@@ -23,6 +23,7 @@
   <link rel="icon" type="image/png" href="/static/wi/img/favicon.png">
   <link rel="apple-touch-icon" href="/static/wi/img/apple-icon.png">
   <link href="/static/sergei/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+  <link href="/static/wi/css/proposal-print.css" rel="stylesheet">
   <style>
     :root {
       --wi-bg:      #edf4ff;
@@ -1225,6 +1226,9 @@
             </p>
 
             <div class="d-grid gap-2 mt-4">
+              <button class="btn btn-outline-primary py-2 fw-bold" onclick="window.WIProposal && WIProposal.open()">
+                Crear propuesta profesional
+              </button>
               <button class="btn btn-primary py-3 fw-bold" onclick="sendToWhatsApp()">
                 <img src="/static/wi/icons/ic-whatsapp.webp" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:.4rem" alt=""> Pedir presupuesto por WhatsApp →
               </button>
@@ -1381,6 +1385,8 @@
 </div><!-- /wi-wrap -->
 
 <script src="/static/sergei/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="/static/wi/js/proposal-template.js"></script>
+<script src="/static/wi/js/proposal-generator.js"></script>
 <!-- WI_L10N: Dynamic content translations (extras, quiz, portfolio, maintenance) -->
 <script>
 (function(){
@@ -3597,6 +3603,7 @@ setLang(LANG);
     setView('open');
     ensureSession(function() {
       startPolling();
+      doPoll(); // immediate poll to get short_id + any pending messages right away
       if (textarea) textarea.focus();
     });
   };
@@ -3775,6 +3782,7 @@ setLang(LANG);
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (!data.ok) return;
+        if (data.short_id && !state.shortId) showCodeBar(data.short_id);
         var msgs = data.messages || [];
         if (msgs.length) renderMessages(msgs, true);
       })

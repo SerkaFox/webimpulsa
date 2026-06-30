@@ -179,6 +179,7 @@ def poll_messages(request):
 
         return JsonResponse({
             "ok":        True,
+            "short_id":  session.short_id,
             "messages":  _messages_as_json(qs),
             "is_active": session.is_active,
         })
