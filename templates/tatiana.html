@@ -3459,6 +3459,7 @@ setLang(LANG);
   </div>
   <div class="wi-cp-codebar" id="wi-cp-codebar" style="display:none">
     <span id="wi-cp-code-label">Chat <strong id="wi-cp-code-val"></strong></span>
+    <button class="wi-cp-code-btn" onclick="wiChatCodeInfo()" title="¿Qué es este código?" style="font-size:.8rem;padding:1px 5px">ℹ</button>
     <button class="wi-cp-code-btn" id="wi-cp-copy-btn" onclick="wiChatCopyCode()" title="Copiar código">📋 Copiar</button>
     <button class="wi-cp-code-btn" onclick="wiChatReset()" title="Nueva conversación" style="color:#ef4444">🗑</button>
   </div>
@@ -3473,10 +3474,30 @@ setLang(LANG);
 (function() {
   // ── i18n ────────────────────────────────────────────────────────────────
   var CHAT_L10N = {
-    es: { bubble_title:'¿Tienes alguna pregunta?', bubble_sub:'● Soporte en línea', bubble_btn:'Chatear →', placeholder:'Escribe tu mensaje...', online:'● En línea' },
-    eu: { bubble_title:'Galderarik duzu?',         bubble_sub:'● Laguntza online',   bubble_btn:'Txateatu →', placeholder:'Idatzi zure mezua...',  online:'● Online'   },
-    en: { bubble_title:'Got a question?',           bubble_sub:'● Support online',    bubble_btn:'Chat →',     placeholder:'Type your message...',   online:'● Online'   },
-    ru: { bubble_title:'Есть вопросы?',             bubble_sub:'● Поддержка онлайн', bubble_btn:'Написать →', placeholder:'Напишите сообщение...',  online:'● Онлайн'   },
+    es: {
+      bubble_title:'¿Tienes alguna pregunta?', bubble_sub:'● Soporte en línea', bubble_btn:'Chatear →', placeholder:'Escribe tu mensaje...', online:'● En línea',
+      code_info_title: 'Tu código de chat',
+      code_info_body:  'Este número identifica tu conversación con nosotros.\n\nSi quieres continuar este chat desde otro dispositivo o navegador, simplemente escribe este código en el campo de mensaje y tu historial se cargará automáticamente.\n\nGuárdalo o cópialo para no perder el hilo.',
+      reset_confirm: '¿Iniciar nueva conversación? El historial de este dispositivo se borrará.',
+    },
+    eu: {
+      bubble_title:'Galderarik duzu?', bubble_sub:'● Laguntza online', bubble_btn:'Txateatu →', placeholder:'Idatzi zure mezua...', online:'● Online',
+      code_info_title: 'Zure txat-kodea',
+      code_info_body:  'Zenbaki honek gure arteko solasaldia identifikatzen du.\n\nBestegailu edo nabigatzaile batetik jarraitu nahi baduzu, idatzi kode hau mezu-eremuan eta historia automatikoki kargatuko da.',
+      reset_confirm: 'Solasaldi berri bat hasi? Gailu honetako historia ezabatuko da.',
+    },
+    en: {
+      bubble_title:'Got a question?', bubble_sub:'● Support online', bubble_btn:'Chat →', placeholder:'Type your message...', online:'● Online',
+      code_info_title: 'Your chat code',
+      code_info_body:  'This number identifies your conversation with us.\n\nIf you want to continue this chat on another device or browser, simply type this code in the message field and your history will load automatically.\n\nSave or copy it so you don\'t lose the thread.',
+      reset_confirm: 'Start a new conversation? The history on this device will be cleared.',
+    },
+    ru: {
+      bubble_title:'Есть вопросы?', bubble_sub:'● Поддержка онлайн', bubble_btn:'Написать →', placeholder:'Напишите сообщение...', online:'● Онлайн',
+      code_info_title: 'Код вашего чата',
+      code_info_body:  'Этот номер идентифицирует вашу переписку с нами.\n\nЧтобы продолжить чат с другого устройства или браузера, просто введите этот код в поле сообщения — история загрузится автоматически.\n\nСохраните или скопируйте его.',
+      reset_confirm: 'Начать новый разговор? История на этом устройстве будет удалена.',
+    },
   };
   function getChatL10n() {
     var lang = window.WI_LANG || localStorage.getItem('wi_lang') || 'es';
@@ -3628,6 +3649,15 @@ setLang(LANG);
     if (codeVal) codeVal.textContent = '#' + code;
     if (codeBar) codeBar.style.display = 'flex';
   }
+
+  window.wiChatCodeInfo = function() {
+    var t = getChatL10n();
+    var code = state.shortId ? ' #' + state.shortId : '';
+    document.getElementById('calcInfoTitle').textContent = (t.code_info_title || 'Código de chat') + code;
+    document.getElementById('calcInfoBody').style.whiteSpace = 'pre-line';
+    document.getElementById('calcInfoBody').textContent = t.code_info_body || '';
+    new bootstrap.Modal(document.getElementById('calcInfoModal')).show();
+  };
 
   window.wiChatCopyCode = function() {
     if (!state.shortId) return;
