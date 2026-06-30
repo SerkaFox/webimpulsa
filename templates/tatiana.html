@@ -3809,8 +3809,10 @@ setLang(LANG);
   function stopPolling() {
     if (state.pollTimer) { clearInterval(state.pollTimer); state.pollTimer = null; }
   }
+  var _pollInFlight = false;
   function doPoll() {
-    if (!state.sessionId) return;
+    if (!state.sessionId || _pollInFlight) return;
+    _pollInFlight = true;
     var url = '/wi/chat/poll/?sid=' + encodeURIComponent(state.sessionId);
     if (state.lastMsgTime) url += '&after=' + encodeURIComponent(state.lastMsgTime);
     fetch(url)
@@ -3821,7 +3823,8 @@ setLang(LANG);
         var msgs = data.messages || [];
         if (msgs.length) renderMessages(msgs, true);
       })
-      .catch(function() {});
+      .catch(function() {})
+      .finally(function() { _pollInFlight = false; });
   }
 
   // ── init ──────────────────────────────────────────────────────────────────
