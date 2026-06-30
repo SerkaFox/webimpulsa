@@ -3749,17 +3749,22 @@ setLang(LANG);
     if (!text) return;
 
     // detect cross-device restore code (#123456 or 123456)
+    // detect restore code (#123456 or 123456) — works even if session already open
     var codeMatch = text.match(/^#?(\d{6})$/);
-    if (codeMatch && !state.sessionId) {
+    if (codeMatch) {
       textarea.value = '';
       appendMessage('system', '🔍 Buscando tu conversación...');
       scrollToBottom();
       tryLookup(codeMatch[1], function(data) {
         messages.lastChild && messages.removeChild(messages.lastChild);
         if (data && data.ok && data.found) {
-          state.sessionId = data.session_id;
+          // switch to the restored session
+          state.sessionId   = data.session_id;
+          state.lastMsgTime = null;
           localStorage.setItem(SESSION_KEY, data.session_id);
+          localStorage.removeItem(LAST_MSG_KEY);
           if (data.short_id) showCodeBar(data.short_id);
+          messages.innerHTML = '';
           renderMessages(data.messages || [], false);
           startPolling();
         } else {

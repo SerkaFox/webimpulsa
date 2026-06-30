@@ -23,6 +23,19 @@ class ChatSession(models.Model):
         return f"Session {self.session_id[:8]} ({'active' if self.is_active else 'closed'})"
 
 
+class WaMessageMap(models.Model):
+    """Maps a WhatsApp message ID (wamid) to a chat session for reply routing."""
+    wamid      = models.CharField(max_length=256, unique=True)
+    session    = models.ForeignKey('ChatSession', on_delete=models.CASCADE, related_name='wa_msgs')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.wamid[:20]} → {self.session.short_id}"
+
+
 class ChatMessage(models.Model):
     VISITOR  = 'visitor'
     OPERATOR = 'operator'

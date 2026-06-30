@@ -15,7 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_datetime
 
-from .models import ChatSession, ChatMessage
+from .models import ChatSession, ChatMessage, WaMessageMap
 from . import wa_send
 
 logger = logging.getLogger(__name__)
@@ -31,19 +31,21 @@ TEMPLATE_NAME = "nuevo_mensaje_webimpulsa"
 TEMPLATE_LANG = "es"
 
 
-def _send_to_all(phones: list, fn, *args, **kwargs):
-    for phone in phones:
-        try:
-            fn(phone, *args, **kwargs)
-        except Exception as e:
-            logger.error("WA send to %s failed: %s", phone, e)
+def _store_wamid(result: dict, session: ChatSession) -> None:
+    """Store WhatsApp message ID → session mapping for reply routing."""
+    try:
+        wamid = (result.get("messages") or [{}])[0].get("id", "")
+        if wamid:
+            WaMessageMap.objects.get_or_create(wamid=wamid, defaults={"session": session})
+    except Exception as e:
+        logger.warning("Could not store wamid: %s", e)
 
 
 def _notify_operator(session: ChatSession, text: str, first: bool = False) -> None:
     if not OPERATOR_PHONES:
         return
 
-    ticket_id = "WEB-" + session.session_id[:4].upper()
+    ticket_id = "WEB-" + session.short_id
     short_text = text[:200] if text else "—"
 
     if first:
@@ -55,23 +57,31 @@ def _notify_operator(session: ChatSession, text: str, first: bool = False) -> No
                 {"type": "text", "text": short_text},
             ],
         }]
-        template_ok = False
         for phone in OPERATOR_PHONES:
             try:
-                wa_send.send_template(phone, TEMPLATE_NAME, TEMPLATE_LANG, components)
-                template_ok = True
+                result = wa_send.send_template(phone, TEMPLATE_NAME, TEMPLATE_LANG, components)
+                _store_wamid(result, session)
             except Exception as e:
-                logger.error("WA template to %s failed: %s — falling back to text", phone, e)
+                logger.error("WA template to %s failed: %s — falling back", phone, e)
                 try:
-                    wa_send.send_text(phone,
+                    result = wa_send.send_text(
+                        phone,
                         f"🌐 webimpulsa.es — nuevo chat [{ticket_id}]\n\n"
                         f"{short_text}\n\n"
-                        f"_Responde aquí para contestar al visitante._")
+                        f"_Responde a ESTE mensaje para contestar al visitante._"
+                    )
+                    _store_wamid(result, session)
                 except Exception as e2:
                     logger.error("WA fallback to %s failed: %s", phone, e2)
     else:
-        _send_to_all(OPERATOR_PHONES, wa_send.send_text,
-                     f"💬 *Cliente [{ticket_id}]:* {text}")
+        for phone in OPERATOR_PHONES:
+            try:
+                result = wa_send.send_text(
+                    phone, f"💬 *Chat {ticket_id}:* {text}"
+                )
+                _store_wamid(result, session)
+            except Exception as e:
+                logger.error("WA send to %s failed: %s", phone, e)
 
 
 def _messages_as_json(qs):
@@ -273,15 +283,30 @@ def wa_webhook(request):
         if not text:
             return JsonResponse({"ok": True, "note": "empty text"})
 
-        # route to most recently active session
-        session = ChatSession.objects.filter(is_active=True).order_by("-updated_at").first()
+        # ── route by reply context first (Tanya used WhatsApp Reply on a notification) ──
+        session = None
+        context_wamid = (msg.get("context") or {}).get("id", "")
+        if context_wamid:
+            mapping = WaMessageMap.objects.filter(wamid=context_wamid).select_related("session").first()
+            if mapping:
+                session = mapping.session
+                logger.info("Routed by context wamid → session %s (chat #%s)",
+                            session.session_id[:8], session.short_id)
+
+        # ── fallback: most recently active session ──
         if not session:
-            logger.info("WA webhook: operator reply but no active chat session")
+            session = ChatSession.objects.filter(is_active=True).order_by("-updated_at").first()
+            if session:
+                logger.info("Routed by fallback (most recent) → session %s (chat #%s)",
+                            session.session_id[:8], session.short_id)
+
+        if not session:
+            logger.info("WA webhook: operator reply but no active session")
             return JsonResponse({"ok": True, "note": "no active session"})
 
         ChatMessage.objects.create(session=session, sender=ChatMessage.OPERATOR, text=text)
         session.save()
-        logger.info("Operator reply saved → session %s", session.session_id[:8])
+        logger.info("Operator reply saved → chat #%s", session.short_id)
 
     except Exception as e:
         logger.exception("wa_webhook error: %s", e)
