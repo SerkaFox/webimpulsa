@@ -1226,11 +1226,14 @@
             </p>
 
             <div class="d-grid gap-2 mt-4">
+              <button class="btn btn-success py-3 fw-bold" onclick="wiLeadOpen()" style="font-size:1rem">
+                📨 Solicitar presupuesto gratuito
+              </button>
               <button class="btn btn-outline-primary py-2 fw-bold" onclick="window.WIProposal && WIProposal.open()">
                 Crear propuesta profesional
               </button>
-              <button class="btn btn-primary py-3 fw-bold" onclick="sendToWhatsApp()">
-                <img src="/static/wi/icons/ic-whatsapp.webp" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:.4rem" alt=""> Pedir presupuesto por WhatsApp →
+              <button class="btn btn-primary py-2 fw-bold" onclick="sendToWhatsApp()">
+                <img src="/static/wi/icons/ic-whatsapp.webp" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:.4rem" alt=""> Pedir por WhatsApp →
               </button>
               <button class="btn btn-outline-primary py-2" onclick="prefillContact()">
                 <img src="/static/wi/icons/ic-email.webp" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:.4rem" alt=""> Enviar por formulario
@@ -3838,6 +3841,110 @@ setLang(LANG);
 })();
 </script>
 
+
+<!-- ── Lead Capture Modal ──────────────────────────────────────────────────── -->
+<div class="modal fade" id="wiLeadModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header border-0 pb-0" style="background:#f8fafc">
+        <div>
+          <h5 class="modal-title fw-900 mb-0" style="font-size:1.05rem">Solicitar presupuesto gratuito</h5>
+          <p class="mb-0 mt-1" style="font-size:.8rem;color:#64748b">Propuesta personalizada en 48 horas, sin compromiso.</p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body p-4" id="wiLeadBody">
+        <div class="mb-3">
+          <label class="form-label fw-bold" style="font-size:.82rem" for="wiLeadName">Nombre *</label>
+          <input type="text" class="form-control" id="wiLeadName" placeholder="Tu nombre o empresa" autocomplete="name">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold" style="font-size:.82rem" for="wiLeadContact">Teléfono o email *</label>
+          <input type="text" class="form-control" id="wiLeadContact" placeholder="600 000 000 o tu@email.com" autocomplete="tel email">
+        </div>
+        <div class="mb-4">
+          <label class="form-label" style="font-size:.82rem;color:#64748b" for="wiLeadBiz">Tipo de negocio <span style="font-weight:400">(opcional)</span></label>
+          <input type="text" class="form-control" id="wiLeadBiz" placeholder="Restaurante, clínica, tienda online...">
+        </div>
+        <button class="btn btn-success w-100 py-2 fw-bold" id="wiLeadSubmitBtn" onclick="wiLeadSubmit()">
+          Enviar solicitud →
+        </button>
+        <p class="text-center mb-0 mt-2" style="font-size:.72rem;color:#94a3b8">Sin spam · Sin compromiso · Respuesta en 48 h</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  window.wiLeadOpen = function() {
+    new bootstrap.Modal(document.getElementById('wiLeadModal')).show();
+  };
+
+  window.wiLeadSubmit = function() {
+    var name    = (document.getElementById('wiLeadName').value || '').trim();
+    var contact = (document.getElementById('wiLeadContact').value || '').trim();
+    var biz     = (document.getElementById('wiLeadBiz').value || '').trim();
+
+    if (!name)    { alert('Por favor, escribe tu nombre.'); return; }
+    if (!contact) { alert('Por favor, escribe tu teléfono o email.'); return; }
+
+    // Read current calculator state
+    var sub = calc.base + calc.extras;
+    if (calc.rush) sub = Math.round(sub * 1.25);
+    var total = sub - Math.round(sub * 0.15);
+
+    var payload = {
+      name:     name,
+      contact:  contact,
+      biz_type: biz,
+      source:   'calculator',
+      calc: {
+        package:      calc.baseName,
+        base:         calc.base,
+        extras:       calc.extraNames.slice(),
+        extras_price: calc.extras,
+        rush:         calc.rush,
+        maint:        calc.maint,
+        maint_name:   calc.maintName,
+        total:        total
+      }
+    };
+
+    var btn = document.getElementById('wiLeadSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    fetch('/wi/crm/leads/', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        document.getElementById('wiLeadBody').innerHTML =
+          '<div style="text-align:center;padding:2.2rem 1rem">' +
+          '<div style="font-size:3rem;margin-bottom:.6rem">✅</div>' +
+          '<h5 style="font-weight:900;margin-bottom:.5rem">¡Solicitud enviada!</h5>' +
+          '<p style="color:#64748b;font-size:.9rem;margin:0">Nos ponemos en contacto contigo en las próximas 48 horas con tu propuesta personalizada.</p>' +
+          '</div>';
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'Enviar solicitud →';
+        alert('Error al enviar: ' + (data.error || 'inténtalo de nuevo.'));
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = 'Enviar solicitud →';
+      alert('Error de conexión. Por favor, inténtalo de nuevo.');
+    });
+  };
+})();
+</script>
 
 </body>
 </html>

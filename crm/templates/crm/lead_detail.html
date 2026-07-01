@@ -1,0 +1,188 @@
+{% load crm_extras %}<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Lead #{{ lead.pk }} — WebImpulsa CRM</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; background: #f8fafc; color: #1e293b; }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .top-bar { background: #1e293b; color: #fff; padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
+    .top-bar h1 { margin: 0; font-size: 1rem; font-weight: 700; }
+    .top-bar .back { color: #94a3b8; font-size: .83rem; }
+    .top-bar .back:hover { color: #fff; text-decoration: none; }
+
+    .main { max-width: 860px; margin: 0 auto; padding: 28px 16px; display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+    @media (max-width: 680px) { .main { grid-template-columns: 1fr; } }
+
+    .card { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 22px 24px; }
+    .card-title { font-weight: 800; font-size: .95rem; margin: 0 0 18px; color: #0f172a; }
+
+    .field-row { margin-bottom: 14px; }
+    .field-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; margin-bottom: 3px; }
+    .field-val { font-weight: 600; color: #1e293b; word-break: break-word; }
+    .field-val.muted { font-weight: 400; color: #64748b; }
+    .field-val.price { color: #15803d; font-size: 1.25rem; font-weight: 900; }
+    .field-val.mono { font-family: monospace; font-size: .78rem; color: #475569; max-height: 120px; overflow-y: auto; }
+
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 14px; font-size: 12px; font-weight: 700; color: #fff; }
+    .extras-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+    .extra-tag { background: #eff6ff; color: #2563eb; border-radius: 10px; padding: 2px 9px; font-size: 11px; font-weight: 600; }
+    .divider { border: none; border-top: 1px solid #f1f5f9; margin: 18px 0; }
+
+    .action-card form { display: flex; flex-direction: column; gap: 14px; }
+    label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #64748b; display: block; margin-bottom: 4px; }
+    select, textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 10px; font-size: 13px; font-family: inherit; outline: none; background: #fff; }
+    select:focus, textarea:focus { border-color: #2563eb; }
+    textarea { resize: vertical; min-height: 100px; }
+    .save-btn { background: #2563eb; color: #fff; border: none; border-radius: 6px; padding: 10px 0; font-size: .88rem; font-weight: 700; cursor: pointer; }
+    .save-btn:hover { background: #1d4ed8; }
+
+    .ts { font-size: 11px; color: #94a3b8; margin-top: 8px; }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="/wi/crm/" class="back">← Volver</a>
+  <h1>Lead #{{ lead.pk }} — {{ lead.name }}</h1>
+</div>
+
+<div class="main">
+
+  <!-- Left: lead info -->
+  <div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Cliente</div>
+      <div class="field-row">
+        <div class="field-label">Nombre</div>
+        <div class="field-val">{{ lead.name }}</div>
+      </div>
+      {% if lead.email %}
+      <div class="field-row">
+        <div class="field-label">Email</div>
+        <div class="field-val"><a href="mailto:{{ lead.email }}">{{ lead.email }}</a></div>
+      </div>
+      {% endif %}
+      {% if lead.phone %}
+      <div class="field-row">
+        <div class="field-label">Teléfono</div>
+        <div class="field-val"><a href="tel:{{ lead.phone }}">{{ lead.phone }}</a></div>
+      </div>
+      {% endif %}
+      {% if lead.biz_type %}
+      <div class="field-row">
+        <div class="field-label">Tipo de negocio</div>
+        <div class="field-val">{{ lead.biz_type }}</div>
+      </div>
+      {% endif %}
+      <div class="field-row">
+        <div class="field-label">Fuente</div>
+        <div class="field-val muted">{{ lead.get_source_display }}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Presupuesto calculado</div>
+      <div class="field-row">
+        <div class="field-label">Paquete</div>
+        <div class="field-val">{{ lead.package|default:"—" }}</div>
+      </div>
+      <div class="field-row">
+        <div class="field-label">Precio base</div>
+        <div class="field-val">{{ lead.package_base_price }}€</div>
+      </div>
+      {% if lead.extras %}
+      <div class="field-row">
+        <div class="field-label">Extras (+{{ lead.extras_price }}€)</div>
+        <div class="extras-list">
+          {% for e in lead.extras %}<span class="extra-tag">{{ e }}</span>{% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% if lead.rush %}
+      <div class="field-row">
+        <div class="field-label">Entrega urgente</div>
+        <div class="field-val" style="color:#b86800">⚡ Sí (+25%)</div>
+      </div>
+      {% endif %}
+      <div class="field-row">
+        <div class="field-label">Descuento lanzamiento</div>
+        <div class="field-val muted">−{{ lead.discount_pct }}%</div>
+      </div>
+      {% if lead.maintenance_plan %}
+      <div class="field-row">
+        <div class="field-label">Mantenimiento</div>
+        <div class="field-val">{{ lead.maintenance_plan }} — {{ lead.maintenance_price }}€/mes</div>
+      </div>
+      {% endif %}
+      <hr class="divider">
+      <div class="field-row">
+        <div class="field-label">Total estimado</div>
+        <div class="field-val price">{{ lead.estimated_price }}€</div>
+      </div>
+
+      <hr class="divider">
+      <div class="field-label" style="margin-bottom:6px">Payload original (JSON)</div>
+      <div class="field-val mono">{{ lead.raw_data }}</div>
+
+      <div class="ts">
+        Creado: {{ lead.created_at|date:"d/m/Y H:i" }} ·
+        Actualizado: {{ lead.updated_at|date:"d/m/Y H:i" }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: CRM actions -->
+  <div>
+    <div class="card action-card">
+      <div class="card-title">Estado y notas</div>
+      <form method="post" action="/wi/crm/{{ lead.pk }}/">
+        <div>
+          <label for="status-sel">Estado</label>
+          <select id="status-sel" name="status">
+            {% for val, lbl in statuses %}
+            <option value="{{ val }}" {% if val == lead.status %}selected{% endif %}>{{ lbl }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="notes-ta">Notas internas</label>
+          <textarea id="notes-ta" name="notes">{{ lead.notes }}</textarea>
+        </div>
+        <button type="submit" class="save-btn">Guardar cambios</button>
+      </form>
+
+      <hr class="divider">
+      <div class="field-label" style="margin-bottom:8px">Estado actual</div>
+      <span class="badge"
+        {% for val, lbl in statuses %}{% if val == lead.status %}style="background:{{ status_css|get:val }}"{% endif %}{% endfor %}>
+        {{ lead.get_status_display }}
+      </span>
+    </div>
+
+    {% if lead.phone or lead.email %}
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">Acciones rápidas</div>
+      {% if lead.phone %}
+      <a href="https://wa.me/34{{ lead.phone|slice:'1:' }}" target="_blank" rel="noopener"
+         style="display:block;background:#25d366;color:#fff;border-radius:7px;padding:9px 14px;text-align:center;font-weight:700;font-size:.85rem;margin-bottom:8px">
+        💬 Escribir por WhatsApp
+      </a>
+      {% endif %}
+      {% if lead.email %}
+      <a href="mailto:{{ lead.email }}?subject=Presupuesto%20{{ lead.package|urlencode }}&body=Hola%20{{ lead.name|urlencode }},"
+         style="display:block;background:#2563eb;color:#fff;border-radius:7px;padding:9px 14px;text-align:center;font-weight:700;font-size:.85rem">
+        ✉ Enviar email
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+</body>
+</html>

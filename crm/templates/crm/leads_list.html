@@ -1,0 +1,119 @@
+{% load crm_extras %}<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>WebImpulsa CRM</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; background: #f8fafc; color: #1e293b; }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .top-bar { background: #1e293b; color: #fff; padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
+    .top-bar h1 { margin: 0; font-size: 1rem; font-weight: 700; letter-spacing: -.01em; }
+    .top-bar .sub { font-size: .78rem; color: #94a3b8; margin-left: auto; }
+
+    .main { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+
+    .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+    .toolbar form { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; min-width: 0; }
+    .toolbar input[type=text] { border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px; font-size: 13px; min-width: 180px; outline: none; }
+    .toolbar input[type=text]:focus { border-color: #2563eb; }
+    .toolbar button { background: #2563eb; color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 13px; cursor: pointer; }
+    .toolbar button:hover { background: #1d4ed8; }
+    .toolbar a.clear { font-size: 12px; color: #64748b; }
+
+    .status-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+    .status-tab { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #e2e8f0; color: #475569; border: 2px solid transparent; }
+    .status-tab:hover { background: #cbd5e1; text-decoration: none; }
+    .status-tab.active { border-color: #2563eb; background: #eff6ff; color: #2563eb; }
+
+    .count-badge { font-size: 11px; font-weight: 700; background: #1e293b; color: #fff; border-radius: 10px; padding: 1px 6px; margin-left: 4px; }
+
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+    th { background: #f1f5f9; color: #64748b; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; padding: 10px 12px; text-align: left; }
+    td { padding: 11px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+
+    .badge { display: inline-block; padding: 3px 9px; border-radius: 12px; font-size: 11px; font-weight: 700; color: #fff; white-space: nowrap; }
+    .price { font-weight: 700; color: #15803d; }
+    .muted { color: #94a3b8; font-size: 12px; }
+    .pkg { font-weight: 600; }
+    .empty { text-align: center; padding: 48px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>🗂 WebImpulsa CRM</h1>
+  <span class="sub">{{ total }} lead{% if total != 1 %}s{% endif %} {% if status_filter %}· filtro: {{ status_filter }}{% endif %}{% if search %}· búsqueda: "{{ search }}"{% endif %}</span>
+</div>
+
+<div class="main">
+
+  <div class="toolbar">
+    <form method="get" action="">
+      {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+      <input type="text" name="q" value="{{ search }}" placeholder="Buscar por nombre, email, teléfono...">
+      <button type="submit">Buscar</button>
+      {% if search or status_filter %}<a href="/wi/crm/" class="clear">✕ Limpiar filtros</a>{% endif %}
+    </form>
+  </div>
+
+  <div class="status-tabs">
+    <a href="/wi/crm/{% if search %}?q={{ search }}{% endif %}" class="status-tab {% if not status_filter %}active{% endif %}">
+      Todos
+    </a>
+    {% for val, label in statuses %}
+    <a href="/wi/crm/?status={{ val }}{% if search %}&q={{ search }}{% endif %}"
+       class="status-tab {% if status_filter == val %}active{% endif %}">
+      {{ label }}
+    </a>
+    {% endfor %}
+  </div>
+
+  {% if leads %}
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Fecha</th>
+        <th>Nombre</th>
+        <th>Contacto</th>
+        <th>Negocio</th>
+        <th>Paquete</th>
+        <th>Precio est.</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for lead in leads %}
+      <tr>
+        <td><a href="/wi/crm/{{ lead.pk }}/">#{{ lead.pk }}</a></td>
+        <td class="muted">{{ lead.created_at|date:"d/m/Y" }}<br>{{ lead.created_at|date:"H:i" }}</td>
+        <td><a href="/wi/crm/{{ lead.pk }}/" style="font-weight:600;color:#1e293b">{{ lead.name }}</a></td>
+        <td class="muted">{{ lead.email|default:lead.phone }}</td>
+        <td class="muted">{{ lead.biz_type|default:"—" }}</td>
+        <td class="pkg">{{ lead.package|default:"—" }}
+          {% if lead.extras %}<br><span class="muted">+{{ lead.extras|length }} extra{% if lead.extras|length != 1 %}s{% endif %}</span>{% endif %}
+        </td>
+        <td class="price">{% if lead.estimated_price %}{{ lead.estimated_price }}€{% else %}—{% endif %}</td>
+        <td>
+          <span class="badge"
+            {% for val, lbl in statuses %}{% if val == lead.status %}style="background:{{ status_css|get:val }}"{% endif %}{% endfor %}>
+            {{ lead.get_status_display }}
+          </span>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">No hay leads{% if status_filter %} con estado "{{ status_filter }}"{% endif %}{% if search %} para "{{ search }}"{% endif %}.</div>
+  {% endif %}
+
+</div>
+</body>
+</html>
