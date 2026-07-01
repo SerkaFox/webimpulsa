@@ -10,38 +10,78 @@
     a { color: #2563eb; text-decoration: none; }
     a:hover { text-decoration: underline; }
 
-    .top-bar { background: #1e293b; color: #fff; padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
-    .top-bar h1 { margin: 0; font-size: 1rem; font-weight: 700; }
-    .top-bar .back { color: #94a3b8; font-size: .83rem; }
+    .top-bar { background: #1e293b; color: #fff; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .top-bar h1 { margin: 0; font-size: 1rem; font-weight: 700; flex: 1; }
+    .top-bar .back { color: #94a3b8; font-size: .83rem; white-space: nowrap; }
     .top-bar .back:hover { color: #fff; text-decoration: none; }
 
-    .main { max-width: 860px; margin: 0 auto; padding: 28px 16px; display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
-    @media (max-width: 680px) { .main { grid-template-columns: 1fr; } }
+    .main { max-width: 1060px; margin: 0 auto; padding: 24px 16px; display: grid; grid-template-columns: 1fr 310px; gap: 20px; align-items: start; }
+    @media (max-width: 720px) { .main { grid-template-columns: 1fr; } }
 
-    .card { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 22px 24px; }
-    .card-title { font-weight: 800; font-size: .95rem; margin: 0 0 18px; color: #0f172a; }
+    .col-left { display: flex; flex-direction: column; gap: 18px; }
+    .col-right { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 16px; }
 
-    .field-row { margin-bottom: 14px; }
-    .field-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; margin-bottom: 3px; }
+    .card { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 20px 22px; }
+    .card-title { font-weight: 800; font-size: .9rem; margin: 0 0 16px; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+    .card-title small { font-weight: 400; color: #94a3b8; font-size: .75rem; }
+
+    .field-row { margin-bottom: 12px; }
+    .field-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; margin-bottom: 2px; }
     .field-val { font-weight: 600; color: #1e293b; word-break: break-word; }
     .field-val.muted { font-weight: 400; color: #64748b; }
-    .field-val.price { color: #15803d; font-size: 1.25rem; font-weight: 900; }
-    .field-val.mono { font-family: monospace; font-size: .78rem; color: #475569; max-height: 120px; overflow-y: auto; }
+    .field-val.price { color: #15803d; font-size: 1.2rem; font-weight: 900; }
+    .field-val.mono { font-family: monospace; font-size: .75rem; color: #475569; max-height: 80px; overflow-y: auto; }
 
-    .badge { display: inline-block; padding: 4px 12px; border-radius: 14px; font-size: 12px; font-weight: 700; color: #fff; }
-    .extras-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
-    .extra-tag { background: #eff6ff; color: #2563eb; border-radius: 10px; padding: 2px 9px; font-size: 11px; font-weight: 600; }
-    .divider { border: none; border-top: 1px solid #f1f5f9; margin: 18px 0; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; color: #fff; }
+    .extras-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+    .extra-tag { background: #eff6ff; color: #2563eb; border-radius: 10px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+    hr.div { border: none; border-top: 1px solid #f1f5f9; margin: 14px 0; }
 
-    .action-card form { display: flex; flex-direction: column; gap: 14px; }
+    /* form elements */
     label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #64748b; display: block; margin-bottom: 4px; }
-    select, textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 10px; font-size: 13px; font-family: inherit; outline: none; background: #fff; }
-    select:focus, textarea:focus { border-color: #2563eb; }
-    textarea { resize: vertical; min-height: 100px; }
-    .save-btn { background: #2563eb; color: #fff; border: none; border-radius: 6px; padding: 10px 0; font-size: .88rem; font-weight: 700; cursor: pointer; }
+    select, textarea, input[type=text] { width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 7px 10px; font-size: 13px; font-family: inherit; outline: none; background: #fff; }
+    select:focus, textarea:focus, input:focus { border-color: #2563eb; }
+    textarea { resize: vertical; min-height: 80px; }
+    .save-btn { background: #2563eb; color: #fff; border: none; border-radius: 6px; padding: 9px 0; font-size: .85rem; font-weight: 700; cursor: pointer; width: 100%; }
     .save-btn:hover { background: #1d4ed8; }
+    .btn-sm { display: inline-block; padding: 5px 12px; border-radius: 6px; font-size: .78rem; font-weight: 700; border: 1px solid #cbd5e1; background: #f8fafc; cursor: pointer; color: #1e293b; }
+    .btn-sm:hover { background: #f1f5f9; }
+    .btn-sm.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .btn-sm.primary:hover { background: #1d4ed8; }
+    .btn-sm.green { background: #25d366; color: #fff; border-color: #25d366; }
 
-    .ts { font-size: 11px; color: #94a3b8; margin-top: 8px; }
+    /* next step */
+    .next-step { background: #eff6ff; border-left: 3px solid #2563eb; padding: 8px 12px; border-radius: 0 6px 6px 0; font-size: .82rem; color: #1e40af; }
+
+    /* client access panel */
+    .access-status { display: flex; align-items: center; gap: 8px; font-size: .83rem; margin-bottom: 14px; }
+    .access-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .access-link-box { background: #f1f5f9; border-radius: 6px; padding: 8px 10px; font-family: monospace; font-size: .75rem; word-break: break-all; margin-bottom: 10px; color: #2563eb; }
+    .pin-display { font-size: 1.6rem; font-weight: 900; letter-spacing: .3em; color: #1e293b; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 10px; text-align: center; margin-bottom: 10px; }
+
+    /* comm log */
+    .comm-entry { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f8fafc; align-items: flex-start; }
+    .comm-entry:last-child { border-bottom: none; }
+    .comm-dir { font-size: 1rem; flex-shrink: 0; }
+    .comm-body { flex: 1; min-width: 0; }
+    .comm-content { font-size: .82rem; color: #334155; word-break: break-word; }
+    .comm-meta { font-size: .72rem; color: #94a3b8; margin-top: 2px; }
+    .comm-badge { display: inline-block; padding: 1px 6px; border-radius: 8px; font-size: 10px; font-weight: 700; background: #f1f5f9; color: #475569; }
+
+    /* materials */
+    .mat-item { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f8fafc; }
+    .mat-item:last-child { border-bottom: none; }
+    .mat-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .mat-name { flex: 1; font-size: .82rem; font-weight: 600; min-width: 0; word-break: break-word; }
+    .mat-meta { font-size: .72rem; color: #94a3b8; white-space: nowrap; }
+
+    /* wa message preview */
+    .wa-preview { background: #dcfce7; border-radius: 10px 10px 10px 2px; padding: 10px 14px; font-size: .82rem; white-space: pre-wrap; line-height: 1.55; color: #14532d; max-height: 180px; overflow-y: auto; }
+    .wa-copy-btn { margin-top: 8px; }
+
+    .ts { font-size: 11px; color: #94a3b8; margin-top: 6px; }
+    .form-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .form-row > * { flex: 1; }
   </style>
 </head>
 <body>
@@ -49,140 +89,435 @@
 <div class="top-bar">
   <a href="/wi/crm/" class="back">← Volver</a>
   <h1>Lead #{{ lead.pk }} — {{ lead.name }}</h1>
+  <span class="badge" {% for v, l in statuses %}{% if v == lead.status %}style="background:{{ status_css|get:v }}"{% endif %}{% endfor %}>
+    {{ lead.get_status_display }}
+  </span>
 </div>
 
 <div class="main">
 
-  <!-- Left: lead info -->
-  <div>
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-title">Cliente</div>
-      <div class="field-row">
-        <div class="field-label">Nombre</div>
-        <div class="field-val">{{ lead.name }}</div>
-      </div>
-      {% if lead.email %}
-      <div class="field-row">
-        <div class="field-label">Email</div>
-        <div class="field-val"><a href="mailto:{{ lead.email }}">{{ lead.email }}</a></div>
-      </div>
-      {% endif %}
-      {% if lead.phone %}
-      <div class="field-row">
-        <div class="field-label">Teléfono</div>
-        <div class="field-val"><a href="tel:{{ lead.phone }}">{{ lead.phone }}</a></div>
-      </div>
-      {% endif %}
-      {% if lead.biz_type %}
-      <div class="field-row">
-        <div class="field-label">Tipo de negocio</div>
-        <div class="field-val">{{ lead.biz_type }}</div>
-      </div>
-      {% endif %}
-      <div class="field-row">
-        <div class="field-label">Fuente</div>
-        <div class="field-val muted">{{ lead.get_source_display }}</div>
-      </div>
-    </div>
+  <!-- ── LEFT COLUMN ──────────────────────────────────────────────────── -->
+  <div class="col-left">
 
+    <!-- Client info -->
     <div class="card">
-      <div class="card-title">Presupuesto calculado</div>
-      <div class="field-row">
-        <div class="field-label">Paquete</div>
-        <div class="field-val">{{ lead.package|default:"—" }}</div>
-      </div>
-      <div class="field-row">
-        <div class="field-label">Precio base</div>
-        <div class="field-val">{{ lead.package_base_price }}€</div>
-      </div>
-      {% if lead.extras %}
-      <div class="field-row">
-        <div class="field-label">Extras (+{{ lead.extras_price }}€)</div>
-        <div class="extras-list">
-          {% for e in lead.extras %}<span class="extra-tag">{{ e }}</span>{% endfor %}
+      <div class="card-title">👤 Cliente</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
+        <div class="field-row">
+          <div class="field-label">Nombre</div>
+          <div class="field-val">{{ lead.name }}</div>
+        </div>
+        <div class="field-row">
+          <div class="field-label">Tipo de negocio</div>
+          <div class="field-val muted">{{ lead.biz_type|default:"—" }}</div>
+        </div>
+        {% if lead.email %}
+        <div class="field-row">
+          <div class="field-label">Email</div>
+          <div class="field-val"><a href="mailto:{{ lead.email }}">{{ lead.email }}</a></div>
+        </div>
+        {% endif %}
+        {% if lead.phone %}
+        <div class="field-row">
+          <div class="field-label">Teléfono</div>
+          <div class="field-val"><a href="tel:{{ lead.phone }}">{{ lead.phone }}</a></div>
+        </div>
+        {% endif %}
+        <div class="field-row">
+          <div class="field-label">Fuente</div>
+          <div class="field-val muted">{{ lead.get_source_display }}</div>
+        </div>
+        <div class="field-row">
+          <div class="field-label">Canal preferido</div>
+          <div class="field-val muted">{{ lead.get_preferred_channel_display }}</div>
         </div>
       </div>
-      {% endif %}
-      {% if lead.rush %}
-      <div class="field-row">
-        <div class="field-label">Entrega urgente</div>
-        <div class="field-val" style="color:#b86800">⚡ Sí (+25%)</div>
+    </div>
+
+    <!-- Project budget -->
+    <div class="card">
+      <div class="card-title">💼 Presupuesto calculado</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
+        <div class="field-row">
+          <div class="field-label">Paquete</div>
+          <div class="field-val">{{ lead.package|default:"—" }}</div>
+        </div>
+        <div class="field-row">
+          <div class="field-label">Precio base</div>
+          <div class="field-val">{{ lead.package_base_price }}€</div>
+        </div>
+        {% if lead.rush %}
+        <div class="field-row">
+          <div class="field-label">Urgente</div>
+          <div class="field-val" style="color:#b86800">⚡ +25%</div>
+        </div>
+        {% endif %}
+        <div class="field-row">
+          <div class="field-label">Descuento</div>
+          <div class="field-val muted">−{{ lead.discount_pct }}%</div>
+        </div>
+        {% if lead.maintenance_plan %}
+        <div class="field-row">
+          <div class="field-label">Mantenimiento</div>
+          <div class="field-val muted">{{ lead.maintenance_plan }} {{ lead.maintenance_price }}€/mes</div>
+        </div>
+        {% endif %}
+      </div>
+      {% if lead.extras %}
+      <div class="field-label" style="margin-bottom:5px">Extras (+{{ lead.extras_price }}€)</div>
+      <div class="extras-list">
+        {% for e in lead.extras %}<span class="extra-tag">{{ e }}</span>{% endfor %}
       </div>
       {% endif %}
-      <div class="field-row">
-        <div class="field-label">Descuento lanzamiento</div>
-        <div class="field-val muted">−{{ lead.discount_pct }}%</div>
-      </div>
-      {% if lead.maintenance_plan %}
-      <div class="field-row">
-        <div class="field-label">Mantenimiento</div>
-        <div class="field-val">{{ lead.maintenance_plan }} — {{ lead.maintenance_price }}€/mes</div>
-      </div>
+      <hr class="div">
+      <div class="field-label">Total estimado (sin IVA)</div>
+      <div class="field-val price">{{ lead.estimated_price }}€</div>
+      <div class="ts">Creado: {{ lead.created_at|date:"d/m/Y H:i" }} · Actualizado: {{ lead.updated_at|date:"d/m/Y H:i" }}</div>
+    </div>
+
+    <!-- Client portal access -->
+    <div class="card">
+      <div class="card-title">🔗 Portal del cliente <small>enlace de acceso seguro</small></div>
+
+      {% if active_access %}
+        {% if active_access.is_valid %}
+        <div class="access-status">
+          <div class="access-dot" style="background:#16a34a"></div>
+          <span>Enlace activo · expira {{ active_access.expires_at|date:"d/m/Y H:i" }}</span>
+        </div>
+        <div class="access-link-box" id="portalLinkBox">{{ active_access.portal_url }}</div>
+        {% if active_access.last_access %}
+        <div class="ts" style="margin-bottom:10px">
+          Último acceso: {{ active_access.last_access|date:"d/m/Y H:i" }} · {{ active_access.access_count }} visita{{ active_access.access_count|pluralize }}
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="access-status">
+          <div class="access-dot" style="background:#94a3b8"></div>
+          <span style="color:#94a3b8">Enlace expirado</span>
+        </div>
+        {% endif %}
+      {% else %}
+        <div class="access-status">
+          <div class="access-dot" style="background:#e2e8f0"></div>
+          <span style="color:#94a3b8">Sin enlace generado</span>
+        </div>
       {% endif %}
-      <hr class="divider">
-      <div class="field-row">
-        <div class="field-label">Total estimado</div>
-        <div class="field-val price">{{ lead.estimated_price }}€</div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="btn-sm primary" onclick="generateAccess({{ lead.pk }})">
+          ⚡ Generar nuevo enlace
+        </button>
+        {% if active_access and active_access.is_valid %}
+        <button class="btn-sm" onclick="copyPortalLink()">📋 Copiar enlace</button>
+        <button class="btn-sm green" onclick="openWaMessage()">💬 Copiar mensaje WA</button>
+        {% endif %}
+        <button class="btn-sm" onclick="generateAndRequest({{ lead.pk }})">📦 Solicitar materiales</button>
       </div>
 
-      <hr class="divider">
-      <div class="field-label" style="margin-bottom:6px">Payload original (JSON)</div>
-      <div class="field-val mono">{{ lead.raw_data }}</div>
-
-      <div class="ts">
-        Creado: {{ lead.created_at|date:"d/m/Y H:i" }} ·
-        Actualizado: {{ lead.updated_at|date:"d/m/Y H:i" }}
+      <div id="accessResult" style="display:none">
+        <div class="pin-display" id="pinDisplay"></div>
+        <div class="wa-preview" id="waPreview"></div>
+        <button class="btn-sm green wa-copy-btn" onclick="copyWaMessage()">📋 Copiar mensaje WhatsApp</button>
       </div>
     </div>
+
+    <!-- Communication log -->
+    <div class="card">
+      <div class="card-title">📨 Comunicaciones <small>últimas 20</small></div>
+
+      <!-- Quick log form -->
+      <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:14px">
+        <div class="form-row">
+          <div>
+            <label>Dirección</label>
+            <select id="logDir">
+              {% for v, l in comm_dirs %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+            </select>
+          </div>
+          <div>
+            <label>Canal</label>
+            <select id="logChan">
+              {% for v, l in comm_channels %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:8px">
+          <label>Contenido</label>
+          <textarea id="logContent" rows="2" placeholder="Resumen de la comunicación…"></textarea>
+        </div>
+        <button class="btn-sm primary" onclick="logComm({{ lead.pk }})">Registrar</button>
+        <span id="logResult" style="font-size:.78rem;color:#16a34a;margin-left:8px"></span>
+      </div>
+
+      {% if comm_log %}
+      {% for entry in comm_log %}
+      <div class="comm-entry">
+        <div class="comm-dir">
+          {% if entry.direction == 'outbound' %}📤{% else %}📥{% endif %}
+        </div>
+        <div class="comm-body">
+          <div class="comm-content">{{ entry.content }}</div>
+          <div class="comm-meta">
+            <span class="comm-badge">{{ entry.get_channel_display }}</span>
+            {% if entry.template_name %}<span class="comm-badge" style="background:#eff6ff;color:#2563eb">{{ entry.template_name }}</span>{% endif %}
+            {{ entry.created_at|date:"d/m/Y H:i" }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0">Sin comunicaciones registradas.</div>
+      {% endif %}
+    </div>
+
+    <!-- Materials -->
+    <div class="card">
+      <div class="card-title">📁 Materiales <small>{{ materials|length }} archivo{{ materials|length|pluralize }}</small></div>
+      {% if materials %}
+      {% for m in materials %}
+      <div class="mat-item">
+        <div class="mat-icon">
+          {% if m.file_type == 'photo' %}🖼️
+          {% elif m.file_type == 'video' %}🎬
+          {% elif m.file_type == 'logo' %}🎨
+          {% elif m.file_type == 'document' %}📄
+          {% elif m.file_type == 'text' %}📝
+          {% else %}📎{% endif %}
+        </div>
+        <div class="mat-name">{{ m.original_filename }}</div>
+        <div class="mat-meta">
+          {{ m.size_display }}<br>
+          <span style="color:#cbd5e1">{{ m.get_source_display }}</span><br>
+          {{ m.created_at|date:"d/m/Y" }}
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0">Sin materiales subidos aún.</div>
+      {% endif %}
+    </div>
+
   </div>
 
-  <!-- Right: CRM actions -->
-  <div>
-    <div class="card action-card">
-      <div class="card-title">Estado y notas</div>
-      <form method="post" action="/wi/crm/{{ lead.pk }}/">
+  <!-- ── RIGHT COLUMN (sticky CRM panel) ──────────────────────────────── -->
+  <div class="col-right">
+
+    <!-- Status + notes -->
+    <div class="card">
+      <div class="card-title">📋 Estado y notas</div>
+      <form method="post" action="/wi/crm/{{ lead.pk }}/" style="display:flex;flex-direction:column;gap:12px">
         <div>
-          <label for="status-sel">Estado</label>
-          <select id="status-sel" name="status">
-            {% for val, lbl in statuses %}
-            <option value="{{ val }}" {% if val == lead.status %}selected{% endif %}>{{ lbl }}</option>
+          <label>Estado</label>
+          <select name="status">
+            {% for v, l in statuses %}
+            <option value="{{ v }}" {% if v == lead.status %}selected{% endif %}>{{ l }}</option>
             {% endfor %}
           </select>
         </div>
         <div>
-          <label for="notes-ta">Notas internas</label>
-          <textarea id="notes-ta" name="notes">{{ lead.notes }}</textarea>
+          <label>Canal preferido</label>
+          <select name="preferred_channel">
+            {% for v, l in channels %}
+            <option value="{{ v }}" {% if v == lead.preferred_channel %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
         </div>
-        <button type="submit" class="save-btn">Guardar cambios</button>
+        <div>
+          <label>Notas internas</label>
+          <textarea name="notes">{{ lead.notes }}</textarea>
+        </div>
+        <button type="submit" class="save-btn">Guardar</button>
       </form>
 
-      <hr class="divider">
-      <div class="field-label" style="margin-bottom:8px">Estado actual</div>
-      <span class="badge"
-        {% for val, lbl in statuses %}{% if val == lead.status %}style="background:{{ status_css|get:val }}"{% endif %}{% endfor %}>
-        {{ lead.get_status_display }}
-      </span>
+      {% if next_step %}
+      <hr class="div">
+      <div class="field-label">Próximo paso</div>
+      <div class="next-step">{{ next_step }}</div>
+      {% endif %}
     </div>
 
-    {% if lead.phone or lead.email %}
-    <div class="card" style="margin-top:16px">
-      <div class="card-title">Acciones rápidas</div>
+    <!-- Quick actions -->
+    <div class="card">
+      <div class="card-title">⚡ Acciones rápidas</div>
       {% if lead.phone %}
-      <a href="https://wa.me/34{{ lead.phone|slice:'1:' }}" target="_blank" rel="noopener"
-         style="display:block;background:#25d366;color:#fff;border-radius:7px;padding:9px 14px;text-align:center;font-weight:700;font-size:.85rem;margin-bottom:8px">
-        💬 Escribir por WhatsApp
+      <a href="https://wa.me/34{{ lead.phone|slice:'1:' }}"
+         target="_blank" rel="noopener"
+         style="display:flex;align-items:center;gap:6px;background:#25d366;color:#fff;border-radius:7px;padding:9px 12px;font-weight:700;font-size:.83rem;margin-bottom:8px;text-decoration:none">
+        💬 WhatsApp al cliente
       </a>
       {% endif %}
       {% if lead.email %}
-      <a href="mailto:{{ lead.email }}?subject=Presupuesto%20{{ lead.package|urlencode }}&body=Hola%20{{ lead.name|urlencode }},"
-         style="display:block;background:#2563eb;color:#fff;border-radius:7px;padding:9px 14px;text-align:center;font-weight:700;font-size:.85rem">
+      <a href="mailto:{{ lead.email }}?subject=Tu proyecto {{ lead.package|urlencode }}"
+         style="display:flex;align-items:center;gap:6px;background:#2563eb;color:#fff;border-radius:7px;padding:9px 12px;font-weight:700;font-size:.83rem;text-decoration:none">
         ✉ Enviar email
       </a>
       {% endif %}
     </div>
-    {% endif %}
-  </div>
 
+    <!-- Raw data -->
+    <div class="card">
+      <div class="card-title">🗄 Datos originales</div>
+      <div class="field-val mono">{{ lead.raw_data }}</div>
+    </div>
+
+  </div>
 </div>
+
+<script>
+(function() {
+  'use strict';
+
+  var _waMsg = '';
+
+  // ── Generate access link ──────────────────────────────────────────────────
+  window.generateAccess = function(pk) {
+    var btn = event.target;
+    btn.disabled = true;
+    btn.textContent = '…';
+
+    var fd = new FormData();
+    fd.append('pin_required', 'true');
+    fd.append('expires_hours', '72');
+
+    fetch('/wi/crm/' + pk + '/access/', {
+      method: 'POST',
+      body: fd,
+      headers: { 'Authorization': _getAuth() },
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.ok) { alert('Error: ' + data.error); return; }
+      _waMsg = data.wa_message;
+
+      // Update link box
+      var box = document.getElementById('portalLinkBox');
+      if (box) box.textContent = data.portal_url;
+      else {
+        // reload to show full panel
+        location.reload();
+        return;
+      }
+
+      // Show PIN + WA preview
+      document.getElementById('pinDisplay').textContent = data.pin || '(sin PIN)';
+      document.getElementById('waPreview').textContent  = data.wa_message;
+      document.getElementById('accessResult').style.display = 'block';
+    })
+    .catch(function(e) { alert('Error de conexión: ' + e); })
+    .finally(function() { btn.disabled = false; btn.textContent = '⚡ Generar nuevo enlace'; });
+  };
+
+  window.generateAndRequest = function(pk) {
+    var fd = new FormData();
+    fd.append('pin_required', 'true');
+    fd.append('expires_hours', '72');
+
+    fetch('/wi/crm/' + pk + '/access/', {
+      method: 'POST',
+      body: fd,
+      headers: { 'Authorization': _getAuth() },
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.ok) { alert('Error generando enlace'); return; }
+      var lead = { name: document.querySelector('.top-bar h1').textContent.split('—')[1].trim() };
+      // Build materials request message using the generated URL
+      var msg = '¡Hola ' + lead.name.split(' ')[0] + '! 👋\n\n'
+              + 'Para comenzar tu proyecto necesitamos algunos materiales:\n\n'
+              + '📸 Fotos del negocio o productos\n'
+              + '🎨 Logo (si tienes)\n'
+              + '📝 Textos / descripción de servicios\n'
+              + '📄 Cualquier documento útil\n\n'
+              + 'Súbelos aquí:\n🔗 ' + data.portal_url + '\n\n'
+              + 'Tu código de acceso: *' + (data.pin || '') + '*\n\n'
+              + '¡Sin prisa, cuando puedas! 😊';
+      _waMsg = msg;
+      _showWaMsg(msg);
+      _copyToClipboard(msg);
+      alert('Mensaje copiado al portapapeles. Ahora pégalo en WhatsApp.');
+    })
+    .catch(function(e) { alert('Error: ' + e); });
+  };
+
+  window.openWaMessage = function() {
+    if (_waMsg) { _showWaMsg(_waMsg); } else { alert('Genera un enlace primero.'); }
+  };
+
+  window.copyPortalLink = function() {
+    var box = document.getElementById('portalLinkBox');
+    if (box) _copyToClipboard(box.textContent.trim());
+  };
+
+  window.copyWaMessage = function() {
+    if (_waMsg) _copyToClipboard(_waMsg);
+  };
+
+  function _showWaMsg(msg) {
+    document.getElementById('waPreview').textContent = msg;
+    document.getElementById('accessResult').style.display = 'block';
+  }
+
+  // ── Log communication ─────────────────────────────────────────────────────
+  window.logComm = function(pk) {
+    var dir     = document.getElementById('logDir').value;
+    var chan    = document.getElementById('logChan').value;
+    var content = document.getElementById('logContent').value.trim();
+    if (!content) { alert('Escribe el contenido de la comunicación.'); return; }
+
+    var fd = new FormData();
+    fd.append('direction', dir);
+    fd.append('channel', chan);
+    fd.append('content', content);
+
+    fetch('/wi/crm/' + pk + '/comm/', {
+      method: 'POST',
+      body: fd,
+      headers: { 'Authorization': _getAuth() },
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        document.getElementById('logContent').value = '';
+        document.getElementById('logResult').textContent = '✓ Registrado';
+        setTimeout(function() {
+          document.getElementById('logResult').textContent = '';
+          location.reload();
+        }, 1000);
+      } else {
+        alert('Error: ' + (data.error || 'desconocido'));
+      }
+    });
+  };
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function _copyToClipboard(text) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).catch(function() { _fallbackCopy(text); });
+    } else {
+      _fallbackCopy(text);
+    }
+  }
+  function _fallbackCopy(text) {
+    var el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    el.remove();
+  }
+  function _getAuth() {
+    // The browser already sent Basic Auth to load this page,
+    // so we extract it from localStorage (set on first load) or prompt.
+    var stored = sessionStorage.getItem('crm_auth');
+    if (stored) return 'Basic ' + stored;
+    var pw = prompt('Contraseña CRM:');
+    if (!pw) return '';
+    var enc = btoa(':' + pw);
+    sessionStorage.setItem('crm_auth', enc);
+    return 'Basic ' + enc;
+  }
+})();
+</script>
 </body>
 </html>

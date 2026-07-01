@@ -13,6 +13,7 @@ ALLOWED_HOSTS = [h.strip() for h in raw_hosts.split(",") if h.strip()]
 
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
+    'django.contrib.sessions',
     'django.contrib.staticfiles',
     'core',
     'crm',
@@ -20,9 +21,14 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 ROOT_URLCONF = 'config.urls'
 
@@ -52,6 +58,15 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     '/home/seradmin/listoya/static/',
 ]
+
+# Client portal media (project materials uploaded by clients)
+# Files served through protected Django view, NOT via Nginx directly.
+MEDIA_URL  = '/media/'
+MEDIA_ROOT = BASE_DIR.parent / 'media'
+
+# 15 MB upload limit per file (enforced in services.py; Nginx allows 20M)
+DATA_UPLOAD_MAX_MEMORY_SIZE  = 16 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE  = 16 * 1024 * 1024
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

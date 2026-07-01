@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Portal cliente — WebImpulsa</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html { font-size: 16px; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      background: #f0f4ff;
+      color: #1e293b;
+      min-height: 100vh;
+    }
+
+    /* ── header ── */
+    .wi-header {
+      background: linear-gradient(135deg, #1760d6 0%, #2563eb 100%);
+      color: #fff;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .wi-logo {
+      font-size: 1.15rem;
+      font-weight: 900;
+      letter-spacing: -.02em;
+      line-height: 1;
+    }
+    .wi-logo span { opacity: .7; font-weight: 400; }
+    .wi-header-sub {
+      font-size: .78rem;
+      opacity: .8;
+      margin-left: auto;
+    }
+
+    /* ── layout ── */
+    .wi-main {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px 16px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── card ── */
+    .wi-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(37,99,235,.08);
+    }
+    .wi-card-title {
+      font-size: .7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #94a3b8;
+      margin: 0 0 12px;
+    }
+
+    /* ── status badge ── */
+    .status-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: .8rem;
+      font-weight: 800;
+      background: #eff6ff;
+      color: #2563eb;
+      margin-bottom: 10px;
+    }
+    .status-badge.green  { background: #f0fdf4; color: #16a34a; }
+    .status-badge.orange { background: #fff7ed; color: #c2410c; }
+    .status-badge.gray   { background: #f8fafc; color: #64748b; }
+
+    .project-name {
+      font-size: 1.1rem;
+      font-weight: 900;
+      margin: 0 0 4px;
+    }
+    .project-meta {
+      font-size: .82rem;
+      color: #64748b;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .project-meta span::before { content: '·'; margin-right: 8px; color: #cbd5e1; }
+    .project-meta span:first-child::before { display: none; }
+
+    .next-step-box {
+      background: #eff6ff;
+      border-left: 3px solid #2563eb;
+      border-radius: 0 8px 8px 0;
+      padding: 10px 14px;
+      font-size: .86rem;
+      color: #1e40af;
+      line-height: 1.5;
+    }
+
+    /* ── extras tags ── */
+    .extras-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 8px;
+    }
+    .extra-tag {
+      background: #f1f5f9;
+      border-radius: 10px;
+      padding: 3px 10px;
+      font-size: .75rem;
+      color: #475569;
+      font-weight: 600;
+    }
+
+    /* ── upload area ── */
+    .upload-area {
+      border: 2px dashed #bfdbfe;
+      border-radius: 12px;
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      margin-bottom: 12px;
+    }
+    .upload-area:hover, .upload-area.dragover {
+      border-color: #2563eb;
+      background: #eff6ff;
+    }
+    .upload-icon { font-size: 2rem; margin-bottom: 6px; }
+    .upload-hint { font-size: .8rem; color: #64748b; margin-top: 4px; }
+
+    #fileInput { display: none; }
+
+    /* ── file list ── */
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: .84rem;
+    }
+    .file-item:last-child { border-bottom: none; }
+    .file-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .file-name { font-weight: 600; flex: 1; min-width: 0; word-break: break-word; }
+    .file-meta { color: #94a3b8; font-size: .74rem; white-space: nowrap; }
+    .file-dl { color: #2563eb; font-size: .78rem; text-decoration: none; white-space: nowrap; }
+    .file-dl:hover { text-decoration: underline; }
+
+    /* ── button ── */
+    .btn-primary {
+      display: block;
+      width: 100%;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 13px 16px;
+      font-size: .92rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+    }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
+
+    .btn-wa {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #25d366;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 13px 16px;
+      font-size: .92rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-wa:hover { background: #1da851; }
+
+    /* ── PIN form ── */
+    .pin-wrap {
+      max-width: 340px;
+      margin: 0 auto;
+      text-align: center;
+      padding: 24px 0;
+    }
+    .pin-emoji { font-size: 2.5rem; margin-bottom: 12px; }
+    .pin-title { font-size: 1.15rem; font-weight: 900; margin-bottom: 6px; }
+    .pin-sub { font-size: .85rem; color: #64748b; margin-bottom: 24px; }
+    .pin-input {
+      width: 100%;
+      font-size: 1.8rem;
+      font-weight: 900;
+      letter-spacing: .35em;
+      text-align: center;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+      outline: none;
+      margin-bottom: 14px;
+    }
+    .pin-input:focus { border-color: #2563eb; }
+    .pin-error { color: #dc2626; font-size: .82rem; margin-bottom: 12px; }
+
+    /* ── invalid/expired ── */
+    .error-wrap {
+      text-align: center;
+      padding: 48px 16px;
+    }
+    .error-emoji { font-size: 3rem; margin-bottom: 12px; }
+    .error-title { font-size: 1.15rem; font-weight: 900; margin-bottom: 8px; }
+    .error-sub { font-size: .86rem; color: #64748b; line-height: 1.6; }
+
+    /* ── upload progress ── */
+    .upload-progress { margin-top: 10px; display: none; }
+    .progress-bar { height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #2563eb; transition: width .3s; width: 0; }
+    .progress-label { font-size: .75rem; color: #64748b; margin-top: 4px; text-align: center; }
+    .upload-result-ok { color: #16a34a; font-size: .82rem; margin-top: 8px; }
+    .upload-result-err { color: #dc2626; font-size: .82rem; margin-top: 8px; }
+
+    /* ── footer ── */
+    .wi-footer {
+      text-align: center;
+      font-size: .72rem;
+      color: #94a3b8;
+      padding: 16px;
+    }
+    .wi-footer a { color: #94a3b8; }
+
+    @media (max-width: 400px) {
+      .wi-main { padding: 14px 10px 40px; }
+      .wi-card  { padding: 16px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wi-header">
+  <div>
+    <div class="wi-logo">WebImpulsa <span>·</span> Portal</div>
+  </div>
+  {% if step == 'portal' %}
+  <div class="wi-header-sub">Bienvenido, {{ lead.name }}</div>
+  {% endif %}
+</div>
+
+{% if step == 'invalid' %}
+<!-- ── INVALID / EXPIRED TOKEN ──────────────────────────────────────────── -->
+<div class="wi-main">
+  <div class="wi-card">
+    <div class="error-wrap">
+      <div class="error-emoji">🔗</div>
+      <div class="error-title">
+        {% if expired %}Enlace expirado{% else %}Enlace no válido{% endif %}
+      </div>
+      <div class="error-sub">
+        {% if expired %}
+          Este enlace ha caducado (validez 72 horas).<br>
+          Escríbenos por WhatsApp para recibir uno nuevo.
+        {% else %}
+          El enlace no existe o ya no está activo.<br>
+          Por favor, usa el enlace que te enviamos por WhatsApp.
+        {% endif %}
+      </div>
+      <a href="https://wa.me/34613708322" target="_blank" rel="noopener"
+         class="btn-wa" style="margin-top:24px">
+        💬 Contactar por WhatsApp
+      </a>
+    </div>
+  </div>
+</div>
+
+{% elif step == 'pin' %}
+<!-- ── PIN ENTRY ─────────────────────────────────────────────────────────── -->
+<div class="wi-main">
+  <div class="wi-card">
+    <div class="pin-wrap">
+      <div class="pin-emoji">🔐</div>
+      <div class="pin-title">Introduce tu código</div>
+      <div class="pin-sub">
+        Hola <strong>{{ lead.name }}</strong>,<br>
+        introduce el código de 6 dígitos que te enviamos por WhatsApp.
+      </div>
+
+      {% if pin_error %}
+      <div class="pin-error">❌ Código incorrecto. Inténtalo de nuevo.</div>
+      {% endif %}
+
+      <form method="post" action="/p/{{ access.token }}/">
+        <input type="hidden" name="_action" value="verify_pin">
+        <input
+          class="pin-input"
+          type="number"
+          name="pin"
+          inputmode="numeric"
+          pattern="[0-9]{6}"
+          maxlength="6"
+          placeholder="· · · · · ·"
+          autofocus
+          autocomplete="one-time-code"
+        >
+        <button type="submit" class="btn-primary">Acceder →</button>
+      </form>
+
+      <p style="font-size:.76rem;color:#94a3b8;margin-top:16px">
+        ¿No tienes el código? Escríbenos por
+        <a href="https://wa.me/34613708322" target="_blank" rel="noopener">WhatsApp</a>.
+      </p>
+    </div>
+  </div>
+</div>
+
+{% elif step == 'portal' %}
+<!-- ── FULL PORTAL ────────────────────────────────────────────────────────── -->
+<div class="wi-main">
+
+  <!-- Project status card -->
+  <div class="wi-card">
+    <div class="wi-card-title">Tu proyecto</div>
+    <div class="status-badge{% if lead.status == 'finalizado' %} green{% elif lead.status == 'perdido' %} gray{% elif lead.status in 'en_trabajo,aceptado' %} orange{% endif %}">
+      {{ status_label }}
+    </div>
+    <div class="project-name">{{ lead.package|default:"Proyecto WebImpulsa" }}</div>
+    <div class="project-meta">
+      {% if lead.biz_type %}<span>{{ lead.biz_type }}</span>{% endif %}
+      {% if lead.estimated_price %}<span>{{ lead.estimated_price }}€ estimado</span>{% endif %}
+      {% if lead.maintenance_plan %}<span>Mant. {{ lead.maintenance_plan }}</span>{% endif %}
+    </div>
+
+    {% if lead.extras %}
+    <div class="extras-row">
+      {% for e in lead.extras %}<span class="extra-tag">{{ e }}</span>{% endfor %}
+    </div>
+    {% endif %}
+
+    {% if next_step %}
+    <div class="next-step-box" style="margin-top:14px">
+      <strong>Siguiente paso:</strong> {{ next_step }}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Materials upload -->
+  <div class="wi-card">
+    <div class="wi-card-title">Materiales del proyecto</div>
+    <p style="font-size:.85rem;color:#64748b;margin:0 0 14px">
+      Sube fotos, logotipo, textos o documentos que necesitemos para tu web.
+      Máximo 15 MB por archivo.
+    </p>
+
+    <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+      <div class="upload-icon">📁</div>
+      <div style="font-weight:700;font-size:.9rem">Pulsa para seleccionar archivos</div>
+      <div class="upload-hint">
+        Fotos · Videos · Logo (SVG, AI, PDF) · Documentos (Word, Excel, PDF)
+      </div>
+    </div>
+    <input type="file" id="fileInput" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.svg,.ai,.eps,.psd,.csv">
+
+    <div style="margin-bottom:10px">
+      <input type="text" id="uploaderNote" placeholder="Nota opcional (ej: logo en fondo blanco)"
+             style="width:100%;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:.83rem;outline:none">
+    </div>
+
+    <button class="btn-primary" id="uploadBtn" onclick="doUpload()" disabled>
+      Subir archivos
+    </button>
+
+    <div class="upload-progress" id="uploadProgress">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-label" id="progressLabel">Subiendo...</div>
+    </div>
+    <div id="uploadResult"></div>
+  </div>
+
+  <!-- Already uploaded materials -->
+  {% if materials %}
+  <div class="wi-card">
+    <div class="wi-card-title">Archivos subidos ({{ materials|length }})</div>
+    {% for m in materials %}
+    <div class="file-item">
+      <div class="file-icon">
+        {% if m.file_type == 'photo' %}🖼️
+        {% elif m.file_type == 'video' %}🎬
+        {% elif m.file_type == 'logo' %}🎨
+        {% elif m.file_type == 'document' %}📄
+        {% elif m.file_type == 'text' %}📝
+        {% else %}📎{% endif %}
+      </div>
+      <div class="file-name">{{ m.original_filename }}</div>
+      <div class="file-meta">{{ m.size_display }}</div>
+      <a class="file-dl" href="/p/{{ access.token }}/file/{{ m.pk }}/" download="{{ m.original_filename }}">
+        ↓
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Contact -->
+  <div class="wi-card">
+    <div class="wi-card-title">¿Tienes alguna duda?</div>
+    <p style="font-size:.85rem;color:#64748b;margin:0 0 14px">
+      Escríbenos directamente por WhatsApp. Te respondemos lo antes posible.
+    </p>
+    <a href="https://wa.me/34613708322?text={{ 'Hola, soy '|urlencode }}{{ lead.name|urlencode }}{{ ', tengo una consulta sobre mi proyecto: '|urlencode }}{{ lead.package|urlencode }}"
+       target="_blank" rel="noopener" class="btn-wa">
+      💬 Escribir por WhatsApp
+    </a>
+  </div>
+
+</div>
+
+<div class="wi-footer">
+  WebImpulsa · <a href="https://webimpulsa.es" target="_blank">webimpulsa.es</a>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  var token    = '{{ access.token }}';
+  var fileInput = document.getElementById('fileInput');
+  var uploadBtn = document.getElementById('uploadBtn');
+  var uploadArea = document.getElementById('uploadArea');
+  var selectedFiles = [];
+
+  // Drag-and-drop
+  uploadArea.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+  });
+  uploadArea.addEventListener('dragleave', function() {
+    uploadArea.classList.remove('dragover');
+  });
+  uploadArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    setFiles(e.dataTransfer.files);
+  });
+
+  fileInput.addEventListener('change', function() {
+    setFiles(fileInput.files);
+  });
+
+  function setFiles(files) {
+    selectedFiles = Array.from(files);
+    if (selectedFiles.length > 0) {
+      uploadBtn.disabled = false;
+      uploadArea.querySelector('div:nth-child(2)').textContent =
+        selectedFiles.length + ' archivo' + (selectedFiles.length !== 1 ? 's' : '') + ' seleccionado' + (selectedFiles.length !== 1 ? 's' : '');
+    } else {
+      uploadBtn.disabled = true;
+    }
+  }
+
+  window.doUpload = function() {
+    if (!selectedFiles.length) return;
+
+    var fd = new FormData();
+    selectedFiles.forEach(function(f) { fd.append('files', f); });
+
+    var note = document.getElementById('uploaderNote').value.trim();
+    if (note) fd.append('notes', note);
+
+    uploadBtn.disabled = true;
+    var prog = document.getElementById('uploadProgress');
+    prog.style.display = 'block';
+    document.getElementById('uploadResult').innerHTML = '';
+
+    var xhr = new XMLHttpRequest();
+    xhr.upload.addEventListener('progress', function(e) {
+      if (e.lengthComputable) {
+        var pct = Math.round(e.loaded / e.total * 100);
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('progressLabel').textContent = 'Subiendo... ' + pct + '%';
+      }
+    });
+    xhr.addEventListener('load', function() {
+      prog.style.display = 'none';
+      try {
+        var data = JSON.parse(xhr.responseText);
+        var resultDiv = document.getElementById('uploadResult');
+        if (data.saved && data.saved.length) {
+          resultDiv.innerHTML =
+            '<div class="upload-result-ok">✓ ' + data.saved.length +
+            ' archivo' + (data.saved.length !== 1 ? 's' : '') + ' subido' +
+            (data.saved.length !== 1 ? 's' : '') + ' correctamente. ' +
+            '<a href="" onclick="location.reload();return false;">Actualizar lista →</a></div>';
+        }
+        if (data.errors && data.errors.length) {
+          data.errors.forEach(function(e) {
+            resultDiv.innerHTML +=
+              '<div class="upload-result-err">❌ ' + e.name + ': ' + e.error + '</div>';
+          });
+        }
+      } catch(e) {
+        document.getElementById('uploadResult').innerHTML =
+          '<div class="upload-result-err">Error inesperado. Inténtalo de nuevo.</div>';
+      }
+      uploadBtn.disabled = false;
+      selectedFiles = [];
+    });
+    xhr.addEventListener('error', function() {
+      prog.style.display = 'none';
+      document.getElementById('uploadResult').innerHTML =
+        '<div class="upload-result-err">Error de conexión. Inténtalo de nuevo.</div>';
+      uploadBtn.disabled = false;
+    });
+
+    xhr.open('POST', '/p/' + token + '/upload/');
+    xhr.send(fd);
+  };
+})();
+</script>
+
+{% endif %}
+</body>
+</html>
