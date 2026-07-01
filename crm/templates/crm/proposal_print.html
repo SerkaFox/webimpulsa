@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ proposal.number }} — WebImpulsa</title>
+  <link rel="stylesheet" href="/static/wi/css/proposal-print.css">
+  <style>
+    body { margin: 0; background: #e8edf2; }
+    .noprint {
+      position: fixed; bottom: 24px; right: 24px; z-index: 99;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .noprint a, .noprint button {
+      display: block; padding: 10px 18px; border-radius: 8px;
+      font-family: system-ui, sans-serif; font-size: .85rem; font-weight: 700;
+      cursor: pointer; text-align: center; text-decoration: none; border: none;
+    }
+    .btn-print { background: #1760d6; color: #fff; }
+    .btn-back  { background: #fff; color: #1e293b; border: 1px solid #cbd5e1; }
+    @media print {
+      .noprint { display: none !important; }
+      body { background: #fff !important; }
+    }
+  </style>
+</head>
+<body class="proposal-print-body">
+
+<div id="proposal"></div>
+
+<div class="noprint">
+  <button class="btn-print" onclick="window.print()">🖨 Imprimir / Guardar PDF</button>
+  <button class="btn-print" style="background:#7c3aed" onclick="exportWord()">📄 Word</button>
+  <a class="btn-back" href="/wi/crm/proposal/{{ proposal.pk }}/">← Editar</a>
+  <a class="btn-back" href="/wi/crm/{{ lead.pk }}/">← Lead</a>
+</div>
+
+<script src="/static/wi/js/proposal-template.js"></script>
+<script>
+(function(){
+'use strict';
+var INPUT       = {{ template_input_json|safe }};
+var SCOPE       = {{ scope_json|safe }};
+var OUT_OF_SCOPE = {{ out_of_scope_json|safe }};
+var PHASES      = {{ phases_json|safe }};
+var CONDITIONS  = {{ conditions_json|safe }};
+
+var data = WIProposalTemplate.buildProposalData(INPUT);
+data.scope      = SCOPE;
+data.outOfScope = OUT_OF_SCOPE;
+data.phases     = PHASES;
+data.conditions = CONDITIONS;
+
+document.getElementById('proposal').innerHTML = WIProposalTemplate.renderProposal(data);
+
+window.exportWord = function() {
+  var html = document.getElementById('proposal').innerHTML;
+  var css = '';
+  try {
+    Array.from(document.styleSheets).forEach(function(s) {
+      try { Array.from(s.cssRules).forEach(function(r){ css += r.cssText; }); } catch(e){}
+    });
+  } catch(e){}
+  var full = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' + css +
+             '</style></head><body>' + html + '</body></html>';
+  var blob = new Blob([full], { type: 'application/msword' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '{{ proposal.number }}.doc';
+  a.click();
+};
+})();
+</script>
+</body>
+</html>

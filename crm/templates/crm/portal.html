@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Portal cliente — WebImpulsa</title>
+  {% if step == 'portal' and proposal %}<link rel="stylesheet" href="/static/wi/css/proposal-print.css">{% endif %}
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     html { font-size: 16px; }
@@ -355,6 +356,86 @@
     {% endif %}
   </div>
 
+  <!-- Proposal card (shown when a sent/viewed/accepted proposal exists) -->
+  {% if proposal %}
+  <div class="wi-card" id="proposalCard">
+    <div class="wi-card-title">Tu propuesta</div>
+
+    {% if accepted %}
+    <div class="next-step-box" style="background:#f0fdf4;border-color:#16a34a;color:#14532d;margin-bottom:14px">
+      ✅ Propuesta aceptada correctamente. ¡Gracias!
+    </div>
+    {% endif %}
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap">
+      {% if proposal.status == 'accepted' %}
+      <span class="status-badge green">Aceptada ✓</span>
+      {% else %}
+      <span class="status-badge">Lista para revisar</span>
+      {% endif %}
+      <span style="font-size:.72rem;color:#94a3b8;font-family:monospace">{{ proposal.number }}</span>
+    </div>
+
+    {% if proposal.status == 'accepted' %}
+    <div style="background:#f0fdf4;border-radius:10px;padding:14px;text-align:center;margin-bottom:14px">
+      <div style="font-size:1.4rem;margin-bottom:4px">✅</div>
+      <div style="font-weight:800;color:#14532d;font-size:.9rem">Propuesta aceptada</div>
+      {% if proposal.accepted_at %}
+      <div style="font-size:.76rem;color:#64748b;margin-top:4px">
+        {{ proposal.accepted_at|date:"d/m/Y" }} · {{ proposal.accepted_by_name }}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- A4 preview (scrollable) -->
+    <div style="overflow-x:auto;overflow-y:hidden;margin-bottom:14px;
+                border:1px solid #e2e8f0;border-radius:8px;background:#fff">
+      <div id="portalProposalPreview" style="padding:4px;min-height:120px">
+        <div style="text-align:center;padding:24px;color:#94a3b8;font-size:.82rem">
+          Cargando propuesta…
+        </div>
+      </div>
+    </div>
+
+    <!-- Total highlight -->
+    <div id="portalProposalTotal" style="display:flex;justify-content:space-between;align-items:center;
+         background:#eff6ff;border-radius:8px;padding:10px 14px;margin-bottom:14px">
+      <span style="font-size:.82rem;color:#2563eb;font-weight:700">Total (IVA 21% incluido):</span>
+      <span style="font-size:1.05rem;font-weight:900;color:#1760d6">—</span>
+    </div>
+
+    {% if proposal.status != 'accepted' %}
+    <!-- Acceptance form -->
+    <div style="border:1px solid #e2e8f0;border-radius:10px;padding:16px;background:#f8fafc">
+      <div style="font-size:.83rem;font-weight:800;color:#0f172a;margin-bottom:12px">
+        Aceptar propuesta
+      </div>
+      <form method="post" action="/p/{{ access.token }}/proposal/accept/" id="acceptForm">
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;
+                      margin-bottom:14px;font-size:.84rem;font-weight:400;
+                      text-transform:none;letter-spacing:0;color:#1e293b">
+          <input type="checkbox" name="agree" id="agreeCheck" required
+                 style="margin-top:2px;width:18px;height:18px;flex-shrink:0;accent-color:#2563eb">
+          <span>Acepto el alcance, presupuesto y condiciones indicadas en esta propuesta.</span>
+        </label>
+        <input type="text" name="accept_name" placeholder="Nombre completo *" required
+               style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
+                      font-size:.84rem;outline:none;margin-bottom:8px;font-family:inherit">
+        <input type="text" name="accept_nif" placeholder="DNI/NIF/CIF (opcional)"
+               style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
+                      font-size:.84rem;outline:none;margin-bottom:8px;font-family:inherit">
+        <input type="text" name="accept_signature" placeholder="Escribe tu nombre como firma digital"
+               style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
+                      font-size:.84rem;outline:none;margin-bottom:12px;font-family:inherit">
+        <button type="submit" class="btn-primary">Confirmar aceptación →</button>
+      </form>
+    </div>
+    {% endif %}
+
+  </div>
+  {% endif %}
+
   <!-- Materials upload -->
   <div class="wi-card">
     <div class="wi-card-title">Materiales del proyecto</div>
@@ -529,6 +610,28 @@
 })();
 </script>
 
+{% endif %}
+{% if step == 'portal' and proposal_json %}
+<script src="/static/wi/js/proposal-template.js"></script>
+<script>
+(function(){
+'use strict';
+var P = {{ proposal_json|safe }};
+var data = WIProposalTemplate.buildProposalData(P.input);
+data.scope      = P.scope;
+data.outOfScope = P.outOfScope;
+data.phases     = P.phases;
+data.conditions = P.conditions;
+
+var el = document.getElementById('portalProposalPreview');
+if (el) el.innerHTML = WIProposalTemplate.renderProposal(data);
+
+var totEl = document.getElementById('portalProposalTotal');
+if (totEl) {
+  totEl.querySelector('span:last-child').textContent = WIProposalTemplate.eur(data.pricing.totalWithVat);
+}
+})();
+</script>
 {% endif %}
 </body>
 </html>

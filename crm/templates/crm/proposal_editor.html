@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ proposal.number }} — Propuesta CRM</title>
+  <link rel="stylesheet" href="/static/wi/css/proposal-print.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root { --ink:#0c1c42; --blue:#1760d6; --muted:#5a6d8c; --line:rgba(12,28,66,.12); --soft:#eef6ff; }
+    body { margin:0; font-family:system-ui,-apple-system,'Segoe UI',sans-serif; font-size:14px; background:#f3f8ff; color:var(--ink); }
+    a { color:var(--blue); text-decoration:none; }
+
+    .top-bar { position:sticky; top:0; z-index:100; background:#1e293b; color:#fff;
+               padding:10px 20px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .top-bar-title { flex:1; font-weight:700; font-size:.95rem; }
+    .top-bar a { color:#94a3b8; font-size:.82rem; white-space:nowrap; }
+    .top-bar a:hover { color:#fff; text-decoration:none; }
+    .schip { font-size:.74rem; font-weight:700; padding:3px 10px; border-radius:20px;
+             background:rgba(255,255,255,.15); white-space:nowrap; }
+    .schip.sent { background:#7c3aed; } .schip.accepted { background:#16a34a; }
+    .schip.viewed { background:#0891b2; }
+
+    .shell { display:grid; grid-template-columns:420px 1fr; height:calc(100vh - 48px); }
+    .ep { height:calc(100vh - 48px); overflow-y:auto; padding:16px;
+          background:#fff; border-right:1px solid var(--line); }
+    .pp { height:calc(100vh - 48px); overflow-y:auto; padding:20px 24px;
+          background:linear-gradient(135deg,rgba(23,96,214,.08),rgba(0,168,204,.05)); }
+
+    .fsec { border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px; background:#fbfdff; }
+    .fsec h3 { color:var(--blue); font-size:.7rem; font-weight:900; letter-spacing:.08em;
+               text-transform:uppercase; margin:0 0 10px; }
+    .fg { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .fg-full { grid-column:1/-1; }
+    .fl { font-size:.73rem; font-weight:700; color:var(--muted); display:block; margin-bottom:3px; }
+    .fi,.fsel,.fta { width:100%; border:1.5px solid var(--line); border-radius:8px;
+                     padding:6px 9px; font:inherit; font-size:.82rem; outline:none;
+                     background:#fff; color:var(--ink); }
+    .fi:focus,.fsel:focus,.fta:focus { border-color:var(--blue); }
+    .fta { resize:vertical; min-height:68px; font-size:.78rem; }
+
+    .extra-row { display:flex; gap:6px; margin-bottom:6px; align-items:center; }
+    .extra-row .fi { flex:1; }
+    .ep-price { width:76px!important; flex-shrink:0; }
+    .btn-rm { background:none; border:none; color:#dc2626; cursor:pointer; font-size:1.1rem; padding:0 4px; }
+
+    .abar { position:sticky; bottom:0; z-index:10; margin:12px -16px -16px;
+            padding:10px 16px 16px; background:linear-gradient(to top,#fff 78%,transparent);
+            border-top:1px solid var(--line); display:flex; flex-direction:column; gap:7px; }
+    .brow { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+    .btn { border:none; border-radius:8px; padding:9px 12px; font:inherit; font-size:.82rem;
+           font-weight:700; cursor:pointer; text-align:center; text-decoration:none;
+           display:inline-block; line-height:1.2; }
+    .btn-p { background:var(--blue); color:#fff; }
+    .btn-p:hover { background:#1a52c2; }
+    .btn-g { background:#16a34a; color:#fff; }
+    .btn-g:hover { background:#14532d; }
+    .btn-o { background:#fff; color:var(--ink); border:1.5px solid var(--line); }
+    .btn-o:hover { background:var(--soft); }
+    .btn-v { background:#7c3aed; color:#fff; }
+    .btn-v:hover { background:#6d28d9; }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .smsg { font-size:.74rem; text-align:center; min-height:16px; color:#16a34a; }
+
+    .wa-box { background:#dcfce7; border-radius:10px; padding:10px 14px; font-size:.79rem;
+              white-space:pre-wrap; color:#14532d; max-height:130px; overflow-y:auto; margin-top:8px; }
+
+    .plabel { font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em;
+              color:var(--muted); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+    .ptotals { display:flex; gap:12px; justify-content:flex-end; margin-bottom:14px;
+               font-size:.82rem; font-weight:700; color:var(--blue); }
+
+    @media (max-width:900px) {
+      .shell { grid-template-columns:1fr; height:auto; }
+      .ep,.pp { height:auto; max-height:none; }
+      .pp { display:none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="/wi/crm/{{ lead.pk }}/">← Lead #{{ lead.pk }}</a>
+  <div class="top-bar-title">{{ proposal.number }} — {{ lead.name }}</div>
+  <span class="schip {% if proposal.status == 'sent' %}sent{% elif proposal.status == 'accepted' %}accepted{% elif proposal.status == 'viewed' %}viewed{% endif %}">
+    {{ proposal.get_status_display }}
+  </span>
+  <a href="/wi/crm/proposal/{{ proposal.pk }}/print/" target="_blank"
+     class="btn btn-o" style="padding:5px 10px;font-size:.77rem">🖨 Ver/PDF</a>
+</div>
+
+<div class="shell">
+
+<!-- ── EDITOR ────────────────────────────────────────────────────────────── -->
+<div class="ep">
+
+  <div class="fsec">
+    <h3>Cliente</h3>
+    <div class="fg">
+      <div class="fg-full"><label class="fl">Nombre</label>
+        <input class="fi" id="fClientName"></div>
+      <div><label class="fl">Email</label><input class="fi" id="fClientEmail"></div>
+      <div><label class="fl">Teléfono</label><input class="fi" id="fClientPhone"></div>
+      <div><label class="fl">Tipo de negocio</label><input class="fi" id="fClientBiz"></div>
+      <div><label class="fl">NIF/CIF/DNI</label><input class="fi" id="fClientNif"></div>
+      <div><label class="fl">Dirección</label><input class="fi" id="fClientAddress"></div>
+      <div><label class="fl">Ciudad/Provincia</label><input class="fi" id="fClientCity"></div>
+    </div>
+  </div>
+
+  <div class="fsec">
+    <h3>Proyecto</h3>
+    <div class="fg">
+      <div class="fg-full"><label class="fl">Nombre del proyecto</label>
+        <input class="fi" id="fProjectName"></div>
+      <div class="fg-full"><label class="fl">Objetivo principal</label>
+        <textarea class="fta" id="fGoal" rows="2"></textarea></div>
+      <div class="fg-full"><label class="fl">Descripción del negocio</label>
+        <textarea class="fta" id="fBizDesc" rows="2"></textarea></div>
+      <div class="fg-full"><label class="fl">Funcionalidades indicadas</label>
+        <textarea class="fta" id="fFeatures" rows="2"></textarea></div>
+    </div>
+  </div>
+
+  <div class="fsec">
+    <h3>Presupuesto</h3>
+    <div class="fg">
+      <div><label class="fl">Tipo de proyecto</label><input class="fi" id="fPackage"></div>
+      <div><label class="fl">Precio base (€)</label>
+        <input class="fi" type="number" id="fBasePrice" min="0"></div>
+      <div><label class="fl">Descuento %</label>
+        <input class="fi" type="number" id="fDiscount" min="0" max="100"></div>
+      <div><label class="fl">Urgente +25%</label>
+        <select class="fsel" id="fRush">
+          <option value="0">No</option><option value="1">Sí</option>
+        </select></div>
+    </div>
+    <label class="fl" style="margin-top:10px">Extras</label>
+    <div id="extrasContainer"></div>
+    <button type="button" class="btn btn-o"
+            style="font-size:.75rem;padding:4px 10px;margin-top:5px"
+            onclick="addExtra()">+ Añadir extra</button>
+    <div class="fg" style="margin-top:10px">
+      <div><label class="fl">Mantenimiento</label><input class="fi" id="fMaintName"></div>
+      <div><label class="fl">Precio/mes €</label>
+        <input class="fi" type="number" id="fMaintPrice" min="0"></div>
+    </div>
+  </div>
+
+  <div class="fsec">
+    <h3>Plazos y pago</h3>
+    <div class="fg">
+      <div class="fg-full"><label class="fl">Plazo estimado</label>
+        <input class="fi" id="fTimeline"></div>
+      <div><label class="fl">Fecha estimada inicio</label>
+        <input class="fi" type="date" id="fStartDate"></div>
+      <div><label class="fl">Validez (días)</label>
+        <input class="fi" type="number" id="fValidDays" min="1"></div>
+      <div class="fg-full"><label class="fl">Forma de pago</label>
+        <select class="fsel" id="fPayment" onchange="toggleCustomPay()">
+          <option value="50-50">50% inicio + 50% entrega</option>
+          <option value="40-40-20">40%+40%+20%</option>
+          <option value="single">Pago único</option>
+          <option value="custom">Personalizado</option>
+        </select></div>
+      <div class="fg-full" id="customPayRow" style="display:none">
+        <label class="fl">Condiciones personalizadas</label>
+        <textarea class="fta" id="fCustomPay" rows="2"></textarea></div>
+    </div>
+  </div>
+
+  <div class="fsec">
+    <h3>Alcance y contenido</h3>
+    <label class="fl">Alcance (una línea por punto)</label>
+    <textarea class="fta" id="fScope" rows="6" style="margin-bottom:8px"></textarea>
+    <label class="fl">Fuera de alcance (una línea)</label>
+    <textarea class="fta" id="fOutOfScope" rows="5" style="margin-bottom:8px"></textarea>
+    <label class="fl">Fases</label>
+    <textarea class="fta" id="fPhases" rows="4" style="margin-bottom:8px"></textarea>
+    <label class="fl">Condiciones</label>
+    <textarea class="fta" id="fConditions" rows="6"></textarea>
+  </div>
+
+  <div class="fsec">
+    <h3>Notas adicionales</h3>
+    <textarea class="fta" id="fNotes" rows="3"></textarea>
+  </div>
+
+  <div class="fsec">
+    <h3>Datos de WebImpulsa</h3>
+    <div class="fg">
+      <div><label class="fl">Nombre comercial</label><input class="fi" id="fCoTrade"></div>
+      <div><label class="fl">Razón social</label><input class="fi" id="fCoLegal"></div>
+      <div><label class="fl">NIF/CIF</label><input class="fi" id="fCoNif"></div>
+      <div><label class="fl">Email</label><input class="fi" id="fCoEmail"></div>
+      <div><label class="fl">Teléfono</label><input class="fi" id="fCoPhone"></div>
+      <div><label class="fl">Web</label><input class="fi" id="fCoWeb"></div>
+      <div class="fg-full"><label class="fl">Dirección fiscal</label>
+        <input class="fi" id="fCoAddress"></div>
+    </div>
+  </div>
+
+  {% if wa_msg %}
+  <div class="fsec">
+    <h3>Mensaje WhatsApp</h3>
+    <div class="wa-box" id="waBox"></div>
+    <button class="btn btn-o" style="width:100%;margin-top:8px;font-size:.79rem"
+            onclick="copyWaMsg()">📋 Copiar mensaje WA</button>
+  </div>
+  {% endif %}
+
+  <div class="abar">
+    <div class="smsg" id="smsg"></div>
+    <div class="brow">
+      <button class="btn btn-p" onclick="saveDraft()">💾 Guardar borrador</button>
+      <button class="btn btn-g" id="btnSend"
+              {% if proposal.status == 'accepted' %}disabled{% endif %}
+              onclick="sendProposal()">
+        {% if proposal.status in 'sent,viewed,accepted' %}✅ Enviada{% else %}📤 Marcar enviada{% endif %}
+      </button>
+    </div>
+    <div class="brow">
+      <a class="btn btn-o" href="/wi/crm/proposal/{{ proposal.pk }}/print/" target="_blank">🖨 Imprimir/PDF</a>
+      <button class="btn btn-o" onclick="exportWord()">📄 Exportar Word</button>
+    </div>
+    {% if portal_url %}
+    <button class="btn btn-v" onclick="copyWaMsg()">💬 Copiar mensaje WhatsApp</button>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ── PREVIEW ───────────────────────────────────────────────────────────── -->
+<div class="pp">
+  <div class="plabel">Vista previa A4 en vivo</div>
+  <div class="ptotals" id="ptotals"></div>
+  <div id="previewContainer"></div>
+</div>
+
+</div><!-- /shell -->
+
+<script src="/static/wi/js/proposal-template.js"></script>
+<script>
+(function(){
+'use strict';
+
+var PID         = {{ proposal.pk }};
+var _waMsg      = {{ wa_msg_json|safe }};
+var _budgetNum  = {{ proposal_number_json|safe }};
+var _issueDate  = '{{ proposal.issued_at|date:"Y-m-d" }}';
+var _extras     = {{ extras_json|safe }};
+var _scope      = {{ scope_json|safe }};
+var _outOfScope = {{ out_of_scope_json|safe }};
+var _phases     = {{ phases_json|safe }};
+var _conditions = {{ conditions_json|safe }};
+var _tmplInput  = {{ template_input_json|safe }};
+
+// ── Initial fill ──────────────────────────────────────────────────────────────
+function _v(id, val) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  if (el.tagName === 'SELECT') el.value = val || el.options[0].value;
+  else if (el.tagName === 'TEXTAREA') el.value = val || '';
+  else el.value = val != null ? val : '';
+}
+
+function boot() {
+  var c = _tmplInput.client || {};
+  var co = _tmplInput.company || {};
+  _v('fClientName',    c.name);
+  _v('fClientEmail',   c.email);
+  _v('fClientPhone',   c.phone);
+  _v('fClientBiz',     c.businessType);
+  _v('fClientNif',     c.taxId);
+  _v('fClientAddress', c.address);
+  _v('fClientCity',    c.city);
+  _v('fProjectName',   _tmplInput.projectName);
+  _v('fGoal',          _tmplInput.goal);
+  _v('fBizDesc',       _tmplInput.businessDescription);
+  _v('fFeatures',      _tmplInput.selectedFeatures);
+  _v('fPackage',       _tmplInput.projectType);
+  _v('fBasePrice',     _tmplInput.basePrice || 0);
+  _v('fDiscount',      {{ proposal.discount_pct }});
+  _v('fRush',          {{ proposal.rush|yesno:"1,0" }});
+  _v('fMaintName',     _tmplInput.maintenanceName);
+  _v('fMaintPrice',    _tmplInput.maintenancePrice || 0);
+  _v('fTimeline',      _tmplInput.deadline);
+  _v('fStartDate',     _tmplInput.startDate);
+  _v('fValidDays',     _tmplInput.validDays || 15);
+  _v('fPayment',       _tmplInput.paymentMethod || '50-50');
+  _v('fCustomPay',     _tmplInput.customPayment);
+  _v('fNotes',         _tmplInput.notes);
+  _v('fScope',         _scope.join('\n'));
+  _v('fOutOfScope',    _outOfScope.join('\n'));
+  _v('fPhases',        _phases.join('\n'));
+  _v('fConditions',    _conditions.join('\n'));
+  _v('fCoTrade',       co.tradeName);
+  _v('fCoLegal',       co.legalName);
+  _v('fCoNif',         co.taxId);
+  _v('fCoEmail',       co.email);
+  _v('fCoPhone',       co.phone);
+  _v('fCoWeb',         co.website);
+  _v('fCoAddress',     co.address);
+
+  toggleCustomPay();
+
+  _extras.forEach(function(e){ _addExtraRow(e.name, e.price); });
+
+  var waBox = document.getElementById('waBox');
+  if (waBox) waBox.textContent = _waMsg;
+
+  document.querySelectorAll('.fi,.fsel,.fta').forEach(function(el) {
+    el.addEventListener('input', _debounce(refreshPreview, 350));
+  });
+
+  refreshPreview();
+}
+
+// ── Extras ────────────────────────────────────────────────────────────────────
+function _addExtraRow(name, price) {
+  var c = document.getElementById('extrasContainer');
+  var r = document.createElement('div');
+  r.className = 'extra-row';
+  r.innerHTML =
+    '<input class="fi" placeholder="Nombre del extra" value="' + _esc(name||'') + '"' +
+    ' oninput="_debounce(refreshPreview,350)()">' +
+    '<input class="fi ep-price" type="number" min="0" placeholder="€" value="' + (price||0) + '"' +
+    ' oninput="_debounce(refreshPreview,350)()">' +
+    '<button class="btn-rm" onclick="this.parentNode.remove();_debounce(refreshPreview,350)()">×</button>';
+  c.appendChild(r);
+}
+
+window.addExtra = function() { _addExtraRow('', 0); };
+
+function _collectExtras() {
+  var rows = document.querySelectorAll('#extrasContainer .extra-row');
+  var result = [];
+  rows.forEach(function(row) {
+    var ins = row.querySelectorAll('input');
+    var name  = ins[0].value.trim();
+    var price = parseInt(ins[1].value || 0, 10);
+    if (name) result.push({ name: name, price: price });
+  });
+  return result;
+}
+
+// ── Preview ───────────────────────────────────────────────────────────────────
+function collectInput() {
+  var extras = _collectExtras();
+  var extrasTotal = extras.reduce(function(s,e){ return s+e.price; }, 0);
+  var base    = parseInt(document.getElementById('fBasePrice').value || 0, 10);
+  var disc    = parseInt(document.getElementById('fDiscount').value || 0, 10);
+  var rush    = document.getElementById('fRush').value === '1';
+  var subtot  = base + extrasTotal;
+  var rushAmt = rush ? Math.round(subtot * 0.25) : 0;
+  subtot += rushAmt;
+  var discAmt = Math.round(subtot * disc / 100);
+
+  return {
+    projectType:         document.getElementById('fPackage').value,
+    basePrice:           base,
+    extras:              extras,
+    extrasTotal:         extrasTotal,
+    rushAmount:          rushAmt,
+    discountAmount:      discAmt,
+    maintenanceName:     document.getElementById('fMaintName').value,
+    maintenancePrice:    parseInt(document.getElementById('fMaintPrice').value || 0, 10),
+    maintenanceInfo:     '',
+    budgetNumber:        _budgetNum,
+    issueDate:           _issueDate,
+    validDays:           parseInt(document.getElementById('fValidDays').value || 15, 10),
+    client: {
+      name:          document.getElementById('fClientName').value,
+      taxId:         document.getElementById('fClientNif').value,
+      contactPerson: document.getElementById('fClientName').value,
+      email:         document.getElementById('fClientEmail').value,
+      phone:         document.getElementById('fClientPhone').value,
+      address:       document.getElementById('fClientAddress').value,
+      city:          document.getElementById('fClientCity').value,
+      businessType:  document.getElementById('fClientBiz').value,
+    },
+    projectName:         document.getElementById('fProjectName').value,
+    goal:                document.getElementById('fGoal').value,
+    businessDescription: document.getElementById('fBizDesc').value,
+    selectedFeatures:    document.getElementById('fFeatures').value,
+    deadline:            document.getElementById('fTimeline').value,
+    startDate:           document.getElementById('fStartDate').value,
+    notes:               document.getElementById('fNotes').value,
+    paymentMethod:       document.getElementById('fPayment').value,
+    customPayment:       document.getElementById('fCustomPay').value,
+    company: {
+      tradeName: document.getElementById('fCoTrade').value,
+      legalName: document.getElementById('fCoLegal').value,
+      taxId:     document.getElementById('fCoNif').value,
+      email:     document.getElementById('fCoEmail').value,
+      phone:     document.getElementById('fCoPhone').value,
+      website:   document.getElementById('fCoWeb').value,
+      address:   document.getElementById('fCoAddress').value,
+      logoUrl:   '/static/wi/img/logo.webp',
+    },
+  };
+}
+
+function refreshPreview() {
+  var input = collectInput();
+  var data  = WIProposalTemplate.buildProposalData(input);
+  data.scope      = _lines(document.getElementById('fScope').value);
+  data.outOfScope = _lines(document.getElementById('fOutOfScope').value);
+  data.phases     = _lines(document.getElementById('fPhases').value);
+  data.conditions = _lines(document.getElementById('fConditions').value);
+  document.getElementById('previewContainer').innerHTML = WIProposalTemplate.renderProposal(data);
+  document.getElementById('ptotals').innerHTML =
+    'Base: <strong>' + WIProposalTemplate.eur(data.pricing.taxableBase) + '</strong> &nbsp;' +
+    'IVA 21%: <strong>' + WIProposalTemplate.eur(data.pricing.vat) + '</strong> &nbsp;' +
+    'Total: <strong style="color:#1760d6">' + WIProposalTemplate.eur(data.pricing.totalWithVat) + '</strong>';
+}
+
+window.toggleCustomPay = function() {
+  document.getElementById('customPayRow').style.display =
+    document.getElementById('fPayment').value === 'custom' ? '' : 'none';
+};
+
+// ── Save draft ────────────────────────────────────────────────────────────────
+window.saveDraft = function() {
+  var extras = _collectExtras();
+  var payload = {
+    client_name:       document.getElementById('fClientName').value,
+    client_email:      document.getElementById('fClientEmail').value,
+    client_phone:      document.getElementById('fClientPhone').value,
+    client_biz_type:   document.getElementById('fClientBiz').value,
+    client_nif:        document.getElementById('fClientNif').value,
+    client_address:    document.getElementById('fClientAddress').value,
+    client_city:       document.getElementById('fClientCity').value,
+    project_name:      document.getElementById('fProjectName').value,
+    project_goal:      document.getElementById('fGoal').value,
+    biz_description:   document.getElementById('fBizDesc').value,
+    selected_features: document.getElementById('fFeatures').value,
+    package:           document.getElementById('fPackage').value,
+    package_base_price: parseInt(document.getElementById('fBasePrice').value || 0, 10),
+    discount_pct:      parseInt(document.getElementById('fDiscount').value || 0, 10),
+    rush:              document.getElementById('fRush').value === '1',
+    extras:            extras,
+    maintenance_plan:  document.getElementById('fMaintName').value,
+    maintenance_price: parseInt(document.getElementById('fMaintPrice').value || 0, 10),
+    timeline:          document.getElementById('fTimeline').value,
+    start_date:        document.getElementById('fStartDate').value,
+    valid_days:        parseInt(document.getElementById('fValidDays').value || 15, 10),
+    payment_method:    document.getElementById('fPayment').value,
+    payment_custom:    document.getElementById('fCustomPay').value,
+    notes:             document.getElementById('fNotes').value,
+    scope:             _lines(document.getElementById('fScope').value),
+    out_of_scope:      _lines(document.getElementById('fOutOfScope').value),
+    phases:            _lines(document.getElementById('fPhases').value),
+    conditions:        _lines(document.getElementById('fConditions').value),
+    company_data: {
+      trade_name: document.getElementById('fCoTrade').value,
+      legal_name: document.getElementById('fCoLegal').value,
+      nif:        document.getElementById('fCoNif').value,
+      email:      document.getElementById('fCoEmail').value,
+      phone:      document.getElementById('fCoPhone').value,
+      website:    document.getElementById('fCoWeb').value,
+      address:    document.getElementById('fCoAddress').value,
+      logo_url:   '/static/wi/img/logo.webp',
+    },
+  };
+
+  _setMsg('Guardando…', '#64748b');
+  return fetch('/wi/crm/proposal/' + PID + '/save/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': _auth() },
+    body: JSON.stringify(payload),
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d) {
+    if (d.ok) { _setMsg('✓ Guardado', '#16a34a'); setTimeout(function(){ _setMsg('',''); }, 2500); }
+    else       { _setMsg('Error: ' + (d.error||'?'), '#dc2626'); }
+    return d;
+  })
+  .catch(function(){ _setMsg('Error de red', '#dc2626'); });
+};
+
+// ── Send proposal ─────────────────────────────────────────────────────────────
+window.sendProposal = function() {
+  if (!confirm('¿Marcar esta propuesta como enviada al cliente?')) return;
+  saveDraft().then(function() {
+    fetch('/wi/crm/proposal/' + PID + '/send/', {
+      method: 'POST',
+      headers: { 'Authorization': _auth() },
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      if (d.ok && d.redirect) location.href = d.redirect;
+      else alert('Error: ' + (d.error||'desconocido'));
+    });
+  });
+};
+
+// ── Export Word ───────────────────────────────────────────────────────────────
+window.exportWord = function() {
+  var html = document.getElementById('previewContainer').innerHTML;
+  if (!html) { alert('Vista previa vacía, espera un momento.'); return; }
+  var css = '';
+  try {
+    Array.from(document.styleSheets).forEach(function(s) {
+      try { Array.from(s.cssRules).forEach(function(r){ css += r.cssText; }); } catch(e){}
+    });
+  } catch(e){}
+  var full = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' + css +
+             '</style></head><body>' + html + '</body></html>';
+  var blob = new Blob([full], { type: 'application/msword' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = _budgetNum + '.doc';
+  a.click();
+};
+
+// ── Copy WA ───────────────────────────────────────────────────────────────────
+window.copyWaMsg = function() {
+  if (!_waMsg) { alert('Genera el enlace del cliente en el lead primero.'); return; }
+  _copy(_waMsg);
+  _setMsg('✓ Mensaje WA copiado', '#16a34a');
+  setTimeout(function(){ _setMsg('', ''); }, 2000);
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function _lines(txt) {
+  return (txt||'').split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+}
+function _esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function _setMsg(txt, color) {
+  var el = document.getElementById('smsg');
+  el.textContent = txt; el.style.color = color || '';
+}
+function _copy(text) {
+  if (navigator.clipboard) navigator.clipboard.writeText(text).catch(function(){ _fbCopy(text); });
+  else _fbCopy(text);
+}
+function _fbCopy(text) {
+  var el = document.createElement('textarea'); el.value = text;
+  document.body.appendChild(el); el.select(); document.execCommand('copy'); el.remove();
+}
+function _auth() {
+  var s = sessionStorage.getItem('crm_auth');
+  if (s) return 'Basic ' + s;
+  var pw = prompt('Contraseña CRM:'); if (!pw) return '';
+  var enc = btoa(':' + pw); sessionStorage.setItem('crm_auth', enc); return 'Basic ' + enc;
+}
+
+var _debTimers = {};
+window._debounce = function(fn, ms) {
+  return function() { clearTimeout(_debTimers[fn]); _debTimers[fn] = setTimeout(fn, ms); };
+};
+
+boot();
+})();
+</script>
+</body>
+</html>

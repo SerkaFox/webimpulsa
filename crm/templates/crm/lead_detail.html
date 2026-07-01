@@ -175,6 +175,38 @@
       <div class="ts">Creado: {{ lead.created_at|date:"d/m/Y H:i" }} · Actualizado: {{ lead.updated_at|date:"d/m/Y H:i" }}</div>
     </div>
 
+    <!-- Proposal -->
+    <div class="card">
+      <div class="card-title">📋 Propuesta
+        {% with lead.proposals.all as proposals %}
+        {% if proposals %}
+        <small>{{ proposals.0.number }} · {{ proposals.0.get_status_display }}</small>
+        {% endif %}
+        {% endwith %}
+      </div>
+      {% with lead.proposals.all as proposals %}
+      {% if proposals %}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <a href="/wi/crm/proposal/{{ proposals.0.pk }}/" class="btn-sm primary">✏️ Editar propuesta</a>
+        <a href="/wi/crm/proposal/{{ proposals.0.pk }}/print/" target="_blank" class="btn-sm">🖨 Ver / PDF</a>
+        {% if proposals.0.status == 'accepted' %}
+        <span class="badge" style="background:#16a34a;padding:5px 10px">✅ Aceptada por {{ proposals.0.accepted_by_name }}</span>
+        {% endif %}
+      </div>
+      {% if proposals|length > 1 %}
+      <div class="ts">{{ proposals|length }} propuestas ·
+        {% for p in proposals %}<a href="/wi/crm/proposal/{{ p.pk }}/">{{ p.number }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+      </div>
+      {% endif %}
+      {% else %}
+      <div style="color:#94a3b8;font-size:.82rem;margin-bottom:12px">Sin propuesta generada aún.</div>
+      {% endif %}
+      {% endwith %}
+      <a href="/wi/crm/{{ lead.pk }}/proposal/" class="btn-sm primary" style="display:inline-block">
+        📋 {% if lead.proposals.all %}Crear nueva propuesta{% else %}Crear propuesta profesional{% endif %}
+      </a>
+    </div>
+
     <!-- Client portal access -->
     <div class="card">
       <div class="card-title">🔗 Portal del cliente <small>enlace de acceso seguro</small></div>

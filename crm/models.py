@@ -1,5 +1,7 @@
 import hashlib
 import os
+from datetime import timedelta
+
 from django.db import models
 from django.utils import timezone
 
@@ -279,3 +281,142 @@ class ProjectMaterial(models.Model):
         if ext in cls._DOC_EXTS:
             return cls.TYPE_DOCUMENT
         return cls.TYPE_OTHER
+
+
+# ── PROPOSALS ──────────────────────────────────────────────────────────────────
+
+class Proposal(models.Model):
+    """Professional proposal/budget tied to a Lead.
+
+    Number format: WI-YYYYMMDD-XXXX (sequential per day).
+    Client-visible statuses: sent, viewed, accepted.
+    Pricing fields are a snapshot from the Lead calculator but fully editable.
+    scope/out_of_scope/phases/conditions are stored so they survive editing.
+    """
+    ST_DRAFT    = 'draft'
+    ST_SENT     = 'sent'
+    ST_VIEWED   = 'viewed'
+    ST_ACCEPTED = 'accepted'
+    ST_REJECTED = 'rejected'
+    ST_EXPIRED  = 'expired'
+
+    STATUS_CHOICES = [
+        (ST_DRAFT,    'Borrador'),
+        (ST_SENT,     'Enviada'),
+        (ST_VIEWED,   'Vista'),
+        (ST_ACCEPTED, 'Aceptada'),
+        (ST_REJECTED, 'Rechazada'),
+        (ST_EXPIRED,  'Expirada'),
+    ]
+
+    # Identity
+    number     = models.CharField(max_length=30, unique=True)
+    lead       = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='proposals')
+    status     = models.CharField(max_length=20, choices=STATUS_CHOICES, default=ST_DRAFT)
+    valid_days = models.IntegerField(default=15)
+    issued_at  = models.DateField()
+
+    # Client data snapshot (editable)
+    client_name     = models.CharField(max_length=200, blank=True)
+    client_email    = models.CharField(max_length=200, blank=True)
+    client_phone    = models.CharField(max_length=50, blank=True)
+    client_biz_type = models.CharField(max_length=100, blank=True)
+    client_nif      = models.CharField(max_length=30, blank=True)
+    client_address  = models.CharField(max_length=300, blank=True)
+    client_city     = models.CharField(max_length=100, blank=True)
+
+    # Company data snapshot (editable per proposal)
+    company_data = models.JSONField(default=dict)
+
+    # Project
+    project_name      = models.CharField(max_length=200, blank=True)
+    project_goal      = models.TextField(blank=True)
+    biz_description   = models.TextField(blank=True)
+    selected_features = models.TextField(blank=True)
+
+    # Content lists (stored so they can be customised after creation)
+    scope        = models.JSONField(default=list)
+    out_of_scope = models.JSONField(default=list)
+    phases       = models.JSONField(default=list)
+    conditions   = models.JSONField(default=list)
+
+    # Timeline + payment
+    timeline       = models.CharField(max_length=100, blank=True)
+    start_date     = models.CharField(max_length=20, blank=True)
+    payment_method = models.CharField(max_length=30, default='50-50')
+    payment_custom = models.TextField(blank=True)
+
+    # Pricing snapshot — copied from Lead, can be overridden
+    package            = models.CharField(max_length=100, blank=True)
+    package_base_price = models.IntegerField(default=0)
+    extras             = models.JSONField(default=list)   # [{name, price}]
+    extras_price       = models.IntegerField(default=0)
+    rush               = models.BooleanField(default=False)
+    rush_amount        = models.IntegerField(default=0)
+    discount_pct       = models.IntegerField(default=15)
+    discount_amount    = models.IntegerField(default=0)
+    taxable_base       = models.IntegerField(default=0)
+    iva_pct            = models.IntegerField(default=21)
+    iva_amount         = models.IntegerField(default=0)
+    total_with_iva     = models.IntegerField(default=0)
+    maintenance_plan   = models.CharField(max_length=50, blank=True)
+    maintenance_price  = models.IntegerField(default=0)
+
+    notes = models.TextField(blank=True)
+
+    # Client acceptance data
+    accepted_by_name   = models.CharField(max_length=200, blank=True)
+    accepted_nif       = models.CharField(max_length=30, blank=True)
+    accepted_signature = models.TextField(blank=True)
+    accepted_at        = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.number} — {self.lead.name} [{self.get_status_display()}]'
+
+    @classmethod
+    def generate_number(cls) -> str:
+        today  = timezone.localdate()
+        prefix = f'WI-{today.strftime("%Y%m%d")}-'
+        last   = (cls.objects.filter(number__startswith=prefix)
+                  .order_by('-number')
+                  .values_list('number', flat=True)
+                  .first())
+        if last:
+            try:
+                seq = int(last.split('-')[-1]) + 1
+            except (ValueError, IndexError):
+                seq = 1
+        else:
+            seq = 1
+        return f'{prefix}{seq:04d}'
+
+    def compute_totals(self):
+        """Recompute all totals from component prices."""
+        subtotal = self.package_base_price + self.extras_price
+        if self.rush:
+            self.rush_amount = round(subtotal * 0.25)
+            subtotal += self.rush_amount
+        else:
+            self.rush_amount = 0
+        self.discount_amount = round(subtotal * self.discount_pct / 100)
+        self.taxable_base    = subtotal - self.discount_amount
+        self.iva_amount      = round(self.taxable_base * self.iva_pct / 100)
+        self.total_with_iva  = self.taxable_base + self.iva_amount
+
+    @property
+    def is_editable(self) -> bool:
+        return self.status in (self.ST_DRAFT, self.ST_SENT)
+
+    @property
+    def is_client_visible(self) -> bool:
+        return self.status in (self.ST_SENT, self.ST_VIEWED, self.ST_ACCEPTED)
+
+    @property
+    def expires_date(self):
+        return self.issued_at + timedelta(days=self.valid_days)

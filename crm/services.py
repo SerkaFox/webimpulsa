@@ -250,6 +250,180 @@ def save_material(
     return material
 
 
+# ── Proposal services ─────────────────────────────────────────────────────────
+
+def create_proposal_from_lead(lead: Lead):
+    """Create a draft Proposal pre-populated from Lead calculator data."""
+    from .models import Proposal
+    from .proposal_content import (
+        WI_COMPANY, EXTRAS_PRICES, PROJECT_SCOPES, DEFAULT_SCOPE,
+        OUT_OF_SCOPE, PHASES, CONDITIONS, DEADLINES,
+    )
+
+    extras_with_prices = [
+        {'name': name, 'price': EXTRAS_PRICES.get(name, 0)}
+        for name in (lead.extras or [])
+    ]
+
+    subtotal     = lead.package_base_price + lead.extras_price
+    rush_amount  = round(subtotal * 0.25) if lead.rush else 0
+    if lead.rush:
+        subtotal += rush_amount
+    discount_amt = round(subtotal * lead.discount_pct / 100)
+    taxable_base = subtotal - discount_amt
+    iva_amount   = round(taxable_base * 0.21)
+    total        = taxable_base + iva_amount
+
+    proposal = Proposal.objects.create(
+        number             = Proposal.generate_number(),
+        lead               = lead,
+        issued_at          = timezone.localdate(),
+        client_name        = lead.name,
+        client_email       = lead.email,
+        client_phone       = lead.phone,
+        client_biz_type    = lead.biz_type,
+        company_data       = WI_COMPANY.copy(),
+        project_name       = lead.package or 'Proyecto web',
+        scope              = PROJECT_SCOPES.get(lead.package, DEFAULT_SCOPE)[:],
+        out_of_scope       = OUT_OF_SCOPE[:],
+        phases             = PHASES[:],
+        conditions         = CONDITIONS[:],
+        timeline           = DEADLINES.get(lead.package, 'Según alcance'),
+        payment_method     = '50-50',
+        package            = lead.package,
+        package_base_price = lead.package_base_price,
+        extras             = extras_with_prices,
+        extras_price       = lead.extras_price,
+        rush               = lead.rush,
+        rush_amount        = rush_amount,
+        discount_pct       = lead.discount_pct,
+        discount_amount    = discount_amt,
+        taxable_base       = taxable_base,
+        iva_amount         = iva_amount,
+        total_with_iva     = total,
+        maintenance_plan   = lead.maintenance_plan,
+        maintenance_price  = lead.maintenance_price,
+    )
+
+    log_communication(
+        lead=lead,
+        direction=CommunicationLog.DIR_OUTBOUND,
+        channel=CommunicationLog.CH_MANUAL,
+        content=f'Propuesta {proposal.number} creada (borrador).',
+        status=CommunicationLog.ST_PENDING,
+    )
+    return proposal
+
+
+def proposal_to_template_input(proposal) -> dict:
+    """Convert a Proposal to the input dict for WIProposalTemplate.buildProposalData()."""
+    c = proposal.company_data or {}
+    return {
+        'projectType':         proposal.package or 'Proyecto a medida',
+        'basePrice':           proposal.package_base_price,
+        'extras':              proposal.extras or [],
+        'extrasTotal':         proposal.extras_price,
+        'rushAmount':          proposal.rush_amount,
+        'discountAmount':      proposal.discount_amount,
+        'maintenanceName':     proposal.maintenance_plan,
+        'maintenancePrice':    proposal.maintenance_price,
+        'maintenanceInfo':     '',
+        'budgetNumber':        proposal.number,
+        'issueDate':           proposal.issued_at.strftime('%Y-%m-%d') if proposal.issued_at else '',
+        'validDays':           proposal.valid_days,
+        'client': {
+            'name':          proposal.client_name,
+            'taxId':         proposal.client_nif,
+            'contactPerson': proposal.client_name,
+            'email':         proposal.client_email,
+            'phone':         proposal.client_phone,
+            'address':       proposal.client_address,
+            'city':          proposal.client_city,
+            'businessType':  proposal.client_biz_type,
+        },
+        'projectName':         proposal.project_name,
+        'goal':                proposal.project_goal,
+        'businessDescription': proposal.biz_description,
+        'selectedFeatures':    proposal.selected_features,
+        'deadline':            proposal.timeline,
+        'startDate':           proposal.start_date,
+        'notes':               proposal.notes,
+        'paymentMethod':       proposal.payment_method,
+        'customPayment':       proposal.payment_custom,
+        'company': {
+            'tradeName': c.get('trade_name', 'WebImpulsa'),
+            'legalName': c.get('legal_name', ''),
+            'taxId':     c.get('nif', ''),
+            'email':     c.get('email', 'info@webimpulsa.es'),
+            'phone':     c.get('phone', ''),
+            'website':   c.get('website', 'https://webimpulsa.es'),
+            'address':   c.get('address', ''),
+            'logoUrl':   c.get('logo_url', '/static/wi/img/logo.webp'),
+        },
+    }
+
+
+def mark_proposal_sent(proposal) -> None:
+    """Mark proposal as sent and update lead status to propuesta_enviada."""
+    proposal.status = proposal.ST_SENT
+    proposal.save(update_fields=['status', 'updated_at'])
+
+    lead = proposal.lead
+    if lead.status in (Lead.ST_NUEVO, Lead.ST_CONTACTADO):
+        lead.status = Lead.ST_PROPUESTA
+        lead.save(update_fields=['status', 'updated_at'])
+
+    log_communication(
+        lead=lead,
+        direction=CommunicationLog.DIR_OUTBOUND,
+        channel=CommunicationLog.CH_PORTAL,
+        content=f'Propuesta {proposal.number} marcada como enviada al cliente.',
+        status=CommunicationLog.ST_SENT,
+    )
+
+
+def accept_proposal(proposal, name: str, nif: str, signature: str) -> None:
+    """Record client acceptance: update proposal + lead status + log."""
+    proposal.status             = proposal.ST_ACCEPTED
+    proposal.accepted_by_name   = name[:200]
+    proposal.accepted_nif       = nif[:30]
+    proposal.accepted_signature = signature[:200]
+    proposal.accepted_at        = timezone.now()
+    proposal.save(update_fields=[
+        'status', 'accepted_by_name', 'accepted_nif',
+        'accepted_signature', 'accepted_at', 'updated_at',
+    ])
+
+    lead = proposal.lead
+    if lead.status not in (Lead.ST_ACEPTADO, Lead.ST_EN_TRABAJO, Lead.ST_FINALIZADO):
+        lead.status = Lead.ST_ACEPTADO
+        lead.save(update_fields=['status', 'updated_at'])
+
+    log_communication(
+        lead=lead,
+        direction=CommunicationLog.DIR_INBOUND,
+        channel=CommunicationLog.CH_PORTAL,
+        content=f'Propuesta {proposal.number} aceptada por {name} (NIF: {nif or "—"}).',
+        status=CommunicationLog.ST_DELIVERED,
+    )
+
+
+def compose_proposal_wa_message(proposal, portal_url: str) -> str:
+    """Compose a WhatsApp message announcing the proposal is ready."""
+    first = (proposal.client_name or 'cliente').split()[0]
+    return (
+        f'Hola {first} 👋\n\n'
+        f'Tu propuesta de proyecto está lista para revisar.\n\n'
+        f'📋 *{proposal.number}*\n'
+        f'Proyecto: {proposal.package}\n'
+        f'Total (IVA incluido): *{proposal.total_with_iva}€*\n\n'
+        f'Revísala y acéptala aquí:\n'
+        f'🔗 {portal_url}\n\n'
+        f'Validez: {proposal.valid_days} días naturales.\n'
+        f'¿Alguna pregunta? Escríbenos 😊'
+    )
+
+
 # ── Status → next-step mapping ────────────────────────────────────────────────
 
 NEXT_STEPS = {
