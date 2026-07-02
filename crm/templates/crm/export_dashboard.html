@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Exportar CRM — WebImpulsa</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,sans-serif;font-size:13px;color:#1e293b;background:#f8fafc}
+a{color:#2563eb;text-decoration:none}
+a:hover{text-decoration:underline}
+
+.top-bar{background:#1e293b;color:#fff;padding:12px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.top-bar h1{margin:0;font-size:1rem;font-weight:700;flex:1}
+.top-bar .back{color:#94a3b8;font-size:.83rem;white-space:nowrap}
+.top-bar .back:hover{color:#fff;text-decoration:none}
+
+.main{max-width:1100px;margin:0 auto;padding:24px 16px}
+
+/* Filter bar */
+.filter-bar{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.07);padding:16px 20px;margin-bottom:20px;display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.filter-bar label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b;display:block;margin-bottom:4px}
+.filter-bar input[type=date]{border:1px solid #cbd5e1;border-radius:6px;padding:7px 10px;font-size:13px;font-family:inherit;outline:none;background:#fff}
+.filter-bar input:focus{border-color:#2563eb}
+.btn{display:inline-block;padding:8px 18px;border-radius:6px;font-size:.83rem;font-weight:700;border:none;cursor:pointer;font-family:inherit}
+.btn-primary{background:#2563eb;color:#fff}
+.btn-primary:hover{background:#1d4ed8}
+.btn-outline{background:#fff;color:#475569;border:1px solid #cbd5e1}
+.btn-outline:hover{background:#f1f5f9;text-decoration:none}
+.btn-green{background:#16a34a;color:#fff}
+.btn-green:hover{background:#15803d}
+
+/* Stats */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:600px){.stats-row{grid-template-columns:1fr 1fr}}
+.stat-card{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.07);padding:16px 20px;text-align:center}
+.stat-card .val{font-size:2rem;font-weight:900;color:#1760d6;line-height:1}
+.stat-card .lbl{font-size:.72rem;color:#64748b;margin-top:4px;text-transform:uppercase;letter-spacing:.05em}
+
+/* Table */
+.card{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.07);padding:0;overflow:hidden}
+.card-header{padding:14px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-header h2{margin:0;font-size:.9rem;font-weight:800;color:#0f172a}
+.card-actions{display:flex;gap:8px;flex-wrap:wrap}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th{background:#f8fafc;color:#64748b;font-weight:700;padding:9px 14px;text-align:left;border-bottom:1px solid #e2e8f0;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+td{padding:9px 14px;border-bottom:1px solid #f8fafc;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbff}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700}
+
+/* Status colors */
+.st-nuevo{background:#eff6ff;color:#2563eb}
+.st-contactado{background:#e0f2fe;color:#0891b2}
+.st-propuesta_enviada{background:#f3e8ff;color:#7c3aed}
+.st-negociacion{background:#fef3c7;color:#d97706}
+.st-aceptado{background:#dcfce7;color:#16a34a}
+.st-en_trabajo{background:#d1fae5;color:#059669}
+.st-finalizado{background:#f1f5f9;color:#475569}
+.st-perdido{background:#fee2e2;color:#dc2626}
+
+/* Disclaimer */
+.disclaimer{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 14px;margin-bottom:20px;font-size:.78rem;color:#0c4a6e}
+
+/* Print */
+@media print{
+  body{background:#fff}
+  .top-bar,.filter-bar,.card-actions,.no-print{display:none!important}
+  .main{padding:0}
+  table{font-size:.72rem}
+  th,td{padding:5px 8px}
+  .stat-card{box-shadow:none;border:1px solid #e2e8f0}
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar no-print">
+  <a href="/wi/crm/" class="back">← CRM</a>
+  <h1>Exportar actividad CRM — WebImpulsa</h1>
+  <button class="btn btn-outline" onclick="window.print()">🖨 Imprimir</button>
+</div>
+
+<div class="main">
+
+  <div class="disclaimer">
+    <strong>Nota:</strong> Este informe es un documento de actividad interna.
+    No constituye certificado oficial ni documento contable con validez fiscal.
+    Generado el {{ generated_at|date:"d/m/Y H:i" }}.
+  </div>
+
+  <!-- Filter form -->
+  <form method="get" action="/wi/crm/export/" class="filter-bar no-print">
+    <div>
+      <label>Desde</label>
+      <input type="date" name="from" value="{{ date_from }}">
+    </div>
+    <div>
+      <label>Hasta</label>
+      <input type="date" name="to" value="{{ date_to }}">
+    </div>
+    <button type="submit" class="btn btn-primary">Filtrar</button>
+    <a href="/wi/crm/export/" class="btn btn-outline">Limpiar filtro</a>
+    <a href="/wi/crm/export/?from={{ date_from }}&to={{ date_to }}&format=csv" class="btn btn-green">⬇ CSV</a>
+  </form>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="val">{{ leads|length }}</div>
+      <div class="lbl">Total leads</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">{{ accepted_count }}</div>
+      <div class="lbl">Proyectos aceptados</div>
+    </div>
+    <div class="stat-card">
+      <div class="val" style="color:#16a34a">{{ total_income }}€</div>
+      <div class="lbl">Ingresos registrados</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">
+        {% if leads|length > 0 %}
+        {{ accepted_count }}
+        {% else %}0{% endif %}
+      </div>
+      <div class="lbl">Convertidos</div>
+    </div>
+  </div>
+
+  <!-- Leads table -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Leads{% if date_from or date_to %} (filtrado){% endif %}</h2>
+      <div class="card-actions no-print">
+        <a href="/wi/crm/export/?from={{ date_from }}&to={{ date_to }}&format=csv" class="btn btn-green">⬇ Exportar CSV</a>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Email / Teléfono</th>
+            <th>Paquete</th>
+            <th>Estado</th>
+            <th>Fuente</th>
+            <th>Propuesta</th>
+            <th>Precio</th>
+            <th>Ingresos</th>
+            <th class="no-print">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lead in leads %}
+          {% with lead.proposals.all as proposals %}
+          {% with lead.payments.all as payments %}
+          <tr>
+            <td><strong>{{ lead.pk }}</strong></td>
+            <td style="white-space:nowrap">{{ lead.created_at|date:"d/m/Y" }}</td>
+            <td>
+              <strong>{{ lead.name }}</strong>
+              {% if lead.biz_type %}<br><span style="color:#94a3b8;font-size:.72rem">{{ lead.biz_type }}</span>{% endif %}
+            </td>
+            <td>
+              {% if lead.email %}<span style="font-size:.78rem">{{ lead.email }}</span>{% endif %}
+              {% if lead.email and lead.phone %}<br>{% endif %}
+              {% if lead.phone %}<span style="font-size:.78rem;color:#64748b">{{ lead.phone }}</span>{% endif %}
+            </td>
+            <td>{{ lead.package|default:"—" }}</td>
+            <td><span class="badge st-{{ lead.status }}">{{ lead.get_status_display }}</span></td>
+            <td>{{ lead.get_source_display }}</td>
+            <td>
+              {% for p in proposals %}
+              <span style="font-size:.72rem;font-family:monospace">{{ p.number }}</span>
+              {% if not forloop.last %}<br>{% endif %}
+              {% empty %}
+              <span style="color:#94a3b8">—</span>
+              {% endfor %}
+            </td>
+            <td>
+              {% if lead.estimated_price %}
+              <strong>{{ lead.estimated_price }}€</strong>
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% with 0 as total %}
+              {% for p in payments %}{% if p.status == 'received' %}
+              <strong style="color:#16a34a">{{ p.amount }}€</strong>
+              {% endif %}{% endfor %}
+              {% endwith %}
+            </td>
+            <td class="no-print">
+              <a href="/wi/crm/{{ lead.pk }}/" style="font-size:.75rem;margin-right:4px">ver</a>
+              <a href="/wi/crm/{{ lead.pk }}/dossier/" style="font-size:.75rem;color:#7c3aed">ZIP</a>
+            </td>
+          </tr>
+          {% endwith %}
+          {% endwith %}
+          {% empty %}
+          <tr>
+            <td colspan="11" style="text-align:center;color:#94a3b8;padding:24px">Sin leads en el período seleccionado.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -420,3 +420,166 @@ class Proposal(models.Model):
     @property
     def expires_date(self):
         return self.issued_at + timedelta(days=self.valid_days)
+
+
+# ── UPLOAD PATH HELPERS ────────────────────────────────────────────────────────
+
+def _invoice_upload_path(instance, filename):
+    safe = ''.join(c for c in filename if c.isalnum() or c in '._- ').rstrip()
+    return f'invoices/{instance.lead_id}/{safe}'
+
+
+def _evidence_upload_path(instance, filename):
+    safe = ''.join(c for c in filename if c.isalnum() or c in '._- ').rstrip()
+    return f'evidence/{instance.lead_id}/{safe}'
+
+
+# ── PROJECT MILESTONES ─────────────────────────────────────────────────────────
+
+class ProjectMilestone(models.Model):
+    ST_PENDING     = 'pending'
+    ST_IN_PROGRESS = 'in_progress'
+    ST_DONE        = 'done'
+    ST_BLOCKED     = 'blocked'
+
+    STATUS_CHOICES = [
+        (ST_PENDING,     'Pendiente'),
+        (ST_IN_PROGRESS, 'En progreso'),
+        (ST_DONE,        'Completado'),
+        (ST_BLOCKED,     'Bloqueado'),
+    ]
+
+    lead           = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='milestones')
+    title          = models.CharField(max_length=200)
+    description    = models.TextField(blank=True)
+    due_date       = models.DateField(null=True, blank=True)
+    completed_date = models.DateField(null=True, blank=True)
+    status         = models.CharField(max_length=20, choices=STATUS_CHOICES, default=ST_PENDING)
+    notes          = models.TextField(blank=True)
+    created_at     = models.DateTimeField(auto_now_add=True)
+    updated_at     = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['due_date', 'created_at']
+
+    def __str__(self):
+        return f'{self.title} (Lead #{self.lead_id})'
+
+
+# ── WORK LOG ───────────────────────────────────────────────────────────────────
+
+class WorkLog(models.Model):
+    CAT_DESIGN      = 'design'
+    CAT_DEVELOPMENT = 'development'
+    CAT_CONTENT     = 'content'
+    CAT_MEETING     = 'meeting'
+    CAT_REVISION    = 'revision'
+    CAT_DELIVERY    = 'delivery'
+    CAT_OTHER       = 'other'
+
+    CATEGORY_CHOICES = [
+        (CAT_DESIGN,      'Diseño'),
+        (CAT_DEVELOPMENT, 'Desarrollo'),
+        (CAT_CONTENT,     'Contenido'),
+        (CAT_MEETING,     'Reunión'),
+        (CAT_REVISION,    'Revisión'),
+        (CAT_DELIVERY,    'Entrega'),
+        (CAT_OTHER,       'Otro'),
+    ]
+
+    lead            = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='work_logs')
+    date            = models.DateField()
+    hours           = models.DecimalField(max_digits=5, decimal_places=1)
+    category        = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default=CAT_DEVELOPMENT)
+    description     = models.TextField()
+    deliverable_url = models.CharField(max_length=500, blank=True)
+    notes           = models.TextField(blank=True)
+    created_at      = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date', '-created_at']
+
+    def __str__(self):
+        return f'{self.date} {self.hours}h — {self.description[:60]} (Lead #{self.lead_id})'
+
+
+# ── PAYMENT RECORDS ────────────────────────────────────────────────────────────
+
+class PaymentRecord(models.Model):
+    MT_BANK_TRANSFER = 'bank_transfer'
+    MT_BIZUM         = 'bizum'
+    MT_PAYPAL        = 'paypal'
+    MT_CASH          = 'cash'
+    MT_STRIPE        = 'stripe'
+    MT_OTHER         = 'other'
+
+    ST_PENDING  = 'pending'
+    ST_RECEIVED = 'received'
+    ST_PARTIAL  = 'partial'
+    ST_REFUNDED = 'refunded'
+
+    METHOD_CHOICES = [
+        (MT_BANK_TRANSFER, 'Transferencia bancaria'),
+        (MT_BIZUM,         'Bizum'),
+        (MT_PAYPAL,        'PayPal'),
+        (MT_CASH,          'Efectivo'),
+        (MT_STRIPE,        'Stripe'),
+        (MT_OTHER,         'Otro'),
+    ]
+    STATUS_CHOICES = [
+        (ST_PENDING,  'Pendiente'),
+        (ST_RECEIVED, 'Recibido'),
+        (ST_PARTIAL,  'Parcial'),
+        (ST_REFUNDED, 'Devuelto'),
+    ]
+
+    lead         = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='payments')
+    concept      = models.CharField(max_length=300)
+    amount       = models.IntegerField()          # euros
+    payment_date = models.DateField()
+    method       = models.CharField(max_length=20, choices=METHOD_CHOICES, default=MT_BANK_TRANSFER)
+    reference    = models.CharField(max_length=200, blank=True)   # bank ref or invoice number
+    invoice_file = models.FileField(upload_to=_invoice_upload_path, null=True, blank=True)
+    status       = models.CharField(max_length=20, choices=STATUS_CHOICES, default=ST_RECEIVED)
+    notes        = models.TextField(blank=True)
+    created_at   = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-payment_date', '-created_at']
+
+    def __str__(self):
+        return f'{self.concept} {self.amount}€ ({self.payment_date}) Lead #{self.lead_id}'
+
+
+# ── EVIDENCE FILES ─────────────────────────────────────────────────────────────
+
+class EvidenceFile(models.Model):
+    CAT_SCREENSHOT = 'screenshot'
+    CAT_INVOICE    = 'invoice'
+    CAT_APPROVAL   = 'approval'
+    CAT_CONTRACT   = 'contract'
+    CAT_DELIVERY   = 'delivery'
+    CAT_OTHER      = 'other'
+
+    CATEGORY_CHOICES = [
+        (CAT_SCREENSHOT, 'Captura de pantalla'),
+        (CAT_INVOICE,    'Factura'),
+        (CAT_APPROVAL,   'Aprobación del cliente'),
+        (CAT_CONTRACT,   'Contrato'),
+        (CAT_DELIVERY,   'Entregable'),
+        (CAT_OTHER,      'Otro'),
+    ]
+
+    lead       = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='evidence')
+    category   = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default=CAT_OTHER)
+    title      = models.CharField(max_length=200)
+    file       = models.FileField(upload_to=_evidence_upload_path, null=True, blank=True)
+    url        = models.CharField(max_length=500, blank=True)
+    notes      = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.title} ({self.category}) Lead #{self.lead_id}'

@@ -330,6 +330,243 @@
       {% endif %}
     </div>
 
+    <!-- Milestones -->
+    <div class="card">
+      <div class="card-title">🏁 Hitos del proyecto <small>{{ milestones|length }} hito{{ milestones|length|pluralize }}</small></div>
+
+      <!-- Quick-add form -->
+      <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:14px">
+        <div class="form-row">
+          <div>
+            <label>Título del hito</label>
+            <input type="text" id="msTitle" placeholder="Ej: Entrega de diseño">
+          </div>
+          <div>
+            <label>Fecha límite</label>
+            <input type="text" id="msDue" placeholder="YYYY-MM-DD">
+          </div>
+        </div>
+        <div style="margin-bottom:8px">
+          <label>Estado inicial</label>
+          <select id="msStatus">
+            {% for v, l in milestone_choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+          </select>
+        </div>
+        <button class="btn-sm primary" onclick="addMilestone({{ lead.pk }})">+ Añadir hito</button>
+        <span id="msResult" style="font-size:.78rem;color:#16a34a;margin-left:8px"></span>
+      </div>
+
+      {% if milestones %}
+      {% for m in milestones %}
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f8fafc">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.82rem;font-weight:600">{{ m.title }}</div>
+          <div style="font-size:.72rem;color:#94a3b8">
+            {% if m.due_date %}📅 {{ m.due_date|date:"d/m/Y" }}{% endif %}
+            {% if m.completed_date %} · ✅ {{ m.completed_date|date:"d/m/Y" }}{% endif %}
+          </div>
+        </div>
+        <select style="font-size:.72rem;padding:3px 6px;border-radius:4px;border:1px solid #cbd5e1;background:#fff"
+                onchange="updateMilestone({{ lead.pk }}, {{ m.pk }}, this.value)">
+          {% for v, l in milestone_choices %}
+          <option value="{{ v }}" {% if v == m.status %}selected{% endif %}>{{ l }}</option>
+          {% endfor %}
+        </select>
+        <span style="font-size:.75rem;padding:2px 7px;border-radius:8px;font-weight:700;
+          {% if m.status == 'done' %}background:#dcfce7;color:#166534
+          {% elif m.status == 'in_progress' %}background:#dbeafe;color:#1e40af
+          {% elif m.status == 'blocked' %}background:#fee2e2;color:#991b1b
+          {% else %}background:#fef3c7;color:#92400e{% endif %}">
+          {{ m.get_status_display }}
+        </span>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0">Sin hitos registrados.</div>
+      {% endif %}
+    </div>
+
+    <!-- Work Log -->
+    <div class="card">
+      <div class="card-title">⏱ Trabajo realizado <small>{{ total_hours|floatformat:1 }}h registradas</small></div>
+
+      <!-- Quick-add form -->
+      <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:14px">
+        <div class="form-row">
+          <div>
+            <label>Fecha</label>
+            <input type="text" id="wlDate" placeholder="YYYY-MM-DD">
+          </div>
+          <div>
+            <label>Horas</label>
+            <input type="text" id="wlHours" placeholder="1.5" style="width:80px">
+          </div>
+          <div>
+            <label>Categoría</label>
+            <select id="wlCat">
+              {% for v, l in worklog_categories %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:8px">
+          <label>Descripción del trabajo</label>
+          <textarea id="wlDesc" rows="2" placeholder="¿Qué se hizo?"></textarea>
+        </div>
+        <div style="margin-bottom:8px">
+          <label>URL entregable (opcional)</label>
+          <input type="text" id="wlUrl" placeholder="https://…">
+        </div>
+        <button class="btn-sm primary" onclick="addWorklog({{ lead.pk }})">+ Registrar horas</button>
+        <span id="wlResult" style="font-size:.78rem;color:#16a34a;margin-left:8px"></span>
+      </div>
+
+      {% if work_logs %}
+      {% for w in work_logs %}
+      <div class="mat-item">
+        <div class="mat-icon">⏱</div>
+        <div class="mat-name">
+          <span style="background:#eff6ff;color:#2563eb;border-radius:8px;padding:1px 6px;font-size:.7rem;font-weight:700">{{ w.get_category_display }}</span>
+          {{ w.description }}
+          {% if w.deliverable_url %}<a href="{{ w.deliverable_url }}" target="_blank" style="font-size:.72rem;margin-left:4px">🔗</a>{% endif %}
+        </div>
+        <div class="mat-meta">
+          <strong>{{ w.hours }}h</strong><br>
+          {{ w.date|date:"d/m/Y" }}
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0">Sin trabajo registrado.</div>
+      {% endif %}
+    </div>
+
+    <!-- Payments -->
+    <div class="card">
+      <div class="card-title">💰 Pagos e ingresos <small>{{ total_income }}€ recibidos</small></div>
+
+      <!-- Quick-add form -->
+      <form id="payForm{{ lead.pk }}" style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:14px" enctype="multipart/form-data">
+        <div class="form-row">
+          <div>
+            <label>Concepto</label>
+            <input type="text" name="concept" placeholder="Pago inicial 50%">
+          </div>
+          <div>
+            <label>Importe (€)</label>
+            <input type="text" name="amount" placeholder="730" style="width:90px">
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>Fecha de pago</label>
+            <input type="text" name="payment_date" placeholder="YYYY-MM-DD">
+          </div>
+          <div>
+            <label>Método</label>
+            <select name="method">
+              {% for v, l in payment_methods %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>Referencia / nº factura</label>
+            <input type="text" name="reference" placeholder="REF-2026-001">
+          </div>
+          <div>
+            <label>Estado</label>
+            <select name="status">
+              {% for v, l in payment_statuses %}<option value="{{ v }}" {% if v == 'received' %}selected{% endif %}>{{ l }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:8px">
+          <label>Factura (PDF/imagen, opcional)</label>
+          <input type="file" name="invoice_file" accept=".pdf,.png,.jpg,.jpeg">
+        </div>
+        <button type="button" class="btn-sm primary" onclick="addPayment({{ lead.pk }}, document.getElementById('payForm{{ lead.pk }}'))">+ Registrar pago</button>
+        <span id="payResult" style="font-size:.78rem;color:#16a34a;margin-left:8px"></span>
+      </form>
+
+      {% if payments %}
+      {% for p in payments %}
+      <div class="mat-item">
+        <div class="mat-icon">💰</div>
+        <div class="mat-name">
+          {{ p.concept }}<br>
+          <span style="font-size:.72rem;color:#94a3b8">{{ p.get_method_display }} · {{ p.payment_date|date:"d/m/Y" }}
+          {% if p.reference %} · Ref: {{ p.reference }}{% endif %}</span>
+        </div>
+        <div class="mat-meta">
+          <strong style="color:{% if p.status == 'received' %}#16a34a{% else %}#d97706{% endif %}">{{ p.amount }}€</strong><br>
+          {{ p.get_status_display }}<br>
+          {% if p.invoice_file %}<a href="/wi/crm/payment/{{ p.pk }}/invoice/" style="font-size:.7rem">📄 Factura</a>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0">Sin pagos registrados.</div>
+      {% endif %}
+    </div>
+
+    <!-- Evidence Files -->
+    <div class="card">
+      <div class="card-title">📎 Evidencias <small>{{ evidence|length }} archivo{{ evidence|length|pluralize }}</small></div>
+
+      <!-- Quick-add form -->
+      <form id="evForm{{ lead.pk }}" style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:14px" enctype="multipart/form-data">
+        <div class="form-row">
+          <div>
+            <label>Categoría</label>
+            <select name="category">
+              {% for v, l in evidence_categories %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+            </select>
+          </div>
+          <div>
+            <label>Título</label>
+            <input type="text" name="title" placeholder="Web publicada en producción">
+          </div>
+        </div>
+        <div style="margin-bottom:8px">
+          <label>URL (opcional)</label>
+          <input type="text" name="url" placeholder="https://cliente.es">
+        </div>
+        <div style="margin-bottom:8px">
+          <label>Archivo adjunto (opcional)</label>
+          <input type="file" name="file">
+        </div>
+        <div style="margin-bottom:8px">
+          <label>Notas</label>
+          <textarea name="notes" rows="2" placeholder="Descripción o contexto…"></textarea>
+        </div>
+        <button type="button" class="btn-sm primary" onclick="addEvidence({{ lead.pk }}, document.getElementById('evForm{{ lead.pk }}'))">+ Añadir evidencia</button>
+        <span id="evResult" style="font-size:.78rem;color:#16a34a;margin-left:8px"></span>
+      </form>
+
+      {% if evidence %}
+      {% for e in evidence %}
+      <div class="mat-item">
+        <div class="mat-icon">📎</div>
+        <div class="mat-name">
+          <span style="background:#f3e8ff;color:#7c3aed;border-radius:8px;padding:1px 6px;font-size:.7rem;font-weight:700">{{ e.get_category_display }}</span>
+          {{ e.title }}
+          {% if e.notes %}<br><span style="font-size:.72rem;color:#64748b">{{ e.notes }}</span>{% endif %}
+        </div>
+        <div class="mat-meta">
+          {% if e.file %}
+            <a href="/wi/crm/evidence/{{ e.pk }}/file/" style="font-size:.72rem">⬇ Descargar</a><br>
+          {% elif e.url %}
+            <a href="{{ e.url }}" target="_blank" style="font-size:.72rem">🔗 Abrir</a><br>
+          {% endif %}
+          {{ e.created_at|date:"d/m/Y" }}
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0">Sin evidencias registradas.</div>
+      {% endif %}
+    </div>
+
   </div>
 
   <!-- ── RIGHT COLUMN (sticky CRM panel) ──────────────────────────────── -->
@@ -385,6 +622,20 @@
         ✉ Enviar email
       </a>
       {% endif %}
+    </div>
+
+    <!-- Dossier export -->
+    <div class="card">
+      <div class="card-title">📦 Exportar dossier</div>
+      <p style="font-size:.8rem;color:#64748b;margin:0 0 12px">
+        ZIP con informe HTML, CSVs de actividad, pagos, trabajo y evidencias para Extranjería u otro uso.
+      </p>
+      <a href="/wi/crm/{{ lead.pk }}/dossier/" class="btn-sm primary" style="display:block;text-align:center;padding:9px">
+        ⬇ Descargar dossier ZIP
+      </a>
+      <a href="/wi/crm/{{ lead.pk }}/dossier/preview/" target="_blank" class="btn-sm" style="display:block;text-align:center;margin-top:6px;padding:9px">
+        👁 Vista previa HTML
+      </a>
     </div>
 
     <!-- Raw data -->
@@ -520,6 +771,102 @@
         alert('Error: ' + (data.error || 'desconocido'));
       }
     });
+  };
+
+  // ── Milestone functions ───────────────────────────────────────────────────
+  window.addMilestone = function(pk) {
+    var title  = document.getElementById('msTitle').value.trim();
+    var due    = document.getElementById('msDue').value.trim();
+    var status = document.getElementById('msStatus').value;
+    if (!title) { alert('El título del hito es obligatorio.'); return; }
+
+    var fd = new FormData();
+    fd.append('title', title);
+    if (due) fd.append('due_date', due);
+    fd.append('status', status);
+
+    fetch('/wi/crm/' + pk + '/milestone/', {
+      method: 'POST', body: fd, headers: { 'Authorization': _getAuth() }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        document.getElementById('msResult').textContent = '✓ Hito añadido';
+        setTimeout(function() { location.reload(); }, 800);
+      } else { alert('Error: ' + (d.error || 'desconocido')); }
+    })
+    .catch(function(e) { alert('Error: ' + e); });
+  };
+
+  window.updateMilestone = function(pk, mid, status) {
+    var fd = new FormData();
+    fd.append('status', status);
+    fetch('/wi/crm/' + pk + '/milestone/' + mid + '/', {
+      method: 'POST', body: fd, headers: { 'Authorization': _getAuth() }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok) location.reload(); else alert('Error al actualizar hito'); })
+    .catch(function(e) { alert('Error: ' + e); });
+  };
+
+  // ── Work log functions ────────────────────────────────────────────────────
+  window.addWorklog = function(pk) {
+    var wlDate = document.getElementById('wlDate').value.trim();
+    var wlDesc = document.getElementById('wlDesc').value.trim();
+    if (!wlDate) { alert('La fecha es obligatoria.'); return; }
+    if (!wlDesc) { alert('La descripción es obligatoria.'); return; }
+
+    var fd = new FormData();
+    fd.append('date', wlDate);
+    fd.append('description', wlDesc);
+    fd.append('hours', document.getElementById('wlHours').value || '1.0');
+    fd.append('category', document.getElementById('wlCat').value);
+    var url = document.getElementById('wlUrl').value.trim();
+    if (url) fd.append('deliverable_url', url);
+
+    fetch('/wi/crm/' + pk + '/worklog/', {
+      method: 'POST', body: fd, headers: { 'Authorization': _getAuth() }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        document.getElementById('wlResult').textContent = '✓ Registrado';
+        setTimeout(function() { location.reload(); }, 800);
+      } else { alert('Error: ' + (d.error || 'desconocido')); }
+    })
+    .catch(function(e) { alert('Error: ' + e); });
+  };
+
+  // ── Payment functions ─────────────────────────────────────────────────────
+  window.addPayment = function(pk, formEl) {
+    var fd = new FormData(formEl);
+    fetch('/wi/crm/' + pk + '/payment/', {
+      method: 'POST', body: fd, headers: { 'Authorization': _getAuth() }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        document.getElementById('payResult').textContent = '✓ Pago registrado';
+        setTimeout(function() { location.reload(); }, 800);
+      } else { alert('Error: ' + (d.error || 'desconocido')); }
+    })
+    .catch(function(e) { alert('Error: ' + e); });
+  };
+
+  // ── Evidence functions ────────────────────────────────────────────────────
+  window.addEvidence = function(pk, formEl) {
+    var fd = new FormData(formEl);
+    fetch('/wi/crm/' + pk + '/evidence/', {
+      method: 'POST', body: fd, headers: { 'Authorization': _getAuth() }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        document.getElementById('evResult').textContent = '✓ Evidencia añadida';
+        setTimeout(function() { location.reload(); }, 800);
+      } else { alert('Error: ' + (d.error || 'desconocido')); }
+    })
+    .catch(function(e) { alert('Error: ' + e); });
   };
 
   // ── Helpers ───────────────────────────────────────────────────────────────

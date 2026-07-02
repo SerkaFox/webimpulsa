@@ -3,13 +3,17 @@ import functools
 import json
 import logging
 import os
+from datetime import date
 
-from django.http import HttpResponse, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST, require_http_methods
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
-from .models import CommunicationLog, Lead, ProjectMaterial
+from .models import (
+    CommunicationLog, EvidenceFile, Lead, PaymentRecord,
+    ProjectMaterial, ProjectMilestone, WorkLog,
+)
 from .services import (
     generate_client_access, lead_from_payload, log_communication,
     NEXT_STEPS,
@@ -125,17 +129,36 @@ def lead_detail(request, pk):
     comm_log      = lead.comm_log.all()[:20]
     materials     = lead.materials.all()
 
+    milestones  = lead.milestones.all()
+    work_logs   = lead.work_logs.all()
+    payments    = lead.payments.all()
+    evidence    = lead.evidence.all()
+
+    total_hours  = sum(float(w.hours) for w in work_logs) if work_logs else 0
+    total_income = sum(p.amount for p in payments if p.status == PaymentRecord.ST_RECEIVED)
+
     return render(request, 'crm/lead_detail.html', {
-        'lead':          lead,
-        'statuses':      Lead.STATUS_CHOICES,
-        'channels':      Lead.CHANNEL_CHOICES,
-        'status_css':    STATUS_CSS,
-        'active_access': active_access,
-        'comm_log':      comm_log,
-        'materials':     materials,
-        'next_step':     NEXT_STEPS.get(lead.status, ''),
-        'comm_channels': CommunicationLog.CHANNEL_CHOICES,
-        'comm_dirs':     CommunicationLog.DIRECTION_CHOICES,
+        'lead':               lead,
+        'statuses':           Lead.STATUS_CHOICES,
+        'channels':           Lead.CHANNEL_CHOICES,
+        'status_css':         STATUS_CSS,
+        'active_access':      active_access,
+        'comm_log':           comm_log,
+        'materials':          materials,
+        'next_step':          NEXT_STEPS.get(lead.status, ''),
+        'comm_channels':      CommunicationLog.CHANNEL_CHOICES,
+        'comm_dirs':          CommunicationLog.DIRECTION_CHOICES,
+        'milestones':         milestones,
+        'work_logs':          work_logs,
+        'payments':           payments,
+        'evidence':           evidence,
+        'total_hours':        total_hours,
+        'total_income':       total_income,
+        'milestone_choices':  ProjectMilestone.STATUS_CHOICES,
+        'worklog_categories': WorkLog.CATEGORY_CHOICES,
+        'payment_methods':    PaymentRecord.METHOD_CHOICES,
+        'payment_statuses':   PaymentRecord.STATUS_CHOICES,
+        'evidence_categories': EvidenceFile.CATEGORY_CHOICES,
     })
 
 
@@ -212,3 +235,167 @@ def lead_materials(request, pk):
             for m in materials
         ],
     })
+
+
+# ── Activity / dossier AJAX endpoints ─────────────────────────────────────────
+
+@_crm_auth
+@csrf_exempt
+@require_POST
+def lead_add_milestone(request, pk):
+    """POST /wi/crm/<pk>/milestone/ — add a project milestone."""
+    lead  = get_object_or_404(Lead, pk=pk)
+    title = (request.POST.get('title') or '').strip()
+    if not title:
+        return JsonResponse({'ok': False, 'error': 'title required'}, status=400)
+
+    m = ProjectMilestone.objects.create(
+        lead        = lead,
+        title       = title,
+        description = request.POST.get('description', ''),
+        due_date    = request.POST.get('due_date') or None,
+        status      = request.POST.get('status', ProjectMilestone.ST_PENDING),
+        notes       = request.POST.get('notes', ''),
+    )
+    return JsonResponse({'ok': True, 'id': m.pk, 'title': m.title, 'status': m.status})
+
+
+@_crm_auth
+@csrf_exempt
+@require_POST
+def lead_update_milestone(request, pk, mid):
+    """POST /wi/crm/<pk>/milestone/<mid>/ — update a milestone's status/notes."""
+    lead = get_object_or_404(Lead, pk=pk)
+    m    = get_object_or_404(ProjectMilestone, pk=mid, lead=lead)
+
+    if 'status' in request.POST:
+        new_status = request.POST['status']
+        if new_status in dict(ProjectMilestone.STATUS_CHOICES):
+            m.status = new_status
+            if new_status == ProjectMilestone.ST_DONE and not m.completed_date:
+                m.completed_date = date.today()
+    if 'notes' in request.POST:
+        m.notes = request.POST['notes']
+    if 'completed_date' in request.POST:
+        m.completed_date = request.POST['completed_date'] or None
+    m.save()
+    return JsonResponse({'ok': True})
+
+
+@_crm_auth
+@csrf_exempt
+@require_POST
+def lead_add_worklog(request, pk):
+    """POST /wi/crm/<pk>/worklog/ — log work hours."""
+    lead = get_object_or_404(Lead, pk=pk)
+    log_date    = (request.POST.get('date') or '').strip()
+    description = (request.POST.get('description') or '').strip()
+    if not log_date:
+        return JsonResponse({'ok': False, 'error': 'date required'}, status=400)
+    if not description:
+        return JsonResponse({'ok': False, 'error': 'description required'}, status=400)
+
+    try:
+        hours = float(request.POST.get('hours', '1.0') or '1.0')
+    except (ValueError, TypeError):
+        hours = 1.0
+
+    w = WorkLog.objects.create(
+        lead            = lead,
+        date            = log_date,
+        hours           = hours,
+        category        = request.POST.get('category', WorkLog.CAT_DEVELOPMENT),
+        description     = description,
+        deliverable_url = request.POST.get('deliverable_url', ''),
+        notes           = request.POST.get('notes', ''),
+    )
+    return JsonResponse({'ok': True, 'id': w.pk})
+
+
+@_crm_auth
+@csrf_exempt
+@require_POST
+def lead_add_payment(request, pk):
+    """POST /wi/crm/<pk>/payment/ — record a payment (multipart, may include invoice_file)."""
+    lead = get_object_or_404(Lead, pk=pk)
+    concept      = (request.POST.get('concept') or '').strip()
+    payment_date = (request.POST.get('payment_date') or '').strip()
+    try:
+        amount = int(request.POST.get('amount', 0))
+    except (ValueError, TypeError):
+        return JsonResponse({'ok': False, 'error': 'amount must be integer'}, status=400)
+
+    if not concept:
+        return JsonResponse({'ok': False, 'error': 'concept required'}, status=400)
+    if not payment_date:
+        return JsonResponse({'ok': False, 'error': 'payment_date required'}, status=400)
+
+    p = PaymentRecord(
+        lead         = lead,
+        concept      = concept,
+        amount       = amount,
+        payment_date = payment_date,
+        method       = request.POST.get('method', PaymentRecord.MT_BANK_TRANSFER),
+        reference    = request.POST.get('reference', ''),
+        status       = request.POST.get('status', PaymentRecord.ST_RECEIVED),
+        notes        = request.POST.get('notes', ''),
+    )
+    if 'invoice_file' in request.FILES:
+        p.invoice_file = request.FILES['invoice_file']
+    p.save()
+    return JsonResponse({'ok': True, 'id': p.pk})
+
+
+@_crm_auth
+@csrf_exempt
+@require_POST
+def lead_add_evidence(request, pk):
+    """POST /wi/crm/<pk>/evidence/ — add evidence file/URL (multipart)."""
+    lead  = get_object_or_404(Lead, pk=pk)
+    title = (request.POST.get('title') or '').strip()
+    if not title:
+        return JsonResponse({'ok': False, 'error': 'title required'}, status=400)
+
+    e = EvidenceFile(
+        lead     = lead,
+        category = request.POST.get('category', EvidenceFile.CAT_OTHER),
+        title    = title,
+        url      = request.POST.get('url', ''),
+        notes    = request.POST.get('notes', ''),
+    )
+    if 'file' in request.FILES:
+        e.file = request.FILES['file']
+    e.save()
+    return JsonResponse({'ok': True, 'id': e.pk})
+
+
+@_crm_auth
+@require_GET
+def serve_invoice(request, pk):
+    """GET /wi/crm/payment/<pk>/invoice/ — serve PaymentRecord invoice file."""
+    p = get_object_or_404(PaymentRecord, pk=pk)
+    if not p.invoice_file or not p.invoice_file.name:
+        raise Http404('No invoice file attached')
+    try:
+        f = p.invoice_file.open('rb')
+    except (FileNotFoundError, IOError):
+        raise Http404('Invoice file not found on disk')
+    filename = os.path.basename(p.invoice_file.name)
+    resp = FileResponse(f, as_attachment=True, filename=filename)
+    return resp
+
+
+@_crm_auth
+@require_GET
+def serve_evidence(request, pk):
+    """GET /wi/crm/evidence/<pk>/file/ — serve EvidenceFile attachment."""
+    e = get_object_or_404(EvidenceFile, pk=pk)
+    if not e.file or not e.file.name:
+        raise Http404('No file attached')
+    try:
+        f = e.file.open('rb')
+    except (FileNotFoundError, IOError):
+        raise Http404('Evidence file not found on disk')
+    filename = os.path.basename(e.file.name)
+    resp = FileResponse(f, as_attachment=True, filename=filename)
+    return resp
