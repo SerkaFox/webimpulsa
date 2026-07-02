@@ -34,11 +34,20 @@ def _hex_fill(cell, rgb_tuple):
     tcPr.append(shd)
 
 
+def _get_or_add_tblPr(tbl):
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
+    tblPr = tbl.find(qn('w:tblPr'))
+    if tblPr is None:
+        tblPr = OxmlElement('w:tblPr')
+        tbl.insert(0, tblPr)
+    return tblPr
+
+
 def _no_borders(table):
     from docx.oxml.ns import qn
     from docx.oxml import OxmlElement
-    tbl   = table._tbl
-    tblPr = tbl.tblPr if tbl.tblPr is not None else OxmlElement('w:tblPr')
+    tblPr = _get_or_add_tblPr(table._tbl)
     tblBorders = OxmlElement('w:tblBorders')
     for side in ('top', 'left', 'bottom', 'right', 'insideH', 'insideV'):
         el = OxmlElement(f'w:{side}')
@@ -47,15 +56,13 @@ def _no_borders(table):
     for old in tblPr.findall(qn('w:tblBorders')):
         tblPr.remove(old)
     tblPr.append(tblBorders)
-    tbl.tblPr = tblPr
 
 
 def _thin_borders(table, rgb=(0xD0, 0xE1, 0xFA)):
     from docx.oxml.ns import qn
     from docx.oxml import OxmlElement
     hex_color = '%02X%02X%02X' % rgb
-    tbl   = table._tbl
-    tblPr = tbl.tblPr if tbl.tblPr is not None else OxmlElement('w:tblPr')
+    tblPr = _get_or_add_tblPr(table._tbl)
     tblBorders = OxmlElement('w:tblBorders')
     for side in ('top', 'left', 'bottom', 'right', 'insideH', 'insideV'):
         el = OxmlElement(f'w:{side}')

@@ -258,16 +258,50 @@
     }
     .wi-footer a { color: #94a3b8; }
 
-    /* ── desktop 2-col for proposal mode ── */
+    /* ── desktop 2-col for proposal mode: proposal left, chat right ── */
     @media (min-width: 720px) {
       .proposal-layout {
         display: grid;
-        grid-template-columns: 300px 1fr;
+        grid-template-columns: 1fr 280px;
         gap: 16px;
         align-items: start;
       }
-      .proposal-layout .wi-card { height: auto; }
     }
+
+    /* ── chat widget ── */
+    .chat-avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg,#1760d6,#2563eb);
+      color: #fff; font-size: 1.2rem; font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .chat-bubble {
+      background: #f0f4ff; border-radius: 12px; padding: 10px 14px;
+      font-size: .83rem; color: #1e293b; line-height: 1.5;
+      border-bottom-left-radius: 3px;
+    }
+    .chat-msg-thread {
+      max-height: 220px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 8px;
+      margin-bottom: 12px;
+    }
+    .chat-msg-in  { background: #eff6ff; border-radius: 12px 12px 3px 12px; }
+    .chat-msg-out { background: #f1f5f9; border-radius: 12px 12px 12px 3px; }
+    .chat-input {
+      width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px;
+      padding: 9px 12px; font-size: .83rem; font-family: inherit;
+      resize: vertical; outline: none; box-sizing: border-box;
+      margin-bottom: 8px;
+    }
+    .chat-input:focus { border-color: #2563eb; }
+    .btn-tg {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: #2aabee; color: #fff; border: none; border-radius: 10px;
+      padding: 11px 16px; font-size: .88rem; font-weight: 800;
+      cursor: pointer; text-decoration: none; width: 100%;
+    }
+    .btn-tg:hover { background: #1a96d5; }
 
     @media (max-width: 600px) {
       .wi-main  { padding: 14px 10px 40px; }
@@ -363,49 +397,32 @@
 
   <div class="proposal-layout">
 
-    <!-- Project status card -->
-    <div class="wi-card">
-      <div class="wi-card-title">Tu proyecto</div>
-      <div class="status-badge{% if lead.status == 'finalizado' %} green{% elif lead.status == 'perdido' %} gray{% endif %}">
-        {{ status_label }}
-      </div>
-      <div class="project-name">{{ lead.package|default:"Proyecto Web-Impulsa" }}</div>
-      <div class="project-meta">
-        {% if lead.biz_type %}<span>{{ lead.biz_type }}</span>{% endif %}
-        {% if lead.estimated_price %}<span>{{ lead.estimated_price }}€ estimado</span>{% endif %}
-        {% if lead.maintenance_plan %}<span>Mant. {{ lead.maintenance_plan }}</span>{% endif %}
-      </div>
-
-      {% if lead.extras %}
-      <div class="extras-row">
-        {% for e in lead.extras %}<span class="extra-tag">{{ e }}</span>{% endfor %}
-      </div>
-      {% endif %}
-
-      {% if next_step %}
-      <div class="next-step-box" style="margin-top:14px">
-        <strong>Siguiente paso:</strong> {{ next_step }}
-      </div>
-      {% endif %}
-
-      <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f1f5f9;font-size:.8rem;color:#94a3b8;line-height:1.6">
-        ¿Tienes preguntas? Escríbenos por
-        <a href="https://wa.me/34613708322?text={{ 'Hola, soy '|urlencode }}{{ lead.name|urlencode }}{{ ', tengo una consulta sobre mi propuesta'|urlencode }}"
-           target="_blank" rel="noopener" style="color:#2563eb;font-weight:600">WhatsApp</a>
-        o responde al correo que te enviamos.
-      </div>
-    </div>
-
-    <!-- Proposal card -->
-    {% if proposal %}
+    <!-- LEFT: Proposal card (wide) -->
     <div class="wi-card" id="proposalCard">
-      <div class="wi-card-title">Tu propuesta</div>
+
+      <!-- Project status summary (compact header) -->
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;
+                  padding-bottom:14px;border-bottom:1px solid #f1f5f9">
+        <div class="status-badge{% if lead.status == 'finalizado' %} green{% elif lead.status == 'perdido' %} gray{% endif %}" style="margin-bottom:0">
+          {{ status_label }}
+        </div>
+        <div style="font-weight:900;font-size:1rem;color:#0c1c42">{{ lead.package|default:"Proyecto Web-Impulsa" }}</div>
+        {% if lead.estimated_price %}<div style="font-size:.82rem;color:#5a6d8c">{{ lead.estimated_price }}€ estimado</div>{% endif %}
+        {% if lead.extras %}
+        <div class="extras-row" style="width:100%;margin-top:0">
+          {% for e in lead.extras %}<span class="extra-tag">{{ e }}</span>{% endfor %}
+        </div>
+        {% endif %}
+      </div>
 
       {% if accepted %}
       <div class="next-step-box" style="background:#f0fdf4;border-color:#16a34a;color:#14532d;margin-bottom:14px">
         ✅ Propuesta aceptada correctamente. ¡Gracias! En breve nos pondremos en contacto contigo.
       </div>
       {% endif %}
+
+      {% if proposal %}
+      <div class="wi-card-title">Tu propuesta</div>
 
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap">
         {% if proposal.status == 'accepted' %}
@@ -479,11 +496,8 @@
       </div>
       {% endif %}
 
-    </div>
-    {% else %}
-    <!-- No proposal yet -->
-    <div class="wi-card">
-      <div class="wi-card-title">Tu propuesta</div>
+      {% else %}
+      <!-- No proposal yet -->
       <div style="text-align:center;padding:24px 16px;color:#94a3b8">
         <div style="font-size:2rem;margin-bottom:8px">📋</div>
         <div style="font-size:.9rem;font-weight:600;color:#64748b">Preparando tu propuesta</div>
@@ -491,8 +505,83 @@
           En breve recibirás la propuesta personalizada para tu proyecto.
         </div>
       </div>
-    </div>
-    {% endif %}
+      {% endif %}
+
+    </div>{# end proposal card #}
+
+    <!-- RIGHT: Chat widget -->
+    <div style="display:flex;flex-direction:column;gap:14px">
+
+      <!-- Team intro -->
+      <div class="wi-card">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div class="chat-avatar">T</div>
+          <div>
+            <div style="font-weight:800;font-size:.9rem;color:#0c1c42">Tatiana</div>
+            <div style="font-size:.76rem;color:#5a6d8c">Web-Impulsa · <span style="color:#16a34a;font-weight:700">● En línea</span></div>
+          </div>
+        </div>
+        <div class="chat-bubble">
+          Hola, <strong>{{ lead.name }}</strong>. 👋<br>
+          He preparado esta propuesta para tu proyecto.
+          Si tienes alguna pregunta, escríbeme aquí mismo o por WhatsApp.
+        </div>
+      </div>
+
+      <!-- Message thread + form -->
+      <div class="wi-card">
+        <div class="wi-card-title">Mensajes</div>
+
+        {% if msg_sent %}
+        <div class="next-step-box" style="margin-bottom:10px;font-size:.82rem">
+          ✓ Mensaje enviado.
+        </div>
+        {% endif %}
+
+        {% if portal_msgs %}
+        <div class="chat-msg-thread">
+          {% for m in portal_msgs %}
+          <div style="display:flex;{% if m.direction == 'inbound' %}justify-content:flex-end{% endif %}">
+            <div style="max-width:88%;padding:8px 12px;font-size:.82rem;line-height:1.45;
+                        {% if m.direction == 'inbound' %}background:#eff6ff;color:#1e293b;border-radius:12px 12px 3px 12px
+                        {% else %}background:#f1f5f9;color:#334155;border-radius:12px 12px 12px 3px{% endif %}">
+              {{ m.content }}
+              <div style="font-size:.68rem;color:#94a3b8;margin-top:3px;text-align:{% if m.direction == 'inbound' %}right{% else %}left{% endif %}">
+                {% if m.direction == 'outbound' %}<span style="font-weight:600;color:#1760d6">Tatiana · </span>{% endif %}
+                {{ m.created_at|date:"d/m H:i" }}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" action="/p/{{ access.token }}/message/">
+          <textarea name="message" rows="3" required class="chat-input"
+                    placeholder="Escribe tu pregunta sobre la propuesta…"></textarea>
+          <button type="submit" class="btn-primary" style="margin-bottom:10px">Enviar →</button>
+        </form>
+      </div>
+
+      <!-- WhatsApp -->
+      <div class="wi-card" style="padding:16px">
+        <div class="wi-card-title" style="margin-bottom:10px">WhatsApp</div>
+        <a href="https://wa.me/34613708322?text={{ 'Hola Tatiana, soy '|urlencode }}{{ lead.name|urlencode }}{{ '. Tengo una pregunta sobre mi propuesta ('|urlencode }}{{ proposal.number|default:''|urlencode }}{{ ')'|urlencode }}"
+           target="_blank" rel="noopener" class="btn-wa">
+          💬 Escribir por WhatsApp
+        </a>
+      </div>
+
+      <!-- Telegram -->
+      <div class="wi-card" style="padding:16px">
+        <div class="wi-card-title" style="margin-bottom:10px">Telegram</div>
+        <a href="https://t.me/serkafox?text={{ 'Hola, soy '|urlencode }}{{ lead.name|urlencode }}{{ ' — pregunta sobre propuesta '|urlencode }}{{ proposal.number|default:''|urlencode }}"
+           target="_blank" rel="noopener" class="btn-tg">
+          ✈️ Escribir por Telegram
+        </a>
+      </div>
+
+    </div>{# end right column #}
 
   </div>{# end .proposal-layout #}
 

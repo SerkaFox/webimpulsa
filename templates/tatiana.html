@@ -1245,7 +1245,7 @@
             </p>
 
             <div class="d-grid gap-2 mt-4">
-              <button class="btn btn-success py-3 fw-bold" id="calcLeadBtn" onclick="wiLeadOpen()" style="font-size:1rem">
+              <button class="btn btn-success py-3 fw-bold" id="calcLeadBtn" onclick="window._wiLeadSource='calc';wiLeadOpen()" style="font-size:1rem">
                 📨 Solicitar presupuesto gratuito
               </button>
               <button class="btn btn-primary py-2 fw-bold" onclick="sendToWhatsApp()">
@@ -4191,14 +4191,17 @@ function renderFlex(budget) {
     return '<span style="background:#f1f5f9;color:#475569;border-radius:20px;padding:3px 10px;font-size:.78rem;font-weight:600">' + _tExtra(e.name) + ' (' + _t('flex.missing') + ' ~' + fmt(e.price) + '€)</span>';
   }).join('');
 
-  // Store in wiCalcState for lead modal
-  window.wiCalcState = window.wiCalcState || {};
-  window.wiCalcState.baseName = r.pkg.name;
-  window.wiCalcState.base = r.pkg.base;
-  window.wiCalcState.extras = r.included.reduce(function(s, e) { return s + e.price; }, 0);
-  window.wiCalcState.extraNames = r.included.map(function(e) { return e.name; });
-  window.wiCalcState.rush = false;
-  window.wiCalcState._flexBudget = budget;
+  // Store in separate wiFlexState — never overwrite the main calc selection
+  window.wiFlexState = {
+    baseName:   r.pkg.name,
+    base:       r.pkg.base,
+    extras:     r.included.reduce(function(s, e) { return s + e.price; }, 0),
+    extraNames: r.included.map(function(e) { return e.name; }),
+    rush:       false,
+    maint:      0,
+    maintName:  '',
+    _flexBudget: budget
+  };
   // Resize flip wrapper if back face is currently visible
   if (window.wiFlipHeightUpdate) wiFlipHeightUpdate();
 }
@@ -4214,6 +4217,7 @@ window.wiFlexSync = function(src) {
 };
 
 window.wiFlexRequest = function() {
+  window._wiLeadSource = 'flex';
   if (window.wiLeadOpen) wiLeadOpen();
 };
 
@@ -4243,8 +4247,9 @@ setTimeout(function() { renderFlex(600); }, 100);
     if (!name)    { alert('Por favor, escribe tu nombre.'); return; }
     if (!contact) { alert('Por favor, escribe tu teléfono o email.'); return; }
 
-    // Read current calculator state (may be from normal or flex calculator)
-    var c = window.wiCalcState || {};
+    // Read calculator state: flex if user came from inverse-budget calc, main calc otherwise
+    var _src = window._wiLeadSource || 'calc';
+    var c = (_src === 'flex' && window.wiFlexState) ? window.wiFlexState : (window.wiCalcState || {});
     var sub = (c.base || 0) + (c.extras || 0);
     if (c.rush) sub = Math.round(sub * 1.25);
     var total = sub ? sub - Math.round(sub * 0.15) : 0;
