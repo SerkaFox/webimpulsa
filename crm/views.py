@@ -53,7 +53,7 @@ def _crm_auth(view):
             except Exception:
                 pass
         resp = HttpResponse('Unauthorized', status=401, content_type='text/plain')
-        resp['WWW-Authenticate'] = 'Basic realm="WebImpulsa CRM"'
+        resp['WWW-Authenticate'] = 'Basic realm="Web-Impulsa CRM"'
         return resp
     return wrapper
 
@@ -153,7 +153,7 @@ def _send_lead_emails(lead) -> None:
   <tr>
     <td style="padding:20px 32px 16px;border-bottom:3px solid #1760d6">
       <table width="100%" cellpadding="0" cellspacing="0"><tr>
-        <td><img src="https://webimpulsa.es/static/wi/img/logo.webp" alt="WebImpulsa" height="36" style="display:block"></td>
+        <td><img src="https://webimpulsa.es/static/wi/img/logo.webp" alt="Web-Impulsa" height="36" style="display:block"></td>
         <td align="right" style="font-size:12px;color:#5a6d8c"><a href="https://webimpulsa.es" style="color:#1760d6;text-decoration:none;font-weight:600">webimpulsa.es</a></td>
       </tr></table>
     </td>
@@ -234,7 +234,7 @@ def _send_lead_emails(lead) -> None:
   <tr><td style="padding:16px 32px;background:#f8fafc;border-top:1px solid #e2e8f0">
     <table width="100%" cellpadding="0" cellspacing="0"><tr>
       <td>
-        <p style="margin:0 0 2px;font-size:13px;font-weight:700;color:#0c1c42">Equipo WebImpulsa</p>
+        <p style="margin:0 0 2px;font-size:13px;font-weight:700;color:#0c1c42">Equipo Web-Impulsa</p>
         <p style="margin:0;font-size:12px;color:#5a6d8c">
           <a href="mailto:info@webimpulsa.es" style="color:#1760d6;text-decoration:none">info@webimpulsa.es</a>
           &nbsp;·&nbsp;
@@ -245,7 +245,7 @@ def _send_lead_emails(lead) -> None:
         <a href="{portal_url}" style="display:inline-block;background:#edf4ff;color:#1760d6;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;text-decoration:none">Portal →</a>
       </td>
     </tr></table>
-    <p style="margin:10px 0 0;font-size:11px;color:#cbd5e1;text-align:center">© 2026 WebImpulsa · España</p>
+    <p style="margin:10px 0 0;font-size:11px;color:#cbd5e1;text-align:center">© 2026 Web-Impulsa · España</p>
   </td></tr>
 
 </table>
@@ -256,7 +256,7 @@ def _send_lead_emails(lead) -> None:
 
     # ── 5. Send email with attachments ────────────────────────────────────────
     try:
-        subject_client = f'Tu propuesta WebImpulsa — {pkg}'
+        subject_client = f'Tu propuesta Web-Impulsa — {pkg}'
         msg = EmailMultiAlternatives(
             subject=subject_client,
             body=plain_text,
@@ -266,9 +266,9 @@ def _send_lead_emails(lead) -> None:
         )
         msg.attach_alternative(html_client, 'text/html')
         if pdf_bytes:
-            msg.attach(f'Propuesta_WebImpulsa_{safe_name}.pdf', pdf_bytes, 'application/pdf')
+            msg.attach(f'Propuesta_Web-Impulsa_{safe_name}.pdf', pdf_bytes, 'application/pdf')
         if docx_bytes:
-            msg.attach(f'Propuesta_WebImpulsa_{safe_name}.docx', docx_bytes,
+            msg.attach(f'Propuesta_Web-Impulsa_{safe_name}.docx', docx_bytes,
                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
         msg.send()
         logger.info('Client email sent to %s (pdf=%s docx=%s portal=%s)',

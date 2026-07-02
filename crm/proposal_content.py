@@ -10,7 +10,7 @@ import os
 # ── Company data ── edit here or via environment variables ────────────────────
 # TODO: fill legal_name, nif, address when company registration is confirmed
 WI_COMPANY = {
-    'trade_name': os.getenv('WI_COMPANY_NAME',    'WebImpulsa'),
+    'trade_name': os.getenv('WI_COMPANY_NAME',    'Web-Impulsa'),
     'legal_name': os.getenv('WI_COMPANY_LEGAL',   ''),
     'nif':        os.getenv('WI_COMPANY_NIF',     ''),
     'email':      os.getenv('WI_COMPANY_EMAIL',   'info@webimpulsa.es'),

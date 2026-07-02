@@ -160,6 +160,10 @@ def portal(request, token):
                    .exclude(content__startswith='Enlace de acceso')
                    .order_by('created_at')[:20])
 
+    _PROPOSAL_STATUSES = (Lead.ST_NUEVO, Lead.ST_CONTACTADO,
+                          Lead.ST_PROPUESTA, Lead.ST_NEGOCIACION)
+    portal_mode = 'proposal' if lead.status in _PROPOSAL_STATUSES else 'cabinet'
+
     return render(request, 'crm/portal.html', {
         'step':            'portal',
         'access':          access,
@@ -174,6 +178,7 @@ def portal(request, token):
         'proposal_json':   proposal_json,
         'accepted':        request.GET.get('accepted') == '1',
         'msg_sent':        request.GET.get('msg') == '1',
+        'portal_mode':     portal_mode,
     })
 
 
