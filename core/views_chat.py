@@ -1,14 +1,20 @@
 """
 Live chat backend for webimpulsa.es
+
 Flow:
-  visitor  → POST /wi/chat/start/   → creates ChatSession, notifies Tanya via WA
-  visitor  → POST /wi/chat/send/    → saves ChatMessage, forwards to Tanya via WA
+  visitor  → POST /wi/chat/start/   → creates session, shows greeting (no WA template yet)
+  visitor  → POST /wi/chat/send/    → saves message
+                                       first message → sends WA template + Telegram notification
+                                       subsequent   → sends WA plain text (if operator activated)
   visitor  → GET  /wi/chat/poll/    → returns new messages (operator replies)
-  Tanya    → replies in WhatsApp    → GET/POST /wi/wh/ webhook → saves as operator message
+  Tanya    → replies in WhatsApp    → webhook → first reply = activation (not shown to visitor),
+                                       system resends visitor's first message; then normal routing
+  Tanya/Sergey → reply in Telegram → webhook → saves as operator message, shown to visitor
 """
 import json
 import os
 import logging
+import requests
 
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -24,15 +30,16 @@ OPERATOR_PHONES  = [p.strip() for p in os.getenv("WI_OPERATOR_PHONE", "").split(
 WA_VERIFY_TOKEN  = os.getenv("WI_WA_VERIFY_TOKEN", "")
 WA_PHONE_ID      = os.getenv("WI_WA_PHONE_NUMBER_ID", "")
 
+TG_TOKEN         = os.getenv("WI_TG_TOKEN", "")
+TG_CHAT_ID       = os.getenv("WI_TG_CHAT_ID", "")
+
+TEMPLATE_NAME = "nuevo_mensaje_webimpulsa"
+TEMPLATE_LANG = "es_ES"
+
 
 # ── helpers ─────────────────────────────────────────────────────────────────
 
-TEMPLATE_NAME = "nuevo_mensaje_webimpulsa"
-TEMPLATE_LANG = "es"
-
-
 def _store_wamid(result: dict, session: ChatSession) -> None:
-    """Store WhatsApp message ID → session mapping for reply routing."""
     try:
         wamid = (result.get("messages") or [{}])[0].get("id", "")
         if wamid:
@@ -41,47 +48,72 @@ def _store_wamid(result: dict, session: ChatSession) -> None:
         logger.warning("Could not store wamid: %s", e)
 
 
-def _notify_operator(session: ChatSession, text: str, first: bool = False) -> None:
-    if not OPERATOR_PHONES:
-        return
-
+def _send_wa_template(session: ChatSession, visitor_text: str) -> None:
+    """Send WA template to all operators — called once on first visitor message."""
     ticket_id = "WEB-" + session.short_id
-    short_text = text[:200] if text else "—"
-
-    if first:
-        components = [{
-            "type": "body",
-            "parameters": [
-                {"type": "text", "text": ticket_id},
-                {"type": "text", "text": "Visitante web"},
-                {"type": "text", "text": short_text},
-            ],
-        }]
-        for phone in OPERATOR_PHONES:
-            try:
-                result = wa_send.send_template(phone, TEMPLATE_NAME, TEMPLATE_LANG, components)
-                _store_wamid(result, session)
-            except Exception as e:
-                logger.error("WA template to %s failed: %s — falling back", phone, e)
-                try:
-                    result = wa_send.send_text(
-                        phone,
-                        f"🌐 webimpulsa.es — nuevo chat [{ticket_id}]\n\n"
-                        f"{short_text}\n\n"
-                        f"_Responde a ESTE mensaje para contestar al visitante._"
-                    )
-                    _store_wamid(result, session)
-                except Exception as e2:
-                    logger.error("WA fallback to %s failed: %s", phone, e2)
-    else:
-        for phone in OPERATOR_PHONES:
+    short_text = visitor_text[:200] if visitor_text else "—"
+    components = [{
+        "type": "body",
+        "parameters": [
+            {"type": "text", "text": ticket_id},
+            {"type": "text", "text": "Visitante web"},
+            {"type": "text", "text": short_text},
+        ],
+    }]
+    for phone in OPERATOR_PHONES:
+        try:
+            result = wa_send.send_template(phone, TEMPLATE_NAME, TEMPLATE_LANG, components)
+            _store_wamid(result, session)
+        except Exception as e:
+            logger.error("WA template to %s failed: %s — falling back", phone, e)
             try:
                 result = wa_send.send_text(
-                    phone, f"💬 *Chat {ticket_id}:* {text}"
+                    phone,
+                    f"🌐 webimpulsa.es — nuevo chat [{ticket_id}]\n\n"
+                    f"{short_text}\n\n"
+                    f"_Responde a ESTE mensaje para contestar al visitante._"
                 )
                 _store_wamid(result, session)
-            except Exception as e:
-                logger.error("WA send to %s failed: %s", phone, e)
+            except Exception as e2:
+                logger.error("WA fallback to %s failed: %s", phone, e2)
+
+
+def _send_wa_text(session: ChatSession, text: str) -> None:
+    """Send plain text to all operators — only works after operator has activated (24h window)."""
+    ticket_id = "WEB-" + session.short_id
+    for phone in OPERATOR_PHONES:
+        try:
+            result = wa_send.send_text(phone, f"💬 *Chat {ticket_id}:* {text}")
+            _store_wamid(result, session)
+        except Exception as e:
+            logger.error("WA send to %s failed: %s", phone, e)
+
+
+def _send_tg(session: ChatSession, text: str, with_buttons: bool = False) -> None:
+    """Send Telegram notification."""
+    if not TG_TOKEN or not TG_CHAT_ID:
+        return
+    ticket_id = "WEB-" + session.short_id
+    url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
+    payload: dict = {
+        "chat_id": TG_CHAT_ID,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True,
+        "text": text,
+    }
+    if with_buttons:
+        payload["reply_markup"] = {
+            "inline_keyboard": [[
+                {"text": "✅ Responder", "callback_data": f"chat_reply:{session.short_id}"},
+                {"text": "❌ Ignorar",   "callback_data": f"chat_ignore:{session.short_id}"},
+            ]]
+        }
+    try:
+        r = requests.post(url, json=payload, timeout=10)
+        r.raise_for_status()
+        logger.info("TG notification sent for chat #%s", ticket_id)
+    except Exception as e:
+        logger.error("TG send failed for chat #%s: %s", ticket_id, e)
 
 
 def _messages_as_json(qs):
@@ -100,13 +132,12 @@ def _messages_as_json(qs):
 @csrf_exempt
 @require_POST
 def start_chat(request):
-    """Create session + add system greeting + ping Tanya."""
+    """Create session + show system greeting. WA/TG notifications sent on first real message."""
     try:
         data         = json.loads(request.body or b"{}")
         session_id   = (data.get("session_id") or "").strip()
         trigger      = data.get("trigger", "timer")
         page_time    = int(data.get("page_time_sec", 0))
-        first_msg    = (data.get("first_message") or "").strip()
 
         if not session_id:
             return JsonResponse({"ok": False, "error": "missing session_id"}, status=400)
@@ -125,8 +156,6 @@ def start_chat(request):
                     "¿Tienes alguna duda o quieres saber más sobre nuestros servicios? Escríbenos 😊"
                 ),
             )
-            intro = first_msg or f"Nuevo visitante — lleva {page_time}s leyendo la página."
-            _notify_operator(session, intro, first=True)
 
         return JsonResponse({
             "ok":         True,
@@ -142,7 +171,7 @@ def start_chat(request):
 @csrf_exempt
 @require_POST
 def send_message(request):
-    """Visitor sends a message → save + forward to Tanya."""
+    """Visitor sends a message → save + notify operators."""
     try:
         data       = json.loads(request.body or b"{}")
         session_id = (data.get("session_id") or "").strip()
@@ -157,9 +186,28 @@ def send_message(request):
             return JsonResponse({"ok": False, "error": "session not found"}, status=404)
 
         msg = ChatMessage.objects.create(session=session, sender=ChatMessage.VISITOR, text=text)
-        session.save()  # bump updated_at so webhook can find most-recent active session
+        session.save()
 
-        _notify_operator(session, text)
+        if not session.template_sent:
+            # First real message — send WA template + Telegram notification
+            _send_wa_template(session, text)
+            _send_tg(
+                session,
+                f"💬 <b>Nuevo chat en webimpulsa.es</b>\n\n"
+                f"🎫 Ticket: <b>WEB-{session.short_id}</b>\n"
+                f"📝 Mensaje: <i>{text[:300]}</i>\n\n"
+                f"Responde aquí para chatear con el visitante.",
+                with_buttons=True,
+            )
+            session.template_sent = True
+            session.save(update_fields=["template_sent"])
+        elif session.operator_activated:
+            # Operator already activated — send plain text via WA
+            _send_wa_text(session, text)
+            _send_tg(
+                session,
+                f"💬 <b>WEB-{session.short_id}:</b> {text[:300]}",
+            )
 
         return JsonResponse({"ok": True, "created_at": msg.created_at.isoformat()})
     except Exception as e:
@@ -231,12 +279,25 @@ def _wa_verify(request):
     return HttpResponse("Forbidden", status=403)
 
 
+def _route_session(msg: dict) -> ChatSession | None:
+    """Find the session this operator reply belongs to."""
+    context_wamid = (msg.get("context") or {}).get("id", "")
+    if context_wamid:
+        mapping = WaMessageMap.objects.filter(wamid=context_wamid).select_related("session").first()
+        if mapping:
+            logger.info("Routed by context wamid → session #%s", mapping.session.short_id)
+            return mapping.session
+    session = ChatSession.objects.filter(is_active=True).order_by("-updated_at").first()
+    if session:
+        logger.info("Routed by fallback (most recent) → session #%s", session.short_id)
+    return session
+
+
 @csrf_exempt
 def wa_webhook(request):
-    """Meta WhatsApp Cloud API webhook — receive Tanya's replies."""
+    """Meta WhatsApp Cloud API webhook — receive operator replies."""
     if request.method == "GET":
         return _wa_verify(request)
-
     if request.method != "POST":
         return HttpResponse("Method not allowed", status=405)
 
@@ -250,7 +311,6 @@ def wa_webhook(request):
         changes = entry[0].get("changes", []) if entry else []
         value   = changes[0].get("value", {}) if changes else {}
 
-        # guard: only handle our phone number
         phone_id_in = (value.get("metadata") or {}).get("phone_number_id")
         if WA_PHONE_ID and phone_id_in and phone_id_in != WA_PHONE_ID:
             return JsonResponse({"ok": True, "note": "ignored other phone_id"})
@@ -268,7 +328,6 @@ def wa_webhook(request):
             logger.info("WA webhook: ignored non-operator from=%s", wa_from)
             return JsonResponse({"ok": True, "note": "not operator"})
 
-        # extract text
         msg_type = msg.get("type", "")
         text = ""
         if msg_type == "text":
@@ -283,32 +342,110 @@ def wa_webhook(request):
         if not text:
             return JsonResponse({"ok": True, "note": "empty text"})
 
-        # ── route by reply context first (Tanya used WhatsApp Reply on a notification) ──
-        session = None
-        context_wamid = (msg.get("context") or {}).get("id", "")
-        if context_wamid:
-            mapping = WaMessageMap.objects.filter(wamid=context_wamid).select_related("session").first()
-            if mapping:
-                session = mapping.session
-                logger.info("Routed by context wamid → session %s (chat #%s)",
-                            session.session_id[:8], session.short_id)
-
-        # ── fallback: most recently active session ──
-        if not session:
-            session = ChatSession.objects.filter(is_active=True).order_by("-updated_at").first()
-            if session:
-                logger.info("Routed by fallback (most recent) → session %s (chat #%s)",
-                            session.session_id[:8], session.short_id)
-
+        session = _route_session(msg)
         if not session:
             logger.info("WA webhook: operator reply but no active session")
             return JsonResponse({"ok": True, "note": "no active session"})
 
-        ChatMessage.objects.create(session=session, sender=ChatMessage.OPERATOR, text=text)
-        session.save()
-        logger.info("Operator reply saved → chat #%s", session.short_id)
+        if not session.operator_activated:
+            # First operator reply = activation. Don't show to visitor.
+            # Mark activated and resend the visitor's first real message.
+            session.operator_activated = True
+            session.save(update_fields=["operator_activated"])
+            logger.info("Operator activated session #%s", session.short_id)
+
+            first_visitor_msg = (
+                session.messages
+                .filter(sender=ChatMessage.VISITOR)
+                .order_by("created_at")
+                .first()
+            )
+            if first_visitor_msg:
+                _send_wa_text(session, first_visitor_msg.text)
+                logger.info("Resent first visitor message to operators for session #%s", session.short_id)
+        else:
+            # Normal reply — save and show to visitor
+            ChatMessage.objects.create(session=session, sender=ChatMessage.OPERATOR, text=text)
+            session.save()
+            logger.info("Operator reply saved → chat #%s", session.short_id)
 
     except Exception as e:
         logger.exception("wa_webhook error: %s", e)
 
-    return JsonResponse({"ok": True})  # always 200 to Meta
+    return JsonResponse({"ok": True})
+
+
+# ── Telegram webhook ─────────────────────────────────────────────────────────
+
+@csrf_exempt
+def tg_webhook(request):
+    """Telegram bot webhook — receive operator replies from Telegram."""
+    if request.method != "POST":
+        return HttpResponse("Method not allowed", status=405)
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except Exception:
+        return HttpResponse("Bad JSON", status=400)
+
+    try:
+        # Handle inline button callbacks (✅ Responder / ❌ Ignorar)
+        callback = payload.get("callback_query")
+        if callback:
+            data     = (callback.get("data") or "")
+            tg_from  = str((callback.get("from") or {}).get("id", ""))
+            if tg_from != str(TG_CHAT_ID):
+                return JsonResponse({"ok": True})
+
+            if data.startswith("chat_reply:"):
+                short_id = data.split(":", 1)[1]
+                try:
+                    session = ChatSession.objects.get(short_id=short_id)
+                    # Send all buffered visitor messages to Telegram
+                    msgs = session.messages.filter(sender=ChatMessage.VISITOR).order_by("created_at")
+                    lines = [f"📋 <b>WEB-{short_id} — mensajes del visitante:</b>"]
+                    for m in msgs:
+                        lines.append(f"• {m.text[:200]}")
+                    _send_tg(session, "\n".join(lines))
+                except ChatSession.DoesNotExist:
+                    pass
+            # Answer callback to remove spinner
+            _tg_answer_callback(callback.get("id"))
+            return JsonResponse({"ok": True})
+
+        # Handle plain text reply
+        message  = payload.get("message") or {}
+        tg_from  = str((message.get("from") or {}).get("id", ""))
+        if tg_from != str(TG_CHAT_ID):
+            return JsonResponse({"ok": True})
+
+        text = (message.get("text") or "").strip()
+        if not text or text.startswith("/"):
+            return JsonResponse({"ok": True})
+
+        # Route to most recent active session
+        session = ChatSession.objects.filter(is_active=True).order_by("-updated_at").first()
+        if not session:
+            return JsonResponse({"ok": True})
+
+        ChatMessage.objects.create(session=session, sender=ChatMessage.OPERATOR, text=text)
+        session.save()
+        logger.info("TG operator reply saved → chat #%s", session.short_id)
+
+    except Exception as e:
+        logger.exception("tg_webhook error: %s", e)
+
+    return JsonResponse({"ok": True})
+
+
+def _tg_answer_callback(callback_id: str) -> None:
+    if not TG_TOKEN or not callback_id:
+        return
+    try:
+        requests.post(
+            f"https://api.telegram.org/bot{TG_TOKEN}/answerCallbackQuery",
+            json={"callback_query_id": callback_id},
+            timeout=5,
+        )
+    except Exception:
+        pass

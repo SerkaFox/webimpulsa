@@ -72,14 +72,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 USE_TZ = True
 
-# Email via Mailcow
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = '127.0.0.1'
-EMAIL_PORT = 25
-EMAIL_USE_TLS = False
-EMAIL_HOST_USER = ''
-EMAIL_HOST_PASSWORD = ''
-DEFAULT_FROM_EMAIL = 'info@webimpulsa.es'
+# Email via Brevo SMTP relay (external) / Mailcow (internal fallback)
+EMAIL_BACKEND   = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST      = os.getenv('BREVO_HOST', '127.0.0.1')
+EMAIL_PORT      = int(os.getenv('BREVO_PORT', 25))
+EMAIL_USE_TLS   = bool(os.getenv('BREVO_HOST', ''))
+EMAIL_HOST_USER = os.getenv('BREVO_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('BREVO_PASS', '')
+DEFAULT_FROM_EMAIL  = 'info@webimpulsa.es'
 
 LOGGING = {
     'version': 1,

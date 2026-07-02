@@ -12,7 +12,9 @@ class ChatSession(models.Model):
     short_id      = models.CharField(max_length=8, unique=True, default=_gen_short_id)
     trigger       = models.CharField(max_length=32, default='timer')
     page_time_sec = models.IntegerField(default=0)
-    is_active     = models.BooleanField(default=True)
+    is_active          = models.BooleanField(default=True)
+    template_sent      = models.BooleanField(default=False)
+    operator_activated = models.BooleanField(default=False)
     created_at    = models.DateTimeField(auto_now_add=True)
     updated_at    = models.DateTimeField(auto_now=True)
 

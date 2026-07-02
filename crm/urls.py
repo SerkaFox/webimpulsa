@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from . import views_dossier
 from . import views_portal
+from .views_portal import portal_send_message
 from . import views_proposal
 
 urlpatterns = [
@@ -45,4 +46,5 @@ urlpatterns = [
     path('p/<str:token>/upload/',             views_portal.portal_upload,          name='crm_portal_upload'),
     path('p/<str:token>/file/<int:pk>/',      views_portal.portal_file,            name='crm_portal_file'),
     path('p/<str:token>/proposal/accept/',    views_portal.portal_accept_proposal, name='crm_portal_accept_proposal'),
+    path('p/<str:token>/message/',            portal_send_message,                 name='crm_portal_message'),
 ]

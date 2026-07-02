@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views_chat import start_chat, send_message, poll_messages, lookup_session, wa_webhook
+from .views_chat import start_chat, send_message, poll_messages, lookup_session, wa_webhook, tg_webhook
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -14,4 +14,7 @@ urlpatterns = [
 
     # WhatsApp webhook (Meta sends here)
     path('wi/wh/', wa_webhook, name='wa_webhook'),
+
+    # Telegram webhook (bot sends here)
+    path('wi/tg/', tg_webhook, name='tg_webhook'),
 ]

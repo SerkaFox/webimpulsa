@@ -5,6 +5,7 @@ import logging
 import os
 from datetime import date
 
+from django.core.mail import send_mail, get_connection, EmailMultiAlternatives
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import csrf_exempt
@@ -16,7 +17,7 @@ from .models import (
 )
 from .services import (
     generate_client_access, lead_from_payload, log_communication,
-    NEXT_STEPS,
+    mark_proposal_sent, create_proposal_from_lead, NEXT_STEPS,
 )
 from .wa_templates import compose_portal_message, compose_materials_request
 
@@ -59,6 +60,223 @@ def _crm_auth(view):
 
 # ── public API ────────────────────────────────────────────────────────────────
 
+def _mailcow_connection():
+    """Direct connection to local Mailcow — for internal @webimpulsa.es delivery."""
+    return get_connection(
+        backend='django.core.mail.backends.smtp.EmailBackend',
+        host='127.0.0.1', port=25, use_tls=False,
+        username='', password='',
+    )
+
+
+def _brevo_connection():
+    """Brevo SMTP relay — for external delivery (Gmail, etc.)."""
+    return get_connection(
+        backend='django.core.mail.backends.smtp.EmailBackend',
+        host=os.getenv('BREVO_HOST', 'smtp-relay.brevo.com'),
+        port=int(os.getenv('BREVO_PORT', 587)),
+        use_tls=True,
+        username=os.getenv('BREVO_USER', ''),
+        password=os.getenv('BREVO_PASS', ''),
+    )
+
+
+def _send_lead_emails(lead) -> None:
+    from .pdf import generate_proposal_pdf
+    from .docx_gen import generate_proposal_docx
+
+    pkg     = lead.package or '—'
+    price_s = f'{lead.estimated_price} €' if lead.estimated_price else '—'
+    contact = lead.email or lead.phone or '—'
+    biz     = lead.biz_type or '—'
+
+    # ── 1. Internal notification to Tatiana via Mailcow ───────────────────────
+    subject_tanya = f'📋 Nueva solicitud — {lead.name} | {pkg} | {price_s}'
+    body_tanya = (
+        f"Nueva solicitud en webimpulsa.es\n"
+        f"{'─'*40}\n"
+        f"Nombre:   {lead.name}\n"
+        f"Contacto: {contact}\n"
+        f"Negocio:  {biz}\n"
+        f"{'─'*40}\n"
+        f"Proyecto:    {pkg}\n"
+        f"Presupuesto: {price_s}\n\n"
+        f"→ CRM: https://webimpulsa.es/wi/crm/leads/{lead.pk}/\n"
+    )
+    try:
+        send_mail(subject_tanya, body_tanya, 'info@webimpulsa.es',
+                  ['info@webimpulsa.es'], connection=_mailcow_connection())
+    except Exception as exc:
+        logger.error('Lead notify email failed #%d: %s', lead.pk, exc)
+
+    if not lead.email:
+        return
+
+    # ── 2. Create proposal + portal access ───────────────────────────────────
+    try:
+        proposal = create_proposal_from_lead(lead)
+        mark_proposal_sent(proposal)
+        _, portal_url, _ = generate_client_access(lead, pin_required=False, expires_hours=168)
+    except Exception as exc:
+        logger.error('Proposal/portal setup failed #%d: %s', lead.pk, exc)
+        proposal  = None
+        portal_url = 'https://webimpulsa.es'
+
+    # ── 3. Generate attachments ───────────────────────────────────────────────
+    pdf_bytes  = generate_proposal_pdf(proposal) if proposal else None
+    docx_bytes = generate_proposal_docx(proposal) if proposal else None
+    safe_name  = ''.join(c if c.isalnum() or c in '-_' else '_' for c in lead.name)
+
+    # ── 4. Build HTML email ───────────────────────────────────────────────────
+    first   = (lead.name.split()[0] if lead.name else lead.name)
+    biz_row = (
+        f'<tr><td style="padding:4px 0;color:#5a6d8c;font-size:13px">Tipo de negocio</td>'
+        f'<td style="padding:4px 0;font-weight:600;font-size:13px">{biz}</td></tr>'
+        if biz != '—' else ''
+    )
+    plain_text = (
+        f"Hola {lead.name},\n\n"
+        f"Tu propuesta está lista — la encontrarás adjunta (PDF y Word).\n"
+        f"También puedes revisarla y aceptarla online: {portal_url}\n\n"
+        f"Proyecto: {pkg}\nPresupuesto: {price_s}\n\n"
+        f"info@webimpulsa.es | +34 613 708 322 | webimpulsa.es\n"
+    )
+    html_client = f"""<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f0f4f8;font-family:'Segoe UI',Arial,Helvetica,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:28px 12px">
+<tr><td align="center">
+<table width="580" cellpadding="0" cellspacing="0" style="max-width:580px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.07)">
+
+  <!-- Logo bar -->
+  <tr>
+    <td style="padding:20px 32px 16px;border-bottom:3px solid #1760d6">
+      <table width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td><img src="https://webimpulsa.es/static/wi/img/logo.webp" alt="WebImpulsa" height="36" style="display:block"></td>
+        <td align="right" style="font-size:12px;color:#5a6d8c"><a href="https://webimpulsa.es" style="color:#1760d6;text-decoration:none;font-weight:600">webimpulsa.es</a></td>
+      </tr></table>
+    </td>
+  </tr>
+
+  <!-- Greeting -->
+  <tr><td style="padding:26px 32px 0">
+    <p style="font-size:20px;font-weight:800;color:#0c1c42;margin:0 0 8px">Hola {first} 👋</p>
+    <p style="font-size:14px;color:#5a6d8c;line-height:1.65;margin:0 0 20px">
+      Tu propuesta personalizada está lista. Tienes <strong style="color:#0c1c42">dos opciones</strong>:
+      revisarla online o descargar los archivos adjuntos (PDF y Word).
+    </p>
+  </td></tr>
+
+  <!-- CTA portal -->
+  <tr><td style="padding:0 32px 20px">
+    <a href="{portal_url}"
+       style="display:block;background:#1760d6;color:#ffffff;text-decoration:none;
+              text-align:center;padding:14px 24px;border-radius:8px;
+              font-size:15px;font-weight:800;letter-spacing:.01em">
+      Ver y aceptar propuesta online →
+    </a>
+    <p style="font-size:11px;color:#94a3b8;text-align:center;margin:8px 0 0">
+      El enlace es personal y caduca en 7 días
+    </p>
+  </td></tr>
+
+  <!-- Divider -->
+  <tr><td style="padding:0 32px 20px">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="border-top:1px solid #e2e8f0"></td>
+        <td style="padding:0 12px;white-space:nowrap;font-size:11px;color:#94a3b8">o descarga los adjuntos</td>
+        <td style="border-top:1px solid #e2e8f0"></td>
+      </tr>
+    </table>
+  </td></tr>
+
+  <!-- Attachments note -->
+  <tr><td style="padding:0 32px 24px">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="48%" style="background:#f5f9ff;border:1px solid #d0e1fa;border-radius:8px;padding:12px 14px">
+          <p style="margin:0 0 3px;font-size:12px;font-weight:700;color:#0c1c42">📄 PDF</p>
+          <p style="margin:0;font-size:11px;color:#5a6d8c">Para imprimir o firmar a mano</p>
+        </td>
+        <td width="4%"></td>
+        <td width="48%" style="background:#f5f9ff;border:1px solid #d0e1fa;border-radius:8px;padding:12px 14px">
+          <p style="margin:0 0 3px;font-size:12px;font-weight:700;color:#0c1c42">📝 Word</p>
+          <p style="margin:0;font-size:11px;color:#5a6d8c">Para editar tus datos (NIF, dirección)</p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+
+  <!-- Summary box -->
+  <tr><td style="padding:0 32px 26px">
+    <table width="100%" cellpadding="0" cellspacing="0"
+           style="background:#f5f9ff;border-left:4px solid #1760d6;border-radius:0 8px 8px 0;padding:16px 18px">
+      <tr><td>
+        <p style="font-size:10px;font-weight:700;color:#1760d6;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">Tu proyecto</p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="color:#0c1c42">
+          <tr>
+            <td style="padding:4px 0;color:#5a6d8c;font-size:13px;width:44%">Paquete</td>
+            <td style="padding:4px 0;font-weight:700;font-size:13px">{pkg}</td>
+          </tr>
+          <tr>
+            <td style="padding:2px 0;color:#5a6d8c;font-size:13px">Presupuesto</td>
+            <td style="padding:2px 0;font-weight:700;font-size:15px;color:#1760d6">{price_s} + IVA</td>
+          </tr>
+          {biz_row}
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <!-- Footer -->
+  <tr><td style="padding:16px 32px;background:#f8fafc;border-top:1px solid #e2e8f0">
+    <table width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td>
+        <p style="margin:0 0 2px;font-size:13px;font-weight:700;color:#0c1c42">Equipo WebImpulsa</p>
+        <p style="margin:0;font-size:12px;color:#5a6d8c">
+          <a href="mailto:info@webimpulsa.es" style="color:#1760d6;text-decoration:none">info@webimpulsa.es</a>
+          &nbsp;·&nbsp;
+          <a href="https://wa.me/34613708322" style="color:#1760d6;text-decoration:none">+34 613 708 322</a>
+        </p>
+      </td>
+      <td align="right">
+        <a href="{portal_url}" style="display:inline-block;background:#edf4ff;color:#1760d6;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;text-decoration:none">Portal →</a>
+      </td>
+    </tr></table>
+    <p style="margin:10px 0 0;font-size:11px;color:#cbd5e1;text-align:center">© 2026 WebImpulsa · España</p>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>"""
+
+    # ── 5. Send email with attachments ────────────────────────────────────────
+    try:
+        subject_client = f'Tu propuesta WebImpulsa — {pkg}'
+        msg = EmailMultiAlternatives(
+            subject=subject_client,
+            body=plain_text,
+            from_email='info@webimpulsa.es',
+            to=[lead.email],
+            connection=_brevo_connection(),
+        )
+        msg.attach_alternative(html_client, 'text/html')
+        if pdf_bytes:
+            msg.attach(f'Propuesta_WebImpulsa_{safe_name}.pdf', pdf_bytes, 'application/pdf')
+        if docx_bytes:
+            msg.attach(f'Propuesta_WebImpulsa_{safe_name}.docx', docx_bytes,
+                       'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        msg.send()
+        logger.info('Client email sent to %s (pdf=%s docx=%s portal=%s)',
+                    lead.email, bool(pdf_bytes), bool(docx_bytes), portal_url)
+    except Exception as exc:
+        logger.error('Lead client email failed #%d: %s', lead.pk, exc)
+
+
 @csrf_exempt
 @require_POST
 def create_lead(request):
@@ -73,6 +291,7 @@ def create_lead(request):
         lead = lead_from_payload(payload)
         logger.info('CRM: new lead #%d — %s (%s, %d€)',
                     lead.pk, lead.name, lead.package, lead.estimated_price)
+        _send_lead_emails(lead)
         return JsonResponse({'ok': True, 'lead_id': lead.pk})
 
     except Exception as e:

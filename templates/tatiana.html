@@ -160,7 +160,7 @@
       color: var(--wi-text);
     }
     .hero .lead { max-width: 580px; color: var(--wi-muted); font-size: clamp(1rem, 1.8vw, 1.2rem); }
-    .hero-highlight { color: var(--wi-primary); }
+    .hero-highlight { color: var(--wi-primary); font-size: .75em; font-style: italic; font-weight: 500; }
     .biz-chip {
       display: inline-flex; align-items: center; gap: .35rem;
       padding: .32rem .72rem;
@@ -291,6 +291,16 @@
     .process-step p { font-size: .86rem; color: var(--wi-muted); margin: 0; }
 
     /* CALCULATOR */
+    /* Flip card */
+    .wi-flip-wrapper{perspective:2000px;position:relative;transition:height .65s cubic-bezier(.4,0,.2,1);}
+    .wi-flip-inner{position:relative;transform-style:preserve-3d;transition:transform .72s cubic-bezier(.4,0,.2,1);}
+    .wi-flip-inner.flipped{transform:rotateY(180deg);}
+    .wi-flip-face{backface-visibility:hidden;-webkit-backface-visibility:hidden;width:100%;}
+    .wi-flip-back{position:absolute;top:0;left:0;right:0;transform:rotateY(180deg);}
+    .wi-flip-btn{display:inline-flex;align-items:center;gap:.35rem;padding:.38rem .9rem;border:2px solid var(--wi-primary);border-radius:50px;background:transparent;color:var(--wi-primary);font-size:.8rem;font-weight:700;cursor:pointer;transition:background .18s,color .18s;}
+    .wi-flip-btn:hover{background:var(--wi-primary);color:#fff;}
+    .wi-flip-btn-back{border-color:#94a3b8;color:#64748b;}
+    .wi-flip-btn-back:hover{background:#64748b;color:#fff;}
     .calc-label {
       font-weight: 800; color: var(--wi-primary);
       font-size: .78rem; text-transform: uppercase;
@@ -762,7 +772,8 @@
         <ul class="navbar-nav me-3 gap-1">
           <li class="nav-item"><a class="nav-link" href="#servicios" data-i18n="nav.services">Servicios</a></li>
           <li class="nav-item"><a class="nav-link" href="#quiz" data-i18n="nav.foryou">Para ti</a></li>
-          <li class="nav-item"><a class="nav-link" href="#casos" data-i18n="nav.portfolio">Portafolio</a></li>
+          <!-- PORTFOLIO NAV HIDDEN TEMPORARILY — pending client permission -->
+          <!-- <li class="nav-item"><a class="nav-link" href="#casos" data-i18n="nav.portfolio">Portafolio</a></li> -->
           <li class="nav-item"><a class="nav-link" href="#proceso" data-i18n="nav.how">Cómo funciona</a></li>
           <li class="nav-item"><a class="nav-link" href="#precios" data-i18n="nav.prices">Precios</a></li>
           <li class="nav-item"><a class="nav-link" href="#contacto" data-i18n="nav.contact">Contacto</a></li>
@@ -786,13 +797,12 @@
       <div class="row align-items-center g-5">
         <div class="col-lg-7 fade-up">
           <div class="section-kicker mb-3">Digitalización · Automatización · Crecimiento</div>
-          <h1 class="mb-4">Tu negocio,<br><span class="hero-highlight">mejor y más digital.</span></h1>
+          <h1 class="mb-4">¡Mejoremos tu negocio juntos!<br><span class="hero-highlight">Más ingresos.<br>Menos trabajo.</span></h1>
           <p class="lead mb-3">
-            Webs que venden, sistemas que ahorran tiempo, reservas online, aplicaciones a medida y automatización de procesos —
-            todo lo que tu negocio necesita para crecer sin depender de trabajo manual.
+            Webs que venden. Sistemas que ahorran tiempo. Reservas online. Aplicaciones a medida. Automatización de procesos.
           </p>
           <p class="mb-4" style="color:var(--wi-muted);font-size:.97rem;line-height:1.6">
-            Tu web puede ser mucho más que una tarjeta de visita: puede responder, organizar, avisar, vender y ahorrar tiempo. Conectamos tu negocio con clientes, reservas, mensajes, documentos y procesos automáticos.
+            ¡Tu web tendrá un aspecto moderno y te sentirás orgulloso de él!
           </p>
           <div class="d-flex flex-wrap gap-2 mb-5">
             <span class="biz-chip"><img src="/static/wi/icons/biz-restaurant.webp" style="width:16px;height:16px;object-fit:contain;flex-shrink:0" alt=""><span class="biz-chip-txt">Restaurantes</span></span>
@@ -813,8 +823,8 @@
           <div class="hero-img-wrap">
             <img src="/static/wi/img/hero-dashboard.webp" alt="Panel digital para negocios" class="hero-dash-img" loading="eager">
             <div class="hero-badge">
-              <span style="color:var(--wi-green);font-weight:900;font-size:1.5rem;display:block">+40</span>
-              <span style="color:var(--wi-muted);font-size:.76rem">proyectos en producción</span>
+              <span style="color:var(--wi-green);font-weight:900;font-size:1.5rem;display:block">✓</span>
+              <span id="heroBadge" style="color:var(--wi-muted);font-size:.76rem">Resultados garantizados</span>
             </div>
           </div>
         </div>
@@ -1052,23 +1062,22 @@
     </div>
   </section>
 
-  <!-- PORTAFOLIO / CAROUSEL -->
+  <!-- PORTAFOLIO / CAROUSEL — hidden temporarily, pending client permission to publish
   <section id="casos" class="section-shell section-wave-2">
     <div class="container">
       <div class="section-kicker">Portafolio real</div>
       <h2 class="section-title mb-2">Proyectos que ya funcionan — y generan resultados.</h2>
       <p class="section-subtitle mb-1">Webs y plataformas en producción, con clientes reales. Sitios web para negocios locales en España: restaurantes, talleres, salones de belleza, clínicas, academias y tiendas online.</p>
       <p class="ring-hint">← Arrastra o desliza para explorar · Pulsa un proyecto para ver detalles →</p>
-
       <div class="ring-scene" id="ringScene" tabindex="0" aria-label="Carrusel de proyectos, usa flechas para navegar">
         <div class="ring-stage">
           <div class="ring-inner" id="ringInner"></div>
         </div>
         <div class="ring-dots" id="ringDots"></div>
       </div>
-
     </div>
   </section>
+  -->
 
   <!-- PROCESO -->
   <section id="proceso" class="section-shell">
@@ -1099,6 +1108,16 @@
       <div class="text-center mb-5">
         <span class="launch-badge"><img src="/static/wi/icons/ic-launch.webp" style="width:14px;height:14px;object-fit:contain;vertical-align:middle;margin-right:.25rem" alt=""> Descuento de lanzamiento −15% activo</span>
       </div>
+
+      <!-- FLIP CARD ── front = configurador, back = calculadora inversa -->
+      <div class="wi-flip-wrapper" id="calcFlipWrapper">
+        <div class="wi-flip-inner" id="calcFlipInner">
+
+          <!-- FRONT: configurador por tipo de proyecto -->
+          <div class="wi-flip-face wi-flip-front">
+            <div class="text-end mb-3">
+              <button class="wi-flip-btn" id="calcFlipBtnFwd" onclick="wiFlipCalc()">💰 Calcular por presupuesto →</button>
+            </div>
 
       <div class="row g-4 align-items-start">
 
@@ -1226,30 +1245,149 @@
             </p>
 
             <div class="d-grid gap-2 mt-4">
-              <button class="btn btn-success py-3 fw-bold" onclick="wiLeadOpen()" style="font-size:1rem">
+              <button class="btn btn-success py-3 fw-bold" id="calcLeadBtn" onclick="wiLeadOpen()" style="font-size:1rem">
                 📨 Solicitar presupuesto gratuito
-              </button>
-              <button class="btn btn-outline-primary py-2 fw-bold" onclick="window.WIProposal && WIProposal.open()">
-                Crear propuesta profesional
               </button>
               <button class="btn btn-primary py-2 fw-bold" onclick="sendToWhatsApp()">
                 <img src="/static/wi/icons/ic-whatsapp.webp" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:.4rem" alt=""> Pedir por WhatsApp →
-              </button>
-              <button class="btn btn-outline-primary py-2" onclick="prefillContact()">
-                <img src="/static/wi/icons/ic-email.webp" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:.4rem" alt=""> Enviar por formulario
               </button>
             </div>
           </div>
         </div>
 
       </div>
+          </div><!-- /wi-flip-front -->
+
+          <!-- BACK: calculadora inversa -->
+          <div class="wi-flip-face wi-flip-back">
+            <div class="text-end mb-3">
+              <button class="wi-flip-btn wi-flip-btn-back" id="calcFlipBtnBack" onclick="wiFlipCalc()">← Volver al configurador</button>
+            </div>
+
+      <!-- Flex Budget Calculator -->
+      <div class="wi-card p-4 fade-up" id="flexCalcCard">
+        <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+          <div id="flexTitle" style="font-size:1.1rem;font-weight:900;color:var(--wi-text)">💰 Tengo este presupuesto — ¿qué puedo conseguir?</div>
+          <span id="flexBadge" style="font-size:.75rem;color:var(--wi-muted);background:#f1f5f9;border-radius:10px;padding:2px 10px">Calculadora inversa</span>
+        </div>
+        <p id="flexDesc" style="font-size:.85rem;color:var(--wi-muted);margin-bottom:1.2rem">Introduce tu presupuesto total y te mostramos el mejor paquete + extras que podemos incluir.</p>
+
+        <div class="d-flex align-items-center gap-3 mb-1 flex-wrap">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:200px">
+            <span id="flexBudgetLabel" style="font-size:.85rem;font-weight:700;color:var(--wi-muted);white-space:nowrap">Mi presupuesto:</span>
+            <input type="number" id="flexBudgetNum" min="300" max="6000" step="50" value="600"
+              style="width:90px;border:2px solid var(--wi-primary);border-radius:8px;padding:6px 10px;font-size:1rem;font-weight:900;color:var(--wi-primary);text-align:center;outline:none"
+              oninput="wiFlexSync('num')">
+            <span style="font-weight:900;color:var(--wi-primary)">€</span>
+          </div>
+          <input type="range" id="flexBudgetRange" min="300" max="6000" step="50" value="600"
+            style="flex:2;min-width:140px;accent-color:var(--wi-primary)"
+            oninput="wiFlexSync('range')">
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--wi-muted);margin-bottom:1.5rem;padding:0 2px">
+          <span>300€</span><span>1.000€</span><span>2.000€</span><span>4.000€</span><span>6.000€</span>
+        </div>
+
+        <div id="flexResult" style="display:none">
+          <div style="background:linear-gradient(135deg,#1760d6 0%,#1246a8 100%);border-radius:12px;padding:18px 20px;color:#fff;margin-bottom:14px">
+            <div id="flexBestLabel" style="font-size:.75rem;font-weight:700;opacity:.8;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Mejor opción para tu presupuesto</div>
+            <div style="font-size:1.4rem;font-weight:900" id="flexPkgName">—</div>
+            <div style="font-size:.85rem;opacity:.85;margin-top:2px"><span id="flexBaseLabel">Precio base:</span> <span id="flexPkgBase">—</span></div>
+          </div>
+
+          <div id="flexExtrasIncluded" style="display:none;margin-bottom:12px">
+            <div id="flexIncludedLabel" style="font-size:.8rem;font-weight:800;color:#15803d;margin-bottom:6px">✅ Extras incluidos con tu presupuesto:</div>
+            <div id="flexExtrasList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          </div>
+
+          <div id="flexExtrasOut" style="display:none;margin-bottom:16px">
+            <div id="flexNearLabel" style="font-size:.8rem;font-weight:800;color:#64748b;margin-bottom:6px">➕ Podrías añadir (superan ligeramente el presupuesto):</div>
+            <div id="flexExtrasOutList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          </div>
+
+          <div style="background:#f8fafc;border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+            <div>
+              <div id="flexTotalLabel" style="font-size:.75rem;color:var(--wi-muted);font-weight:700">TOTAL ESTIMADO (con dto. −15%)</div>
+              <div style="font-size:1.5rem;font-weight:900;color:var(--wi-primary)" id="flexTotal">—</div>
+            </div>
+            <div style="font-size:.75rem;color:var(--wi-muted);text-align:right">
+              <span id="flexYourBudgetLabel">Tu presupuesto:</span> <span style="font-weight:800;color:var(--wi-text)" id="flexBudgetShow">—</span><br>
+              <span id="flexDiffLabel">Diferencia:</span> <span id="flexDiff" style="font-weight:700">—</span>
+            </div>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button id="flexBtnReq" class="btn btn-success py-3 fw-bold" onclick="wiFlexRequest()" style="font-size:1rem">
+              📨 Solicitar con este presupuesto
+            </button>
+            <button class="btn btn-primary py-2 fw-bold" onclick="wiFlexWhatsApp()">
+              <img src="/static/wi/icons/ic-whatsapp.webp" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:.4rem" alt=""><span id="flexBtnWA">Pedir por WhatsApp →</span>
+            </button>
+          </div>
+        </div>
+      </div>
+          </div><!-- /wi-flip-back -->
+        </div><!-- /wi-flip-inner -->
+      </div><!-- /wi-flip-wrapper END FLIP CARD -->
+
+      <script>
+      (function(){
+        var wrapper=document.getElementById('calcFlipWrapper');
+        var inner=document.getElementById('calcFlipInner');
+        if(!wrapper||!inner) return;
+        var front=inner.querySelector('.wi-flip-front');
+        var back=inner.querySelector('.wi-flip-back');
+        var flipped=false;
+        // Wrapper has no explicit height initially → sizes naturally to front content.
+        // We only set an explicit height when showing the back face.
+        window.wiFlipHeightUpdate=function(){
+          if(flipped) wrapper.style.height=back.offsetHeight+'px';
+        };
+        window.wiFlipCalc=function(){
+          flipped=!flipped;
+          if(flipped){
+            // Flip to back: lock wrapper height to back content
+            wrapper.style.height=back.offsetHeight+'px';
+          } else {
+            // Flip to front: remove explicit height → wrapper returns to natural (front) size
+            wrapper.style.height='';
+          }
+          inner.classList.toggle('flipped',flipped);
+          setTimeout(function(){
+            var rect=wrapper.getBoundingClientRect();
+            if(rect.top<60) window.scrollBy({top:rect.top-80,behavior:'smooth'});
+          },200);
+        };
+        // i18n for flip buttons and flex calc header
+        window.WI_LANG_HOOKS=window.WI_LANG_HOOKS||[];
+        window.WI_LANG_HOOKS.push(function(){
+          var L=window.WI_L10N,lang=window.WI_LANG||'es';
+          if(!L) return;
+          var t=function(k){return (L[lang]&&L[lang][k])||(L.es&&L.es[k])||'';};
+          var e=document.getElementById('calcFlipBtnFwd');  if(e) e.textContent=t('flip.fwd');
+          e=document.getElementById('calcFlipBtnBack');     if(e) e.textContent=t('flip.back');
+          e=document.getElementById('flexTitle');           if(e) e.textContent=t('flex.title');
+          e=document.getElementById('flexBadge');           if(e) e.textContent=t('flex.badge');
+          e=document.getElementById('flexDesc');            if(e) e.textContent=t('flex.desc');
+          e=document.getElementById('flexBudgetLabel');     if(e) e.textContent=t('flex.budget');
+          e=document.getElementById('flexBestLabel');       if(e) e.textContent=t('flex.best');
+          e=document.getElementById('flexBaseLabel');       if(e) e.textContent=t('flex.base');
+          e=document.getElementById('flexIncludedLabel');   if(e) e.textContent=t('flex.included');
+          e=document.getElementById('flexNearLabel');       if(e) e.textContent=t('flex.near');
+          e=document.getElementById('flexTotalLabel');      if(e) e.textContent=t('flex.total');
+          e=document.getElementById('flexYourBudgetLabel'); if(e) e.textContent=t('flex.yourbudget');
+          e=document.getElementById('flexDiffLabel');       if(e) e.textContent=t('flex.diff');
+          e=document.getElementById('flexBtnReq');          if(e) e.textContent=t('flex.btnReq');
+      e=document.getElementById('flexBtnWA');           if(e) e.textContent=t('flex.btnWA');
+        });
+      })();
+      </script>
 
       <!-- Trust strip -->
       <div class="trust-strip fade-up">
         <div class="trust-item"><span class="trust-icon">✓</span> Primera consulta gratuita</div>
         <div class="trust-item"><span class="trust-icon">✓</span> Propuesta en 48 horas</div>
         <div class="trust-item"><span class="trust-icon">✓</span> Pago en fases</div>
-        <div class="trust-item"><span class="trust-icon">✓</span> +40 proyectos en producción</div>
         <div class="trust-item"><span class="trust-icon">✓</span> Sin tecnicismos</div>
       </div>
 
@@ -2032,10 +2170,13 @@ window.WI_LANG_HOOKS.push(function(){
     }
   });
 
+  // expose for lead modal and flex calculator
+  window.wiCalcState = calc;
 })();
 </script>
 
-<!-- Ring detail overlay — before i18n script so applyTranslations() finds rdUrl/rdCalcBtn/rdCloseBtn -->
+<!--
+Ring detail overlay — hidden temporarily with carousel
 <div class="ring-overlay" id="ringOverlay" role="dialog" aria-modal="true" aria-label="Detalle del proyecto">
   <div class="ring-detail">
     <button class="ring-detail-close" id="ringClose" aria-label="Cerrar">&times;</button>
@@ -2055,6 +2196,7 @@ window.WI_LANG_HOOKS.push(function(){
     </div>
   </div>
 </div>
+-->
 
 <!-- I18N -->
 <script>
@@ -2068,9 +2210,9 @@ es:{
   'nav.services':'Servicios','nav.foryou':'Para ti','nav.portfolio':'Portafolio',
   'nav.how':'Cómo funciona','nav.prices':'Precios','nav.contact':'Contacto','nav.cta':'Hablemos →',
   'hero.kicker':'Digitalización · Automatización · Crecimiento',
-  'hero.h1':'Tu negocio,<br><span class="hero-highlight">mejor y más digital.</span>',
-  'hero.lead1':'Webs que venden, sistemas que ahorran tiempo, reservas online, aplicaciones a medida y automatización de procesos — todo lo que tu negocio necesita para crecer sin depender de trabajo manual.',
-  'hero.lead2':'Tu web puede ser mucho más que una tarjeta de visita: puede responder, organizar, avisar, vender y ahorrar tiempo. Conectamos tu negocio con clientes, reservas, mensajes, documentos y procesos automáticos.',
+  'hero.h1':'¡Mejoremos tu negocio juntos!<br><span class="hero-highlight">Más ingresos.<br>Menos trabajo.</span>',
+  'hero.lead1':'Webs que venden. Sistemas que ahorran tiempo. Reservas online. Aplicaciones a medida. Automatización de procesos.',
+  'hero.lead2':'¡Tu web tendrá un aspecto moderno y te sentirás orgulloso de él!',
   'hero.cta1':'¿Qué necesita mi negocio? →','hero.cta2':'Contactar ahora',
   'hero.badge':'proyectos en producción',
   'hero.chip1':'Restaurantes','hero.chip2':'Salones','hero.chip3':'Talleres',
@@ -2172,6 +2314,10 @@ es:{
   'calc.rush.label':'Urgente +25%','calc.discount':'Descuento lanzamiento −15%',
   'calc.total':'Total estimado','calc.maint.label':'Mantenimiento mensual',
   'calc.note':'* Estimación sin IVA. La propuesta final se adapta a tu proyecto concreto.',
+  'calc.lead':'Solicitar presupuesto gratuito','modal.title':'Solicitar presupuesto gratuito','modal.sub':'Propuesta personalizada en 48 horas, sin compromiso.','modal.name':'Nombre *','modal.contact':'Teléfono o email *','modal.biz':'Tipo de negocio','modal.opt':'(opcional)','modal.submit':'Enviar solicitud →','modal.footer':'Sin spam · Sin compromiso · Respuesta en 48 h','modal.ok.title':'¡Solicitud enviada!','modal.ok.body':'Nos ponemos en contacto contigo en las próximas 48 horas con tu propuesta personalizada.',
+  'flip.fwd':'💰 Calcular por presupuesto →','flip.back':'← Volver al configurador',
+  'flex.title':'💰 Tengo este presupuesto — ¿qué puedo conseguir?','flex.badge':'Calculadora inversa','flex.desc':'Introduce tu presupuesto total y te mostramos el mejor paquete + extras que podemos incluir.','flex.budget':'Mi presupuesto:',
+  'flex.best':'MEJOR OPCIÓN PARA TU PRESUPUESTO','flex.base':'Precio base:','flex.included':'✅ Extras incluidos con tu presupuesto:','flex.near':'➕ Podrías añadir (superan ligeramente el presupuesto):','flex.total':'TOTAL ESTIMADO (con dto. −15%)','flex.yourbudget':'Tu presupuesto:','flex.diff':'Diferencia:','flex.btnReq':'📨 Solicitar con este presupuesto','flex.btnWA':'Pedir por WhatsApp →','flex.favor':'a tu favor','flex.above':'por encima','flex.missing':'faltan',
   'calc.wa':'Pedir presupuesto por WhatsApp →','calc.email':'Enviar por formulario',
   'calc.proj.0':'Landing page','calc.proj.0p':'desde 390€',
   'calc.proj.1':'Web profesional','calc.proj.1p':'desde 590€',
@@ -2181,7 +2327,7 @@ es:{
   'calc.proj.5':'Ya tengo proyecto','calc.proj.5p':'desde 150€',
   'calc.proj.6':'Solo mantenimiento','calc.proj.6p':'desde 39€/mes',
   'trust.0':'Primera consulta gratuita','trust.1':'Propuesta en 48 horas',
-  'trust.2':'Pago en fases','trust.3':'+40 proyectos en producción','trust.4':'Sin tecnicismos',
+  'trust.2':'Pago en fases','trust.3':'Sin tecnicismos',
   'faq.kicker':'Preguntas frecuentes',
   'faq.0q':'¿El precio incluye el hosting y el dominio?',
   'faq.0a':'El precio es solo de desarrollo. El hosting depende del servidor que elijamos juntos (desde 5€/mes en servidor compartido). El dominio se contrata aparte y suele costar 10–15€/año. Te lo gestiono todo si lo necesitas.',
@@ -2219,9 +2365,9 @@ eu:{
   'nav.services':'Zerbitzuak','nav.foryou':'Zuretzat','nav.portfolio':'Portfolioa',
   'nav.how':'Nola funtzionatzen du','nav.prices':'Prezioak','nav.contact':'Kontaktua','nav.cta':'Hitz egin →',
   'hero.kicker':'Digitalizazioa · Automatizazioa · Hazkundea',
-  'hero.h1':'Zure negozioa,<br><span class="hero-highlight">hobeto eta digitalago.</span>',
-  'hero.lead1':'Saltzen duten webak, denbora aurrezten duten sistemak, lineako erreserbak, neurriko aplikazioak eta prozesu-automatizazioa — zure negozioak hazteko behar duen guztia, eskuzko lanaren menpe egon gabe.',
-  'hero.lead2':'Zure weba bisita-txartel bat baino askoz gehiago izan daiteke: erantzun, antolatu, abisatu, saldu eta denbora aurreztu dezake. Zure negozioa bezeroei, erreserbei, mezuei, dokumentuei eta prozesu automatikoei konektatzen diegu.',
+  'hero.h1':'Hobetu dezagun zure negozioa batera!<br><span class="hero-highlight">Diru-sarrera gehiago.<br>Lan gutxiago.</span>',
+  'hero.lead1':'Saltzen duten webak. Denbora aurrezten duten sistemak. Lineako erreserbak. Neurriko aplikazioak. Prozesu-automatizazioa.',
+  'hero.lead2':'Zure webak itxura modernoa izango du eta harro sentituko zara!',
   'hero.cta1':'Zer behar du nire negoziak? →','hero.cta2':'Harremanetan jarri orain',
   'hero.badge':'proiektu ekoizpenean',
   'hero.chip1':'Jatetxeak','hero.chip2':'Apaindegiak','hero.chip3':'Tailerrak',
@@ -2317,6 +2463,10 @@ eu:{
   'calc.rush.label':'Urgentea +%25','calc.discount':'Abian jartzeko deskontua −%15',
   'calc.total':'Guztira estimatua','calc.maint.label':'Hileko mantentze-lana',
   'calc.note':'* BEZik gabeko estimazioa. Azken proposamena zure proiektu zehatzetara egokitzen da.',
+  'calc.lead':'Aurrekontua eskatu doan','modal.title':'Aurrekontua eskatu','modal.sub':'Proposamen pertsonalizatua 48 ordutan, konpromisorik gabe.','modal.name':'Izena *','modal.contact':'Telefonoa edo emaila *','modal.biz':'Negozio mota','modal.opt':'(hautazkoa)','modal.submit':'Eskaera bidali →','modal.footer':'Spam gabe · Konpromisorik gabe · 48 ordutan erantzuna','modal.ok.title':'Eskaera bidalita!','modal.ok.body':'48 ordutan zurekin harremanetan jarriko gara proposamen pertsonalizatuarekin.',
+  'flip.fwd':'💰 Aurrekontuaren arabera kalkulatu →','flip.back':'← Konfiguratzailera itzuli',
+  'flex.title':'💰 Aurrekontu hau daukat — zer lor dezaket?','flex.badge':'Alderantzizko kalkulagailua','flex.desc':'Zure aurrekontu osoa sartu eta zure kasurako pakete + gehigarri onena erakutsiko dizugu.','flex.budget':'Nire aurrekontua:',
+  'flex.best':'ZURE AURREKONTURAKO AUKERA ONENA','flex.base':'Oinarrizko prezioa:','flex.included':'✅ Zure aurrekontuan sartutako gehigarriak:','flex.near':'➕ Gehi zenitzake (aurrekontua apur bat gainditzen dute):','flex.total':'GUZTIRA ESTIMATUA (dto. −%15rekin)','flex.yourbudget':'Zure aurrekontua:','flex.diff':'Aldea:','flex.btnReq':'📨 Aurrekontu honekin eskatu','flex.btnWA':'WhatsApp bidez eskatu →','flex.favor':'zure alde','flex.above':'gainditzen du','flex.missing':'falta',
   'calc.wa':'WhatsApp bidez aurrekontua eskatu →','calc.email':'Formularioz bidali',
   'calc.proj.0':'Landing page','calc.proj.0p':'390€-tik','calc.proj.1':'Web profesionala','calc.proj.1p':'590€-tik',
   'calc.proj.2':'Web + erreserbak','calc.proj.2p':'890€-tik','calc.proj.3':'Lineako denda','calc.proj.3p':'1.290€-tik',
@@ -2324,7 +2474,7 @@ eu:{
   'calc.proj.5':'Badut proiektua','calc.proj.5p':'150€-tik',
   'calc.proj.6':'Mantentze soila','calc.proj.6p':'39€/hil.-tik',
   'trust.0':'Lehen kontsulta doan','trust.1':'Proposamena 48 ordutan',
-  'trust.2':'Fasetan ordaindu','trust.3':'+40 proiektu ekoizpenean','trust.4':'Teknizismorik gabe',
+  'trust.2':'Fasetan ordaindu','trust.3':'Teknizismorik gabe',
   'faq.kicker':'Ohiko galderak',
   'faq.0q':'Prezioak hostinga eta domeinua barne al ditu?',
   'faq.0a':'Prezioa garapen lana bakarrik da. Hostinga aukeratuko dugun zerbitzariaren arabera aldatzen da (5€/hilabetik partekatutako zerbitzarian). Domeinua aparte kontratatzen da eta 10–15€/urteko kostua du normalean. Behar izanez gero, dena kudeatzen dut.',
@@ -2362,9 +2512,9 @@ en:{
   'nav.services':'Services','nav.foryou':'For you','nav.portfolio':'Portfolio',
   'nav.how':'How it works','nav.prices':'Prices','nav.contact':'Contact','nav.cta':'Let\'s talk →',
   'hero.kicker':'Digitalization · Automation · Growth',
-  'hero.h1':'Your business,<br><span class="hero-highlight">better and more digital.</span>',
-  'hero.lead1':'Websites that sell, systems that save time, online bookings, custom applications and process automation — everything your business needs to grow without depending on manual work.',
-  'hero.lead2':'Your website can be much more than a business card: it can respond, organize, notify, sell and save time. We connect your business with customers, bookings, messages, documents and automatic processes.',
+  'hero.h1':'Let\'s grow your business together!<br><span class="hero-highlight">More income.<br>Less work.</span>',
+  'hero.lead1':'Websites that sell. Systems that save time. Online bookings. Custom applications. Process automation.',
+  'hero.lead2':'Your website will have a modern look and you\'ll be proud of it!',
   'hero.cta1':'What does my business need? →','hero.cta2':'Contact us now',
   'hero.badge':'projects in production',
   'hero.chip1':'Restaurants','hero.chip2':'Salons','hero.chip3':'Workshops',
@@ -2460,6 +2610,10 @@ en:{
   'calc.rush.label':'Urgent +25%','calc.discount':'Launch discount −15%',
   'calc.total':'Estimated total','calc.maint.label':'Monthly maintenance',
   'calc.note':'* Estimate excluding VAT. The final proposal is adapted to your specific project.',
+  'calc.lead':'Request free quote','modal.title':'Request a free quote','modal.sub':'Personalised proposal within 48 hours, no commitment.','modal.name':'Name *','modal.contact':'Phone or email *','modal.biz':'Business type','modal.opt':'(optional)','modal.submit':'Send request →','modal.footer':'No spam · No commitment · Reply within 48 h','modal.ok.title':'Request sent!','modal.ok.body':'We will get back to you within 48 hours with your personalised proposal.',
+  'flip.fwd':'💰 Calculate by budget →','flip.back':'← Back to configurator',
+  'flex.title':'💰 I have this budget — what can I get?','flex.badge':'Reverse calculator','flex.desc':'Enter your total budget and we\'ll show you the best package + extras we can include.','flex.budget':'My budget:',
+  'flex.best':'BEST OPTION FOR YOUR BUDGET','flex.base':'Base price:','flex.included':'✅ Extras included in your budget:','flex.near':'➕ You could add (slightly over budget):','flex.total':'ESTIMATED TOTAL (−15% discount)','flex.yourbudget':'Your budget:','flex.diff':'Difference:','flex.btnReq':'📨 Request with this budget','flex.btnWA':'Request via WhatsApp →','flex.favor':'in your favour','flex.above':'over budget','flex.missing':'need',
   'calc.wa':'Request quote via WhatsApp →','calc.email':'Send by form',
   'calc.proj.0':'Landing page','calc.proj.0p':'from €390','calc.proj.1':'Professional website','calc.proj.1p':'from €590',
   'calc.proj.2':'Website + bookings','calc.proj.2p':'from €890','calc.proj.3':'Online store','calc.proj.3p':'from €1,290',
@@ -2467,7 +2621,7 @@ en:{
   'calc.proj.5':'I have a project','calc.proj.5p':'from €150',
   'calc.proj.6':'Maintenance only','calc.proj.6p':'from €39/mo',
   'trust.0':'Free first consultation','trust.1':'Proposal in 48 hours',
-  'trust.2':'Payment in phases','trust.3':'+40 projects in production','trust.4':'No jargon',
+  'trust.2':'Payment in phases','trust.3':'No jargon',
   'faq.kicker':'Frequently asked questions',
   'faq.0q':'Does the price include hosting and domain?',
   'faq.0a':'The price is development only. Hosting depends on the server we choose together (from €5/month on shared hosting). The domain is contracted separately and usually costs €10–15/year. I can manage everything for you if needed.',
@@ -2505,9 +2659,9 @@ ru:{
   'nav.services':'Услуги','nav.foryou':'Для вас','nav.portfolio':'Портфолио',
   'nav.how':'Как работаем','nav.prices':'Цены','nav.contact':'Контакт','nav.cta':'Поговорим →',
   'hero.kicker':'Цифровизация · Автоматизация · Рост',
-  'hero.h1':'Ваш бизнес,<br><span class="hero-highlight">лучше и в цифре.</span>',
-  'hero.lead1':'Сайты, которые продают, системы, которые экономят время, онлайн-бронирование, приложения на заказ и автоматизация процессов — всё, что нужно вашему бизнесу для роста без зависимости от ручного труда.',
-  'hero.lead2':'Ваш сайт может быть гораздо больше, чем визитная карточка: отвечать, организовывать, уведомлять, продавать и экономить время. Мы соединяем ваш бизнес с клиентами, бронированиями, сообщениями, документами и автоматическими процессами.',
+  'hero.h1':'Развиваем ваш бизнес вместе!<br><span class="hero-highlight">Больше дохода.<br>Меньше работы.</span>',
+  'hero.lead1':'Сайты, которые продают. Системы, экономящие время. Онлайн-бронирование. Приложения на заказ. Автоматизация процессов.',
+  'hero.lead2':'Ваш сайт будет выглядеть современно — и вы будете им гордиться!',
   'hero.cta1':'Что нужно моему бизнесу? →','hero.cta2':'Связаться сейчас',
   'hero.badge':'проектов в production',
   'hero.chip1':'Рестораны','hero.chip2':'Салоны','hero.chip3':'Мастерские',
@@ -2603,6 +2757,10 @@ ru:{
   'calc.rush.label':'Срочно +25%','calc.discount':'Скидка запуска −15%',
   'calc.total':'Итого (оценка)','calc.maint.label':'Ежемесячное обслуживание',
   'calc.note':'* Оценка без НДС. Финальное предложение адаптируется под конкретный проект.',
+  'calc.lead':'Запросить бесплатную смету','modal.title':'Запросить бесплатную смету','modal.sub':'Персональное предложение за 48 часов, без обязательств.','modal.name':'Имя *','modal.contact':'Телефон или email *','modal.biz':'Тип бизнеса','modal.opt':'(необязательно)','modal.submit':'Отправить запрос →','modal.footer':'Без спама · Без обязательств · Ответ за 48 ч','modal.ok.title':'Запрос отправлен!','modal.ok.body':'Мы свяжемся с вами в течение 48 часов с вашим персональным предложением.',
+  'flip.fwd':'💰 Рассчитать по бюджету →','flip.back':'← Вернуться к конфигуратору',
+  'flex.title':'💰 У меня такой бюджет — что я получу?','flex.badge':'Обратный калькулятор','flex.desc':'Введите ваш общий бюджет — покажем лучший пакет и дополнения, которые войдут.','flex.budget':'Мой бюджет:',
+  'flex.best':'ЛУЧШИЙ ВАРИАНТ ДЛЯ ВАШЕГО БЮДЖЕТА','flex.base':'Базовая цена:','flex.included':'✅ Дополнения, которые входят в бюджет:','flex.near':'➕ Можно добавить (чуть выходят за бюджет):','flex.total':'ИТОГО (со скидкой −15%)','flex.yourbudget':'Ваш бюджет:','flex.diff':'Разница:','flex.btnReq':'📨 Запросить с этим бюджетом','flex.btnWA':'Написать в WhatsApp →','flex.favor':'в вашу пользу','flex.above':'выходит за бюджет','flex.missing':'не хватает',
   'calc.wa':'Запросить смету в WhatsApp →','calc.email':'Отправить через форму',
   'calc.proj.0':'Landing page','calc.proj.0p':'от 390€','calc.proj.1':'Бизнес-сайт','calc.proj.1p':'от 590€',
   'calc.proj.2':'Сайт + бронирование','calc.proj.2p':'от 890€','calc.proj.3':'Интернет-магазин','calc.proj.3p':'от 1 290€',
@@ -2610,7 +2768,7 @@ ru:{
   'calc.proj.5':'Уже есть проект','calc.proj.5p':'от 150€',
   'calc.proj.6':'Только поддержка','calc.proj.6p':'от 39€/мес',
   'trust.0':'Первая консультация бесплатно','trust.1':'Предложение за 48 часов',
-  'trust.2':'Оплата поэтапно','trust.3':'+40 проектов в production','trust.4':'Без технического жаргона',
+  'trust.2':'Оплата поэтапно','trust.3':'Без технического жаргона',
   'faq.kicker':'Частые вопросы',
   'faq.0q':'Цена включает хостинг и домен?',
   'faq.0a':'Цена — только разработка. Хостинг зависит от выбранного сервера (от 5€/мес на shared-хостинге). Домен покупается отдельно, обычно 10–15€/год. Могу организовать всё, если нужно.',
@@ -2823,10 +2981,19 @@ function applyTranslations(){
     var maintLabel=calcSec.querySelector('#calcMaintRow .label');
     if(maintLabel){ var mimg=maintLabel.querySelector('img'); maintLabel.textContent=' '+t('calc.maint.label'); if(mimg) maintLabel.insertBefore(mimg,maintLabel.firstChild); }
     var cnote=calcSec.querySelector('p[style*="font-size:.76rem"]'); if(cnote) cnote.textContent=t('calc.note');
+    var leadBtn=document.getElementById('calcLeadBtn');
+    if(leadBtn) leadBtn.textContent='📨 '+t('calc.lead');
     var waBtn=calcSec.querySelector('button[onclick="sendToWhatsApp()"]');
     if(waBtn){ var waImg=waBtn.querySelector('img'); waBtn.textContent=' '+t('calc.wa'); if(waImg) waBtn.insertBefore(waImg,waBtn.firstChild); }
-    var emBtn=calcSec.querySelector('button[onclick="prefillContact()"]');
-    if(emBtn){ var emImg=emBtn.querySelector('img'); emBtn.textContent=' '+t('calc.email'); if(emImg) emBtn.insertBefore(emImg,emBtn.firstChild); }
+    // Lead modal
+    var mTitle=document.getElementById('wiLeadTitle'); if(mTitle) mTitle.textContent=t('modal.title');
+    var mSub=document.getElementById('wiLeadSubtitle'); if(mSub) mSub.textContent=t('modal.sub');
+    var mName=document.getElementById('wiLeadNameLabel'); if(mName) mName.textContent=t('modal.name');
+    var mCont=document.getElementById('wiLeadContactLabel'); if(mCont) mCont.textContent=t('modal.contact');
+    var mBiz=document.getElementById('wiLeadBizLabel'); if(mBiz) mBiz.firstChild.textContent=t('modal.biz')+' ';
+    var mOpt=document.getElementById('wiLeadBizOpt'); if(mOpt) mOpt.textContent=t('modal.opt');
+    var mSubmit=document.getElementById('wiLeadSubmitBtn'); if(mSubmit && !mSubmit.disabled) mSubmit.textContent=t('modal.submit');
+    var mFoot=document.getElementById('wiLeadFooter'); if(mFoot) mFoot.textContent=t('modal.footer');
     // Trust strip
     var titems=calcSec.querySelectorAll('.trust-item');
     titems.forEach(function(ti,i){
@@ -2915,12 +3082,15 @@ document.querySelectorAll('.lang-btn').forEach(function(b){
   b.addEventListener('click',function(){ setLang(this.dataset.lang); });
 });
 
+// Merge text translations INTO existing WI_L10N (preserves .extras/.quiz/.maint set at line ~1598)
+window.WI_L10N = window.WI_L10N || {};
+Object.assign(window.WI_L10N, T);
 setLang(LANG);
 
 })();
 </script>
 
-<!-- RING CAROUSEL -->
+<!-- RING CAROUSEL — JS stays, guard `if (!scene) return` makes it a no-op while section is hidden -->
 <script>
 (function() {
   'use strict';
@@ -3720,6 +3890,8 @@ setLang(LANG);
   function renderMessages(msgs, isNew) {
     var hadOperator = false;
     msgs.forEach(function(m) {
+      // When rendering poll results, skip visitor messages — already shown optimistically
+      if (isNew && m.sender === 'visitor') { state.lastMsgTime = m.created_at; return; }
       appendMessage(m.sender, m.text);
       state.lastMsgTime = m.created_at;
       if (isNew && m.sender === 'operator') hadOperator = true;
@@ -3848,32 +4020,212 @@ setLang(LANG);
     <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
       <div class="modal-header border-0 pb-0" style="background:#f8fafc">
         <div>
-          <h5 class="modal-title fw-900 mb-0" style="font-size:1.05rem">Solicitar presupuesto gratuito</h5>
-          <p class="mb-0 mt-1" style="font-size:.8rem;color:#64748b">Propuesta personalizada en 48 horas, sin compromiso.</p>
+          <h5 class="modal-title fw-900 mb-0" style="font-size:1.05rem" id="wiLeadTitle">Solicitar presupuesto gratuito</h5>
+          <p class="mb-0 mt-1" style="font-size:.8rem;color:#64748b" id="wiLeadSubtitle">Propuesta personalizada en 48 horas, sin compromiso.</p>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <div class="modal-body p-4" id="wiLeadBody">
         <div class="mb-3">
-          <label class="form-label fw-bold" style="font-size:.82rem" for="wiLeadName">Nombre *</label>
+          <label class="form-label fw-bold" style="font-size:.82rem" for="wiLeadName" id="wiLeadNameLabel">Nombre *</label>
           <input type="text" class="form-control" id="wiLeadName" placeholder="Tu nombre o empresa" autocomplete="name">
         </div>
         <div class="mb-3">
-          <label class="form-label fw-bold" style="font-size:.82rem" for="wiLeadContact">Teléfono o email *</label>
+          <label class="form-label fw-bold" style="font-size:.82rem" for="wiLeadContact" id="wiLeadContactLabel">Teléfono o email *</label>
           <input type="text" class="form-control" id="wiLeadContact" placeholder="600 000 000 o tu@email.com" autocomplete="tel email">
         </div>
         <div class="mb-4">
-          <label class="form-label" style="font-size:.82rem;color:#64748b" for="wiLeadBiz">Tipo de negocio <span style="font-weight:400">(opcional)</span></label>
+          <label class="form-label" style="font-size:.82rem;color:#64748b" for="wiLeadBiz" id="wiLeadBizLabel">Tipo de negocio <span style="font-weight:400" id="wiLeadBizOpt">(opcional)</span></label>
           <input type="text" class="form-control" id="wiLeadBiz" placeholder="Restaurante, clínica, tienda online...">
         </div>
         <button class="btn btn-success w-100 py-2 fw-bold" id="wiLeadSubmitBtn" onclick="wiLeadSubmit()">
           Enviar solicitud →
         </button>
-        <p class="text-center mb-0 mt-2" style="font-size:.72rem;color:#94a3b8">Sin spam · Sin compromiso · Respuesta en 48 h</p>
+        <p class="text-center mb-0 mt-2" style="font-size:.72rem;color:#94a3b8" id="wiLeadFooter">Sin spam · Sin compromiso · Respuesta en 48 h</p>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+/* Modal translation — runs after i18n IIFE and after modal HTML is in DOM */
+(function(){
+  function applyModalLang(){
+    var L=window.WI_L10N,lang=window.WI_LANG||'es';
+    if(!L) return;
+    var t=function(k){return (L[lang]&&L[lang][k])||(L.es&&L.es[k])||'';};
+    var e=document.getElementById('wiLeadTitle');        if(e) e.textContent=t('modal.title');
+    e=document.getElementById('wiLeadSubtitle');         if(e) e.textContent=t('modal.sub');
+    e=document.getElementById('wiLeadNameLabel');        if(e) e.textContent=t('modal.name');
+    e=document.getElementById('wiLeadContactLabel');     if(e) e.textContent=t('modal.contact');
+    e=document.getElementById('wiLeadBizLabel');
+    if(e&&e.childNodes[0]) e.childNodes[0].nodeValue=t('modal.biz')+' ';
+    e=document.getElementById('wiLeadBizOpt');           if(e) e.textContent=t('modal.opt');
+    e=document.getElementById('wiLeadSubmitBtn');        if(e&&!e.disabled) e.textContent=t('modal.submit');
+    e=document.getElementById('wiLeadFooter');           if(e) e.textContent=t('modal.footer');
+  }
+  window.WI_LANG_HOOKS=window.WI_LANG_HOOKS||[];
+  window.WI_LANG_HOOKS.push(applyModalLang);
+  applyModalLang(); // i18n IIFE already ran — translate immediately
+})();
+</script>
+
+<!-- FLEX BUDGET CALCULATOR -->
+<script>
+(function() {
+'use strict';
+
+var DISC = 0.15;
+var PACKAGES = [
+  { name: 'Landing page',     base: 390  },
+  { name: 'Web profesional',  base: 590  },
+  { name: 'Web con reservas', base: 890  },
+  { name: 'Tienda online',    base: 1290 },
+  { name: 'Proyecto a medida',base: 1690 },
+];
+// Extras ordered by value-for-money (cheapest high-impact first)
+var EXTRAS = [
+  { name: 'Ficha en Google Maps',    price: 80  },
+  { name: 'Correo con tu dominio',   price: 80  },
+  { name: 'Formulario inteligente',  price: 90  },
+  { name: 'Galería de Instagram',    price: 90  },
+  { name: 'Textos que venden',       price: 120 },
+  { name: 'Datos en Excel / Sheets', price: 120 },
+  { name: 'Diseño premium',          price: 150 },
+  { name: 'Avisos antes de cada cita', price: 150 },
+  { name: 'Aparecer en Google',      price: 200 },
+  { name: 'Citas y reservas online', price: 180 },
+  { name: 'Documentos automáticos PDF', price: 180 },
+  { name: 'Web en varios idiomas',   price: 280 },
+  { name: 'Asistente automático 24h',price: 280 },
+  { name: 'Zona privada para clientes', price: 290 },
+  { name: 'Estadísticas de ventas',  price: 350 },
+  { name: 'Cobros y conexiones online', price: 350 },
+  { name: 'Panel para tu equipo',    price: 390 },
+  { name: 'App para móvil',          price: 590 },
+];
+
+function fmt(n) { return n.toLocaleString('es-ES'); }
+
+function calcFromBudget(budget) {
+  // budget = what client pays (after discount)
+  // raw = pre-discount max spend
+  var raw = budget / (1 - DISC);
+
+  // Best package (highest base that fits in raw)
+  var pkg = PACKAGES[0];
+  for (var i = PACKAGES.length - 1; i >= 0; i--) {
+    if (PACKAGES[i].base <= raw) { pkg = PACKAGES[i]; break; }
+  }
+
+  var remaining = raw - pkg.base;
+  var included = [], nearMiss = [];
+
+  for (var j = 0; j < EXTRAS.length; j++) {
+    var e = EXTRAS[j];
+    if (e.price <= remaining) {
+      included.push(e);
+      remaining -= e.price;
+    } else if (e.price <= remaining + 100) {
+      // Almost fits — show as "almost"
+      nearMiss.push(e);
+    }
+  }
+
+  var extrasTotal = included.reduce(function(s, e) { return s + e.price; }, 0);
+  var totalRaw = pkg.base + extrasTotal;
+  var totalFinal = Math.round(totalRaw * (1 - DISC));
+  var diff = budget - totalFinal;
+
+  return { pkg: pkg, included: included, nearMiss: nearMiss.slice(0, 3),
+           totalFinal: totalFinal, diff: diff };
+}
+
+function renderFlex(budget) {
+  var r = calcFromBudget(budget);
+  var res = document.getElementById('flexResult');
+  if (!res) return;
+  res.style.display = '';
+
+  var _t = window.wiT || function(k){ var L=window.WI_L10N; var l=window.WI_LANG||'es'; return (L&&L[l]&&L[l][k])||(L&&L.es&&L.es[k])||''; };
+
+  // Translated package name
+  var _pkgKey = {'Landing page':'calc.proj.0','Web profesional':'calc.proj.1','Web con reservas':'calc.proj.2','Tienda online':'calc.proj.3','Proyecto a medida':'calc.proj.4'};
+  document.getElementById('flexPkgName').textContent = _t(_pkgKey[r.pkg.name] || '') || r.pkg.name;
+  document.getElementById('flexPkgBase').textContent = fmt(r.pkg.base) + '€';
+  document.getElementById('flexTotal').textContent = fmt(r.totalFinal) + '€';
+  document.getElementById('flexBudgetShow').textContent = fmt(budget) + '€';
+
+  // Translated extra name helper
+  var _ntk = (window.WI_L10N && window.WI_L10N.nameToKey) || {};
+  var _exL = window.WI_L10N && window.WI_L10N.extras;
+  var _lang = window.WI_LANG || 'es';
+  var _exTr = (_exL && (_exL[_lang] || _exL.es)) || {};
+  function _tExtra(esName) {
+    var k = _ntk[esName];
+    return (k && _exTr[k] && _exTr[k].name) || esName;
+  }
+
+  var diffEl = document.getElementById('flexDiff');
+  if (r.diff >= 0) {
+    diffEl.textContent = '+' + fmt(r.diff) + '€ ' + _t('flex.favor');
+    diffEl.style.color = '#15803d';
+  } else {
+    diffEl.textContent = fmt(Math.abs(r.diff)) + '€ ' + _t('flex.above');
+    diffEl.style.color = '#dc2626';
+  }
+
+  // Included extras
+  var inclDiv = document.getElementById('flexExtrasIncluded');
+  var inclList = document.getElementById('flexExtrasList');
+  inclDiv.style.display = r.included.length ? '' : 'none';
+  inclList.innerHTML = r.included.map(function(e) {
+    return '<span style="background:#dcfce7;color:#15803d;border-radius:20px;padding:3px 10px;font-size:.78rem;font-weight:700">' + _tExtra(e.name) + ' (' + fmt(e.price) + '€)</span>';
+  }).join('');
+
+  // Near-miss extras
+  var outDiv = document.getElementById('flexExtrasOut');
+  var outList = document.getElementById('flexExtrasOutList');
+  outDiv.style.display = r.nearMiss.length ? '' : 'none';
+  outList.innerHTML = r.nearMiss.map(function(e) {
+    return '<span style="background:#f1f5f9;color:#475569;border-radius:20px;padding:3px 10px;font-size:.78rem;font-weight:600">' + _tExtra(e.name) + ' (' + _t('flex.missing') + ' ~' + fmt(e.price) + '€)</span>';
+  }).join('');
+
+  // Store in wiCalcState for lead modal
+  window.wiCalcState = window.wiCalcState || {};
+  window.wiCalcState.baseName = r.pkg.name;
+  window.wiCalcState.base = r.pkg.base;
+  window.wiCalcState.extras = r.included.reduce(function(s, e) { return s + e.price; }, 0);
+  window.wiCalcState.extraNames = r.included.map(function(e) { return e.name; });
+  window.wiCalcState.rush = false;
+  window.wiCalcState._flexBudget = budget;
+  // Resize flip wrapper if back face is currently visible
+  if (window.wiFlipHeightUpdate) wiFlipHeightUpdate();
+}
+
+window.wiFlexSync = function(src) {
+  var num = document.getElementById('flexBudgetNum');
+  var rng = document.getElementById('flexBudgetRange');
+  if (!num || !rng) return;
+  if (src === 'num') rng.value = num.value;
+  else num.value = rng.value;
+  var v = Math.max(300, Math.min(6000, parseInt(num.value) || 600));
+  renderFlex(v);
+};
+
+window.wiFlexRequest = function() {
+  if (window.wiLeadOpen) wiLeadOpen();
+};
+
+window.wiFlexWhatsApp = function() {
+  if (window.sendToWhatsApp) sendToWhatsApp();
+};
+
+// Initial render
+setTimeout(function() { renderFlex(600); }, 100);
+
+})();
+</script>
 
 <script>
 (function() {
@@ -3891,10 +4243,11 @@ setLang(LANG);
     if (!name)    { alert('Por favor, escribe tu nombre.'); return; }
     if (!contact) { alert('Por favor, escribe tu teléfono o email.'); return; }
 
-    // Read current calculator state
-    var sub = calc.base + calc.extras;
-    if (calc.rush) sub = Math.round(sub * 1.25);
-    var total = sub - Math.round(sub * 0.15);
+    // Read current calculator state (may be from normal or flex calculator)
+    var c = window.wiCalcState || {};
+    var sub = (c.base || 0) + (c.extras || 0);
+    if (c.rush) sub = Math.round(sub * 1.25);
+    var total = sub ? sub - Math.round(sub * 0.15) : 0;
 
     var payload = {
       name:     name,
@@ -3902,13 +4255,13 @@ setLang(LANG);
       biz_type: biz,
       source:   'calculator',
       calc: {
-        package:      calc.baseName,
-        base:         calc.base,
-        extras:       calc.extraNames.slice(),
-        extras_price: calc.extras,
-        rush:         calc.rush,
-        maint:        calc.maint,
-        maint_name:   calc.maintName,
+        package:      c.baseName || '',
+        base:         c.base || 0,
+        extras:       (c.extraNames || []).slice(),
+        extras_price: c.extras || 0,
+        rush:         c.rush || false,
+        maint:        c.maint || 0,
+        maint_name:   c.maintName || '',
         total:        total
       }
     };
@@ -3928,8 +4281,8 @@ setLang(LANG);
         document.getElementById('wiLeadBody').innerHTML =
           '<div style="text-align:center;padding:2.2rem 1rem">' +
           '<div style="font-size:3rem;margin-bottom:.6rem">✅</div>' +
-          '<h5 style="font-weight:900;margin-bottom:.5rem">¡Solicitud enviada!</h5>' +
-          '<p style="color:#64748b;font-size:.9rem;margin:0">Nos ponemos en contacto contigo en las próximas 48 horas con tu propuesta personalizada.</p>' +
+          '<h5 style="font-weight:900;margin-bottom:.5rem">'+(window.wiT&&wiT('modal.ok.title')||'¡Solicitud enviada!')+'</h5>' +
+          '<p style="color:#64748b;font-size:.9rem;margin:0">'+(window.wiT&&wiT('modal.ok.body')||'Nos ponemos en contacto contigo en las próximas 48 horas con tu propuesta personalizada.')+'</p>' +
           '</div>';
       } else {
         btn.disabled = false;
@@ -3942,6 +4295,13 @@ setLang(LANG);
       btn.textContent = 'Enviar solicitud →';
       alert('Error de conexión. Por favor, inténtalo de nuevo.');
     });
+  };
+
+  window.wiT = function(key) {
+    var lang = window.WI_LANG || localStorage.getItem('wi_lang') || 'es';
+    var L = window.WI_L10N;
+    if (!L) return '';
+    return (L[lang] && L[lang][key]) || (L.es && L.es[key]) || '';
   };
 })();
 </script>

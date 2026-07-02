@@ -17,6 +17,7 @@ WI_COMPANY = {
     'phone':      os.getenv('WI_COMPANY_PHONE',   '+34 613 708 322'),
     'website':    os.getenv('WI_COMPANY_WEBSITE', 'https://webimpulsa.es'),
     'address':    os.getenv('WI_COMPANY_ADDRESS', ''),
+    'city':       os.getenv('WI_COMPANY_CITY',    ''),
     'logo_url':   '/static/wi/img/logo.webp',
 }
 

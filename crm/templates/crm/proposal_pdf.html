@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Propuesta {{ proposal.number }}</title>
+<style>
+@page {
+  size: A4;
+  margin: 18mm 18mm 22mm 18mm;
+  @bottom-right {
+    content: "Pág. " counter(page) " / " counter(pages);
+    font-size: 8pt;
+    color: #94a3b8;
+  }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  font-size: 9.5pt;
+  color: #0c1c42;
+  line-height: 1.5;
+}
+
+/* ── Header ── */
+.header { margin-bottom: 18pt; }
+.header-inner {
+  display: table;
+  width: 100%;
+}
+.header-logo { display: table-cell; vertical-align: middle; width: 40%; }
+.header-logo img { height: 36pt; }
+.header-logo .brand-text {
+  font-size: 18pt;
+  font-weight: 900;
+  color: #1760d6;
+  letter-spacing: -0.5pt;
+}
+.header-logo .brand-text span { color: #0c1c42; }
+.header-meta { display: table-cell; vertical-align: middle; text-align: right; }
+.header-badge {
+  display: inline-block;
+  background: #1760d6;
+  color: #fff;
+  font-size: 8pt;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3pt 10pt;
+  border-radius: 14pt;
+  margin-bottom: 5pt;
+}
+.header-meta p { font-size: 8pt; color: #5a6d8c; }
+.header-meta p strong { color: #0c1c42; }
+
+.divider-blue {
+  border: none;
+  border-top: 2px solid #1760d6;
+  margin: 10pt 0 14pt;
+}
+.divider-light {
+  border: none;
+  border-top: 1px solid #d0e1fa;
+  margin: 12pt 0;
+}
+
+/* ── Two-column row ── */
+.row-2 { display: table; width: 100%; }
+.col { display: table-cell; vertical-align: top; }
+.col-50 { width: 50%; }
+.col-55 { width: 55%; }
+.col-45 { width: 45%; }
+.col-gap { padding-right: 14pt; }
+
+/* ── Section heading ── */
+.section-title {
+  font-size: 7pt;
+  font-weight: 700;
+  color: #1760d6;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 5pt;
+}
+
+/* ── Client / Company blocks ── */
+.info-box {
+  background: #f5f9ff;
+  border: 1px solid #d0e1fa;
+  border-left: 3px solid #1760d6;
+  border-radius: 4pt;
+  padding: 9pt 11pt;
+}
+.info-box p { font-size: 9pt; color: #0c1c42; margin-bottom: 2pt; }
+.info-box p.label { font-size: 7.5pt; color: #5a6d8c; margin-bottom: 1pt; }
+.info-box .fill-line {
+  display: block;
+  border-bottom: 1px dashed #94a3b8;
+  min-height: 13pt;
+  margin-bottom: 4pt;
+}
+
+/* ── Pricing table ── */
+.price-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 6pt;
+}
+.price-table th {
+  font-size: 7.5pt;
+  font-weight: 700;
+  color: #5a6d8c;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #d0e1fa;
+  padding: 4pt 6pt;
+  text-align: left;
+}
+.price-table th.right { text-align: right; }
+.price-table td {
+  padding: 5pt 6pt;
+  font-size: 9pt;
+  color: #0c1c42;
+  border-bottom: 1px solid #edf4ff;
+}
+.price-table td.right { text-align: right; }
+.price-table td.muted { color: #5a6d8c; font-size: 8.5pt; padding-left: 16pt; }
+.price-table .subtotal td { font-size: 8.5pt; color: #5a6d8c; }
+.price-table .discount td { color: #009e73; font-weight: 600; }
+.price-table .iva-row td { color: #5a6d8c; font-size: 8.5pt; }
+.price-table .total-row td {
+  font-size: 11pt;
+  font-weight: 900;
+  color: #1760d6;
+  border-top: 2px solid #1760d6;
+  border-bottom: none;
+  padding-top: 7pt;
+}
+.price-table .maint-row td { color: #5a6d8c; font-size: 8.5pt; font-style: italic; }
+
+/* ── Scope list ── */
+.scope-list { margin: 0; padding-left: 13pt; }
+.scope-list li { font-size: 9pt; color: #0c1c42; margin-bottom: 3pt; }
+.oos-list { margin: 0; padding-left: 13pt; }
+.oos-list li { font-size: 8.5pt; color: #5a6d8c; margin-bottom: 2pt; }
+
+/* ── Timeline / Phases ── */
+.phase-row { display: table; width: 100%; margin-bottom: 4pt; }
+.phase-dot {
+  display: table-cell;
+  width: 16pt;
+  vertical-align: top;
+  padding-top: 1pt;
+  font-size: 10pt;
+  color: #1760d6;
+}
+.phase-text { display: table-cell; font-size: 9pt; color: #0c1c42; }
+
+/* ── Payment info ── */
+.payment-box {
+  background: #edf4ff;
+  border: 1px solid #c3d8f7;
+  border-radius: 4pt;
+  padding: 9pt 11pt;
+}
+.payment-box p { font-size: 9pt; color: #0c1c42; }
+.payment-row { display: table; width: 100%; margin-top: 6pt; }
+.payment-cell {
+  display: table-cell;
+  width: 50%;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #c3d8f7;
+  border-radius: 4pt;
+  padding: 8pt;
+}
+.payment-cell:first-child { margin-right: 4pt; }
+.payment-cell .pct { font-size: 18pt; font-weight: 900; color: #1760d6; }
+.payment-cell .desc { font-size: 8pt; color: #5a6d8c; margin-top: 2pt; }
+.payment-gap { display: table-cell; width: 8pt; }
+
+/* ── Conditions ── */
+.condition-item {
+  padding: 4pt 0 4pt 10pt;
+  border-left: 2px solid #d0e1fa;
+  font-size: 8pt;
+  color: #5a6d8c;
+  margin-bottom: 4pt;
+  line-height: 1.4;
+}
+
+/* ── Signature block ── */
+.sig-block { display: table; width: 100%; margin-top: 10pt; }
+.sig-cell { display: table-cell; vertical-align: top; padding-right: 12pt; }
+.sig-cell:last-child { padding-right: 0; }
+.sig-label { font-size: 8pt; color: #5a6d8c; margin-bottom: 4pt; }
+.sig-line {
+  border-bottom: 1px solid #0c1c42;
+  min-height: 28pt;
+  display: block;
+  margin-bottom: 3pt;
+}
+.sig-sub { font-size: 7.5pt; color: #94a3b8; }
+
+/* ── Page break control ── */
+.page-break { page-break-before: always; }
+.no-break { page-break-inside: avoid; }
+
+/* ── Validity badge ── */
+.validity {
+  display: inline-block;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 7.5pt;
+  font-weight: 700;
+  padding: 2pt 8pt;
+  border-radius: 10pt;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════
+     CABECERA
+══════════════════════════════════════════════════ -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-logo">
+      <img src="https://webimpulsa.es/static/wi/img/logo.webp" alt="WebImpulsa">
+    </div>
+    <div class="header-meta">
+      <div class="header-badge">Propuesta comercial</div>
+      <p><strong>Nº {{ proposal.number }}</strong></p>
+      <p>Fecha: {{ proposal.issued_at|date:"d/m/Y" }}</p>
+      <p>Válido hasta: {{ proposal.valid_days }} días naturales</p>
+    </div>
+  </div>
+</div>
+<hr class="divider-blue">
+
+<!-- ══════════════════════════════════════════════════
+     EMISOR / CLIENTE
+══════════════════════════════════════════════════ -->
+<div class="row-2" style="margin-bottom:14pt">
+
+  <!-- Emisor -->
+  <div class="col col-50 col-gap">
+    <div class="section-title">Emisor</div>
+    <div class="info-box">
+      <p style="font-weight:800;font-size:10pt">{{ company.trade_name }}</p>
+      {% if company.legal_name %}<p>{{ company.legal_name }}</p>{% endif %}
+      {% if company.nif %}<p>NIF/NIE: {{ company.nif }}</p>{% endif %}
+      {% if company.address %}<p>{{ company.address }}{% if company.city %}, {{ company.city }}{% endif %}</p>{% endif %}
+      <p>{{ company.email }}</p>
+      <p>{{ company.phone }}</p>
+      <p>{{ company.website }}</p>
+    </div>
+  </div>
+
+  <!-- Cliente -->
+  <div class="col col-50">
+    <div class="section-title">Preparado para</div>
+    <div class="info-box">
+      <p style="font-weight:800;font-size:10pt">{{ proposal.client_name }}</p>
+      {% if proposal.client_email %}<p>{{ proposal.client_email }}</p>{% endif %}
+      {% if proposal.client_phone %}<p>{{ proposal.client_phone }}</p>{% endif %}
+      {% if proposal.client_biz_type %}<p style="color:#5a6d8c">{{ proposal.client_biz_type }}</p>{% endif %}
+      <p class="label" style="margin-top:8pt">NIF / CIF (para factura)</p>
+      <span class="fill-line"></span>
+      <p class="label">Dirección fiscal</p>
+      <span class="fill-line"></span>
+    </div>
+  </div>
+
+</div>
+
+<div class="row-2" style="margin-bottom:4pt">
+  <div class="col col-50 col-gap">
+    <p style="font-size:8pt;color:#5a6d8c">
+      <strong style="color:#0c1c42">Proyecto:</strong> {{ proposal.project_name }}
+    </p>
+  </div>
+  <div class="col col-50">
+    <p style="font-size:8pt;color:#5a6d8c">
+      <strong style="color:#0c1c42">Plazo estimado:</strong> {{ deadline }}
+      &nbsp;&nbsp;<span class="validity">Validez: {{ proposal.valid_days }} días</span>
+    </p>
+  </div>
+</div>
+
+<hr class="divider-light">
+
+<!-- ══════════════════════════════════════════════════
+     DESGLOSE ECONÓMICO
+══════════════════════════════════════════════════ -->
+<div class="section-title" style="margin-bottom:6pt">Desglose económico</div>
+
+<table class="price-table">
+  <thead>
+    <tr>
+      <th style="width:70%">Concepto</th>
+      <th class="right">Importe</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Paquete base -->
+    <tr>
+      <td><strong>{{ proposal.package }}</strong></td>
+      <td class="right"><strong>{{ proposal.package_base_price }} €</strong></td>
+    </tr>
+
+    <!-- Extras -->
+    {% for extra in proposal.extras %}
+    <tr>
+      <td class="muted">+ {{ extra.name }}</td>
+      <td class="right" style="color:#5a6d8c">{{ extra.price }} €</td>
+    </tr>
+    {% endfor %}
+
+    <!-- Rush -->
+    {% if proposal.rush and proposal.rush_amount %}
+    <tr>
+      <td class="muted">+ Urgencia (×1.25)</td>
+      <td class="right" style="color:#d97706">+{{ proposal.rush_amount }} €</td>
+    </tr>
+    {% endif %}
+
+    <!-- Subtotal -->
+    <tr class="subtotal">
+      <td>Subtotal</td>
+      <td class="right">{{ subtotal_before_discount }} €</td>
+    </tr>
+
+    <!-- Descuento -->
+    <tr class="discount">
+      <td>Descuento {{ proposal.discount_pct }}%</td>
+      <td class="right">−{{ proposal.discount_amount }} €</td>
+    </tr>
+
+    <!-- Base imponible -->
+    <tr class="subtotal">
+      <td>Base imponible</td>
+      <td class="right">{{ proposal.taxable_base }} €</td>
+    </tr>
+
+    <!-- IVA -->
+    <tr class="iva-row">
+      <td>IVA 21%</td>
+      <td class="right">{{ proposal.iva_amount }} €</td>
+    </tr>
+
+    <!-- Total -->
+    <tr class="total-row">
+      <td>TOTAL CON IVA</td>
+      <td class="right">{{ proposal.total_with_iva }} €</td>
+    </tr>
+
+    <!-- Mantenimiento -->
+    {% if proposal.maintenance_plan %}
+    <tr class="maint-row">
+      <td style="padding-top:8pt">Plan de mantenimiento: {{ proposal.maintenance_plan }}</td>
+      <td class="right" style="padding-top:8pt">{{ proposal.maintenance_price }} €/mes</td>
+    </tr>
+    {% endif %}
+  </tbody>
+</table>
+
+<hr class="divider-light">
+
+<!-- ══════════════════════════════════════════════════
+     ALCANCE
+══════════════════════════════════════════════════ -->
+<div class="row-2 no-break">
+  <div class="col col-55 col-gap">
+    <div class="section-title">Alcance del proyecto</div>
+    <ul class="scope-list">
+      {% for item in scope %}<li>{{ item }}</li>{% endfor %}
+    </ul>
+  </div>
+  <div class="col col-45">
+    <div class="section-title">No incluido</div>
+    <ul class="oos-list">
+      {% for item in out_of_scope %}<li>{{ item }}</li>{% endfor %}
+    </ul>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     FASES DEL PROYECTO / PAGO
+══════════════════════════════════════════════════ -->
+<hr class="divider-light">
+<div class="row-2 no-break">
+
+  <div class="col col-50 col-gap">
+    <div class="section-title">Fases del proyecto</div>
+    {% for phase in phases %}
+    <div class="phase-row">
+      <div class="phase-dot">›</div>
+      <div class="phase-text">{{ phase }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="col col-50">
+    <div class="section-title">Forma de pago</div>
+    <div class="payment-box">
+      <p style="font-weight:700;margin-bottom:8pt">Pago en dos etapas</p>
+      <div class="payment-row">
+        <div class="payment-cell">
+          <div class="pct">50%</div>
+          <div class="desc">Al inicio del proyecto<br><strong>{{ half_payment }} €</strong> (sin IVA)</div>
+        </div>
+        <div class="payment-gap"></div>
+        <div class="payment-cell">
+          <div class="pct">50%</div>
+          <div class="desc">A la entrega final<br><strong>{{ half_payment }} €</strong> (sin IVA)</div>
+        </div>
+      </div>
+      <p style="font-size:8pt;color:#5a6d8c;margin-top:7pt">
+        La entrega se realizará una vez abonado el importe final.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     CONDICIONES GENERALES
+══════════════════════════════════════════════════ -->
+<hr class="divider-light">
+<div class="section-title">Condiciones generales</div>
+{% for cond in conditions %}
+<div class="condition-item">{{ forloop.counter }}. {{ cond }}</div>
+{% endfor %}
+
+<!-- ══════════════════════════════════════════════════
+     BLOQUE DE FIRMA
+══════════════════════════════════════════════════ -->
+<hr class="divider-light">
+<div class="section-title">Aceptación</div>
+<p style="font-size:8.5pt;color:#5a6d8c;margin-bottom:10pt">
+  La firma de este documento implica la aceptación de la propuesta, alcance, precio y condiciones indicadas.
+</p>
+
+<div class="sig-block">
+  <div class="sig-cell" style="width:38%">
+    <div class="sig-label">Nombre completo del cliente</div>
+    <span class="sig-line"></span>
+    <div class="sig-sub">Nombre y apellidos</div>
+  </div>
+  <div class="sig-cell" style="width:22%">
+    <div class="sig-label">NIF / CIF</div>
+    <span class="sig-line"></span>
+    <div class="sig-sub">Documento fiscal</div>
+  </div>
+  <div class="sig-cell" style="width:20%">
+    <div class="sig-label">Fecha</div>
+    <span class="sig-line"></span>
+    <div class="sig-sub">dd / mm / aaaa</div>
+  </div>
+  <div class="sig-cell" style="width:20%;padding-right:0">
+    <div class="sig-label">Firma</div>
+    <span class="sig-line"></span>
+    <div class="sig-sub">&nbsp;</div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="margin-top:16pt;text-align:center">
+  <p style="font-size:7.5pt;color:#94a3b8">
+    {{ company.trade_name }} · {{ company.email }} · {{ company.phone }} · {{ company.website }}
+    {% if company.nif %} · NIF {{ company.nif }}{% endif %}
+  </p>
+</div>
+
+</body>
+</html>

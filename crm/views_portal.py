@@ -5,11 +5,13 @@ URL scheme (all public — authenticated by magic-link token):
   POST      /p/<token>/upload/           file upload endpoint
   GET       /p/<token>/file/<pk>/        protected file download
   POST      /p/<token>/proposal/accept/  client accepts the proposal
+  POST      /p/<token>/message/          client sends a message to the team
 """
 import json
 import mimetypes
 import logging
 import os
+import urllib.request
 
 from django.http import (
     FileResponse, Http404, HttpResponse, JsonResponse
@@ -24,6 +26,23 @@ from .services import (
     accept_proposal, log_communication, proposal_to_template_input,
     record_portal_visit, save_material, validate_portal_token,
 )
+
+_WI_TG_TOKEN   = os.getenv('WI_TG_TOKEN', '')
+_WI_TG_CHAT_ID = os.getenv('WI_TG_CHAT_ID', '')
+
+
+def _notify_tg(text: str) -> None:
+    if not (_WI_TG_TOKEN and _WI_TG_CHAT_ID):
+        return
+    try:
+        url  = f'https://api.telegram.org/bot{_WI_TG_TOKEN}/sendMessage'
+        data = json.dumps({'chat_id': _WI_TG_CHAT_ID, 'text': text,
+                           'parse_mode': 'HTML'}).encode()
+        req  = urllib.request.Request(url, data=data,
+                                      headers={'Content-Type': 'application/json'})
+        urllib.request.urlopen(req, timeout=5)
+    except Exception as exc:
+        logger.warning('Portal TG notify failed: %s', exc)
 
 logger = logging.getLogger(__name__)
 
@@ -129,21 +148,32 @@ def portal(request, token):
             'conditions': proposal.conditions,
         }, ensure_ascii=False, default=str)
 
-    materials = lead.materials.all()
+    materials     = lead.materials.all()
+    milestones    = lead.milestones.all()
     status_label  = CLIENT_STATUS_LABEL.get(lead.status, lead.status)
     next_step_msg = CLIENT_NEXT_STEP.get(lead.status, '')
+    # Last 10 portal messages (inbound from client + outbound from team)
+    portal_msgs = (lead.comm_log
+                   .filter(channel=CommunicationLog.CH_PORTAL)
+                   .exclude(content__startswith='Cliente verificó')
+                   .exclude(content__startswith='Propuesta ')
+                   .exclude(content__startswith='Enlace de acceso')
+                   .order_by('created_at')[:20])
 
     return render(request, 'crm/portal.html', {
         'step':            'portal',
         'access':          access,
         'lead':            lead,
         'materials':       materials,
+        'milestones':      milestones,
+        'portal_msgs':     portal_msgs,
         'status_label':    status_label,
         'next_step':       next_step_msg,
         'wants_materials': lead.status in (Lead.ST_ACEPTADO, Lead.ST_EN_TRABAJO),
         'proposal':        proposal,
         'proposal_json':   proposal_json,
         'accepted':        request.GET.get('accepted') == '1',
+        'msg_sent':        request.GET.get('msg') == '1',
     })
 
 
@@ -251,6 +281,8 @@ def portal_accept_proposal(request, token):
     agree     = request.POST.get('agree', '').strip()
     name      = request.POST.get('accept_name', '').strip()
     nif       = request.POST.get('accept_nif', '').strip()
+    address   = request.POST.get('accept_address', '').strip()
+    city      = request.POST.get('accept_city', '').strip()
     signature = request.POST.get('accept_signature', '').strip()
 
     if not agree:
@@ -260,7 +292,60 @@ def portal_accept_proposal(request, token):
 
     accept_proposal(proposal, name, nif, signature)
 
+    # Save fiscal address to proposal if provided
+    if address or city or nif:
+        if address: proposal.client_address = address[:300]
+        if city:    proposal.client_city    = city[:100]
+        if nif:     proposal.client_nif     = nif[:30]
+        proposal.save(update_fields=['client_address', 'client_city', 'client_nif', 'updated_at'])
+
     logger.info('Proposal %s accepted via portal: lead #%d by %s',
                 proposal.number, lead.pk, name)
 
+    _notify_tg(
+        f'✅ <b>Propuesta aceptada</b>\n'
+        f'Cliente: {name} ({nif or "sin NIF"})\n'
+        f'Propuesta: {proposal.number} — {proposal.total_with_iva}€\n'
+        f'→ https://webimpulsa.es/wi/crm/{lead.pk}/'
+    )
+
     return redirect(f'/p/{token}/?accepted=1')
+
+
+# ── Client message ────────────────────────────────────────────────────────────
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def portal_send_message(request, token):
+    """POST /p/<token>/message/ — client sends a message to the team."""
+    access = validate_portal_token(token)
+    if access is None:
+        return JsonResponse({'ok': False, 'error': 'Token inválido o expirado'}, status=403)
+
+    needs_pin = access.pin_required and not _is_pin_verified(request, token)
+    if needs_pin:
+        return JsonResponse({'ok': False, 'error': 'PIN no verificado'}, status=403)
+
+    lead = access.lead
+    text = (request.POST.get('message') or '').strip()
+    if not text:
+        return JsonResponse({'ok': False, 'error': 'Mensaje vacío'}, status=400)
+    if len(text) > 2000:
+        text = text[:2000]
+
+    log_communication(
+        lead=lead,
+        direction=CommunicationLog.DIR_INBOUND,
+        channel=CommunicationLog.CH_PORTAL,
+        content=text,
+        status=CommunicationLog.ST_DELIVERED,
+    )
+
+    _notify_tg(
+        f'💬 <b>Mensaje del portal</b> — {lead.name}\n'
+        f'Proyecto: {lead.package or "—"}\n\n'
+        f'{text}\n\n'
+        f'→ https://webimpulsa.es/wi/crm/{lead.pk}/'
+    )
+
+    return redirect(f'/p/{token}/?msg=1')

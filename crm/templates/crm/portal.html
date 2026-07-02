@@ -356,6 +356,40 @@
     {% endif %}
   </div>
 
+  <!-- Milestones timeline -->
+  {% if milestones %}
+  <div class="wi-card">
+    <div class="wi-card-title">Progreso del proyecto</div>
+    {% for m in milestones %}
+    <div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #f1f5f9">
+      <div style="flex-shrink:0;margin-top:2px">
+        {% if m.status == 'done' %}
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#f0fdf4;color:#16a34a;font-size:13px">✓</span>
+        {% elif m.status == 'in_progress' %}
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#eff6ff;color:#2563eb;font-size:11px;font-weight:900">▶</span>
+        {% elif m.status == 'blocked' %}
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#fef2f2;color:#dc2626;font-size:13px">!</span>
+        {% else %}
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#f8fafc;color:#94a3b8;font-size:11px">○</span>
+        {% endif %}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.86rem;font-weight:{% if m.status == 'done' %}600{% else %}700{% endif %};
+                    color:{% if m.status == 'done' %}#16a34a{% elif m.status == 'in_progress' %}#1760d6{% elif m.status == 'blocked' %}#dc2626{% else %}#64748b{% endif %}">
+          {{ m.title }}
+        </div>
+        {% if m.description %}
+        <div style="font-size:.78rem;color:#94a3b8;margin-top:2px">{{ m.description }}</div>
+        {% endif %}
+        {% if m.due_date %}
+        <div style="font-size:.74rem;color:#cbd5e1;margin-top:1px">{{ m.due_date|date:"d/m/Y" }}</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
   <!-- Proposal card (shown when a sent/viewed/accepted proposal exists) -->
   {% if proposal %}
   <div class="wi-card" id="proposalCard">
@@ -422,13 +456,19 @@
         <input type="text" name="accept_name" placeholder="Nombre completo *" required
                style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
                       font-size:.84rem;outline:none;margin-bottom:8px;font-family:inherit">
-        <input type="text" name="accept_nif" placeholder="DNI/NIF/CIF (opcional)"
+        <input type="text" name="accept_nif" placeholder="DNI/NIF/CIF (para factura)"
                style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
                       font-size:.84rem;outline:none;margin-bottom:8px;font-family:inherit">
-        <input type="text" name="accept_signature" placeholder="Escribe tu nombre como firma digital"
+        <input type="text" name="accept_address" placeholder="Dirección fiscal (para factura)"
+               style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
+                      font-size:.84rem;outline:none;margin-bottom:8px;font-family:inherit">
+        <input type="text" name="accept_city" placeholder="CP y ciudad (ej: 48901 Barakaldo, Bizkaia)"
+               style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
+                      font-size:.84rem;outline:none;margin-bottom:8px;font-family:inherit">
+        <input type="text" name="accept_signature" placeholder="Escribe tu nombre como firma digital *" required
                style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
                       font-size:.84rem;outline:none;margin-bottom:12px;font-family:inherit">
-        <button type="submit" class="btn-primary">Confirmar aceptación →</button>
+        <button type="submit" class="btn-primary">✓ Confirmar aceptación</button>
       </form>
     </div>
     {% endif %}
@@ -493,12 +533,49 @@
   </div>
   {% endif %}
 
-  <!-- Contact -->
+  <!-- Messages -->
   <div class="wi-card">
-    <div class="wi-card-title">¿Tienes alguna duda?</div>
-    <p style="font-size:.85rem;color:#64748b;margin:0 0 14px">
-      Escríbenos directamente por WhatsApp. Te respondemos lo antes posible.
-    </p>
+    <div class="wi-card-title">Mensajes</div>
+
+    {% if msg_sent %}
+    <div class="next-step-box" style="margin-bottom:12px">
+      ✓ Mensaje enviado. Te respondemos lo antes posible.
+    </div>
+    {% endif %}
+
+    <!-- Thread -->
+    {% if portal_msgs %}
+    <div style="margin-bottom:14px;max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px">
+      {% for m in portal_msgs %}
+      <div style="display:flex;{% if m.direction == 'inbound' %}justify-content:flex-end{% endif %}">
+        <div style="max-width:82%;padding:9px 13px;border-radius:12px;font-size:.83rem;line-height:1.5;
+                    {% if m.direction == 'inbound' %}background:#eff6ff;color:#1e293b;border-bottom-right-radius:3px
+                    {% else %}background:#f1f5f9;color:#334155;border-bottom-left-radius:3px{% endif %}">
+          <div>{{ m.content }}</div>
+          <div style="font-size:.7rem;color:#94a3b8;margin-top:3px;text-align:{% if m.direction == 'inbound' %}right{% else %}left{% endif %}">
+            {% if m.direction == 'outbound' %}<span style="font-weight:600;color:#1760d6">WebImpulsa · </span>{% endif %}
+            {{ m.created_at|date:"d/m H:i" }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Input form -->
+    <form method="post" action="/p/{{ access.token }}/message/">
+      <textarea name="message" rows="3" required
+                placeholder="Escribe aquí tu consulta, corrección o comentario…"
+                style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px 12px;
+                       font-size:.84rem;font-family:inherit;resize:vertical;outline:none;
+                       margin-bottom:8px;box-sizing:border-box"></textarea>
+      <button type="submit" class="btn-primary">Enviar mensaje →</button>
+    </form>
+  </div>
+
+  <!-- Contact WhatsApp -->
+  <div class="wi-card">
+    <div class="wi-card-title">¿Prefieres WhatsApp?</div>
     <a href="https://wa.me/34613708322?text={{ 'Hola, soy '|urlencode }}{{ lead.name|urlencode }}{{ ', tengo una consulta sobre mi proyecto: '|urlencode }}{{ lead.package|urlencode }}"
        target="_blank" rel="noopener" class="btn-wa">
       💬 Escribir por WhatsApp
