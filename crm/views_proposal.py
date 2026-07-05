@@ -144,6 +144,24 @@ def proposal_save(request, pid):
     proposal.compute_totals()
     proposal.save()
 
+    # Keep the parent Lead's price fields in sync — leads_list, dossier exports,
+    # the client portal header and the CRM budget card all read from Lead, not Proposal.
+    lead = proposal.lead
+    lead.package            = proposal.package
+    lead.package_base_price = proposal.package_base_price
+    lead.extras             = [e['name'] for e in proposal.extras]
+    lead.extras_price       = proposal.extras_price
+    lead.rush               = proposal.rush
+    lead.discount_pct       = proposal.discount_pct
+    lead.maintenance_plan   = proposal.maintenance_plan
+    lead.maintenance_price  = proposal.maintenance_price
+    lead.estimated_price    = proposal.taxable_base
+    lead.save(update_fields=[
+        'package', 'package_base_price', 'extras', 'extras_price', 'rush',
+        'discount_pct', 'maintenance_plan', 'maintenance_price', 'estimated_price',
+        'updated_at',
+    ])
+
     return JsonResponse({
         'ok':             True,
         'taxable_base':   proposal.taxable_base,

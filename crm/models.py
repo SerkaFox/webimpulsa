@@ -1,4 +1,5 @@
 import hashlib
+import math
 import os
 from datetime import timedelta
 
@@ -80,6 +81,10 @@ class Lead(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    # Bumped each time the admin chat widget polls for this lead — used to
+    # detect "Tatiana currently has this lead open" and skip WA/TG duplicate pings.
+    admin_chat_seen_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -187,6 +192,13 @@ class CommunicationLog(models.Model):
     notes         = models.TextField(blank=True)
     delivered_at  = models.DateTimeField(null=True, blank=True)
     created_at    = models.DateTimeField(auto_now_add=True)
+
+    # Portal chat extras (only meaningful for channel=portal)
+    reply_to  = models.ForeignKey('self', null=True, blank=True,
+                                   on_delete=models.SET_NULL, related_name='replies')
+    reactions = models.JSONField(default=list, blank=True)   # [{"emoji": "❤️", "by": "client"|"team"}]
+    deleted   = models.BooleanField(default=False)
+    read_at   = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -398,20 +410,23 @@ class Proposal(models.Model):
 
     def compute_totals(self):
         """Recompute all totals from component prices."""
+        _r = lambda x: math.floor(x + 0.5)  # JS-compatible round (half-up)
         subtotal = self.package_base_price + self.extras_price
         if self.rush:
-            self.rush_amount = round(subtotal * 0.25)
+            self.rush_amount = _r(subtotal * 0.25)
             subtotal += self.rush_amount
         else:
             self.rush_amount = 0
-        self.discount_amount = round(subtotal * self.discount_pct / 100)
+        self.discount_amount = _r(subtotal * self.discount_pct / 100)
         self.taxable_base    = subtotal - self.discount_amount
-        self.iva_amount      = round(self.taxable_base * self.iva_pct / 100)
+        self.iva_amount      = _r(self.taxable_base * self.iva_pct / 100)
         self.total_with_iva  = self.taxable_base + self.iva_amount
 
     @property
     def is_editable(self) -> bool:
-        return self.status in (self.ST_DRAFT, self.ST_SENT)
+        # Client viewing the link auto-flips status to "viewed" — that alone
+        # shouldn't lock editing. Only a signed/accepted proposal is final.
+        return self.status in (self.ST_DRAFT, self.ST_SENT, self.ST_VIEWED)
 
     @property
     def is_client_visible(self) -> bool:

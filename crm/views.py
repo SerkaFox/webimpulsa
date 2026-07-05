@@ -8,16 +8,17 @@ from datetime import date
 from django.core.mail import send_mail, get_connection, EmailMultiAlternatives
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from .models import (
     CommunicationLog, EvidenceFile, Lead, PaymentRecord,
-    ProjectMaterial, ProjectMilestone, WorkLog,
+    ProjectMaterial, ProjectMilestone, Proposal, WorkLog,
 )
 from .services import (
-    generate_client_access, lead_from_payload, log_communication,
-    mark_proposal_sent, create_proposal_from_lead, NEXT_STEPS,
+    client_presence, generate_client_access, lead_from_payload, log_communication,
+    mark_proposal_sent, create_proposal_from_lead, serialize_chat_message, NEXT_STEPS,
 )
 from .wa_templates import compose_portal_message, compose_materials_request
 
@@ -356,6 +357,13 @@ def lead_detail(request, pk):
     total_hours  = sum(float(w.hours) for w in work_logs) if work_logs else 0
     total_income = sum(p.amount for p in payments if p.status == PaymentRecord.ST_RECEIVED)
 
+    accepted_proposal = (lead.proposals
+                         .filter(status=Proposal.ST_ACCEPTED)
+                         .order_by('-created_at')
+                         .first())
+    invoice_total = accepted_proposal.total_with_iva if accepted_proposal else 0
+    owed_total    = max(invoice_total - total_income, 0)
+
     return render(request, 'crm/lead_detail.html', {
         'lead':               lead,
         'statuses':           Lead.STATUS_CHOICES,
@@ -373,6 +381,8 @@ def lead_detail(request, pk):
         'evidence':           evidence,
         'total_hours':        total_hours,
         'total_income':       total_income,
+        'invoice_total':      invoice_total,
+        'owed_total':         owed_total,
         'milestone_choices':  ProjectMilestone.STATUS_CHOICES,
         'worklog_categories': WorkLog.CATEGORY_CHOICES,
         'payment_methods':    PaymentRecord.METHOD_CHOICES,
@@ -568,6 +578,21 @@ def lead_add_payment(request, pk):
 @_crm_auth
 @csrf_exempt
 @require_POST
+def payment_confirm(request, pk):
+    """POST /wi/crm/payment/<pk>/confirm/ — mark a pending PaymentRecord as received."""
+    from django.utils.timezone import localdate
+    p = get_object_or_404(PaymentRecord, pk=pk)
+    p.status = PaymentRecord.ST_RECEIVED
+    if not p.payment_date:
+        p.payment_date = localdate()
+    p.save(update_fields=['status', 'payment_date'])
+    return JsonResponse({'ok': True, 'status': p.status, 'amount': p.amount,
+                         'method': p.get_method_display()})
+
+
+@_crm_auth
+@csrf_exempt
+@require_POST
 def lead_add_evidence(request, pk):
     """POST /wi/crm/<pk>/evidence/ — add evidence file/URL (multipart)."""
     lead  = get_object_or_404(Lead, pk=pk)
@@ -586,6 +611,106 @@ def lead_add_evidence(request, pk):
         e.file = request.FILES['file']
     e.save()
     return JsonResponse({'ok': True, 'id': e.pk})
+
+
+# ── Admin chat (mirrors the client portal chat, channel=portal) ─────────────
+
+def _portal_chat_qs(lead):
+    return (lead.comm_log.filter(channel=CommunicationLog.CH_PORTAL)
+            .exclude(content__startswith='Cliente verificó')
+            .exclude(content__startswith='Propuesta ')
+            .exclude(content__startswith='Enlace de acceso')
+            .select_related('reply_to'))
+
+
+@_crm_auth
+@require_GET
+def lead_chat_messages(request, pk):
+    """GET /wi/crm/<pk>/chat/messages/ — poll chat thread; marks client msgs as read."""
+    lead = get_object_or_404(Lead, pk=pk)
+    msgs = list(_portal_chat_qs(lead).order_by('created_at')[:200])
+
+    unread_ids = [m.pk for m in msgs
+                  if m.direction == CommunicationLog.DIR_INBOUND and m.read_at is None]
+    if unread_ids:
+        CommunicationLog.objects.filter(pk__in=unread_ids).update(read_at=timezone.now())
+
+    # Tatiana is actively polling this lead's chat — skip WA/TG duplicate pings for a while
+    Lead.objects.filter(pk=lead.pk).update(admin_chat_seen_at=timezone.now())
+
+    client_online, client_last_seen = client_presence(lead)
+    return JsonResponse({
+        'ok': True,
+        'messages': [serialize_chat_message(m) for m in msgs],
+        'client_online': client_online,
+        'client_last_seen': client_last_seen.isoformat() if client_last_seen else None,
+    })
+
+
+@_crm_auth
+@csrf_exempt
+@require_POST
+def lead_chat_send(request, pk):
+    """POST /wi/crm/<pk>/chat/send/ — Tatiana sends a message to the client portal chat."""
+    lead = get_object_or_404(Lead, pk=pk)
+    text = (request.POST.get('message') or '').strip()
+    if not text:
+        return JsonResponse({'ok': False, 'error': 'Mensaje vacío'}, status=400)
+    if len(text) > 2000:
+        text = text[:2000]
+
+    reply_to = None
+    reply_to_id = request.POST.get('reply_to', '').strip()
+    if reply_to_id.isdigit():
+        reply_to = _portal_chat_qs(lead).filter(pk=int(reply_to_id)).first()
+
+    msg = CommunicationLog.objects.create(
+        lead=lead,
+        direction=CommunicationLog.DIR_OUTBOUND,
+        channel=CommunicationLog.CH_PORTAL,
+        content=text,
+        status=CommunicationLog.ST_SENT,
+        reply_to=reply_to,
+    )
+    return JsonResponse({'ok': True, 'message': serialize_chat_message(msg)})
+
+
+@_crm_auth
+@csrf_exempt
+@require_POST
+def lead_chat_react(request, pk, mid):
+    """POST /wi/crm/<pk>/chat/<mid>/react/ — Tatiana toggles an emoji reaction."""
+    lead  = get_object_or_404(Lead, pk=pk)
+    emoji = (request.POST.get('emoji') or '').strip()
+    if not emoji:
+        return JsonResponse({'ok': False, 'error': 'Falta el emoji'}, status=400)
+
+    msg = get_object_or_404(_portal_chat_qs(lead), pk=mid)
+    reactions = list(msg.reactions or [])
+    existing = next((r for r in reactions if r.get('by') == 'team'), None)
+
+    if existing and existing.get('emoji') == emoji:
+        reactions = [r for r in reactions if r.get('by') != 'team']
+    elif existing:
+        existing['emoji'] = emoji
+    else:
+        reactions.append({'emoji': emoji, 'by': 'team'})
+
+    msg.reactions = reactions
+    msg.save(update_fields=['reactions'])
+    return JsonResponse({'ok': True, 'reactions': reactions})
+
+
+@_crm_auth
+@csrf_exempt
+@require_POST
+def lead_chat_delete(request, pk, mid):
+    """POST /wi/crm/<pk>/chat/<mid>/delete/ — Tatiana soft-deletes her own message."""
+    lead = get_object_or_404(Lead, pk=pk)
+    msg  = get_object_or_404(_portal_chat_qs(lead), pk=mid, direction=CommunicationLog.DIR_OUTBOUND)
+    msg.deleted = True
+    msg.save(update_fields=['deleted'])
+    return JsonResponse({'ok': True})
 
 
 @_crm_auth

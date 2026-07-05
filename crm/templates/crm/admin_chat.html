@@ -1,0 +1,317 @@
+<!-- Admin chat widget — mirrors crm/portal_chat.html but posts as Tatiana (CRM auth). -->
+<div class="card" style="padding:0;overflow:hidden;display:flex;flex-direction:column;min-height:460px;max-height:680px">
+
+  <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;
+              border-bottom:1px solid #e8eef6;background:#f8fafc;flex-shrink:0">
+    <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#0f172a,#334155);
+                color:#fff;font-size:1.05rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      {{ lead.name|slice:":1"|upper }}
+    </div>
+    <div>
+      <div style="font-weight:800;font-size:.9rem;color:#0c1c42">{{ lead.name }}</div>
+      <div id="adminChatPresence" style="font-size:.74rem;color:#94a3b8">···</div>
+    </div>
+  </div>
+
+  <div id="adminChatThread" data-lead-pk="{{ lead.pk }}"
+       style="flex:1;overflow-y:auto;padding:14px 14px 8px;
+              display:flex;flex-direction:column;gap:4px;min-height:240px">
+    <div style="text-align:center;color:#94a3b8;font-size:.78rem;padding:20px 0">Cargando mensajes…</div>
+  </div>
+
+  <div id="adminChatReplyBar" style="display:none;padding:8px 12px;background:#eff6ff;border-top:1px solid #dbeafe;
+                                      font-size:.76rem;color:#1e293b;align-items:center;justify-content:space-between;gap:8px">
+    <div style="overflow:hidden">
+      <div style="font-weight:700;color:#2563eb">Respondiendo</div>
+      <div id="adminChatReplyText" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+    </div>
+    <button onclick="adminChatCancelReply()" style="border:none;background:none;color:#94a3b8;font-size:1rem;cursor:pointer;flex-shrink:0">✕</button>
+  </div>
+
+  <div id="adminChatReactionPicker" style="display:none;position:fixed;background:#fff;border:1px solid #e2e8f0;
+                                            border-radius:14px;padding:6px;box-shadow:0 4px 14px rgba(0,0,0,.12);
+                                            gap:2px;z-index:1000;flex-wrap:wrap;max-width:216px"></div>
+
+  <div style="border-top:1px solid #e8eef6;padding:10px 12px;flex-shrink:0">
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <textarea id="adminChatInput" rows="2"
+                style="flex:1;border:1.5px solid #cbd5e1;border-radius:10px;padding:8px 11px;
+                       font-size:.82rem;font-family:inherit;resize:none;outline:none;line-height:1.45"
+                placeholder="Escribe un mensaje al cliente…"></textarea>
+      <button onclick="adminChatSend()" id="adminChatSendBtn"
+              style="background:#2563eb;color:#fff;border:none;border-radius:10px;padding:8px 14px;
+                     font-size:.82rem;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0;align-self:flex-end">
+        Enviar →
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+  if (window._wiAdminChatInit) return;
+  window._wiAdminChatInit = true;
+
+  var threadEl = document.getElementById('adminChatThread');
+  var LEAD_PK = threadEl.dataset.leadPk;
+  var replyToId = null;
+  var knownIds = {};
+  var firstLoad = true;
+  var EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '🎉', '😍', '👏',
+                '😊', '😅', '🤔', '🙌', '💪', '👀', '✅', '💯', '🥳', '😁'];
+
+  function _getAuth() {
+    var stored = sessionStorage.getItem('crm_auth');
+    if (stored) return 'Basic ' + stored;
+    var pw = prompt('Contraseña CRM:');
+    if (!pw) return '';
+    var enc = btoa(':' + pw);
+    sessionStorage.setItem('crm_auth', enc);
+    return 'Basic ' + enc;
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function renderContent(raw) {
+    var urlRe = /(https?:\/\/[^\s<]+)/g;
+    var parts = String(raw).split(urlRe);
+    var html = '';
+    parts.forEach(function(part, i) {
+      if (i % 2 === 1) {
+        var safeUrl = escapeHtml(part);
+        var isImg = /\.(png|jpe?g|gif|webp)(\?.*)?$/i.test(part);
+        if (isImg) {
+          html += '<a href="' + safeUrl + '" target="_blank" rel="noopener">' +
+                  '<img src="' + safeUrl + '" style="max-width:220px;border-radius:8px;display:block;margin-top:6px" loading="lazy"></a>';
+        } else {
+          html += '<a href="' + safeUrl + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">' + safeUrl + '</a>';
+        }
+      } else {
+        html += escapeHtml(part).replace(/\n/g, '<br>');
+      }
+    });
+    return html;
+  }
+
+  function fmtTime(iso) {
+    return new Date(iso).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
+  }
+  function dayKey(iso) { return new Date(iso).toDateString(); }
+  function dayLabel(iso) {
+    var d = new Date(iso), today = new Date(), yest = new Date(); yest.setDate(today.getDate() - 1);
+    if (d.toDateString() === today.toDateString()) return 'Hoy';
+    if (d.toDateString() === yest.toDateString()) return 'Ayer';
+    return d.toLocaleDateString('es-ES', {day: '2-digit', month: 'long'});
+  }
+
+  function beep() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.frequency.value = 660;
+      osc.connect(gain); gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .35);
+      osc.start(); osc.stop(ctx.currentTime + .35);
+    } catch (e) {}
+  }
+
+  function renderBubble(m, prevDay) {
+    var mine = m.direction === 'outbound';   // Tatiana's own messages
+    var wrap = document.createElement('div');
+    var showDivider = prevDay !== dayKey(m.created_at);
+    var dividerHtml = showDivider
+      ? '<div style="text-align:center;margin:10px 0 4px"><span style="background:#f1f5f9;color:#94a3b8;' +
+        'font-size:.7rem;font-weight:700;padding:3px 12px;border-radius:10px">' + dayLabel(m.created_at) + '</span></div>'
+      : '';
+
+    var replyHtml = '';
+    if (m.reply_to) {
+      replyHtml = '<div style="font-size:.72rem;opacity:.8;border-left:2px solid currentColor;' +
+                  'padding:2px 8px;margin-bottom:4px;border-radius:2px;background:rgba(0,0,0,.05)">' +
+                  escapeHtml((m.reply_to.content || '').slice(0, 80)) + '</div>';
+    }
+
+    var ticksHtml = '';
+    if (mine) {
+      ticksHtml = m.read_at
+        ? '<span style="color:#53bdeb" title="Leído por el cliente">✓✓</span>'
+        : '<span style="color:#94a3b8" title="Enviado">✓</span>';
+    }
+
+    var reactHtml = '';
+    if (m.reactions && m.reactions.length) {
+      reactHtml = '<div style="margin-top:3px">' + m.reactions.map(function(r) {
+        return '<span style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;' +
+               'padding:0 6px;font-size:.78rem;margin-right:3px">' + r.emoji + '</span>';
+      }).join('') + '</div>';
+    }
+
+    var actionsHtml =
+      '<span class="chat-act" data-act="react" title="Reaccionar" style="cursor:pointer;margin-right:8px">🙂</span>' +
+      '<span class="chat-act" data-act="reply" title="Responder" style="cursor:pointer;margin-right:8px">↩</span>' +
+      (mine ? '<span class="chat-act" data-act="delete" title="Eliminar" style="cursor:pointer">🗑</span>' : '');
+
+    var bubbleColor = m.deleted
+      ? (mine ? 'background:#334155;opacity:.55;color:#fff' : 'background:#f1f5f9;opacity:.6;color:#64748b;font-style:italic')
+      : (mine ? 'background:#334155;color:#fff' : 'background:#eff6ff;color:#1e293b');
+    var radius = mine ? '14px 14px 3px 14px' : '14px 14px 14px 3px';
+
+    wrap.innerHTML = dividerHtml +
+      '<div style="display:flex;' + (mine ? 'justify-content:flex-end' : 'gap:8px;align-items:flex-end') + '" data-msg-id="' + m.id + '">' +
+      (mine ? '' : '<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#64748b,#334155);' +
+                   'color:#fff;font-size:.78rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">' +
+                   '{{ lead.name|slice:":1"|upper }}' + '</div>') +
+      '<div style="max-width:78%">' +
+        '<div class="chat-bubble-el" style="' + bubbleColor + ';border-radius:' + radius + ';padding:9px 13px;font-size:.83rem;line-height:1.5">' +
+          replyHtml +
+          '<div class="chat-content-el">' + (m.deleted ? 'Mensaje eliminado' : renderContent(m.content)) + '</div>' +
+          '<div style="font-size:.68rem;opacity:.75;margin-top:3px;text-align:right;display:flex;gap:5px;justify-content:flex-end;align-items:center">' +
+            '<span>' + fmtTime(m.created_at) + '</span>' + ticksHtml +
+          '</div>' +
+        '</div>' +
+        (m.deleted ? '' : '<div style="font-size:.72rem;color:#94a3b8;margin-top:2px;' + (mine ? 'text-align:right' : '') + '">' + actionsHtml + '</div>') +
+        reactHtml +
+      '</div>' +
+      '</div>';
+    return wrap;
+  }
+
+  function render(messages) {
+    var hadNewInbound = false;
+    if (!firstLoad) {
+      messages.forEach(function(m) {
+        if (!knownIds[m.id] && m.direction === 'inbound') hadNewInbound = true;
+      });
+    }
+
+    threadEl.innerHTML = '';
+    var prevDay = null;
+    if (!messages.length) {
+      threadEl.innerHTML = '<div style="text-align:center;color:#94a3b8;font-size:.78rem;padding:20px 0">' +
+        'Aún no hay mensajes de este cliente.</div>';
+    }
+    messages.forEach(function(m) {
+      var el = renderBubble(m, prevDay);
+      prevDay = dayKey(m.created_at);
+      threadEl.appendChild(el);
+      knownIds[m.id] = true;
+    });
+    threadEl.scrollTop = threadEl.scrollHeight;
+
+    if (hadNewInbound) beep();
+    firstLoad = false;
+  }
+
+  function updatePresence(online, lastSeenIso) {
+    var el = document.getElementById('adminChatPresence');
+    if (!el) return;
+    var _t = window.wiT || function(k, fb) { return fb; };
+    if (online) {
+      el.style.color = '#16a34a';
+      el.style.fontWeight = '700';
+      el.textContent = '● ' + _t('chat.client_online', 'Cliente en línea');
+    } else {
+      el.style.color = '#94a3b8';
+      el.style.fontWeight = '400';
+      var when = lastSeenIso ? (dayLabel(lastSeenIso) + ' ' + fmtTime(lastSeenIso)) : null;
+      el.textContent = when
+        ? '○ ' + _t('chat.client_last_seen_prefix', 'Cliente · últ. vez') + ' ' + when
+        : '○ ' + _t('chat.client_offline', 'Cliente sin conexión');
+    }
+  }
+
+  function poll() {
+    fetch('/wi/crm/' + LEAD_PK + '/chat/messages/', {headers: {'Authorization': _getAuth()}})
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.ok) {
+          render(d.messages);
+          updatePresence(d.client_online, d.client_last_seen);
+        }
+      })
+      .catch(function() {});
+  }
+
+  window.adminChatSend = function() {
+    var input = document.getElementById('adminChatInput');
+    var text = input.value.trim();
+    if (!text) return;
+    var btn = document.getElementById('adminChatSendBtn');
+    btn.disabled = true;
+    var body = new URLSearchParams({message: text});
+    if (replyToId) body.append('reply_to', replyToId);
+    fetch('/wi/crm/' + LEAD_PK + '/chat/send/', {method: 'POST', body: body, headers: {'Authorization': _getAuth()}})
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        btn.disabled = false;
+        if (d.ok) { input.value = ''; adminChatCancelReply(); poll(); }
+        else alert(d.error || 'No se pudo enviar el mensaje.');
+      })
+      .catch(function() { btn.disabled = false; });
+  };
+
+  window.adminChatCancelReply = function() {
+    replyToId = null;
+    document.getElementById('adminChatReplyBar').style.display = 'none';
+  };
+
+  document.getElementById('adminChatInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); adminChatSend(); }
+  });
+
+  var picker = document.getElementById('adminChatReactionPicker');
+  document.body.appendChild(picker); // keep position:fixed viewport-relative regardless of ancestor transforms
+  picker.innerHTML = EMOJIS.map(function(e) {
+    return '<span data-emoji="' + e + '" style="cursor:pointer;padding:2px 3px;font-size:1.1rem">' + e + '</span>';
+  }).join('');
+  var pickerTargetId = null;
+  picker.addEventListener('click', function(e) {
+    var emoji = e.target.dataset.emoji;
+    if (!emoji || !pickerTargetId) return;
+    var body = new URLSearchParams({emoji: emoji});
+    fetch('/wi/crm/' + LEAD_PK + '/chat/' + pickerTargetId + '/react/', {method: 'POST', body: body, headers: {'Authorization': _getAuth()}})
+      .then(function() { picker.style.display = 'none'; poll(); });
+  });
+  document.addEventListener('click', function(e) {
+    if (!picker.contains(e.target) && e.target.dataset.act !== 'react') picker.style.display = 'none';
+  });
+
+  threadEl.addEventListener('click', function(e) {
+    var act = e.target.dataset.act;
+    if (!act) return;
+    var row = e.target.closest('[data-msg-id]');
+    var id = row && row.dataset.msgId;
+    if (!id) return;
+
+    if (act === 'reply') {
+      replyToId = id;
+      var bubble = row.querySelector('.chat-content-el');
+      document.getElementById('adminChatReplyText').textContent = bubble ? bubble.textContent.trim().slice(0, 100) : '';
+      document.getElementById('adminChatReplyBar').style.display = 'flex';
+      document.getElementById('adminChatInput').focus();
+    } else if (act === 'delete') {
+      if (!confirm('¿Eliminar este mensaje?')) return;
+      fetch('/wi/crm/' + LEAD_PK + '/chat/' + id + '/delete/', {method: 'POST', headers: {'Authorization': _getAuth()}}).then(poll);
+    } else if (act === 'react') {
+      pickerTargetId = id;
+      var rect = e.target.getBoundingClientRect();
+      picker.style.display = 'flex';
+      var pw = picker.offsetWidth, ph = picker.offsetHeight;
+      var left = Math.min(Math.max(8, rect.left - pw / 2), window.innerWidth - pw - 8);
+      var top  = Math.max(8, rect.top - ph - 8);
+      picker.style.left = left + 'px';
+      picker.style.top  = top + 'px';
+    }
+  });
+
+  poll();
+  setInterval(poll, 5000);
+})();
+</script>

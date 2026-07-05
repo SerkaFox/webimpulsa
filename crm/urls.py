@@ -25,6 +25,12 @@ urlpatterns = [
     path('wi/crm/<int:pk>/payment/',             views.lead_add_payment,      name='crm_add_payment'),
     path('wi/crm/<int:pk>/evidence/',            views.lead_add_evidence,     name='crm_add_evidence'),
 
+    # ── Admin chat (mirrors client portal chat) ─────────────────────────────
+    path('wi/crm/<int:pk>/chat/messages/',      views.lead_chat_messages, name='crm_chat_messages'),
+    path('wi/crm/<int:pk>/chat/send/',          views.lead_chat_send,     name='crm_chat_send'),
+    path('wi/crm/<int:pk>/chat/<int:mid>/react/',  views.lead_chat_react,  name='crm_chat_react'),
+    path('wi/crm/<int:pk>/chat/<int:mid>/delete/', views.lead_chat_delete, name='crm_chat_delete'),
+
     # ── Protected file serving ─────────────────────────────────────────────
     path('wi/crm/payment/<int:pk>/invoice/', views.serve_invoice,  name='crm_serve_invoice'),
     path('wi/crm/evidence/<int:pk>/file/',   views.serve_evidence, name='crm_serve_evidence'),
@@ -43,8 +49,18 @@ urlpatterns = [
 
     # ── Client portal (public, token-authenticated) ────────────────────────
     path('p/<str:token>/',                    views_portal.portal,                 name='crm_portal'),
+    path('p/<str:token>/manifest.json',       views_portal.portal_manifest,        name='crm_portal_manifest'),
+    path('p/<str:token>/sw.js',               views_portal.portal_sw,              name='crm_portal_sw'),
     path('p/<str:token>/upload/',             views_portal.portal_upload,          name='crm_portal_upload'),
     path('p/<str:token>/file/<int:pk>/',      views_portal.portal_file,            name='crm_portal_file'),
     path('p/<str:token>/proposal/accept/',    views_portal.portal_accept_proposal, name='crm_portal_accept_proposal'),
     path('p/<str:token>/message/',            portal_send_message,                 name='crm_portal_message'),
+    path('p/<str:token>/messages/',           views_portal.portal_messages,        name='crm_portal_messages'),
+    path('p/<str:token>/message/<int:pk>/react/',  views_portal.portal_react_message,  name='crm_portal_react_message'),
+    path('p/<str:token>/message/<int:pk>/delete/', views_portal.portal_delete_message, name='crm_portal_delete_message'),
+    path('p/<str:token>/pay/',                views_portal.portal_pay,               name='crm_portal_pay'),
+    path('p/<str:token>/pay/notify/',         views_portal.portal_client_paid,       name='crm_portal_client_paid'),
+    path('p/<str:token>/pay/stripe/',         views_portal.portal_pay_stripe_start,   name='crm_portal_pay_stripe_start'),
+    path('p/<str:token>/pay/stripe/success/', views_portal.portal_pay_stripe_success, name='crm_portal_pay_stripe_success'),
+    path('wi/crm/payment/<int:pk>/confirm/',  views.payment_confirm,                 name='crm_payment_confirm'),
 ]

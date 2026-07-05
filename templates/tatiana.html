@@ -4228,6 +4228,14 @@ window.wiFlexWhatsApp = function() {
 // Initial render
 setTimeout(function() { renderFlex(600); }, 100);
 
+// Re-render on language switch (package name / extras were frozen in the render-time language)
+window.WI_LANG_HOOKS = window.WI_LANG_HOOKS || [];
+window.WI_LANG_HOOKS.push(function() {
+  var num = document.getElementById('flexBudgetNum');
+  var v = num ? (Math.max(300, Math.min(6000, parseInt(num.value) || 600))) : 600;
+  renderFlex(v);
+});
+
 })();
 </script>
 

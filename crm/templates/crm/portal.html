@@ -6,39 +6,89 @@
   <meta name="robots" content="noindex,nofollow">
   <title>Portal cliente — Web-Impulsa</title>
   {% if step == 'portal' and proposal %}<link rel="stylesheet" href="/static/wi/css/proposal-print.css">{% endif %}
+  {% if step == 'portal' %}
+  <link rel="manifest" href="/p/{{ access.token }}/manifest.json">
+  <link rel="apple-touch-icon" href="/static/wi/img/apple-icon.png">
+  <meta name="theme-color" content="#1760d6">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mi proyecto">
+  {% endif %}
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     html { font-size: 16px; }
     body {
       margin: 0;
       font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-      background: #f0f4ff;
       color: #1e293b;
       min-height: 100vh;
       overflow-x: hidden;
+      background-color: #eef3ff;
+      background-image:
+        linear-gradient(180deg, rgba(238,243,255,.5) 0%, rgba(238,243,255,.65) 45%, rgba(238,243,255,.8) 100%),
+        url('/static/wi/img/bg-waves.webp');
+      background-size: cover;
+      background-position: top center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+    @media (max-width: 600px) {
+      /* fixed attachment causes jank on some mobile browsers */
+      body { background-attachment: scroll; }
+    }
+
+    @keyframes wiCardIn {
+      from { opacity: 0; transform: translateY(14px) scale(.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes wiMsgPop {
+      from { opacity: 0; transform: translateY(8px) scale(.94); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes wiPulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(194,65,12,.18); }
+      50%      { box-shadow: 0 0 0 6px rgba(194,65,12,0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
     }
 
     /* ── header ── */
     .wi-header {
-      background: linear-gradient(135deg, #1760d6 0%, #2563eb 100%);
+      background: linear-gradient(135deg, rgba(23,96,214,.94) 0%, rgba(37,99,235,.94) 100%);
+      backdrop-filter: blur(14px) saturate(160%);
+      -webkit-backdrop-filter: blur(14px) saturate(160%);
       color: #fff;
       padding: 16px 20px;
       display: flex;
       align-items: center;
       gap: 12px;
+      flex-wrap: wrap;
+      box-shadow: 0 4px 24px rgba(23,96,214,.22);
+      position: relative;
+      z-index: 2;
     }
-    .wi-logo {
-      font-size: 1.15rem;
-      font-weight: 900;
-      letter-spacing: -.02em;
-      line-height: 1;
+    .wi-header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
     }
-    .wi-logo span { opacity: .7; font-weight: 400; }
     .wi-header-sub {
       font-size: .78rem;
       opacity: .8;
-      margin-left: auto;
     }
+
+    /* ── lang switcher (mirrors the main site) ── */
+    .lang-switcher { display: flex; gap: .28rem; align-items: center; }
+    .lang-btn {
+      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.4); border-radius: 6px;
+      padding: .18rem .42rem; font-size: .72rem; font-weight: 800; cursor: pointer;
+      color: #fff; line-height: 1.4; letter-spacing: .02em;
+      transition: background .15s;
+    }
+    .lang-btn:hover { background: rgba(255,255,255,.28); }
+    .lang-btn.lang-current { display: none; }
 
     /* ── layout ── */
     .wi-main {
@@ -50,12 +100,23 @@
       gap: 16px;
     }
 
-    /* ── card ── */
+    /* ── card (glass) ── */
     .wi-card {
-      background: #fff;
-      border-radius: 14px;
+      background: rgba(255,255,255,.68);
+      backdrop-filter: blur(18px) saturate(180%);
+      -webkit-backdrop-filter: blur(18px) saturate(180%);
+      border: 1px solid rgba(255,255,255,.65);
+      border-radius: 16px;
       padding: 22px 24px;
-      box-shadow: 0 2px 8px rgba(37,99,235,.08);
+      box-shadow: 0 8px 30px rgba(37,99,235,.10), 0 1px 2px rgba(15,23,42,.04);
+      transition: transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s ease;
+      animation: wiCardIn .5s cubic-bezier(.22,1,.36,1) both;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+    .wi-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(37,99,235,.16), 0 2px 4px rgba(15,23,42,.06);
     }
     .wi-card-title {
       font-size: .7rem;
@@ -78,7 +139,7 @@
       margin-bottom: 10px;
     }
     .status-badge.green  { background: #f0fdf4; color: #16a34a; }
-    .status-badge.orange { background: #fff7ed; color: #c2410c; }
+    .status-badge.orange { background: #fff7ed; color: #c2410c; animation: wiPulseGlow 2.4s ease-in-out infinite; }
     .status-badge.gray   { background: #f8fafc; color: #64748b; }
 
     .project-name {
@@ -136,6 +197,7 @@
     .upload-area:hover, .upload-area.dragover {
       border-color: #2563eb;
       background: #eff6ff;
+      transform: scale(1.01);
     }
     .upload-icon { font-size: 2rem; margin-bottom: 6px; }
     .upload-hint { font-size: .8rem; color: #64748b; margin-top: 4px; }
@@ -159,6 +221,13 @@
     .file-dl:hover { text-decoration: underline; }
 
     /* ── button ── */
+    button, .btn-primary, .btn-wa, .btn-tg {
+      transition: transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease, background .15s ease, filter .15s ease;
+    }
+    button:active:not(:disabled), .btn-primary:active, .btn-wa:active, .btn-tg:active {
+      transform: scale(.95);
+    }
+
     .btn-primary {
       display: block;
       width: 100%;
@@ -173,8 +242,9 @@
       text-align: center;
       text-decoration: none;
     }
-    .btn-primary:hover { background: #1d4ed8; }
-    .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
+    .btn-primary:hover { background: #1d4ed8; box-shadow: 0 8px 20px rgba(37,99,235,.35); transform: translateY(-1px); }
+    .btn-primary:active { transform: scale(.97); box-shadow: 0 3px 10px rgba(37,99,235,.3); }
+    .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; box-shadow: none; transform: none; }
 
     .btn-wa {
       display: flex;
@@ -191,7 +261,7 @@
       cursor: pointer;
       text-decoration: none;
     }
-    .btn-wa:hover { background: #1da851; }
+    .btn-wa:hover { background: #1da851; box-shadow: 0 8px 20px rgba(37,163,101,.35); transform: translateY(-1px); }
 
     /* ── PIN form ── */
     .pin-wrap {
@@ -227,6 +297,23 @@
     .error-title { font-size: 1.15rem; font-weight: 900; margin-bottom: 8px; }
     .error-sub { font-size: .86rem; color: #64748b; line-height: 1.6; }
 
+    /* ── project progress bar ── */
+    .proj-progress-track {
+      height: 8px;
+      background: rgba(148,163,184,.25);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .proj-progress-fill {
+      height: 100%;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #1760d6, #38bdf8, #1760d6);
+      background-size: 200% 100%;
+      animation: wiProgressShimmer 2.6s linear infinite, wiProgressGrow 1s cubic-bezier(.22,1,.36,1) both;
+    }
+    @keyframes wiProgressShimmer { 0% { background-position: 0% 0; } 100% { background-position: -200% 0; } }
+    @keyframes wiProgressGrow { from { width: 0; } }
+
     /* ── upload progress ── */
     .upload-progress { margin-top: 10px; display: none; }
     .progress-bar { height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden; }
@@ -258,7 +345,8 @@
     }
     .wi-footer a { color: #94a3b8; }
 
-    /* ── desktop 2-col for proposal mode: proposal left, chat right ── */
+    /* ── desktop 2-col: main content left, quote sidebar right (proposal mode only —
+       cabinet mode is single-column now, its former sidebar lives in a header modal) ── */
     @media (min-width: 720px) {
       .proposal-layout {
         display: grid;
@@ -266,6 +354,153 @@
         gap: 16px;
         align-items: start;
       }
+    }
+
+    /* ── header project chip (opens the project/invoice modal) ── */
+    .wi-header-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,.16);
+      border: 1px solid rgba(255,255,255,.32);
+      border-radius: 999px;
+      padding: 6px 8px 6px 14px;
+      cursor: pointer;
+      color: #fff;
+      font-family: inherit;
+      transition: background .15s;
+    }
+    .wi-header-chip:hover { background: rgba(255,255,255,.28); }
+    .wi-header-chip-name {
+      font-size: .82rem; font-weight: 700; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; max-width: 40vw;
+    }
+    .wi-header-chip-chevron {
+      font-size: .68rem;
+      opacity: .85;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px; height: 20px;
+      background: rgba(255,255,255,.18);
+      border-radius: 50%;
+    }
+    .due-chip {
+      background: #fff;
+      color: #dc2626;
+      font-weight: 900;
+      font-size: .72rem;
+      padding: 3px 9px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    @media (max-width: 600px) {
+      .wi-header-chip-name { max-width: 34vw; overflow: hidden; text-overflow: ellipsis; }
+    }
+
+    /* ── project/invoice modal ── */
+    .wi-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.4);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 78px 16px 16px;
+      z-index: 500;
+    }
+    .wi-modal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 22px 24px;
+      max-width: 420px;
+      width: 100%;
+      max-height: 78vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 60px rgba(0,0,0,.28);
+      animation: wiCardIn .25s cubic-bezier(.22,1,.36,1) both;
+    }
+    .wi-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .wi-modal-close {
+      border: none;
+      background: #f1f5f9;
+      color: #64748b;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: .85rem;
+      flex-shrink: 0;
+    }
+    .wi-modal-close:hover { background: #e2e8f0; }
+    .wi-modal .lang-switcher .lang-btn {
+      background: #eff6ff;
+      border-color: #dbeafe;
+      color: #1760d6;
+    }
+    .wi-modal .lang-switcher .lang-btn:hover { background: #dbeafe; }
+
+    /* ── main column tabs (chat / progress+materials) ── */
+    .main-tab-nav {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .main-tab-btn {
+      flex: 1;
+      border: none;
+      border-radius: 12px;
+      padding: 11px 10px;
+      font-size: .85rem;
+      font-weight: 800;
+      cursor: pointer;
+      background: rgba(255,255,255,.55);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: #5a6d8c;
+      box-shadow: 0 2px 8px rgba(37,99,235,.06);
+    }
+    .main-tab-btn.active {
+      background: #2563eb;
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(37,99,235,.32);
+    }
+
+    /* ── "add to home screen" banner ── */
+    .pwa-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+    .pwa-banner-icon { font-size: 1.4rem; flex-shrink: 0; line-height: 1; }
+    .pwa-banner-text {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font-size: .82rem;
+      color: #475569;
+      line-height: 1.5;
+    }
+    .pwa-banner-text strong { color: #0c1c42; font-size: .88rem; }
+    .pwa-banner-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .pwa-dismiss {
+      border: none; background: none; color: #94a3b8; font-size: 1rem;
+      cursor: pointer; padding: 4px;
+    }
+    @media (max-width: 560px) {
+      .pwa-banner { flex-wrap: wrap; }
+      .pwa-banner-actions { width: 100%; justify-content: space-between; margin-top: 4px; }
     }
 
     /* ── chat widget ── */
@@ -288,6 +523,9 @@
     }
     .chat-msg-in  { background: #eff6ff; border-radius: 12px 12px 3px 12px; }
     .chat-msg-out { background: #f1f5f9; border-radius: 12px 12px 12px 3px; }
+    .msg-in { animation: wiMsgPop .32s cubic-bezier(.34,1.56,.64,1) both; }
+    .chat-act { transition: transform .15s ease; display: inline-block; }
+    .chat-act:hover { transform: scale(1.25); }
     .chat-input {
       width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px;
       padding: 9px 12px; font-size: .83rem; font-family: inherit;
@@ -301,7 +539,7 @@
       padding: 11px 16px; font-size: .88rem; font-weight: 800;
       cursor: pointer; text-decoration: none; width: 100%;
     }
-    .btn-tg:hover { background: #1a96d5; }
+    .btn-tg:hover { background: #1a96d5; box-shadow: 0 8px 20px rgba(42,171,238,.35); transform: translateY(-1px); }
 
     @media (max-width: 600px) {
       .wi-main  { padding: 14px 10px 40px; }
@@ -312,12 +550,28 @@
 <body>
 
 <div class="wi-header">
-  <div>
-    <div class="wi-logo">Web-Impulsa <span>·</span> Portal</div>
+  <div style="background:#fff;border-radius:9px;padding:5px;display:flex;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,.15);flex-shrink:0">
+    <img src="/static/wi/img/apple-icon.png" alt="Web-Impulsa" height="24" style="display:block">
   </div>
-  {% if step == 'portal' %}
-  <div class="wi-header-sub">Bienvenido, {{ lead.name }}</div>
-  {% endif %}
+  <div class="wi-header-right">
+    {% if step == 'portal' and portal_mode == 'cabinet' %}
+    <button type="button" class="wi-header-chip" onclick="toggleProjectModal()">
+      <span class="wi-header-chip-name">{{ lead.name }}</span>
+      {% if owed_total > 0 %}<span class="due-chip">{{ owed_total }}€</span>{% endif %}
+      <span class="wi-header-chip-chevron">▾</span>
+    </button>
+    {% else %}
+      {% if step == 'portal' %}
+      <div class="wi-header-sub"><span data-i18n="header.welcome">Bienvenido</span>, {{ lead.name }}</div>
+      {% endif %}
+      <div class="lang-switcher">
+        <button class="lang-btn" data-lang="es">ES</button>
+        <button class="lang-btn" data-lang="eu">EU</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ru">RU</button>
+      </div>
+    {% endif %}
+  </div>
 </div>
 
 {% if step == 'invalid' %}
@@ -326,10 +580,10 @@
   <div class="wi-card">
     <div class="error-wrap">
       <div class="error-emoji">🔗</div>
-      <div class="error-title">
+      <div class="error-title" data-i18n="{% if expired %}error.expired_title{% else %}error.invalid_title{% endif %}">
         {% if expired %}Enlace expirado{% else %}Enlace no válido{% endif %}
       </div>
-      <div class="error-sub">
+      <div class="error-sub" data-i18n-html="{% if expired %}error.expired_body{% else %}error.invalid_body{% endif %}">
         {% if expired %}
           Este enlace ha caducado (validez 72 horas).<br>
           Escríbenos por WhatsApp para recibir uno nuevo.
@@ -340,7 +594,7 @@
       </div>
       <a href="https://wa.me/34613708322" target="_blank" rel="noopener"
          class="btn-wa" style="margin-top:24px">
-        💬 Contactar por WhatsApp
+        💬 <span data-i18n="error.wa_btn">Contactar por WhatsApp</span>
       </a>
     </div>
   </div>
@@ -352,14 +606,14 @@
   <div class="wi-card">
     <div class="pin-wrap">
       <div class="pin-emoji">🔐</div>
-      <div class="pin-title">Introduce tu código</div>
+      <div class="pin-title" data-i18n="pin.title">Introduce tu código</div>
       <div class="pin-sub">
-        Hola <strong>{{ lead.name }}</strong>,<br>
-        introduce el código de 6 dígitos que te enviamos por WhatsApp.
+        <span data-i18n="pin.hello">Hola</span> <strong>{{ lead.name }}</strong>,<br>
+        <span data-i18n="pin.instruction">introduce el código de 6 dígitos que te enviamos por WhatsApp.</span>
       </div>
 
       {% if pin_error %}
-      <div class="pin-error">❌ Código incorrecto. Inténtalo de nuevo.</div>
+      <div class="pin-error" data-i18n="pin.error">❌ Código incorrecto. Inténtalo de nuevo.</div>
       {% endif %}
 
       <form method="post" action="/p/{{ access.token }}/">
@@ -375,16 +629,273 @@
           autofocus
           autocomplete="one-time-code"
         >
-        <button type="submit" class="btn-primary">Acceder →</button>
+        <button type="submit" class="btn-primary" data-i18n="pin.submit">Acceder →</button>
       </form>
 
       <p style="font-size:.76rem;color:#94a3b8;margin-top:16px">
-        ¿No tienes el código? Escríbenos por
+        <span data-i18n="pin.no_code">¿No tienes el código? Escríbenos por</span>
         <a href="https://wa.me/34613708322" target="_blank" rel="noopener">WhatsApp</a>.
       </p>
     </div>
   </div>
 </div>
+
+{% elif step == 'pay' %}
+<!-- ── PAYMENT PAGE ───────────────────────────────────────────────────────── -->
+<div class="wi-main" style="max-width:600px">
+
+  {% if paid_ok %}
+  <!-- Payment notification sent -->
+  <div class="wi-card" style="text-align:center;padding:32px 24px">
+    <div style="font-size:3rem;margin-bottom:12px">{% if card_ok %}✅{% else %}📨{% endif %}</div>
+    <div style="font-weight:900;font-size:1.1rem;color:#0c1c42;margin-bottom:8px"
+         data-i18n="{% if card_ok %}pay.card_ok_title{% else %}pay.notify_ok_title{% endif %}">
+      {% if card_ok %}¡Pago recibido, gracias!{% else %}¡Gracias por avisarnos!{% endif %}
+    </div>
+    <div style="font-size:.86rem;color:#5a6d8c;line-height:1.6;margin-bottom:20px"
+         data-i18n="{% if card_ok %}pay.card_ok_body{% else %}pay.notify_ok_body{% endif %}">
+      {% if card_ok %}
+        Tu pago con tarjeta se ha confirmado automáticamente. Ya está registrado en tu cuenta.
+      {% else %}
+        Hemos recibido tu notificación. Tatiana revisará el pago
+        y te confirmará en breve por el chat del portal.
+      {% endif %}
+    </div>
+    <a href="/p/{{ access.token }}/" class="btn-primary" style="display:inline-block;width:auto;padding:12px 28px"
+       data-i18n="pay.goto_cabinet">
+      Ir a mi área de cliente →
+    </a>
+  </div>
+
+  {% else %}
+  <!-- Signed confirmation -->
+  <div class="wi-card" style="padding:20px 24px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:44px;height:44px;border-radius:50%;background:#f0fdf4;
+                  display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">
+        ✅
+      </div>
+      <div>
+        <div style="font-weight:900;font-size:1rem;color:#15803d" data-i18n="pay.signed_title">Propuesta firmada</div>
+        <div style="font-size:.82rem;color:#5a6d8c;margin-top:2px">
+          {% if proposal %}{{ proposal.number }} · {{ lead.name }}{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Amount -->
+  <div class="wi-card">
+    <div class="wi-card-title">{{ pay_label|default:"Primer pago" }}</div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px">
+      <span style="font-size:2rem;font-weight:900;color:#1760d6">{{ half }}€</span>
+      <span style="font-size:.82rem;color:#94a3b8" data-i18n="pay.iva_included">IVA incluido</span>
+    </div>
+    {% if proposal %}
+    <div style="font-size:.82rem;color:#5a6d8c">
+      <span data-i18n="pay.project_total">Total del proyecto:</span> {{ proposal.total_with_iva }}€{% if pay_schedule %} · {{ pay_schedule }}{% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Transfer tabs -->
+  <div class="wi-card" style="padding:0;overflow:hidden">
+
+    <!-- Tab nav -->
+    <div style="display:flex;border-bottom:1px solid #e2e8f0">
+      <button id="tabTransfer" onclick="showTab('transfer')"
+              style="flex:1;border:none;background:#eff6ff;padding:13px;font-size:.86rem;
+                     font-weight:800;color:#1760d6;cursor:pointer;border-bottom:2px solid #1760d6">
+        🏦 <span data-i18n="pay.tab_transfer">Transferencia bancaria</span>
+      </button>
+      <button id="tabBizum" onclick="showTab('bizum')"
+              style="flex:1;border:none;background:#fff;padding:13px;font-size:.86rem;
+                     font-weight:700;color:#5a6d8c;cursor:pointer;border-bottom:2px solid transparent">
+        📱 Bizum
+      </button>
+      <button id="tabCash" onclick="showTab('cash')"
+              style="flex:1;border:none;background:#fff;padding:13px;font-size:.86rem;
+                     font-weight:700;color:#5a6d8c;cursor:pointer;border-bottom:2px solid transparent">
+        💵 <span data-i18n="pay.tab_cash">Efectivo</span>
+      </button>
+    </div>
+
+    <!-- Transfer tab -->
+    <div id="panelTransfer" style="padding:20px 22px">
+      <div style="display:grid;gap:10px">
+        {% include "crm/portal_pay_row.html" with label="Titular" i18n_key="pay.holder_label" value=holder id="copy_holder" only %}
+        <div style="display:flex;justify-content:space-between;align-items:center;
+                    padding:10px 14px;background:#f8fafc;border-radius:8px;gap:10px">
+          <div>
+            <div style="font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;
+                        letter-spacing:.05em;margin-bottom:3px">IBAN</div>
+            <div style="font-size:.92rem;font-weight:800;color:#0c1c42;font-family:monospace;
+                        letter-spacing:.04em" id="val_iban">{{ iban }}</div>
+          </div>
+          <button onclick="copyVal('val_iban','btn_iban')" id="btn_iban"
+                  style="border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;
+                         padding:7px 14px;font-size:.78rem;font-weight:700;cursor:pointer;
+                         color:#1760d6;white-space:nowrap;flex-shrink:0" data-i18n="pay.copy_btn">
+            Copiar
+          </button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;
+                    padding:10px 14px;background:#f8fafc;border-radius:8px;gap:10px">
+          <div>
+            <div style="font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;
+                        letter-spacing:.05em;margin-bottom:3px" data-i18n="pay.concept_label">Concepto (importante)</div>
+            <div style="font-size:.88rem;font-weight:800;color:#0c1c42" id="val_concepto">
+              {{ concepto }}
+            </div>
+          </div>
+          <button onclick="copyVal('val_concepto','btn_con')" id="btn_con"
+                  style="border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;
+                         padding:7px 14px;font-size:.78rem;font-weight:700;cursor:pointer;
+                         color:#1760d6;white-space:nowrap;flex-shrink:0" data-i18n="pay.copy_btn">
+            Copiar
+          </button>
+        </div>
+        <div style="font-size:.76rem;color:#94a3b8;line-height:1.5;padding:4px 2px">
+          <span data-i18n="pay.exact_amount">Importe exacto:</span> <strong style="color:#0c1c42">{{ half }}€</strong>.
+          <span data-i18n="pay.include_concept">Incluye el concepto tal como aparece para poder identificar tu pago.</span>
+        </div>
+      </div>
+      <form method="post" action="/p/{{ access.token }}/pay/notify/" style="margin-top:16px">
+        <input type="hidden" name="method" value="bank_transfer">
+        <button type="submit" class="btn-primary" data-i18n="pay.transfer_done_btn">
+          ✓ Ya he realizado la transferencia
+        </button>
+      </form>
+    </div>
+
+    <!-- Bizum tab -->
+    <div id="panelBizum" style="padding:20px 22px;display:none">
+      <div style="display:grid;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;
+                    padding:10px 14px;background:#f8fafc;border-radius:8px;gap:10px">
+          <div>
+            <div style="font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;
+                        letter-spacing:.05em;margin-bottom:3px" data-i18n="pay.bizum_phone_label">Teléfono Bizum</div>
+            <div style="font-size:1.1rem;font-weight:900;color:#0c1c42;font-family:monospace"
+                 id="val_bizum">{{ bizum }}</div>
+          </div>
+          <button onclick="copyVal('val_bizum','btn_biz')" id="btn_biz"
+                  style="border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;
+                         padding:7px 14px;font-size:.78rem;font-weight:700;cursor:pointer;
+                         color:#1760d6;white-space:nowrap;flex-shrink:0" data-i18n="pay.copy_btn">
+            Copiar
+          </button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;
+                    padding:10px 14px;background:#f8fafc;border-radius:8px;gap:10px">
+          <div>
+            <div style="font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;
+                        letter-spacing:.05em;margin-bottom:3px" data-i18n="pay.concept_label2">Concepto</div>
+            <div style="font-size:.88rem;font-weight:800;color:#0c1c42" id="val_concepto_biz">
+              {{ concepto }}
+            </div>
+          </div>
+          <button onclick="copyVal('val_concepto_biz','btn_cbiz')" id="btn_cbiz"
+                  style="border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;
+                         padding:7px 14px;font-size:.78rem;font-weight:700;cursor:pointer;
+                         color:#1760d6;white-space:nowrap;flex-shrink:0" data-i18n="pay.copy_btn">
+            Copiar
+          </button>
+        </div>
+        <div style="font-size:.76rem;color:#94a3b8;line-height:1.5;padding:4px 2px">
+          <span data-i18n="pay.exact_amount">Importe exacto:</span> <strong style="color:#0c1c42">{{ half }}€</strong>.
+          <span data-i18n="pay.holder_label2">Titular:</span> <strong style="color:#0c1c42">{{ holder }}</strong>.
+        </div>
+      </div>
+      <form method="post" action="/p/{{ access.token }}/pay/notify/" style="margin-top:16px">
+        <input type="hidden" name="method" value="bizum">
+        <button type="submit" class="btn-primary" data-i18n="pay.bizum_done_btn">
+          ✓ Ya he enviado el Bizum
+        </button>
+      </form>
+    </div>
+
+    <!-- Cash tab -->
+    <div id="panelCash" style="padding:20px 22px;display:none">
+      <div style="font-size:.86rem;color:#334155;line-height:1.6;padding:6px 2px 14px" data-i18n="pay.cash_note">
+        Puedes pagar en efectivo cuando quedemos en persona. En cuanto confirmemos la recepción, te enviaremos la factura correspondiente.
+      </div>
+      <form method="post" action="/p/{{ access.token }}/pay/notify/">
+        <input type="hidden" name="method" value="cash">
+        <button type="submit" class="btn-primary" data-i18n="pay.cash_done_btn">
+          ✓ Ya he pagado en efectivo
+        </button>
+      </form>
+    </div>
+
+  </div>{# end transfer card #}
+
+  <!-- Card payment (Stripe) -->
+  <div class="wi-card" style="text-align:center;padding:18px 22px">
+    {% if stripe_error %}
+    <div style="font-size:.8rem;color:#dc2626;margin-bottom:10px" data-i18n="pay.card_error">
+      No se pudo iniciar el pago con tarjeta. Prueba de nuevo o usa transferencia/Bizum.
+    </div>
+    {% endif %}
+    {% if stripe_enabled %}
+    <form method="post" action="/p/{{ access.token }}/pay/stripe/">
+      <button type="submit"
+              style="width:100%;border:none;border-radius:10px;padding:13px;
+                     font-size:.9rem;font-weight:700;color:#fff;cursor:pointer;
+                     background:#635bff">
+        💳 <span data-i18n="pay.card_btn_prefix">Pagar</span> {{ half }}€ <span data-i18n="pay.card_btn_suffix">con tarjeta</span>
+      </button>
+    </form>
+    {% else %}
+    <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+                color:#94a3b8;margin-bottom:8px" data-i18n="pay.coming_soon">Próximamente</div>
+    <button disabled
+            style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;
+                   padding:13px;font-size:.9rem;font-weight:700;color:#94a3b8;
+                   background:#f8fafc;cursor:not-allowed" data-i18n="pay.card_disabled_btn">
+      💳 Pagar con tarjeta (Stripe)
+    </button>
+    {% endif %}
+  </div>
+
+  <!-- Cabinet link -->
+  <div style="text-align:center;padding:4px 0">
+    <a href="/p/{{ access.token }}/"
+       style="font-size:.82rem;color:#5a6d8c;text-decoration:none" data-i18n="pay.back_to_cabinet">
+      ← Ir a mi área de cliente
+    </a>
+  </div>
+
+  {% endif %}{# paid_ok #}
+
+</div>
+
+<script>
+function showTab(t) {
+  var tabs = {transfer: 'Transfer', bizum: 'Bizum', cash: 'Cash'};
+  Object.keys(tabs).forEach(function(key) {
+    var suffix = tabs[key];
+    var panel = document.getElementById('panel' + suffix);
+    var btn   = document.getElementById('tab' + suffix);
+    if (panel) panel.style.display = key === t ? '' : 'none';
+    if (btn) {
+      btn.style.background = key === t ? '#eff6ff' : '#fff';
+      btn.style.color      = key === t ? '#1760d6' : '#5a6d8c';
+      btn.style.borderBottomColor = key === t ? '#1760d6' : 'transparent';
+    }
+  });
+}
+function copyVal(id, btnId) {
+  var txt = document.getElementById(id).textContent.trim();
+  navigator.clipboard.writeText(txt).then(function() {
+    var btn = document.getElementById(btnId);
+    var orig = btn.textContent;
+    btn.textContent = '✓ Copiado';
+    btn.style.color = '#16a34a';
+    setTimeout(function(){ btn.textContent = orig; btn.style.color = '#1760d6'; }, 1800);
+  });
+}
+</script>
 
 {% elif step == 'portal' %}
 <!-- ── FULL PORTAL ────────────────────────────────────────────────────────── -->
@@ -403,32 +914,32 @@
       <!-- Project status summary (compact header) -->
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;
                   padding-bottom:14px;border-bottom:1px solid #f1f5f9">
-        <div class="status-badge{% if lead.status == 'finalizado' %} green{% elif lead.status == 'perdido' %} gray{% endif %}" style="margin-bottom:0">
+        <div class="status-badge{% if lead.status == 'finalizado' %} green{% elif lead.status == 'perdido' %} gray{% endif %}" style="margin-bottom:0" data-i18n="status.{{ lead.status }}">
           {{ status_label }}
         </div>
-        <div style="font-weight:900;font-size:1rem;color:#0c1c42">{{ lead.package|default:"Proyecto Web-Impulsa" }}</div>
-        {% if lead.estimated_price %}<div style="font-size:.82rem;color:#5a6d8c">{{ lead.estimated_price }}€ estimado</div>{% endif %}
+        <div style="font-weight:900;font-size:1rem;color:#0c1c42" {% if lead.package %}data-i18n="pkg.{{ lead.package|slugify }}"{% endif %}>{{ lead.package|default:"Proyecto Web-Impulsa" }}</div>
+        {% if lead.estimated_price %}<div style="font-size:.82rem;color:#5a6d8c">{{ lead.estimated_price }}€ <span data-i18n="cabinet.estimated">estimado</span></div>{% endif %}
         {% if lead.extras %}
         <div class="extras-row" style="width:100%;margin-top:0">
-          {% for e in lead.extras %}<span class="extra-tag">{{ e }}</span>{% endfor %}
+          {% for e in lead.extras %}<span class="extra-tag" data-i18n="extra.{{ e|slugify }}">{{ e }}</span>{% endfor %}
         </div>
         {% endif %}
       </div>
 
       {% if accepted %}
-      <div class="next-step-box" style="background:#f0fdf4;border-color:#16a34a;color:#14532d;margin-bottom:14px">
+      <div class="next-step-box" style="background:#f0fdf4;border-color:#16a34a;color:#14532d;margin-bottom:14px" data-i18n="proposal.accepted_banner">
         ✅ Propuesta aceptada correctamente. ¡Gracias! En breve nos pondremos en contacto contigo.
       </div>
       {% endif %}
 
       {% if proposal %}
-      <div class="wi-card-title">Tu propuesta</div>
+      <div class="wi-card-title" data-i18n="proposal.your_proposal">Tu propuesta</div>
 
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap">
         {% if proposal.status == 'accepted' %}
-        <span class="status-badge green">Aceptada ✓</span>
+        <span class="status-badge green" data-i18n="proposal.accepted_badge">Aceptada ✓</span>
         {% else %}
-        <span class="status-badge">Lista para revisar</span>
+        <span class="status-badge" data-i18n="proposal.ready_badge">Lista para revisar</span>
         {% endif %}
         <span style="font-size:.72rem;color:#94a3b8;font-family:monospace">{{ proposal.number }}</span>
       </div>
@@ -436,7 +947,7 @@
       {% if proposal.status == 'accepted' %}
       <div style="background:#f0fdf4;border-radius:10px;padding:14px;text-align:center;margin-bottom:14px">
         <div style="font-size:1.4rem;margin-bottom:4px">✅</div>
-        <div style="font-weight:800;color:#14532d;font-size:.9rem">Propuesta aceptada</div>
+        <div style="font-weight:800;color:#14532d;font-size:.9rem" data-i18n="proposal.accepted_title">Propuesta aceptada</div>
         {% if proposal.accepted_at %}
         <div style="font-size:.76rem;color:#64748b;margin-top:4px">
           {{ proposal.accepted_at|date:"d/m/Y" }} · {{ proposal.accepted_by_name }}
@@ -448,51 +959,107 @@
       <!-- A4 preview (scrolls horizontally on narrow screens) -->
       <div class="proposal-preview-wrap">
         <div id="portalProposalPreview">
-          <div style="text-align:center;padding:24px;color:#94a3b8;font-size:.82rem">
+          <div style="text-align:center;padding:24px;color:#94a3b8;font-size:.82rem" data-i18n="proposal.loading">
             Cargando propuesta…
           </div>
         </div>
       </div>
 
-      <!-- Total highlight -->
+      {% if proposal.status != 'accepted' %}
+      <!-- Signature section — embedded as the final part of the proposal document -->
+      <div style="border:1px solid #d1dce8;border-radius:10px;overflow:hidden;margin-top:4px">
+        <!-- Section header -->
+        <div style="background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:10px 16px;
+                    display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:.78rem;font-weight:900;text-transform:uppercase;
+                       letter-spacing:.07em;color:#1760d6" data-i18n="proposal.data_signature">Datos y firma</span>
+          <span id="portalProposalTotal"
+                style="font-size:.95rem;font-weight:900;color:#0c1c42">—</span>
+        </div>
+        <!-- Form fields -->
+        <div style="padding:16px">
+          <form method="post" action="/p/{{ access.token }}/proposal/accept/" id="acceptForm">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+              <input type="text" name="accept_name" placeholder="Nombre / Empresa *" required
+                     data-i18n-placeholder="form.name_placeholder"
+                     style="border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
+                            font-size:.84rem;outline:none;font-family:inherit;width:100%">
+              <input type="text" name="accept_nif" placeholder="NIF / CIF (para factura)"
+                     data-i18n-placeholder="form.nif_placeholder"
+                     style="border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
+                            font-size:.84rem;outline:none;font-family:inherit;width:100%">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+              <input type="text" name="accept_address" placeholder="Dirección fiscal"
+                     data-i18n-placeholder="form.address_placeholder"
+                     style="border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
+                            font-size:.84rem;outline:none;font-family:inherit;width:100%">
+              <input type="text" name="accept_city" placeholder="CP y ciudad"
+                     data-i18n-placeholder="form.city_placeholder"
+                     style="border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
+                            font-size:.84rem;outline:none;font-family:inherit;width:100%">
+            </div>
+            <input type="text" name="accept_signature" placeholder="Firma digital — escribe tu nombre completo *" required
+                   data-i18n-placeholder="form.signature_placeholder"
+                   style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
+                          font-size:.84rem;outline:none;margin-bottom:10px;font-family:inherit;
+                          font-style:italic;letter-spacing:.03em">
+
+            <div style="margin-bottom:12px">
+              <div style="font-size:.76rem;font-weight:700;color:#5a6d8c;text-transform:uppercase;
+                          letter-spacing:.05em;margin-bottom:6px" data-i18n="form.payment_plan_question">¿Cómo prefieres pagar?</div>
+              <div style="display:grid;gap:6px" id="paymentPlanOptions">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;
+                              border:1.5px solid #e2e8f0;border-radius:8px;font-size:.83rem">
+                  <input type="radio" name="accept_payment_plan" value="50-50" checked
+                         onchange="updatePaymentPlanNote()" style="accent-color:#2563eb">
+                  <span data-i18n="form.plan_5050">50% ahora + 50% a la entrega</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;
+                              border:1.5px solid #e2e8f0;border-radius:8px;font-size:.83rem">
+                  <input type="radio" name="accept_payment_plan" value="3-way"
+                         onchange="updatePaymentPlanNote()" style="accent-color:#2563eb">
+                  <span data-i18n="form.plan_3way">3 pagos (33% cada uno)</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;
+                              border:1.5px solid #e2e8f0;border-radius:8px;font-size:.83rem">
+                  <input type="radio" name="accept_payment_plan" value="full"
+                         onchange="updatePaymentPlanNote()" style="accent-color:#2563eb">
+                  <span data-i18n="form.plan_full">Pago único</span>
+                </label>
+              </div>
+            </div>
+
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;
+                          margin-bottom:14px;font-size:.83rem;color:#1e293b;line-height:1.45">
+              <input type="checkbox" name="agree" id="agreeCheck" required
+                     style="margin-top:2px;width:17px;height:17px;flex-shrink:0;accent-color:#2563eb">
+              <span>
+                <span data-i18n="form.agree_text_prefix">Acepto el alcance, presupuesto y condiciones de esta propuesta.
+                Me comprometo a abonar</span> <strong id="paymentPlanNote">el 50% del importe</strong> <span data-i18n="form.agree_text_suffix">antes del inicio de los trabajos.</span>
+              </span>
+            </label>
+            <button type="submit" class="btn-primary" data-i18n="form.submit">✍️ Firmar y aceptar propuesta</button>
+            <script>
+              function updatePaymentPlanNote() {
+                var v = document.querySelector('[name="accept_payment_plan"]:checked').value;
+                var note = document.getElementById('paymentPlanNote');
+                var _t = window.wiT || function(k){return k;};
+                if (v === 'full')       note.textContent = _t('form.plan_note_full');
+                else if (v === '3-way') note.textContent = _t('form.plan_note_3way');
+                else                    note.textContent = _t('form.plan_note_5050');
+              }
+            </script>
+          </form>
+        </div>
+      </div>
+      {% else %}
+      <!-- Show total even after acceptance -->
       <div id="portalProposalTotal"
            style="display:flex;justify-content:space-between;align-items:center;
-                  background:#eff6ff;border-radius:8px;padding:10px 14px;margin-bottom:14px">
-        <span style="font-size:.82rem;color:#2563eb;font-weight:700">Total (IVA 21% incluido):</span>
+                  background:#eff6ff;border-radius:8px;padding:10px 14px;margin-top:4px">
+        <span style="font-size:.82rem;color:#2563eb;font-weight:700" data-i18n="proposal.total_iva_label">Total (IVA 21% incluido):</span>
         <span style="font-size:1.05rem;font-weight:900;color:#1760d6">—</span>
-      </div>
-
-      {% if proposal.status != 'accepted' %}
-      <!-- Acceptance form -->
-      <div style="border:1px solid #e2e8f0;border-radius:10px;padding:16px;background:#f8fafc">
-        <div style="font-size:.83rem;font-weight:800;color:#0f172a;margin-bottom:12px">
-          Aceptar propuesta
-        </div>
-        <form method="post" action="/p/{{ access.token }}/proposal/accept/" id="acceptForm">
-          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;
-                        margin-bottom:14px;font-size:.84rem;font-weight:400;
-                        text-transform:none;letter-spacing:0;color:#1e293b">
-            <input type="checkbox" name="agree" id="agreeCheck" required
-                   style="margin-top:2px;width:18px;height:18px;flex-shrink:0;accent-color:#2563eb">
-            <span>Acepto el alcance, presupuesto y condiciones indicadas en esta propuesta.</span>
-          </label>
-          <input type="text" name="accept_name" placeholder="Nombre completo *" required
-                 style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
-                        font-size:.84rem;outline:none;margin-bottom:8px;font-family:inherit">
-          <input type="text" name="accept_nif" placeholder="DNI/NIF/CIF (para factura)"
-                 style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
-                        font-size:.84rem;outline:none;margin-bottom:8px;font-family:inherit">
-          <input type="text" name="accept_address" placeholder="Dirección fiscal (para factura)"
-                 style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
-                        font-size:.84rem;outline:none;margin-bottom:8px;font-family:inherit">
-          <input type="text" name="accept_city" placeholder="CP y ciudad (ej: 48901 Barakaldo, Bizkaia)"
-                 style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
-                        font-size:.84rem;outline:none;margin-bottom:8px;font-family:inherit">
-          <input type="text" name="accept_signature" placeholder="Escribe tu nombre como firma digital *" required
-                 style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
-                        font-size:.84rem;outline:none;margin-bottom:12px;font-family:inherit">
-          <button type="submit" class="btn-primary">✓ Confirmar aceptación</button>
-        </form>
       </div>
       {% endif %}
 
@@ -500,8 +1067,8 @@
       <!-- No proposal yet -->
       <div style="text-align:center;padding:24px 16px;color:#94a3b8">
         <div style="font-size:2rem;margin-bottom:8px">📋</div>
-        <div style="font-size:.9rem;font-weight:600;color:#64748b">Preparando tu propuesta</div>
-        <div style="font-size:.82rem;margin-top:6px">
+        <div style="font-size:.9rem;font-weight:600;color:#64748b" data-i18n="proposal.preparing_title">Preparando tu propuesta</div>
+        <div style="font-size:.82rem;margin-top:6px" data-i18n="proposal.preparing_body">
           En breve recibirás la propuesta personalizada para tu proyecto.
         </div>
       </div>
@@ -509,252 +1076,331 @@
 
     </div>{# end proposal card #}
 
-    <!-- RIGHT: Chat widget -->
-    <div style="display:flex;flex-direction:column;gap:14px">
-
-      <!-- Team intro -->
-      <div class="wi-card">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-          <div class="chat-avatar">T</div>
-          <div>
-            <div style="font-weight:800;font-size:.9rem;color:#0c1c42">Tatiana</div>
-            <div style="font-size:.76rem;color:#5a6d8c">Web-Impulsa · <span style="color:#16a34a;font-weight:700">● En línea</span></div>
-          </div>
-        </div>
-        <div class="chat-bubble">
-          Hola, <strong>{{ lead.name }}</strong>. 👋<br>
-          He preparado esta propuesta para tu proyecto.
-          Si tienes alguna pregunta, escríbeme aquí mismo o por WhatsApp.
-        </div>
-      </div>
-
-      <!-- Message thread + form -->
-      <div class="wi-card">
-        <div class="wi-card-title">Mensajes</div>
-
-        {% if msg_sent %}
-        <div class="next-step-box" style="margin-bottom:10px;font-size:.82rem">
-          ✓ Mensaje enviado.
-        </div>
-        {% endif %}
-
-        {% if portal_msgs %}
-        <div class="chat-msg-thread">
-          {% for m in portal_msgs %}
-          <div style="display:flex;{% if m.direction == 'inbound' %}justify-content:flex-end{% endif %}">
-            <div style="max-width:88%;padding:8px 12px;font-size:.82rem;line-height:1.45;
-                        {% if m.direction == 'inbound' %}background:#eff6ff;color:#1e293b;border-radius:12px 12px 3px 12px
-                        {% else %}background:#f1f5f9;color:#334155;border-radius:12px 12px 12px 3px{% endif %}">
-              {{ m.content }}
-              <div style="font-size:.68rem;color:#94a3b8;margin-top:3px;text-align:{% if m.direction == 'inbound' %}right{% else %}left{% endif %}">
-                {% if m.direction == 'outbound' %}<span style="font-weight:600;color:#1760d6">Tatiana · </span>{% endif %}
-                {{ m.created_at|date:"d/m H:i" }}
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
-
-        <form method="post" action="/p/{{ access.token }}/message/">
-          <textarea name="message" rows="3" required class="chat-input"
-                    placeholder="Escribe tu pregunta sobre la propuesta…"></textarea>
-          <button type="submit" class="btn-primary" style="margin-bottom:10px">Enviar →</button>
-        </form>
-      </div>
-
-      <!-- WhatsApp -->
-      <div class="wi-card" style="padding:16px">
-        <div class="wi-card-title" style="margin-bottom:10px">WhatsApp</div>
-        <a href="https://wa.me/34613708322?text={{ 'Hola Tatiana, soy '|urlencode }}{{ lead.name|urlencode }}{{ '. Tengo una pregunta sobre mi propuesta ('|urlencode }}{{ proposal.number|default:''|urlencode }}{{ ')'|urlencode }}"
-           target="_blank" rel="noopener" class="btn-wa">
-          💬 Escribir por WhatsApp
-        </a>
-      </div>
-
-      <!-- Telegram -->
-      <div class="wi-card" style="padding:16px">
-        <div class="wi-card-title" style="margin-bottom:10px">Telegram</div>
-        <a href="https://t.me/serkafox?text={{ 'Hola, soy '|urlencode }}{{ lead.name|urlencode }}{{ ' — pregunta sobre propuesta '|urlencode }}{{ proposal.number|default:''|urlencode }}"
-           target="_blank" rel="noopener" class="btn-tg">
-          ✈️ Escribir por Telegram
-        </a>
-      </div>
-
+    <!-- RIGHT: Chat widget (single card) -->
+    <div>
+      {% include "crm/portal_chat.html" %}
     </div>{# end right column #}
 
   </div>{# end .proposal-layout #}
 
 {% else %}
   <!-- ══════════════════════════════════════════════════════════════════════
-       CABINET MODE — full collaboration (milestones, files, messages)
+       CABINET MODE — chat + materials tabs, full width.
+       Project/invoice info lives in the header chip's modal (see below).
        ══════════════════════════════════════════════════════════════════════ -->
 
-  <!-- Project status card -->
-  <div class="wi-card">
-    <div class="wi-card-title">Tu proyecto</div>
-    <div class="status-badge{% if lead.status == 'finalizado' %} green{% elif lead.status == 'perdido' %} gray{% elif lead.status in 'en_trabajo,aceptado' %} orange{% endif %}">
-      {{ status_label }}
-    </div>
-    <div class="project-name">{{ lead.package|default:"Proyecto Web-Impulsa" }}</div>
-    <div class="project-meta">
-      {% if lead.biz_type %}<span>{{ lead.biz_type }}</span>{% endif %}
-      {% if lead.estimated_price %}<span>{{ lead.estimated_price }}€ estimado</span>{% endif %}
-      {% if lead.maintenance_plan %}<span>Mant. {{ lead.maintenance_plan }}</span>{% endif %}
-    </div>
+  <div>
 
-    {% if lead.extras %}
-    <div class="extras-row">
-      {% for e in lead.extras %}<span class="extra-tag">{{ e }}</span>{% endfor %}
-    </div>
-    {% endif %}
-
-    {% if next_step %}
-    <div class="next-step-box" style="margin-top:14px">
-      <strong>Siguiente paso:</strong> {{ next_step }}
-    </div>
-    {% endif %}
-  </div>
-
-  <!-- Milestones timeline -->
-  {% if milestones %}
-  <div class="wi-card">
-    <div class="wi-card-title">Progreso del proyecto</div>
-    {% for m in milestones %}
-    <div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #f1f5f9">
-      <div style="flex-shrink:0;margin-top:2px">
-        {% if m.status == 'done' %}
-        <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#f0fdf4;color:#16a34a;font-size:13px">✓</span>
-        {% elif m.status == 'in_progress' %}
-        <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#eff6ff;color:#2563eb;font-size:11px;font-weight:900">▶</span>
-        {% elif m.status == 'blocked' %}
-        <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#fef2f2;color:#dc2626;font-size:13px">!</span>
-        {% else %}
-        <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#f8fafc;color:#94a3b8;font-size:11px">○</span>
-        {% endif %}
-      </div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:.86rem;font-weight:{% if m.status == 'done' %}600{% else %}700{% endif %};
-                    color:{% if m.status == 'done' %}#16a34a{% elif m.status == 'in_progress' %}#1760d6{% elif m.status == 'blocked' %}#dc2626{% else %}#64748b{% endif %}">
-          {{ m.title }}
+      <!-- "Add to Home Screen" banner — a bookmark shortcut, not an app install,
+           worded carefully so it doesn't read as "download this app" (virus fears) -->
+      <div id="pwaBanner" class="wi-card pwa-banner" style="display:none">
+        <div class="pwa-banner-icon">📌</div>
+        <div class="pwa-banner-text">
+          <strong data-i18n="pwa.title">Acceso rápido a tu proyecto</strong>
+          <span data-i18n="pwa.body">No es una app ni se descarga nada — es solo un atajo directo a esta página en tu pantalla de inicio, para no tener que buscar el enlace en tu correo cada vez.</span>
+          <span id="pwaIosHint" style="display:none" data-i18n-html="pwa.ios_hint">Toca <strong>Compartir</strong> ⬆️ y luego <strong>«Añadir a pantalla de inicio»</strong>.</span>
         </div>
-        {% if m.description %}
-        <div style="font-size:.78rem;color:#94a3b8;margin-top:2px">{{ m.description }}</div>
-        {% endif %}
-        {% if m.due_date %}
-        <div style="font-size:.74rem;color:#cbd5e1;margin-top:1px">{{ m.due_date|date:"d/m/Y" }}</div>
-        {% endif %}
+        <div class="pwa-banner-actions">
+          <button type="button" id="pwaInstallBtn" class="btn-primary" style="display:none;width:auto;padding:9px 16px" data-i18n="pwa.install_btn">Añadir acceso directo</button>
+          <button type="button" id="pwaDismissBtn" class="pwa-dismiss" aria-label="Cerrar">✕</button>
+        </div>
       </div>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
 
-  <!-- Materials upload -->
-  <div class="wi-card">
-    <div class="wi-card-title">Materiales del proyecto</div>
-    <p style="font-size:.85rem;color:#64748b;margin:0 0 14px">
-      Sube fotos, logotipo, textos o documentos que necesitemos para tu web.
-      Máximo 15 MB por archivo.
-    </p>
-
-    <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-      <div class="upload-icon">📁</div>
-      <div style="font-weight:700;font-size:.9rem">Pulsa para seleccionar archivos</div>
-      <div class="upload-hint">
-        Fotos · Videos · Logo (SVG, AI, PDF) · Documentos (Word, Excel, PDF)
+      <div class="main-tab-nav">
+        <button id="mtabChat" class="main-tab-btn" onclick="showMainTab('chat')">
+          💬 <span data-i18n="cabinet.tab_chat">Chat</span>
+        </button>
+        <button id="mtabFiles" class="main-tab-btn" onclick="showMainTab('files')">
+          📁 <span data-i18n="cabinet.tab_files">Progreso y materiales</span>
+        </button>
       </div>
-    </div>
-    <input type="file" id="fileInput" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.svg,.ai,.eps,.psd,.csv">
 
-    <div style="margin-bottom:10px">
-      <input type="text" id="uploaderNote" placeholder="Nota opcional (ej: logo en fondo blanco)"
-             style="width:100%;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:.83rem;outline:none">
-    </div>
-
-    <button class="btn-primary" id="uploadBtn" onclick="doUpload()" disabled>
-      Subir archivos
-    </button>
-
-    <div class="upload-progress" id="uploadProgress">
-      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-      <div class="progress-label" id="progressLabel">Subiendo...</div>
-    </div>
-    <div id="uploadResult"></div>
-  </div>
-
-  <!-- Already uploaded materials -->
-  {% if materials %}
-  <div class="wi-card">
-    <div class="wi-card-title">Archivos subidos ({{ materials|length }})</div>
-    {% for m in materials %}
-    <div class="file-item">
-      <div class="file-icon">
-        {% if m.file_type == 'photo' %}🖼️
-        {% elif m.file_type == 'video' %}🎬
-        {% elif m.file_type == 'logo' %}🎨
-        {% elif m.file_type == 'document' %}📄
-        {% elif m.file_type == 'text' %}📝
-        {% else %}📎{% endif %}
+      <div id="mpanelChat">
+        {% include "crm/portal_chat.html" %}
       </div>
-      <div class="file-name">{{ m.original_filename }}</div>
-      <div class="file-meta">{{ m.size_display }}</div>
-      <a class="file-dl" href="/p/{{ access.token }}/file/{{ m.pk }}/" download="{{ m.original_filename }}">
-        ↓
-      </a>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
 
-  <!-- Messages -->
-  <div class="wi-card">
-    <div class="wi-card-title">Mensajes</div>
+      <div id="mpanelFiles" style="display:none">
 
-    {% if msg_sent %}
-    <div class="next-step-box" style="margin-bottom:12px">
-      ✓ Mensaje enviado. Te respondemos lo antes posible.
-    </div>
-    {% endif %}
-
-    <!-- Thread -->
-    {% if portal_msgs %}
-    <div style="margin-bottom:14px;max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:8px">
-      {% for m in portal_msgs %}
-      <div style="display:flex;{% if m.direction == 'inbound' %}justify-content:flex-end{% endif %}">
-        <div style="max-width:78%;padding:9px 13px;border-radius:12px;font-size:.83rem;line-height:1.5;
-                    {% if m.direction == 'inbound' %}background:#eff6ff;color:#1e293b;border-bottom-right-radius:3px
-                    {% else %}background:#f1f5f9;color:#334155;border-bottom-left-radius:3px{% endif %}">
-          <div>{{ m.content }}</div>
-          <div style="font-size:.7rem;color:#94a3b8;margin-top:3px;text-align:{% if m.direction == 'inbound' %}right{% else %}left{% endif %}">
-            {% if m.direction == 'outbound' %}<span style="font-weight:600;color:#1760d6">Web-Impulsa · </span>{% endif %}
-            {{ m.created_at|date:"d/m H:i" }}
+        <!-- Progress bar + milestones timeline -->
+        {% if progress_pct is not None %}
+        <div class="wi-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div class="wi-card-title" style="margin:0" data-i18n="cabinet.progress_title">Progreso del proyecto</div>
+            <span style="font-size:.8rem;font-weight:800;color:#1760d6">{{ progress_pct }}%</span>
           </div>
+          <div class="proj-progress-track">
+            <div class="proj-progress-fill" style="width:{{ progress_pct }}%"></div>
+          </div>
+          {% if milestones %}
+          <div style="margin-top:14px">
+          {% for m in milestones %}
+          <div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #f1f5f9">
+            <div style="flex-shrink:0;margin-top:2px">
+              {% if m.status == 'done' %}
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#f0fdf4;color:#16a34a;font-size:13px">✓</span>
+              {% elif m.status == 'in_progress' %}
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#eff6ff;color:#2563eb;font-size:11px;font-weight:900">▶</span>
+              {% elif m.status == 'blocked' %}
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#fef2f2;color:#dc2626;font-size:13px">!</span>
+              {% else %}
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#f8fafc;color:#94a3b8;font-size:11px">○</span>
+              {% endif %}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:.86rem;font-weight:{% if m.status == 'done' %}600{% else %}700{% endif %};
+                          color:{% if m.status == 'done' %}#16a34a{% elif m.status == 'in_progress' %}#1760d6{% elif m.status == 'blocked' %}#dc2626{% else %}#64748b{% endif %}">
+                {{ m.title }}
+              </div>
+              {% if m.description %}
+              <div style="font-size:.78rem;color:#94a3b8;margin-top:2px">{{ m.description }}</div>
+              {% endif %}
+              {% if m.due_date %}
+              <div style="font-size:.74rem;color:#cbd5e1;margin-top:1px">{{ m.due_date|date:"d/m/Y" }}</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+          </div>
+          {% endif %}
         </div>
+        {% endif %}
+
+        <!-- Materials upload -->
+        <div class="wi-card">
+          <div class="wi-card-title" data-i18n="cabinet.materials_title">Materiales del proyecto</div>
+          <p style="font-size:.85rem;color:#64748b;margin:0 0 14px" data-i18n="cabinet.materials_desc">
+            Sube fotos, logotipo, textos o documentos que necesitemos para tu web.
+            Máximo 15 MB por archivo.
+          </p>
+
+          <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon">📁</div>
+            <div style="font-weight:700;font-size:.9rem" data-i18n="cabinet.upload_cta">Pulsa para seleccionar archivos</div>
+            <div class="upload-hint" data-i18n="cabinet.upload_hint">
+              Fotos · Videos · Logo (SVG, AI, PDF) · Documentos (Word, Excel, PDF)
+            </div>
+          </div>
+          <input type="file" id="fileInput" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.svg,.ai,.eps,.psd,.csv">
+
+          <div style="margin-bottom:10px">
+            <input type="text" id="uploaderNote" placeholder="Nota opcional (ej: logo en fondo blanco)"
+                   data-i18n-placeholder="cabinet.note_placeholder"
+                   style="width:100%;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:.83rem;outline:none">
+          </div>
+
+          <button class="btn-primary" id="uploadBtn" onclick="doUpload()" disabled data-i18n="cabinet.upload_btn">
+            Subir archivos
+          </button>
+
+          <div class="upload-progress" id="uploadProgress">
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <div class="progress-label" id="progressLabel" data-i18n="cabinet.uploading">Subiendo...</div>
+          </div>
+          <div id="uploadResult"></div>
+        </div>
+
+        <!-- Already uploaded materials -->
+        {% if materials %}
+        <div class="wi-card">
+          <div class="wi-card-title"><span data-i18n="cabinet.files_uploaded_title">Archivos subidos</span> ({{ materials|length }})</div>
+          {% for m in materials %}
+          <div class="file-item">
+            <div class="file-icon">
+              {% if m.file_type == 'photo' %}🖼️
+              {% elif m.file_type == 'video' %}🎬
+              {% elif m.file_type == 'logo' %}🎨
+              {% elif m.file_type == 'document' %}📄
+              {% elif m.file_type == 'text' %}📝
+              {% else %}📎{% endif %}
+            </div>
+            <div class="file-name">{{ m.original_filename }}</div>
+            <div class="file-meta">{{ m.size_display }}</div>
+            <a class="file-dl" href="/p/{{ access.token }}/file/{{ m.pk }}/" download="{{ m.original_filename }}">
+              ↓
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+      </div>{# end #mpanelFiles #}
+
+  </div>{# end main column #}
+
+  <!-- Project/invoice modal — opened via the header chip -->
+  <div id="projectModalBackdrop" class="wi-modal-backdrop" style="display:none" onclick="if(event.target===this) toggleProjectModal()">
+    <div class="wi-modal">
+      <div class="wi-modal-header">
+        <div style="font-size:.95rem;min-width:0">
+          <span style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8" data-i18n="cabinet.project_label">Proyecto</span>
+          <span style="font-weight:900;color:#0c1c42" {% if lead.package %}data-i18n="pkg.{{ lead.package|slugify }}"{% endif %}>{{ lead.package|default:"Proyecto Web-Impulsa" }}</span>
+        </div>
+        <button type="button" class="wi-modal-close" onclick="toggleProjectModal()">✕</button>
       </div>
-      {% endfor %}
-    </div>
-    {% endif %}
 
-    <!-- Input form -->
-    <form method="post" action="/p/{{ access.token }}/message/">
-      <textarea name="message" rows="3" required
-                placeholder="Escribe aquí tu consulta, corrección o comentario…"
-                style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px 12px;
-                       font-size:.84rem;font-family:inherit;resize:vertical;outline:none;
-                       margin-bottom:8px;box-sizing:border-box"></textarea>
-      <button type="submit" class="btn-primary">Enviar mensaje →</button>
-    </form>
-  </div>
+      <div class="lang-switcher" style="margin-top:12px">
+        <button class="lang-btn" data-lang="es">ES</button>
+        <button class="lang-btn" data-lang="eu">EU</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ru">RU</button>
+      </div>
 
-  <!-- Contact WhatsApp -->
-  <div class="wi-card">
-    <div class="wi-card-title">¿Prefieres WhatsApp?</div>
-    <a href="https://wa.me/34613708322?text={{ 'Hola, soy '|urlencode }}{{ lead.name|urlencode }}{{ ', tengo una consulta sobre mi proyecto: '|urlencode }}{{ lead.package|urlencode }}"
-       target="_blank" rel="noopener" class="btn-wa">
-      💬 Escribir por WhatsApp
-    </a>
-  </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <span style="font-weight:700;font-size:.85rem;color:#334155">{{ lead.name }}</span>
+        <span class="status-badge{% if lead.status == 'finalizado' %} green{% elif lead.status == 'perdido' %} gray{% elif lead.status in 'en_trabajo,aceptado' %} orange{% endif %}" style="margin:0" data-i18n="status.{{ lead.status }}">
+          {{ status_label }}
+        </span>
+      </div>
+
+      <div class="project-meta" style="margin-top:10px">
+        {% if lead.biz_type %}<span>{{ lead.biz_type }}</span>{% endif %}
+        {% if lead.estimated_price %}<span>{{ lead.estimated_price }}€ <span data-i18n="cabinet.estimated">estimado</span></span>{% endif %}
+        {% if lead.maintenance_plan %}<span><span data-i18n="cabinet.maint_prefix">Mant.</span> {{ lead.maintenance_plan }}</span>{% endif %}
+      </div>
+
+      {% if lead.extras %}
+      <div class="extras-row">
+        {% for e in lead.extras %}<span class="extra-tag" data-i18n="extra.{{ e|slugify }}">{{ e }}</span>{% endfor %}
+      </div>
+      {% endif %}
+
+      {% if next_step %}
+      <div class="next-step-box" style="margin-top:14px">
+        <strong data-i18n="cabinet.next_step_label">Siguiente paso:</strong> <span data-i18n="next.{{ lead.status }}">{{ next_step }}</span>
+      </div>
+      {% endif %}
+
+      {% if invoice_total %}
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid #e2e8f0">
+        <div class="wi-card-title" style="margin-bottom:8px" data-i18n="cabinet.invoice_title">Tu factura</div>
+        <div style="font-size:.84rem;color:#334155;line-height:1.7;margin-bottom:10px">
+          <span style="color:#94a3b8" data-i18n="cabinet.total_label">Total</span> <strong style="color:#0c1c42">{{ invoice_total }}€</strong>
+          · <span style="color:#94a3b8" data-i18n="cabinet.paid_label">Pagado</span> <strong style="color:#16a34a">{{ paid_total }}€</strong>
+          · <span style="color:#94a3b8" data-i18n="cabinet.pending_label">Pendiente</span> <strong style="color:{% if owed_total > 0 %}#dc2626{% else %}#16a34a{% endif %}">{{ owed_total }}€</strong>
+        </div>
+
+        {% if payment_pending %}
+        <div style="font-size:.78rem;color:#92400e;background:#fffbeb;border-radius:8px;padding:8px 10px;margin-bottom:10px">
+          ⏳ <span data-i18n="cabinet.payment_notified_prefix">Pago de</span> {{ payment_pending.amount }}€ <span data-i18n="cabinet.payment_notified_suffix">notificado, pendiente de confirmar.</span>
+        </div>
+        {% endif %}
+
+        {% if owed_total > 0 %}
+        <a href="/p/{{ access.token }}/pay/"
+           style="display:block;text-align:center;background:#2563eb;color:#fff;text-decoration:none;
+                  border-radius:10px;padding:11px;font-size:.88rem;font-weight:800" data-i18n="cabinet.pay_now_btn">
+          💳 Pagar ahora →
+        </a>
+        {% else %}
+        <div style="text-align:center;font-size:.82rem;color:#16a34a;font-weight:700;padding:6px 0" data-i18n="cabinet.all_paid">
+          ✅ Al día con los pagos
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>{# end .wi-modal #}
+  </div>{# end #projectModalBackdrop #}
+
+  <script>
+  (function() {
+    window.toggleProjectModal = function() {
+      var el = document.getElementById('projectModalBackdrop');
+      if (!el) return;
+      var show = el.style.display === 'none' || !el.style.display;
+      el.style.display = show ? 'flex' : 'none';
+    };
+    document.addEventListener('keydown', function(e) {
+      if (e.key !== 'Escape') return;
+      var el = document.getElementById('projectModalBackdrop');
+      if (el && el.style.display !== 'none') el.style.display = 'none';
+    });
+  })();
+  </script>
+
+  <script>
+  (function() {
+    var panels = {chat: 'mpanelChat', files: 'mpanelFiles'};
+    window.showMainTab = function(t) {
+      Object.keys(panels).forEach(function(key) {
+        var panel = document.getElementById(panels[key]);
+        var btn   = document.getElementById('mtab' + key.charAt(0).toUpperCase() + key.slice(1));
+        if (panel) panel.style.display = key === t ? '' : 'none';
+        if (btn) btn.classList.toggle('active', key === t);
+      });
+      try { localStorage.setItem('wi_cabinet_tab', t); } catch (e) {}
+    };
+    var saved = null;
+    try { saved = localStorage.getItem('wi_cabinet_tab'); } catch (e) {}
+    showMainTab(saved === 'files' ? 'files' : 'chat');
+  })();
+  </script>
+
+  <script>
+  // Registering a (no-op) service worker is required for Chrome to consider
+  // this installable and fire beforeinstallprompt further down.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/p/{{ access.token }}/sw.js').catch(function() {});
+  }
+  </script>
+
+  <script>
+  (function() {
+    var STORAGE_KEY = 'wi_pwa_dismissed';
+    var isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+      || window.navigator.standalone === true;
+    if (isStandalone) return; // already using it as a shortcut — never nag again
+
+    var dismissed = false;
+    try { dismissed = localStorage.getItem(STORAGE_KEY) === '1'; } catch (e) {}
+    if (dismissed) return;
+
+    var banner     = document.getElementById('pwaBanner');
+    var installBtn = document.getElementById('pwaInstallBtn');
+    var iosHint    = document.getElementById('pwaIosHint');
+    var dismissBtn = document.getElementById('pwaDismissBtn');
+    if (!banner) return;
+
+    // Feature-detect rather than gate by device type — this also covers tablets
+    // and desktop/laptop Chrome & Edge, which can install PWAs just as well as a phone.
+    // Modern iPadOS Safari reports itself as "Macintosh" but is still touch-only,
+    // hence the extra maxTouchPoints check below.
+    var isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var deferredPrompt = null;
+
+    if (isIos) {
+      // Safari has no install-prompt API — just show the manual instructions
+      iosHint.style.display = '';
+      banner.style.display = 'flex';
+    } else {
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = '';
+        banner.style.display = 'flex';
+      });
+    }
+
+    window.addEventListener('appinstalled', function() {
+      banner.style.display = 'none';
+      try { localStorage.setItem(STORAGE_KEY, '1'); } catch (e) {}
+    });
+
+    installBtn.addEventListener('click', function() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function() {
+        deferredPrompt = null;
+        banner.style.display = 'none';
+      });
+    });
+
+    dismissBtn.addEventListener('click', function() {
+      banner.style.display = 'none';
+      try { localStorage.setItem(STORAGE_KEY, '1'); } catch (e) {}
+    });
+  })();
+  </script>
 
 {% endif %}{# end portal_mode #}
 
@@ -796,10 +1442,13 @@
 
   function setFiles(files) {
     selectedFiles = Array.from(files);
+    var _t = window.wiT || function(k){return k;};
     if (selectedFiles.length > 0) {
       uploadBtn.disabled = false;
+      var fileWord = _t(selectedFiles.length !== 1 ? 'upload.files' : 'upload.file');
+      var selWord  = _t(selectedFiles.length !== 1 ? 'upload.selected_plural' : 'upload.selected');
       uploadArea.querySelector('div:nth-child(2)').textContent =
-        selectedFiles.length + ' archivo' + (selectedFiles.length !== 1 ? 's' : '') + ' seleccionado' + (selectedFiles.length !== 1 ? 's' : '');
+        selectedFiles.length + ' ' + fileWord + ' ' + selWord;
     } else {
       uploadBtn.disabled = true;
     }
@@ -807,6 +1456,7 @@
 
   window.doUpload = function() {
     if (!selectedFiles.length) return;
+    var _t = window.wiT || function(k){return k;};
 
     var fd = new FormData();
     selectedFiles.forEach(function(f) { fd.append('files', f); });
@@ -824,7 +1474,7 @@
       if (e.lengthComputable) {
         var pct = Math.round(e.loaded / e.total * 100);
         document.getElementById('progressFill').style.width = pct + '%';
-        document.getElementById('progressLabel').textContent = 'Subiendo... ' + pct + '%';
+        document.getElementById('progressLabel').textContent = _t('cabinet.uploading') + ' ' + pct + '%';
       }
     });
     xhr.addEventListener('load', function() {
@@ -833,11 +1483,12 @@
         var data = JSON.parse(xhr.responseText);
         var resultDiv = document.getElementById('uploadResult');
         if (data.saved && data.saved.length) {
+          var fileWord = _t(data.saved.length !== 1 ? 'upload.files' : 'upload.file');
+          var uplWord  = _t(data.saved.length !== 1 ? 'upload.uploaded_plural' : 'upload.uploaded');
           resultDiv.innerHTML =
-            '<div class="upload-result-ok">✓ ' + data.saved.length +
-            ' archivo' + (data.saved.length !== 1 ? 's' : '') + ' subido' +
-            (data.saved.length !== 1 ? 's' : '') + ' correctamente. ' +
-            '<a href="" onclick="location.reload();return false;">Actualizar lista →</a></div>';
+            '<div class="upload-result-ok">✓ ' + data.saved.length + ' ' + fileWord + ' ' + uplWord + ' ' +
+            _t('upload.successfully') + ' ' +
+            '<a href="" onclick="location.reload();return false;">' + _t('upload.update_list') + '</a></div>';
         }
         if (data.errors && data.errors.length) {
           data.errors.forEach(function(e) {
@@ -847,7 +1498,7 @@
         }
       } catch(e) {
         document.getElementById('uploadResult').innerHTML =
-          '<div class="upload-result-err">Error inesperado. Inténtalo de nuevo.</div>';
+          '<div class="upload-result-err">' + _t('upload.error_unexpected') + '</div>';
       }
       uploadBtn.disabled = false;
       selectedFiles = [];
@@ -855,7 +1506,7 @@
     xhr.addEventListener('error', function() {
       prog.style.display = 'none';
       document.getElementById('uploadResult').innerHTML =
-        '<div class="upload-result-err">Error de conexión. Inténtalo de nuevo.</div>';
+        '<div class="upload-result-err">' + _t('upload.error_connection') + '</div>';
       uploadBtn.disabled = false;
     });
 
@@ -879,14 +1530,818 @@ data.phases     = P.phases;
 data.conditions = P.conditions;
 
 var el = document.getElementById('portalProposalPreview');
-if (el) el.innerHTML = WIProposalTemplate.renderProposal(data);
 
+function _renderPreview() {
+  if (el) el.innerHTML = WIProposalTemplate.renderProposal(data);
+}
+_renderPreview();
+
+// Scroll chat thread to bottom
+var thread = document.getElementById('portalChatThread');
+if (thread) thread.scrollTop = thread.scrollHeight;
+
+// Update total label
 var totEl = document.getElementById('portalProposalTotal');
 if (totEl) {
-  totEl.querySelector('span:last-child').textContent = WIProposalTemplate.eur(data.pricing.totalWithVat);
+  var formatted = WIProposalTemplate.eur(data.pricing.totalWithVat);
+  if (totEl.tagName === 'SPAN') {
+    totEl.textContent = (window.wiT ? window.wiT('proposal.total_iva_short') : 'Total con IVA:') + ' ' + formatted;
+  } else {
+    var sp = totEl.querySelector('span:last-child');
+    if (sp) sp.textContent = formatted;
+  }
 }
+
+// Live-sync acceptance form fields → proposal A4 preview
+var _syncTimer = null;
+function _syncFields() {
+  if (_syncTimer) clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(function() {
+    var fName = document.querySelector('[name="accept_name"]');
+    var fNif  = document.querySelector('[name="accept_nif"]');
+    var fAddr = document.querySelector('[name="accept_address"]');
+    var fCity = document.querySelector('[name="accept_city"]');
+    if (fName && fName.value) data.client.name = fName.value;
+    if (fNif)  data.client.taxId   = fNif.value  || '';
+    if (fAddr) data.client.address = fAddr.value || '';
+    if (fCity) data.client.city    = fCity.value || '';
+    _renderPreview();
+  }, 300);
+}
+['accept_name','accept_nif','accept_address','accept_city'].forEach(function(n) {
+  var inp = document.querySelector('[name="' + n + '"]');
+  if (inp) inp.addEventListener('input', _syncFields);
+});
 })();
 </script>
 {% endif %}
+
+<script>
+(function() {
+'use strict';
+
+var T = {
+es: {
+  'header.welcome': 'Bienvenido',
+  'error.expired_title': 'Enlace expirado',
+  'error.invalid_title': 'Enlace no válido',
+  'error.expired_body': 'Este enlace ha caducado (validez 72 horas).<br>Escríbenos por WhatsApp para recibir uno nuevo.',
+  'error.invalid_body': 'El enlace no existe o ya no está activo.<br>Por favor, usa el enlace que te enviamos por correo.',
+  'error.wa_btn': 'Contactar por WhatsApp',
+  'pin.title': 'Introduce tu código',
+  'pin.hello': 'Hola',
+  'pin.instruction': 'introduce el código de 6 dígitos que te enviamos por WhatsApp.',
+  'pin.error': '❌ Código incorrecto. Inténtalo de nuevo.',
+  'pin.submit': 'Acceder →',
+  'pin.no_code': '¿No tienes el código? Escríbenos por',
+  'pay.card_ok_title': '¡Pago recibido, gracias!',
+  'pay.notify_ok_title': '¡Gracias por avisarnos!',
+  'pay.card_ok_body': 'Tu pago con tarjeta se ha confirmado automáticamente. Ya está registrado en tu cuenta.',
+  'pay.notify_ok_body': 'Hemos recibido tu notificación. Tatiana revisará el pago y te confirmará en breve por el chat del portal.',
+  'pay.goto_cabinet': 'Ir a mi área de cliente →',
+  'pay.signed_title': 'Propuesta firmada',
+  'pay.iva_included': 'IVA incluido',
+  'pay.project_total': 'Total del proyecto:',
+  'pay.tab_transfer': 'Transferencia bancaria',
+  'pay.holder_label': 'Titular',
+  'pay.copy_btn': 'Copiar',
+  'pay.concept_label': 'Concepto (importante)',
+  'pay.exact_amount': 'Importe exacto:',
+  'pay.include_concept': 'Incluye el concepto tal como aparece para poder identificar tu pago.',
+  'pay.transfer_done_btn': '✓ Ya he realizado la transferencia',
+  'pay.bizum_phone_label': 'Teléfono Bizum',
+  'pay.concept_label2': 'Concepto',
+  'pay.holder_label2': 'Titular:',
+  'pay.bizum_done_btn': '✓ Ya he enviado el Bizum',
+  'pay.tab_cash': 'Efectivo',
+  'pay.cash_note': 'Puedes pagar en efectivo cuando quedemos en persona. En cuanto confirmemos la recepción, te enviaremos la factura correspondiente.',
+  'pay.cash_done_btn': '✓ Ya he pagado en efectivo',
+  'pay.card_error': 'No se pudo iniciar el pago con tarjeta. Prueba de nuevo o usa transferencia/Bizum.',
+  'pay.card_btn_prefix': 'Pagar',
+  'pay.card_btn_suffix': 'con tarjeta',
+  'pay.coming_soon': 'Próximamente',
+  'pay.card_disabled_btn': '💳 Pagar con tarjeta (Stripe)',
+  'pay.back_to_cabinet': '← Ir a mi área de cliente',
+  'proposal.accepted_banner': '✅ Propuesta aceptada correctamente. ¡Gracias! En breve nos pondremos en contacto contigo.',
+  'proposal.your_proposal': 'Tu propuesta',
+  'proposal.accepted_badge': 'Aceptada ✓',
+  'proposal.ready_badge': 'Lista para revisar',
+  'proposal.accepted_title': 'Propuesta aceptada',
+  'proposal.loading': 'Cargando propuesta…',
+  'proposal.data_signature': 'Datos y firma',
+  'proposal.total_iva_label': 'Total (IVA 21% incluido):',
+  'proposal.total_iva_short': 'Total con IVA:',
+  'proposal.preparing_title': 'Preparando tu propuesta',
+  'proposal.preparing_body': 'En breve recibirás la propuesta personalizada para tu proyecto.',
+  'form.name_placeholder': 'Nombre / Empresa *',
+  'form.nif_placeholder': 'NIF / CIF (para factura)',
+  'form.address_placeholder': 'Dirección fiscal',
+  'form.city_placeholder': 'CP y ciudad',
+  'form.signature_placeholder': 'Firma digital — escribe tu nombre completo *',
+  'form.payment_plan_question': '¿Cómo prefieres pagar?',
+  'form.plan_5050': '50% ahora + 50% a la entrega',
+  'form.plan_3way': '3 pagos (33% cada uno)',
+  'form.plan_full': 'Pago único',
+  'form.agree_text_prefix': 'Acepto el alcance, presupuesto y condiciones de esta propuesta. Me comprometo a abonar',
+  'form.agree_text_suffix': 'antes del inicio de los trabajos.',
+  'form.plan_note_5050': 'el 50% del importe',
+  'form.plan_note_3way': 'el primer tercio (33%) del importe',
+  'form.plan_note_full': 'el importe completo',
+  'form.submit': '✍️ Firmar y aceptar propuesta',
+  'cabinet.progress_title': 'Progreso del proyecto',
+  'cabinet.materials_title': 'Materiales del proyecto',
+  'cabinet.materials_desc': 'Sube fotos, logotipo, textos o documentos que necesitemos para tu web. Máximo 15 MB por archivo.',
+  'cabinet.upload_cta': 'Pulsa para seleccionar archivos',
+  'cabinet.upload_hint': 'Fotos · Videos · Logo (SVG, AI, PDF) · Documentos (Word, Excel, PDF)',
+  'cabinet.note_placeholder': 'Nota opcional (ej: logo en fondo blanco)',
+  'cabinet.upload_btn': 'Subir archivos',
+  'cabinet.uploading': 'Subiendo...',
+  'cabinet.files_uploaded_title': 'Archivos subidos',
+  'cabinet.your_project': 'Tu proyecto',
+  'cabinet.project_label': 'Proyecto',
+  'cabinet.progress_label': 'Progreso del proyecto',
+  'cabinet.tab_chat': 'Chat',
+  'cabinet.tab_files': 'Progreso y materiales',
+  'pwa.title': 'Acceso rápido a tu proyecto',
+  'pwa.body': 'No es una app ni se descarga nada — es solo un atajo directo a esta página en tu dispositivo, para no tener que buscar el enlace en tu correo cada vez.',
+  'pwa.ios_hint': 'Toca <strong>Compartir</strong> ⬆️ y luego <strong>«Añadir a pantalla de inicio»</strong>.',
+  'pwa.install_btn': 'Añadir acceso directo',
+  'cabinet.estimated': 'estimado',
+  'cabinet.maint_prefix': 'Mant.',
+  'cabinet.next_step_label': 'Siguiente paso:',
+  'cabinet.invoice_title': 'Tu factura',
+  'cabinet.total_label': 'Total',
+  'cabinet.paid_label': 'Pagado',
+  'cabinet.pending_label': 'Pendiente',
+  'cabinet.payment_notified_prefix': 'Pago de',
+  'cabinet.payment_notified_suffix': 'notificado, pendiente de confirmar.',
+  'cabinet.pay_now_btn': '💳 Pagar ahora →',
+  'cabinet.all_paid': '✅ Al día con los pagos',
+  'upload.file': 'archivo',
+  'upload.files': 'archivos',
+  'upload.selected': 'seleccionado',
+  'upload.selected_plural': 'seleccionados',
+  'upload.uploaded': 'subido',
+  'upload.uploaded_plural': 'subidos',
+  'upload.successfully': 'correctamente.',
+  'upload.update_list': 'Actualizar lista →',
+  'upload.error_unexpected': 'Error inesperado. Inténtalo de nuevo.',
+  'upload.error_connection': 'Error de conexión. Inténtalo de nuevo.',
+  'chat.online': 'En línea',
+  'chat.last_seen_prefix': 'Últ. vez',
+  'chat.offline': 'Desconectado',
+  'chat.loading': 'Cargando mensajes…',
+  'chat.replying': 'Respondiendo',
+  'chat.input_placeholder': 'Escribe un mensaje…',
+  'chat.send_btn': 'Enviar →',
+  'chat.today': 'Hoy',
+  'chat.yesterday': 'Ayer',
+  'chat.tooltip_react': 'Reaccionar',
+  'chat.tooltip_reply': 'Responder',
+  'chat.tooltip_delete': 'Eliminar',
+  'chat.sent_title': 'Enviado',
+  'chat.read_title': 'Leído',
+  'chat.deleted': 'Mensaje eliminado',
+  'chat.delete_confirm': '¿Eliminar este mensaje?',
+  'chat.empty_state': 'Aún no hay mensajes. ¡Escríbenos!',
+  'chat.send_error': 'No se pudo enviar el mensaje.',
+  'chat.material_uploaded': 'Material subido:',
+  'status.nuevo': 'Recibido',
+  'status.contactado': 'En contacto',
+  'status.propuesta_enviada': 'Propuesta enviada',
+  'status.negociacion': 'En negociación',
+  'status.aceptado': 'Aceptado ✓',
+  'status.en_trabajo': 'En desarrollo 🚧',
+  'status.finalizado': 'Completado ✅',
+  'status.perdido': 'Cerrado',
+  'next.nuevo': 'Nos ponemos en contacto contigo próximamente.',
+  'next.contactado': 'Estamos preparando tu propuesta personalizada.',
+  'next.propuesta_enviada': 'Revisa la propuesta y coméntanos cualquier ajuste.',
+  'next.negociacion': 'Estamos ultimando los detalles de tu proyecto.',
+  'next.aceptado': 'Por favor, sube los materiales de tu proyecto para comenzar.',
+  'next.en_trabajo': 'Tu proyecto está en desarrollo. Te avisamos en cada avance.',
+  'next.finalizado': '¡Tu proyecto está publicado! Cuéntanos cómo podemos seguir ayudándote.',
+  'next.perdido': 'Gracias por considerarnos. Puedes volver cuando lo necesites.',
+  'pkg.landing-page': 'Landing page',
+  'pkg.web-profesional': 'Web profesional',
+  'pkg.web-con-reservas': 'Web con reservas',
+  'pkg.tienda-online': 'Tienda online',
+  'pkg.proyecto-a-medida': 'Proyecto a medida',
+  'pkg.proyecto-existente': 'Proyecto existente',
+  'pkg.solo-mantenimiento': 'Solo mantenimiento',
+  'extra.diseno-premium': 'Diseño premium',
+  'extra.textos-que-venden': 'Textos que venden',
+  'extra.aparecer-en-google': 'Aparecer en Google',
+  'extra.ficha-en-google-maps': 'Ficha en Google Maps',
+  'extra.formulario-inteligente': 'Formulario inteligente',
+  'extra.boton-de-whatsapp': 'Botón de WhatsApp',
+  'extra.citas-y-reservas-online': 'Citas y reservas online',
+  'extra.cobros-y-conexiones-online': 'Cobros y conexiones online',
+  'extra.web-en-varios-idiomas': 'Web en varios idiomas',
+  'extra.estadisticas-de-ventas': 'Estadísticas de ventas',
+  'extra.subir-catalogo-completo': 'Subir catálogo completo',
+  'extra.avisos-antes-de-cada-cita': 'Avisos antes de cada cita',
+  'extra.asistente-automatico-24h': 'Asistente automático 24h',
+  'extra.correo-con-tu-dominio': 'Correo con tu dominio',
+  'extra.galeria-de-instagram': 'Galería de Instagram',
+  'extra.zona-privada-para-clientes': 'Zona privada para clientes',
+  'extra.documentos-automaticos-pdf': 'Documentos automáticos PDF',
+  'extra.datos-en-excel-sheets': 'Datos en Excel / Sheets',
+  'extra.panel-para-tu-equipo': 'Panel para tu equipo',
+  'extra.app-para-movil': 'App para móvil'
+},
+en: {
+  'header.welcome': 'Welcome',
+  'error.expired_title': 'Link expired',
+  'error.invalid_title': 'Invalid link',
+  'error.expired_body': 'This link has expired (valid for 72 hours).<br>Message us on WhatsApp to get a new one.',
+  'error.invalid_body': "This link doesn't exist or is no longer active.<br>Please use the link we sent you by email.",
+  'error.wa_btn': 'Contact via WhatsApp',
+  'pin.title': 'Enter your code',
+  'pin.hello': 'Hi',
+  'pin.instruction': 'enter the 6-digit code we sent you on WhatsApp.',
+  'pin.error': '❌ Incorrect code. Please try again.',
+  'pin.submit': 'Enter →',
+  'pin.no_code': "Don't have the code? Message us on",
+  'pay.card_ok_title': 'Payment received, thank you!',
+  'pay.notify_ok_title': 'Thanks for letting us know!',
+  'pay.card_ok_body': "Your card payment has been confirmed automatically. It's already recorded in your account.",
+  'pay.notify_ok_body': "We've received your notification. Tatiana will review the payment and confirm shortly via the portal chat.",
+  'pay.goto_cabinet': 'Go to my client area →',
+  'pay.signed_title': 'Proposal signed',
+  'pay.iva_included': 'VAT included',
+  'pay.project_total': 'Project total:',
+  'pay.tab_transfer': 'Bank transfer',
+  'pay.holder_label': 'Account holder',
+  'pay.copy_btn': 'Copy',
+  'pay.concept_label': 'Reference (important)',
+  'pay.exact_amount': 'Exact amount:',
+  'pay.include_concept': 'Include the reference exactly as shown so we can identify your payment.',
+  'pay.transfer_done_btn': "✓ I've made the transfer",
+  'pay.bizum_phone_label': 'Bizum phone number',
+  'pay.concept_label2': 'Reference',
+  'pay.holder_label2': 'Account holder:',
+  'pay.bizum_done_btn': "✓ I've sent the Bizum",
+  'pay.tab_cash': 'Cash',
+  'pay.cash_note': "You can pay in cash when we meet in person. As soon as we confirm we've received it, we'll send you the corresponding invoice.",
+  'pay.cash_done_btn': "✓ I've paid in cash",
+  'pay.card_error': "Couldn't start the card payment. Try again or use bank transfer/Bizum.",
+  'pay.card_btn_prefix': 'Pay',
+  'pay.card_btn_suffix': 'by card',
+  'pay.coming_soon': 'Coming soon',
+  'pay.card_disabled_btn': '💳 Pay by card (Stripe)',
+  'pay.back_to_cabinet': '← Go to my client area',
+  'proposal.accepted_banner': "✅ Proposal accepted successfully. Thank you! We'll be in touch shortly.",
+  'proposal.your_proposal': 'Your proposal',
+  'proposal.accepted_badge': 'Accepted ✓',
+  'proposal.ready_badge': 'Ready to review',
+  'proposal.accepted_title': 'Proposal accepted',
+  'proposal.loading': 'Loading proposal…',
+  'proposal.data_signature': 'Details and signature',
+  'proposal.total_iva_label': 'Total (21% VAT included):',
+  'proposal.total_iva_short': 'Total with VAT:',
+  'proposal.preparing_title': 'Preparing your proposal',
+  'proposal.preparing_body': "You'll receive your personalised proposal shortly.",
+  'form.name_placeholder': 'Name / Company *',
+  'form.nif_placeholder': 'Tax ID (for invoice)',
+  'form.address_placeholder': 'Billing address',
+  'form.city_placeholder': 'Postcode and city',
+  'form.signature_placeholder': 'Digital signature — type your full name *',
+  'form.payment_plan_question': 'How would you prefer to pay?',
+  'form.plan_5050': '50% now + 50% on delivery',
+  'form.plan_3way': '3 payments (33% each)',
+  'form.plan_full': 'Full payment',
+  'form.agree_text_prefix': 'I accept the scope, budget and terms of this proposal. I agree to pay',
+  'form.agree_text_suffix': 'before work begins.',
+  'form.plan_note_5050': '50% of the amount',
+  'form.plan_note_3way': 'the first third (33%) of the amount',
+  'form.plan_note_full': 'the full amount',
+  'form.submit': '✍️ Sign and accept proposal',
+  'cabinet.progress_title': 'Project progress',
+  'cabinet.materials_title': 'Project materials',
+  'cabinet.materials_desc': 'Upload photos, logo, texts or documents we need for your website. Max 15 MB per file.',
+  'cabinet.upload_cta': 'Tap to select files',
+  'cabinet.upload_hint': 'Photos · Videos · Logo (SVG, AI, PDF) · Documents (Word, Excel, PDF)',
+  'cabinet.note_placeholder': 'Optional note (e.g. logo on white background)',
+  'cabinet.upload_btn': 'Upload files',
+  'cabinet.uploading': 'Uploading...',
+  'cabinet.files_uploaded_title': 'Uploaded files',
+  'cabinet.your_project': 'Your project',
+  'cabinet.project_label': 'Project',
+  'cabinet.progress_label': 'Project progress',
+  'cabinet.tab_chat': 'Chat',
+  'cabinet.tab_files': 'Progress and materials',
+  'pwa.title': 'Quick access to your project',
+  'pwa.body': "It's not an app and nothing gets downloaded — it's just a direct shortcut to this page on your device, so you don't need to dig up the email link each time.",
+  'pwa.ios_hint': 'Tap <strong>Share</strong> ⬆️ then <strong>«Add to Home Screen»</strong>.',
+  'pwa.install_btn': 'Add shortcut',
+  'cabinet.estimated': 'estimated',
+  'cabinet.maint_prefix': 'Maint.',
+  'cabinet.next_step_label': 'Next step:',
+  'cabinet.invoice_title': 'Your invoice',
+  'cabinet.total_label': 'Total',
+  'cabinet.paid_label': 'Paid',
+  'cabinet.pending_label': 'Pending',
+  'cabinet.payment_notified_prefix': 'Payment of',
+  'cabinet.payment_notified_suffix': 'notified, pending confirmation.',
+  'cabinet.pay_now_btn': '💳 Pay now →',
+  'cabinet.all_paid': '✅ All payments up to date',
+  'upload.file': 'file',
+  'upload.files': 'files',
+  'upload.selected': 'selected',
+  'upload.selected_plural': 'selected',
+  'upload.uploaded': 'uploaded',
+  'upload.uploaded_plural': 'uploaded',
+  'upload.successfully': 'successfully.',
+  'upload.update_list': 'Refresh list →',
+  'upload.error_unexpected': 'Unexpected error. Please try again.',
+  'upload.error_connection': 'Connection error. Please try again.',
+  'chat.online': 'Online',
+  'chat.last_seen_prefix': 'Last seen',
+  'chat.offline': 'Offline',
+  'chat.loading': 'Loading messages…',
+  'chat.replying': 'Replying to',
+  'chat.input_placeholder': 'Write a message…',
+  'chat.send_btn': 'Send →',
+  'chat.today': 'Today',
+  'chat.yesterday': 'Yesterday',
+  'chat.tooltip_react': 'React',
+  'chat.tooltip_reply': 'Reply',
+  'chat.tooltip_delete': 'Delete',
+  'chat.sent_title': 'Sent',
+  'chat.read_title': 'Read',
+  'chat.deleted': 'Message deleted',
+  'chat.delete_confirm': 'Delete this message?',
+  'chat.empty_state': 'No messages yet. Write to us!',
+  'chat.send_error': "The message couldn't be sent.",
+  'chat.material_uploaded': 'Material uploaded:',
+  'status.nuevo': 'Received',
+  'status.contactado': 'In contact',
+  'status.propuesta_enviada': 'Proposal sent',
+  'status.negociacion': 'Negotiating',
+  'status.aceptado': 'Accepted ✓',
+  'status.en_trabajo': 'In development 🚧',
+  'status.finalizado': 'Completed ✅',
+  'status.perdido': 'Closed',
+  'next.nuevo': "We'll be in touch with you shortly.",
+  'next.contactado': "We're preparing your personalised proposal.",
+  'next.propuesta_enviada': 'Review the proposal and let us know about any changes.',
+  'next.negociacion': "We're finalising the details of your project.",
+  'next.aceptado': 'Please upload your project materials to get started.',
+  'next.en_trabajo': "Your project is in development. We'll keep you posted on progress.",
+  'next.finalizado': "Your project is live! Let us know how we can keep helping you.",
+  'next.perdido': 'Thanks for considering us. Feel free to come back whenever you need us.',
+  'pkg.landing-page': 'Landing page',
+  'pkg.web-profesional': 'Professional website',
+  'pkg.web-con-reservas': 'Website with bookings',
+  'pkg.tienda-online': 'Online store',
+  'pkg.proyecto-a-medida': 'Custom project',
+  'pkg.proyecto-existente': 'Existing project',
+  'pkg.solo-mantenimiento': 'Maintenance only',
+  'extra.diseno-premium': 'Premium design',
+  'extra.textos-que-venden': 'Copy that converts',
+  'extra.aparecer-en-google': 'Appear on Google',
+  'extra.ficha-en-google-maps': 'Google Maps listing',
+  'extra.formulario-inteligente': 'Smart contact form',
+  'extra.boton-de-whatsapp': 'WhatsApp button',
+  'extra.citas-y-reservas-online': 'Online appointments',
+  'extra.cobros-y-conexiones-online': 'Online payments & connections',
+  'extra.web-en-varios-idiomas': 'Website in multiple languages',
+  'extra.estadisticas-de-ventas': 'Sales statistics',
+  'extra.subir-catalogo-completo': 'Upload full catalogue',
+  'extra.avisos-antes-de-cada-cita': 'Pre-appointment reminders',
+  'extra.asistente-automatico-24h': '24h automatic assistant',
+  'extra.correo-con-tu-dominio': 'Email with your domain',
+  'extra.galeria-de-instagram': 'Instagram gallery',
+  'extra.zona-privada-para-clientes': 'Private area for clients',
+  'extra.documentos-automaticos-pdf': 'Automatic PDF documents',
+  'extra.datos-en-excel-sheets': 'Data in Excel / Sheets',
+  'extra.panel-para-tu-equipo': 'Team panel',
+  'extra.app-para-movil': 'Mobile app'
+},
+eu: {
+  'header.welcome': 'Ongi etorri',
+  'error.expired_title': 'Esteka iraungita',
+  'error.invalid_title': 'Esteka baliogabea',
+  'error.expired_body': 'Esteka hau iraungita dago (72 orduko balioa).<br>Idatzi WhatsApp bidez berri bat jasotzeko.',
+  'error.invalid_body': 'Esteka ez da existitzen edo jada ez dago aktibo.<br>Mesedez, erabili posta elektronikoz bidali dizugun esteka.',
+  'error.wa_btn': 'WhatsApp bidez kontaktatu',
+  'pin.title': 'Sartu zure kodea',
+  'pin.hello': 'Kaixo',
+  'pin.instruction': 'sartu WhatsApp bidez bidali dizugun 6 digituko kodea.',
+  'pin.error': '❌ Kode okerra. Saiatu berriro.',
+  'pin.submit': 'Sartu →',
+  'pin.no_code': 'Ez duzu koderik? Idatzi guri',
+  'pay.card_ok_title': 'Ordainketa jasota, eskerrik asko!',
+  'pay.notify_ok_title': 'Eskerrik asko abisatzeagatik!',
+  'pay.card_ok_body': 'Zure txartel bidezko ordainketa automatikoki berretsi da. Jada zure kontuan erregistratuta dago.',
+  'pay.notify_ok_body': 'Zure jakinarazpena jaso dugu. Tatianak ordainketa berrikusiko du eta laster berretsiko dizu portaleko txatetik.',
+  'pay.goto_cabinet': 'Joan nire bezero arlora →',
+  'pay.signed_title': 'Proposamena sinatuta',
+  'pay.iva_included': 'BEZ barne',
+  'pay.project_total': 'Proiektuaren guztira:',
+  'pay.tab_transfer': 'Banku-transferentzia',
+  'pay.holder_label': 'Titularra',
+  'pay.copy_btn': 'Kopiatu',
+  'pay.concept_label': 'Kontzeptua (garrantzitsua)',
+  'pay.exact_amount': 'Zenbateko zehatza:',
+  'pay.include_concept': 'Sartu kontzeptua agertzen den bezala zure ordainketa identifikatu ahal izateko.',
+  'pay.transfer_done_btn': '✓ Transferentzia egin dut jada',
+  'pay.bizum_phone_label': 'Bizum telefonoa',
+  'pay.concept_label2': 'Kontzeptua',
+  'pay.holder_label2': 'Titularra:',
+  'pay.bizum_done_btn': '✓ Bizum-a bidali dut jada',
+  'pay.tab_cash': 'Eskudirutan',
+  'pay.cash_note': 'Eskudirutan ordaindu dezakezu pertsonalki elkartzen garenean. Jasotzea berresten dugun bezain laster, dagokion faktura bidaliko dizugu.',
+  'pay.cash_done_btn': '✓ Eskudirutan ordaindu dut jada',
+  'pay.card_error': 'Ezin izan da txartel bidezko ordainketa hasi. Saiatu berriro edo erabili transferentzia/Bizum.',
+  'pay.card_btn_prefix': 'Ordaindu',
+  'pay.card_btn_suffix': 'txartelarekin',
+  'pay.coming_soon': 'Laster',
+  'pay.card_disabled_btn': '💳 Ordaindu txartelarekin (Stripe)',
+  'pay.back_to_cabinet': '← Joan nire bezero arlora',
+  'proposal.accepted_banner': '✅ Proposamena behar bezala onartu da. Eskerrik asko! Laster harremanetan jarriko gara.',
+  'proposal.your_proposal': 'Zure proposamena',
+  'proposal.accepted_badge': 'Onartuta ✓',
+  'proposal.ready_badge': 'Berrikusteko prest',
+  'proposal.accepted_title': 'Proposamena onartuta',
+  'proposal.loading': 'Proposamena kargatzen…',
+  'proposal.data_signature': 'Datuak eta sinadura',
+  'proposal.total_iva_label': 'Guztira (%21 BEZ barne):',
+  'proposal.total_iva_short': 'Guztira BEZ-arekin:',
+  'proposal.preparing_title': 'Zure proposamena prestatzen',
+  'proposal.preparing_body': 'Laster zure proiekturako proposamen pertsonalizatua jasoko duzu.',
+  'form.name_placeholder': 'Izena / Enpresa *',
+  'form.nif_placeholder': 'NAN/IFZ (fakturarako)',
+  'form.address_placeholder': 'Helbide fiskala',
+  'form.city_placeholder': 'PK eta hiria',
+  'form.signature_placeholder': 'Sinadura digitala — idatzi zure izen-abizen osoa *',
+  'form.payment_plan_question': 'Nola ordaindu nahi duzu?',
+  'form.plan_5050': '%50 orain + %50 entregan',
+  'form.plan_3way': '3 ordainketa (%33 bakoitza)',
+  'form.plan_full': 'Ordainketa bakarra',
+  'form.agree_text_prefix': 'Proposamen honen norainokoa, aurrekontua eta baldintzak onartzen ditut. Ordaintzeko konpromisoa hartzen dut',
+  'form.agree_text_suffix': 'lanak hasi aurretik.',
+  'form.plan_note_5050': 'zenbatekoaren %50a',
+  'form.plan_note_3way': 'zenbatekoaren lehen herena (%33)',
+  'form.plan_note_full': 'zenbateko osoa',
+  'form.submit': '✍️ Sinatu eta onartu proposamena',
+  'cabinet.progress_title': 'Proiektuaren aurrerapena',
+  'cabinet.materials_title': 'Proiektuaren materialak',
+  'cabinet.materials_desc': 'Igo argazkiak, logotipoa, testuak edo dokumentuak zure webgunerako behar ditugunak. Gehienez 15 MB fitxategiko.',
+  'cabinet.upload_cta': 'Sakatu fitxategiak hautatzeko',
+  'cabinet.upload_hint': 'Argazkiak · Bideoak · Logoa (SVG, AI, PDF) · Dokumentuak (Word, Excel, PDF)',
+  'cabinet.note_placeholder': 'Ohar aukerakoa (adib: logoa atzeko plano zurian)',
+  'cabinet.upload_btn': 'Igo fitxategiak',
+  'cabinet.uploading': 'Igotzen...',
+  'cabinet.files_uploaded_title': 'Igotako fitxategiak',
+  'cabinet.your_project': 'Zure proiektua',
+  'cabinet.project_label': 'Proiektua',
+  'cabinet.progress_label': 'Proiektuaren aurrerapena',
+  'cabinet.tab_chat': 'Txata',
+  'cabinet.tab_files': 'Aurrerapena eta materialak',
+  'pwa.title': 'Sarbide azkarra zure proiektura',
+  'pwa.body': 'Ez da aplikazio bat eta ez da ezer deskargatzen — zure gailuko esteka zuzena besterik ez da, posta elektronikoan esteka bilatu behar ez izateko.',
+  'pwa.ios_hint': 'Sakatu <strong>Partekatu</strong> ⬆️ eta gero <strong>«Gehitu hasiera-pantailan»</strong>.',
+  'pwa.install_btn': 'Gehitu lasterbidea',
+  'cabinet.estimated': 'estimatua',
+  'cabinet.maint_prefix': 'Mant.',
+  'cabinet.next_step_label': 'Hurrengo urratsa:',
+  'cabinet.invoice_title': 'Zure faktura',
+  'cabinet.total_label': 'Guztira',
+  'cabinet.paid_label': 'Ordainduta',
+  'cabinet.pending_label': 'Zain',
+  'cabinet.payment_notified_prefix': 'Honako ordainketa',
+  'cabinet.payment_notified_suffix': 'jakinarazita, berresteko zain.',
+  'cabinet.pay_now_btn': '💳 Ordaindu orain →',
+  'cabinet.all_paid': '✅ Ordainketekin egunean',
+  'upload.file': 'fitxategi',
+  'upload.files': 'fitxategi',
+  'upload.selected': 'hautatuta',
+  'upload.selected_plural': 'hautatuta',
+  'upload.uploaded': 'igota',
+  'upload.uploaded_plural': 'igota',
+  'upload.successfully': 'arrakastaz.',
+  'upload.update_list': 'Eguneratu zerrenda →',
+  'upload.error_unexpected': 'Ustekabeko errorea. Saiatu berriro.',
+  'upload.error_connection': 'Konexio errorea. Saiatu berriro.',
+  'chat.online': 'Linean',
+  'chat.last_seen_prefix': 'Azken aldiz',
+  'chat.offline': 'Deskonektatuta',
+  'chat.loading': 'Mezuak kargatzen…',
+  'chat.replying': 'Erantzuten',
+  'chat.input_placeholder': 'Idatzi mezu bat…',
+  'chat.send_btn': 'Bidali →',
+  'chat.today': 'Gaur',
+  'chat.yesterday': 'Atzo',
+  'chat.tooltip_react': 'Erreakzionatu',
+  'chat.tooltip_reply': 'Erantzun',
+  'chat.tooltip_delete': 'Ezabatu',
+  'chat.sent_title': 'Bidalita',
+  'chat.read_title': 'Irakurrita',
+  'chat.deleted': 'Mezua ezabatuta',
+  'chat.delete_confirm': 'Mezu hau ezabatu?',
+  'chat.empty_state': 'Oraindik ez dago mezurik. Idatzi guri!',
+  'chat.send_error': 'Ezin izan da mezua bidali.',
+  'chat.material_uploaded': 'Materiala igota:',
+  'status.nuevo': 'Jasota',
+  'status.contactado': 'Harremanetan',
+  'status.propuesta_enviada': 'Proposamena bidalita',
+  'status.negociacion': 'Negoziatzen',
+  'status.aceptado': 'Onartuta ✓',
+  'status.en_trabajo': 'Garapenean 🚧',
+  'status.finalizado': 'Osatuta ✅',
+  'status.perdido': 'Itxita',
+  'next.nuevo': 'Laster jarriko gara zurekin harremanetan.',
+  'next.contactado': 'Zure proposamen pertsonalizatua prestatzen ari gara.',
+  'next.propuesta_enviada': 'Berrikusi proposamena eta esan iezaguzu edozein aldaketa.',
+  'next.negociacion': 'Zure proiektuaren xehetasunak amaitzen ari gara.',
+  'next.aceptado': 'Mesedez, igo zure proiektuko materialak hasteko.',
+  'next.en_trabajo': 'Zure proiektua garapenean dago. Aurrerapen bakoitzaz jakinaraziko dizugu.',
+  'next.finalizado': 'Zure proiektua argitaratuta dago! Esan iezaguzu nola jarrai dezakegun laguntzen.',
+  'next.perdido': 'Eskerrik asko gugan pentsatzeagatik. Itzuli nahi duzunean.',
+  'pkg.landing-page': 'Landing page',
+  'pkg.web-profesional': 'Web profesionala',
+  'pkg.web-con-reservas': 'Web erreserbekin',
+  'pkg.tienda-online': 'Lineako denda',
+  'pkg.proyecto-a-medida': 'Neurriko proiektua',
+  'pkg.proyecto-existente': 'Dagoeneko proiektua',
+  'pkg.solo-mantenimiento': 'Mantentze soila',
+  'extra.diseno-premium': 'Diseinu premium-a',
+  'extra.textos-que-venden': 'Saltzen duten testuak',
+  'extra.aparecer-en-google': 'Google-n agertu',
+  'extra.ficha-en-google-maps': 'Google Maps-eko fitxa',
+  'extra.formulario-inteligente': 'Formulario adimenduna',
+  'extra.boton-de-whatsapp': 'WhatsApp botoia',
+  'extra.citas-y-reservas-online': 'Online hitzorduak',
+  'extra.cobros-y-conexiones-online': 'Online ordainketak eta konexioak',
+  'extra.web-en-varios-idiomas': 'Web hainbat hizkuntzatan',
+  'extra.estadisticas-de-ventas': 'Salmenta-estatistikak',
+  'extra.subir-catalogo-completo': 'Katalogo osoa igo',
+  'extra.avisos-antes-de-cada-cita': 'Hitzordu aurreko abisua',
+  'extra.asistente-automatico-24h': '24h laguntzaile automatikoa',
+  'extra.correo-con-tu-dominio': 'Korreoa zure domeinuarekin',
+  'extra.galeria-de-instagram': 'Instagram galeria',
+  'extra.zona-privada-para-clientes': 'Bezeroentzako eremu pribatua',
+  'extra.documentos-automaticos-pdf': 'PDF dokumentu automatikoak',
+  'extra.datos-en-excel-sheets': 'Datuak Excel / Sheets-en',
+  'extra.panel-para-tu-equipo': 'Taldearen panela',
+  'extra.app-para-movil': 'Mugikorreko aplikazioa'
+},
+ru: {
+  'header.welcome': 'Добро пожаловать',
+  'error.expired_title': 'Ссылка истекла',
+  'error.invalid_title': 'Недействительная ссылка',
+  'error.expired_body': 'Срок действия этой ссылки истёк (действительна 72 часа).<br>Напишите нам в WhatsApp, чтобы получить новую.',
+  'error.invalid_body': 'Ссылка не существует или больше не активна.<br>Пожалуйста, используйте ссылку, которую мы отправили вам по почте.',
+  'error.wa_btn': 'Связаться через WhatsApp',
+  'pin.title': 'Введите ваш код',
+  'pin.hello': 'Привет',
+  'pin.instruction': 'введите 6-значный код, который мы отправили вам в WhatsApp.',
+  'pin.error': '❌ Неверный код. Попробуйте ещё раз.',
+  'pin.submit': 'Войти →',
+  'pin.no_code': 'Нет кода? Напишите нам в',
+  'pay.card_ok_title': 'Оплата получена, спасибо!',
+  'pay.notify_ok_title': 'Спасибо, что сообщили!',
+  'pay.card_ok_body': 'Ваш платёж картой подтверждён автоматически. Он уже зафиксирован в вашем аккаунте.',
+  'pay.notify_ok_body': 'Мы получили ваше уведомление. Татьяна проверит платёж и подтвердит в чате портала в ближайшее время.',
+  'pay.goto_cabinet': 'Перейти в личный кабинет →',
+  'pay.signed_title': 'Предложение подписано',
+  'pay.iva_included': 'с учётом НДС',
+  'pay.project_total': 'Итого по проекту:',
+  'pay.tab_transfer': 'Банковский перевод',
+  'pay.holder_label': 'Владелец счёта',
+  'pay.copy_btn': 'Копировать',
+  'pay.concept_label': 'Назначение платежа (важно)',
+  'pay.exact_amount': 'Точная сумма:',
+  'pay.include_concept': 'Укажите назначение платежа точно как указано, чтобы мы могли идентифицировать ваш платёж.',
+  'pay.transfer_done_btn': '✓ Я уже сделал(а) перевод',
+  'pay.bizum_phone_label': 'Телефон для Bizum',
+  'pay.concept_label2': 'Назначение',
+  'pay.holder_label2': 'Владелец:',
+  'pay.bizum_done_btn': '✓ Я уже отправил(а) Bizum',
+  'pay.tab_cash': 'Наличными',
+  'pay.cash_note': 'Вы можете оплатить наличными при личной встрече. Как только мы подтвердим получение, вышлем вам счёт.',
+  'pay.cash_done_btn': '✓ Я уже оплатил(а) наличными',
+  'pay.card_error': 'Не удалось начать оплату картой. Попробуйте снова или используйте перевод/Bizum.',
+  'pay.card_btn_prefix': 'Оплатить',
+  'pay.card_btn_suffix': 'картой',
+  'pay.coming_soon': 'Скоро',
+  'pay.card_disabled_btn': '💳 Оплата картой (Stripe)',
+  'pay.back_to_cabinet': '← Перейти в личный кабинет',
+  'proposal.accepted_banner': '✅ Предложение успешно принято. Спасибо! Скоро свяжемся с вами.',
+  'proposal.your_proposal': 'Ваше предложение',
+  'proposal.accepted_badge': 'Принято ✓',
+  'proposal.ready_badge': 'Готово к просмотру',
+  'proposal.accepted_title': 'Предложение принято',
+  'proposal.loading': 'Загрузка предложения…',
+  'proposal.data_signature': 'Данные и подпись',
+  'proposal.total_iva_label': 'Итого (с НДС 21%):',
+  'proposal.total_iva_short': 'Итого с НДС:',
+  'proposal.preparing_title': 'Готовим ваше предложение',
+  'proposal.preparing_body': 'Скоро вы получите персональное предложение для вашего проекта.',
+  'form.name_placeholder': 'Имя / Компания *',
+  'form.nif_placeholder': 'NIF/CIF (для счёта)',
+  'form.address_placeholder': 'Юридический адрес',
+  'form.city_placeholder': 'Индекс и город',
+  'form.signature_placeholder': 'Электронная подпись — введите ваше полное имя *',
+  'form.payment_plan_question': 'Как вам удобнее оплатить?',
+  'form.plan_5050': '50% сейчас + 50% при сдаче',
+  'form.plan_3way': '3 платежа (по 33%)',
+  'form.plan_full': 'Полная оплата сразу',
+  'form.agree_text_prefix': 'Я принимаю объём работ, бюджет и условия этого предложения. Обязуюсь оплатить',
+  'form.agree_text_suffix': 'до начала работ.',
+  'form.plan_note_5050': '50% от суммы',
+  'form.plan_note_3way': 'первую треть (33%) от суммы',
+  'form.plan_note_full': 'полную сумму',
+  'form.submit': '✍️ Подписать и принять предложение',
+  'cabinet.progress_title': 'Прогресс проекта',
+  'cabinet.materials_title': 'Материалы проекта',
+  'cabinet.materials_desc': 'Загрузите фото, логотип, тексты или документы, нужные для вашего сайта. Максимум 15 МБ на файл.',
+  'cabinet.upload_cta': 'Нажмите, чтобы выбрать файлы',
+  'cabinet.upload_hint': 'Фото · Видео · Логотип (SVG, AI, PDF) · Документы (Word, Excel, PDF)',
+  'cabinet.note_placeholder': 'Комментарий (необязательно, напр. логотип на белом фоне)',
+  'cabinet.upload_btn': 'Загрузить файлы',
+  'cabinet.uploading': 'Загрузка...',
+  'cabinet.files_uploaded_title': 'Загруженные файлы',
+  'cabinet.your_project': 'Ваш проект',
+  'cabinet.project_label': 'Проект',
+  'cabinet.progress_label': 'Прогресс проекта',
+  'cabinet.tab_chat': 'Чат',
+  'cabinet.tab_files': 'Прогресс и материалы',
+  'pwa.title': 'Быстрый доступ к проекту',
+  'pwa.body': 'Это не приложение, ничего скачивать не нужно — просто ярлык на эту страницу на вашем устройстве, чтобы не искать ссылку в почте каждый раз.',
+  'pwa.ios_hint': 'Нажмите <strong>«Поделиться»</strong> ⬆️, затем <strong>«На экран «Домой»»</strong>.',
+  'pwa.install_btn': 'Добавить ярлык',
+  'cabinet.estimated': 'оценка',
+  'cabinet.maint_prefix': 'Обсл.',
+  'cabinet.next_step_label': 'Следующий шаг:',
+  'cabinet.invoice_title': 'Ваш счёт',
+  'cabinet.total_label': 'Итого',
+  'cabinet.paid_label': 'Оплачено',
+  'cabinet.pending_label': 'Осталось',
+  'cabinet.payment_notified_prefix': 'Платёж на',
+  'cabinet.payment_notified_suffix': 'отмечен, ожидает подтверждения.',
+  'cabinet.pay_now_btn': '💳 Оплатить сейчас →',
+  'cabinet.all_paid': '✅ Все платежи внесены',
+  'upload.file': 'файл',
+  'upload.files': 'файлов',
+  'upload.selected': 'выбран',
+  'upload.selected_plural': 'выбрано',
+  'upload.uploaded': 'загружен',
+  'upload.uploaded_plural': 'загружено',
+  'upload.successfully': 'успешно.',
+  'upload.update_list': 'Обновить список →',
+  'upload.error_unexpected': 'Непредвиденная ошибка. Попробуйте снова.',
+  'upload.error_connection': 'Ошибка соединения. Попробуйте снова.',
+  'chat.online': 'В сети',
+  'chat.last_seen_prefix': 'Был(а) в сети',
+  'chat.offline': 'Не в сети',
+  'chat.loading': 'Загрузка сообщений…',
+  'chat.replying': 'Ответ на',
+  'chat.input_placeholder': 'Введите сообщение…',
+  'chat.send_btn': 'Отправить →',
+  'chat.today': 'Сегодня',
+  'chat.yesterday': 'Вчера',
+  'chat.tooltip_react': 'Реакция',
+  'chat.tooltip_reply': 'Ответить',
+  'chat.tooltip_delete': 'Удалить',
+  'chat.sent_title': 'Отправлено',
+  'chat.read_title': 'Прочитано',
+  'chat.deleted': 'Сообщение удалено',
+  'chat.delete_confirm': 'Удалить это сообщение?',
+  'chat.empty_state': 'Пока нет сообщений. Напишите нам!',
+  'chat.send_error': 'Не удалось отправить сообщение.',
+  'chat.material_uploaded': 'Загружен материал:',
+  'status.nuevo': 'Получено',
+  'status.contactado': 'На связи',
+  'status.propuesta_enviada': 'Предложение отправлено',
+  'status.negociacion': 'Переговоры',
+  'status.aceptado': 'Принято ✓',
+  'status.en_trabajo': 'В разработке 🚧',
+  'status.finalizado': 'Завершено ✅',
+  'status.perdido': 'Закрыто',
+  'next.nuevo': 'Мы свяжемся с вами в ближайшее время.',
+  'next.contactado': 'Мы готовим ваше персональное предложение.',
+  'next.propuesta_enviada': 'Ознакомьтесь с предложением и сообщите нам о любых правках.',
+  'next.negociacion': 'Мы дорабатываем детали вашего проекта.',
+  'next.aceptado': 'Пожалуйста, загрузите материалы для вашего проекта, чтобы начать работу.',
+  'next.en_trabajo': 'Ваш проект в разработке. Будем держать вас в курсе на каждом этапе.',
+  'next.finalizado': 'Ваш проект опубликован! Расскажите, чем ещё можем помочь.',
+  'next.perdido': 'Спасибо, что рассматривали нас. Возвращайтесь, когда понадобится.',
+  'pkg.landing-page': 'Landing page',
+  'pkg.web-profesional': 'Бизнес-сайт',
+  'pkg.web-con-reservas': 'Сайт с бронированием',
+  'pkg.tienda-online': 'Интернет-магазин',
+  'pkg.proyecto-a-medida': 'Проект на заказ',
+  'pkg.proyecto-existente': 'Уже существующий проект',
+  'pkg.solo-mantenimiento': 'Только поддержка',
+  'extra.diseno-premium': 'Премиум дизайн',
+  'extra.textos-que-venden': 'Тексты, которые продают',
+  'extra.aparecer-en-google': 'Появиться в Google',
+  'extra.ficha-en-google-maps': 'Карточка в Google Картах',
+  'extra.formulario-inteligente': 'Умная форма обратной связи',
+  'extra.boton-de-whatsapp': 'Кнопка WhatsApp',
+  'extra.citas-y-reservas-online': 'Онлайн-запись на приём',
+  'extra.cobros-y-conexiones-online': 'Онлайн-оплата и подключения',
+  'extra.web-en-varios-idiomas': 'Сайт на нескольких языках',
+  'extra.estadisticas-de-ventas': 'Статистика продаж',
+  'extra.subir-catalogo-completo': 'Загрузить весь каталог',
+  'extra.avisos-antes-de-cada-cita': 'Напоминания перед визитом',
+  'extra.asistente-automatico-24h': 'Автоматический помощник 24ч',
+  'extra.correo-con-tu-dominio': 'Почта с вашим доменом',
+  'extra.galeria-de-instagram': 'Галерея Instagram',
+  'extra.zona-privada-para-clientes': 'Личный кабинет клиентов',
+  'extra.documentos-automaticos-pdf': 'Автоматические документы PDF',
+  'extra.datos-en-excel-sheets': 'Данные в Excel / Sheets',
+  'extra.panel-para-tu-equipo': 'Панель для команды',
+  'extra.app-para-movil': 'Мобильное приложение'
+}
+};
+
+function detectBrowserLang() {
+  // Only used the very first time a device visits (no saved preference yet) —
+  // after that the client's own manual choice in localStorage always wins.
+  var langs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || navigator.userLanguage || ''];
+  for (var i = 0; i < langs.length; i++) {
+    var l = String(langs[i]).toLowerCase();
+    if (l.indexOf('ru') === 0) return 'ru';
+    if (l.indexOf('eu') === 0) return 'eu';
+    if (l.indexOf('en') === 0) return 'en';
+    if (l.indexOf('es') === 0) return 'es';
+  }
+  return 'es';
+}
+var LANG = localStorage.getItem('wi_lang') || detectBrowserLang();
+
+function t(key) {
+  var cur = T[LANG], fb = T.es;
+  var v = (cur && cur[key] !== undefined) ? cur[key] : (fb && fb[key]);
+  return v !== undefined ? v : key;
+}
+window.wiT = t;
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    if (key) el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n-html');
+    if (key) el.innerHTML = t(key);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n-placeholder');
+    if (key) el.placeholder = t(key);
+  });
+  document.documentElement.lang = LANG;
+}
+
+function setLang(lang) {
+  LANG = lang;
+  window.WI_LANG = lang;
+  localStorage.setItem('wi_lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(function(b) {
+    b.classList.toggle('lang-current', b.dataset.lang === lang);
+  });
+  applyTranslations();
+  (window.WI_LANG_HOOKS || []).forEach(function(fn) { try { fn(); } catch (e) {} });
+}
+window.wiSetLang = setLang;
+
+document.querySelectorAll('.lang-btn').forEach(function(b) {
+  b.addEventListener('click', function() { setLang(this.dataset.lang); });
+});
+
+window.WI_LANG = LANG;
+setLang(LANG);
+})();
+</script>
+
+<script>
+// Subtle 3D tilt on glass cards (pointer devices only, respects reduced-motion)
+(function() {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var isTouch = window.matchMedia && window.matchMedia('(hover: none), (pointer: coarse)').matches;
+  if (reduce || isTouch) return;
+
+  document.querySelectorAll('.wi-card').forEach(function(card) {
+    var rect = null;
+    card.addEventListener('mouseenter', function() { rect = card.getBoundingClientRect(); });
+    card.addEventListener('mousemove', function(e) {
+      if (!rect) rect = card.getBoundingClientRect();
+      var px = (e.clientX - rect.left) / rect.width - .5;
+      var py = (e.clientY - rect.top) / rect.height - .5;
+      var rx = (-py * 4).toFixed(2);
+      var ry = (px * 4).toFixed(2);
+      card.style.transform = 'perspective(900px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) translateY(-3px)';
+    });
+    card.addEventListener('mouseleave', function() {
+      rect = null;
+      card.style.transform = '';
+    });
+  });
+})();
+</script>
 </body>
 </html>

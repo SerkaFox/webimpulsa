@@ -15,7 +15,16 @@
     .top-bar .back { color: #94a3b8; font-size: .83rem; white-space: nowrap; }
     .top-bar .back:hover { color: #fff; text-decoration: none; }
 
-    .main { max-width: 1060px; margin: 0 auto; padding: 24px 16px; display: grid; grid-template-columns: 1fr 310px; gap: 20px; align-items: start; }
+    .lang-switcher { display: flex; gap: .28rem; align-items: center; }
+    .lang-btn {
+      background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.35); border-radius: 6px;
+      padding: .16rem .4rem; font-size: .72rem; font-weight: 800; cursor: pointer;
+      color: #fff; line-height: 1.4; letter-spacing: .02em;
+    }
+    .lang-btn:hover { background: rgba(255,255,255,.22); }
+    .lang-btn.lang-current { display: none; }
+
+    .main { max-width: 1180px; margin: 0 auto; padding: 24px 16px; display: grid; grid-template-columns: 1fr 310px; gap: 20px; align-items: start; }
     @media (max-width: 720px) { .main { grid-template-columns: 1fr; } }
 
     .col-left { display: flex; flex-direction: column; gap: 18px; }
@@ -82,566 +91,650 @@
     .ts { font-size: 11px; color: #94a3b8; margin-top: 6px; }
     .form-row { display: flex; gap: 8px; margin-bottom: 10px; }
     .form-row > * { flex: 1; }
+
+    /* admin tabs */
+    .admin-tabs { display: flex; flex-direction: column; gap: 4px; }
+    .admin-tab-btn {
+      display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+      border: none; background: none; padding: 9px 10px; border-radius: 8px;
+      font-size: .84rem; font-weight: 700; color: #475569; cursor: pointer;
+    }
+    .admin-tab-btn:hover { background: #f1f5f9; }
+    .admin-tab-btn.active { background: #eff6ff; color: #1d4ed8; }
+    .admin-tab-btn .cnt {
+      margin-left: auto; font-size: .7rem; font-weight: 700; color: #94a3b8;
+      background: #f1f5f9; border-radius: 10px; padding: 1px 7px;
+    }
+    .admin-tab-btn.active .cnt { background: #dbeafe; color: #1d4ed8; }
+    .admin-tab-panel { display: none; }
+    .admin-tab-panel.active { display: block; }
   </style>
 </head>
 <body>
 
 <div class="top-bar">
-  <a href="/wi/crm/" class="back">← Volver</a>
+  <a href="/wi/crm/" class="back" data-i18n="crm.back">← Volver</a>
   <h1>Lead #{{ lead.pk }} — {{ lead.name }}</h1>
-  <span class="badge" {% for v, l in statuses %}{% if v == lead.status %}style="background:{{ status_css|get:v }}"{% endif %}{% endfor %}>
+  <span class="badge" data-i18n="status.{{ lead.status }}" {% for v, l in statuses %}{% if v == lead.status %}style="background:{{ status_css|get:v }}"{% endif %}{% endfor %}>
     {{ lead.get_status_display }}
   </span>
+  <div class="lang-switcher">
+    <button class="lang-btn" data-lang="es">ES</button>
+    <button class="lang-btn" data-lang="ru">RU</button>
+  </div>
 </div>
 
 <div class="main">
 
-  <!-- ── LEFT COLUMN ──────────────────────────────────────────────────── -->
+  <!-- ── MAIN WINDOW (tab panels, switched by the sidebar buttons) ───────── -->
   <div class="col-left">
 
-    <!-- Client info -->
-    <div class="card">
-      <div class="card-title">👤 Cliente</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
-        <div class="field-row">
-          <div class="field-label">Nombre</div>
-          <div class="field-val">{{ lead.name }}</div>
-        </div>
-        <div class="field-row">
-          <div class="field-label">Tipo de negocio</div>
-          <div class="field-val muted">{{ lead.biz_type|default:"—" }}</div>
-        </div>
-        {% if lead.email %}
-        <div class="field-row">
-          <div class="field-label">Email</div>
-          <div class="field-val"><a href="mailto:{{ lead.email }}">{{ lead.email }}</a></div>
-        </div>
-        {% endif %}
-        {% if lead.phone %}
-        <div class="field-row">
-          <div class="field-label">Teléfono</div>
-          <div class="field-val"><a href="tel:{{ lead.phone }}">{{ lead.phone }}</a></div>
-        </div>
-        {% endif %}
-        <div class="field-row">
-          <div class="field-label">Fuente</div>
-          <div class="field-val muted">{{ lead.get_source_display }}</div>
-        </div>
-        <div class="field-row">
-          <div class="field-label">Canal preferido</div>
-          <div class="field-val muted">{{ lead.get_preferred_channel_display }}</div>
-        </div>
-      </div>
+    <!-- Chat -->
+    <div class="admin-tab-panel active" data-tab="chat">
+      {% include "crm/admin_chat.html" %}
     </div>
 
-    <!-- Project budget -->
-    <div class="card">
-      <div class="card-title">💼 Presupuesto calculado</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
-        <div class="field-row">
-          <div class="field-label">Paquete</div>
-          <div class="field-val">{{ lead.package|default:"—" }}</div>
+    <!-- Tools: client info, status, payment, quick actions, portal access, dossier -->
+    <div class="admin-tab-panel" data-tab="herramientas">
+
+      <!-- Client info -->
+      <div class="card">
+        <div class="card-title">👤 <span data-i18n="crm.client">Cliente</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
+          <div class="field-row">
+            <div class="field-label" data-i18n="crm.name">Nombre</div>
+            <div class="field-val">{{ lead.name }}</div>
+          </div>
+          <div class="field-row">
+            <div class="field-label" data-i18n="crm.biz_type">Tipo de negocio</div>
+            <div class="field-val muted">{{ lead.biz_type|default:"—" }}</div>
+          </div>
+          {% if lead.email %}
+          <div class="field-row">
+            <div class="field-label" data-i18n="crm.email">Email</div>
+            <div class="field-val"><a href="mailto:{{ lead.email }}">{{ lead.email }}</a></div>
+          </div>
+          {% endif %}
+          {% if lead.phone %}
+          <div class="field-row">
+            <div class="field-label" data-i18n="crm.phone">Teléfono</div>
+            <div class="field-val"><a href="tel:{{ lead.phone }}">{{ lead.phone }}</a></div>
+          </div>
+          {% endif %}
+          <div class="field-row">
+            <div class="field-label" data-i18n="crm.source">Fuente</div>
+            <div class="field-val muted">{{ lead.get_source_display }}</div>
+          </div>
         </div>
-        <div class="field-row">
-          <div class="field-label">Precio base</div>
-          <div class="field-val">{{ lead.package_base_price }}€</div>
-        </div>
-        {% if lead.rush %}
-        <div class="field-row">
-          <div class="field-label">Urgente</div>
-          <div class="field-val" style="color:#b86800">⚡ +25%</div>
-        </div>
-        {% endif %}
-        <div class="field-row">
-          <div class="field-label">Descuento</div>
-          <div class="field-val muted">−{{ lead.discount_pct }}%</div>
-        </div>
-        {% if lead.maintenance_plan %}
-        <div class="field-row">
-          <div class="field-label">Mantenimiento</div>
-          <div class="field-val muted">{{ lead.maintenance_plan }} {{ lead.maintenance_price }}€/mes</div>
-        </div>
+      </div>
+
+      <!-- Status + notes -->
+      <div class="card">
+        <div class="card-title">📋 <span data-i18n="crm.status_notes">Estado y notas</span></div>
+        <form method="post" action="/wi/crm/{{ lead.pk }}/" style="display:flex;flex-direction:column;gap:12px">
+          <div>
+            <label data-i18n="crm.status">Estado</label>
+            <select name="status">
+              {% for v, l in statuses %}
+              <option value="{{ v }}" {% if v == lead.status %}selected{% endif %}>{{ l }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label data-i18n="crm.preferred_channel">Canal preferido</label>
+            <select name="preferred_channel">
+              {% for v, l in channels %}
+              <option value="{{ v }}" {% if v == lead.preferred_channel %}selected{% endif %}>{{ l }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label data-i18n="crm.internal_notes">Notas internas</label>
+            <textarea name="notes">{{ lead.notes }}</textarea>
+          </div>
+          <button type="submit" class="save-btn" data-i18n="crm.save">Guardar</button>
+        </form>
+
+        {% if next_step %}
+        <hr class="div">
+        <div class="field-label" data-i18n="crm.next_step">Próximo paso</div>
+        <div class="next-step" data-i18n="next.{{ lead.status }}">{{ next_step }}</div>
         {% endif %}
       </div>
-      {% if lead.extras %}
-      <div class="field-label" style="margin-bottom:5px">Extras (+{{ lead.extras_price }}€)</div>
-      <div class="extras-list">
-        {% for e in lead.extras %}<span class="extra-tag">{{ e }}</span>{% endfor %}
+
+      <!-- Invoice / payment summary -->
+      {% if invoice_total %}
+      <div class="card">
+        <div class="card-title">💰 <span data-i18n="crm.client_invoice">Factura del cliente</span></div>
+        <div style="display:grid;gap:6px;margin-bottom:4px">
+          <div style="display:flex;justify-content:space-between;font-size:.84rem">
+            <span style="color:#94a3b8" data-i18n="cabinet.total_label">Total</span>
+            <span style="font-weight:800;color:#0c1c42">{{ invoice_total }}€</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.84rem">
+            <span style="color:#94a3b8" data-i18n="cabinet.paid_label">Pagado</span>
+            <span style="font-weight:800;color:#16a34a">{{ total_income }}€</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.84rem;padding-top:6px;border-top:1px dashed #e2e8f0">
+            <span style="color:#94a3b8" data-i18n="cabinet.pending_label">Pendiente</span>
+            <span style="font-weight:900;color:{% if owed_total > 0 %}#dc2626{% else %}#16a34a{% endif %}">{{ owed_total }}€</span>
+          </div>
+        </div>
       </div>
       {% endif %}
-      <hr class="div">
-      <div class="field-label">Total estimado (sin IVA)</div>
-      <div class="field-val price">{{ lead.estimated_price }}€</div>
-      <div class="ts">Creado: {{ lead.created_at|date:"d/m/Y H:i" }} · Actualizado: {{ lead.updated_at|date:"d/m/Y H:i" }}</div>
+
+      <!-- Quick actions -->
+      <div class="card">
+        <div class="card-title">⚡ <span data-i18n="crm.quick_actions">Acciones rápidas</span></div>
+        {% if lead.phone %}
+        <a href="https://wa.me/34{{ lead.phone|slice:'1:' }}"
+           target="_blank" rel="noopener"
+           style="display:flex;align-items:center;gap:6px;background:#25d366;color:#fff;border-radius:7px;padding:9px 12px;font-weight:700;font-size:.83rem;margin-bottom:8px;text-decoration:none">
+          💬 <span data-i18n="crm.wa_to_client">WhatsApp al cliente</span>
+        </a>
+        {% endif %}
+        {% if lead.email %}
+        <a href="mailto:{{ lead.email }}?subject=Tu proyecto {{ lead.package|urlencode }}"
+           style="display:flex;align-items:center;gap:6px;background:#2563eb;color:#fff;border-radius:7px;padding:9px 12px;font-weight:700;font-size:.83rem;text-decoration:none">
+          ✉ <span data-i18n="crm.send_email">Enviar email</span>
+        </a>
+        {% endif %}
+      </div>
+
+      <!-- Client portal access -->
+      <div class="card">
+        <div class="card-title">🔗 <span data-i18n="crm.client_portal">Portal del cliente</span> <small data-i18n="crm.secure_link">enlace de acceso seguro</small></div>
+
+        {% if active_access %}
+          {% if active_access.is_valid %}
+          <div class="access-status">
+            <div class="access-dot" style="background:#16a34a"></div>
+            <span><span data-i18n="crm.link_active">Enlace activo</span> · <span data-i18n="crm.expires">expira</span> {{ active_access.expires_at|date:"d/m/Y H:i" }}</span>
+          </div>
+          <div class="access-link-box" id="portalLinkBox">{{ active_access.portal_url }}</div>
+          {% if active_access.last_access %}
+          <div class="ts" style="margin-bottom:10px">
+            <span data-i18n="crm.last_access">Último acceso:</span> {{ active_access.last_access|date:"d/m/Y H:i" }} · {{ active_access.access_count }} <span data-i18n="crm.visits">visitas</span>
+          </div>
+          {% endif %}
+          {% else %}
+          <div class="access-status">
+            <div class="access-dot" style="background:#94a3b8"></div>
+            <span style="color:#94a3b8" data-i18n="crm.link_expired">Enlace expirado</span>
+          </div>
+          {% endif %}
+        {% else %}
+          <div class="access-status">
+            <div class="access-dot" style="background:#e2e8f0"></div>
+            <span style="color:#94a3b8" data-i18n="crm.no_link">Sin enlace generado</span>
+          </div>
+        {% endif %}
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <button class="btn-sm primary" onclick="generateAccess({{ lead.pk }})" data-i18n="crm.generate_link">
+            ⚡ Generar nuevo enlace
+          </button>
+          {% if active_access and active_access.is_valid %}
+          <button class="btn-sm" onclick="copyPortalLink()" data-i18n="crm.copy_link">📋 Copiar enlace</button>
+          <button class="btn-sm green" onclick="openWaMessage()" data-i18n="crm.copy_wa_msg">💬 Copiar mensaje WA</button>
+          {% endif %}
+          <button class="btn-sm" onclick="generateAndRequest({{ lead.pk }})" data-i18n="crm.request_materials">📦 Solicitar materiales</button>
+        </div>
+
+        <div id="accessResult" style="display:none">
+          <div class="pin-display" id="pinDisplay"></div>
+          <div class="wa-preview" id="waPreview"></div>
+          <button class="btn-sm green wa-copy-btn" onclick="copyWaMessage()" data-i18n="crm.copy_wa_full">📋 Copiar mensaje WhatsApp</button>
+        </div>
+      </div>
+
+      <!-- Dossier export -->
+      <div class="card">
+        <div class="card-title">📦 <span data-i18n="crm.export_dossier">Exportar dossier</span></div>
+        <p style="font-size:.8rem;color:#64748b;margin:0 0 12px" data-i18n="crm.dossier_desc">
+          ZIP con informe HTML, CSVs de actividad, pagos, trabajo y evidencias para Extranjería u otro uso.
+        </p>
+        <a href="/wi/crm/{{ lead.pk }}/dossier/" class="btn-sm primary" style="display:block;text-align:center;padding:9px" data-i18n="crm.download_zip">
+          ⬇ Descargar dossier ZIP
+        </a>
+        <a href="/wi/crm/{{ lead.pk }}/dossier/preview/" target="_blank" class="btn-sm" style="display:block;text-align:center;margin-top:6px;padding:9px" data-i18n="crm.preview_html">
+          👁 Vista previa HTML
+        </a>
+      </div>
+
     </div>
 
     <!-- Proposal -->
-    <div class="card">
-      <div class="card-title">📋 Propuesta
+    <div class="admin-tab-panel" data-tab="propuesta">
+      <div class="card">
+        <div class="card-title">📋 <span data-i18n="crm.proposal">Propuesta</span>
+          {% with lead.proposals.all as proposals %}
+          {% if proposals %}
+          <small>{{ proposals.0.number }} · {{ proposals.0.get_status_display }}</small>
+          {% endif %}
+          {% endwith %}
+        </div>
         {% with lead.proposals.all as proposals %}
         {% if proposals %}
-        <small>{{ proposals.0.number }} · {{ proposals.0.get_status_display }}</small>
-        {% endif %}
-        {% endwith %}
-      </div>
-      {% with lead.proposals.all as proposals %}
-      {% if proposals %}
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-        <a href="/wi/crm/proposal/{{ proposals.0.pk }}/" class="btn-sm primary">✏️ Editar propuesta</a>
-        <a href="/wi/crm/proposal/{{ proposals.0.pk }}/print/" target="_blank" class="btn-sm">🖨 Ver / PDF</a>
-        {% if proposals.0.status == 'accepted' %}
-        <span class="badge" style="background:#16a34a;padding:5px 10px">✅ Aceptada por {{ proposals.0.accepted_by_name }}</span>
-        {% endif %}
-      </div>
-      {% if proposals|length > 1 %}
-      <div class="ts">{{ proposals|length }} propuestas ·
-        {% for p in proposals %}<a href="/wi/crm/proposal/{{ p.pk }}/">{{ p.number }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
-      </div>
-      {% endif %}
-      {% else %}
-      <div style="color:#94a3b8;font-size:.82rem;margin-bottom:12px">Sin propuesta generada aún.</div>
-      {% endif %}
-      {% endwith %}
-      <a href="/wi/crm/{{ lead.pk }}/proposal/" class="btn-sm primary" style="display:inline-block">
-        📋 {% if lead.proposals.all %}Crear nueva propuesta{% else %}Crear propuesta profesional{% endif %}
-      </a>
-    </div>
-
-    <!-- Client portal access -->
-    <div class="card">
-      <div class="card-title">🔗 Portal del cliente <small>enlace de acceso seguro</small></div>
-
-      {% if active_access %}
-        {% if active_access.is_valid %}
-        <div class="access-status">
-          <div class="access-dot" style="background:#16a34a"></div>
-          <span>Enlace activo · expira {{ active_access.expires_at|date:"d/m/Y H:i" }}</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <a href="/wi/crm/proposal/{{ proposals.0.pk }}/" class="btn-sm primary" data-i18n="crm.edit_proposal">✏️ Editar propuesta</a>
+          <a href="/wi/crm/proposal/{{ proposals.0.pk }}/print/" target="_blank" class="btn-sm" data-i18n="crm.view_pdf">🖨 Ver / PDF</a>
+          {% if proposals.0.status == 'accepted' %}
+          <span class="badge" style="background:#16a34a;padding:5px 10px"><span data-i18n="crm.accepted_by">✅ Aceptada por</span> {{ proposals.0.accepted_by_name }}</span>
+          {% endif %}
         </div>
-        <div class="access-link-box" id="portalLinkBox">{{ active_access.portal_url }}</div>
-        {% if active_access.last_access %}
-        <div class="ts" style="margin-bottom:10px">
-          Último acceso: {{ active_access.last_access|date:"d/m/Y H:i" }} · {{ active_access.access_count }} visita{{ active_access.access_count|pluralize }}
+        {% if proposals|length > 1 %}
+        <div class="ts"><span>{{ proposals|length }}</span> <span data-i18n="crm.proposals_count">propuestas</span> ·
+          {% for p in proposals %}<a href="/wi/crm/proposal/{{ p.pk }}/">{{ p.number }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
         </div>
         {% endif %}
         {% else %}
-        <div class="access-status">
-          <div class="access-dot" style="background:#94a3b8"></div>
-          <span style="color:#94a3b8">Enlace expirado</span>
-        </div>
+        <div style="color:#94a3b8;font-size:.82rem;margin-bottom:12px" data-i18n="crm.no_proposal">Sin propuesta generada aún.</div>
         {% endif %}
-      {% else %}
-        <div class="access-status">
-          <div class="access-dot" style="background:#e2e8f0"></div>
-          <span style="color:#94a3b8">Sin enlace generado</span>
-        </div>
-      {% endif %}
-
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-        <button class="btn-sm primary" onclick="generateAccess({{ lead.pk }})">
-          ⚡ Generar nuevo enlace
-        </button>
-        {% if active_access and active_access.is_valid %}
-        <button class="btn-sm" onclick="copyPortalLink()">📋 Copiar enlace</button>
-        <button class="btn-sm green" onclick="openWaMessage()">💬 Copiar mensaje WA</button>
-        {% endif %}
-        <button class="btn-sm" onclick="generateAndRequest({{ lead.pk }})">📦 Solicitar materiales</button>
+        {% endwith %}
+        <a href="/wi/crm/{{ lead.pk }}/proposal/" class="btn-sm primary" style="display:inline-block">
+          📋 <span data-i18n="{% if lead.proposals.all %}crm.new_proposal{% else %}crm.create_proposal{% endif %}">{% if lead.proposals.all %}Crear nueva propuesta{% else %}Crear propuesta profesional{% endif %}</span>
+        </a>
       </div>
 
-      <div id="accessResult" style="display:none">
-        <div class="pin-display" id="pinDisplay"></div>
-        <div class="wa-preview" id="waPreview"></div>
-        <button class="btn-sm green wa-copy-btn" onclick="copyWaMessage()">📋 Copiar mensaje WhatsApp</button>
+      <!-- Project budget -->
+      <div class="card">
+        <div class="card-title">💼 <span data-i18n="crm.budget">Presupuesto calculado</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
+          <div class="field-row">
+            <div class="field-label" data-i18n="crm.package">Paquete</div>
+            <div class="field-val" {% if lead.package %}data-i18n="pkg.{{ lead.package|slugify }}"{% endif %}>{{ lead.package|default:"—" }}</div>
+          </div>
+          <div class="field-row">
+            <div class="field-label" data-i18n="crm.base_price">Precio base</div>
+            <div class="field-val">{{ lead.package_base_price }}€</div>
+          </div>
+          {% if lead.rush %}
+          <div class="field-row">
+            <div class="field-label" data-i18n="crm.rush">Urgente</div>
+            <div class="field-val" style="color:#b86800">⚡ +25%</div>
+          </div>
+          {% endif %}
+          <div class="field-row">
+            <div class="field-label" data-i18n="crm.discount">Descuento</div>
+            <div class="field-val muted">−{{ lead.discount_pct }}%</div>
+          </div>
+          {% if lead.maintenance_plan %}
+          <div class="field-row">
+            <div class="field-label" data-i18n="crm.maintenance">Mantenimiento</div>
+            <div class="field-val muted">{{ lead.maintenance_plan }} {{ lead.maintenance_price }}€/mes</div>
+          </div>
+          {% endif %}
+        </div>
+        {% if lead.extras %}
+        <div class="field-label" style="margin-bottom:5px"><span data-i18n="crm.extras">Extras</span> (+{{ lead.extras_price }}€)</div>
+        <div class="extras-list">
+          {% for e in lead.extras %}<span class="extra-tag" data-i18n="extra.{{ e|slugify }}">{{ e }}</span>{% endfor %}
+        </div>
+        {% endif %}
+        <hr class="div">
+        <div class="field-label" data-i18n="crm.total_no_vat">Total estimado (sin IVA)</div>
+        <div class="field-val price">{{ lead.estimated_price }}€</div>
+        <div class="ts"><span data-i18n="crm.created">Creado:</span> {{ lead.created_at|date:"d/m/Y H:i" }} · <span data-i18n="crm.updated">Actualizado:</span> {{ lead.updated_at|date:"d/m/Y H:i" }}</div>
+      </div>
+    </div>
+
+    <!-- Materials (live-refreshed via polling, no reload needed) -->
+    <div class="admin-tab-panel" data-tab="materiales">
+      <div class="card">
+        <div class="card-title">📁 <span data-i18n="crm.materials">Materiales</span> <small id="matCountLabel">{{ materials|length }} archivo{{ materials|length|pluralize }}</small></div>
+        <div id="matList">
+        {% if materials %}
+        {% for m in materials %}
+        <div class="mat-item">
+          <div class="mat-icon">
+            {% if m.file_type == 'photo' %}🖼️
+            {% elif m.file_type == 'video' %}🎬
+            {% elif m.file_type == 'logo' %}🎨
+            {% elif m.file_type == 'document' %}📄
+            {% elif m.file_type == 'text' %}📝
+            {% else %}📎{% endif %}
+          </div>
+          <div class="mat-name">{{ m.original_filename }}</div>
+          <div class="mat-meta">
+            {{ m.size_display }}<br>
+            <span style="color:#cbd5e1">{{ m.get_source_display }}</span><br>
+            {{ m.created_at|date:"d/m/Y" }}
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0" data-i18n="crm.no_materials">Sin materiales subidos aún.</div>
+        {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Milestones -->
+    <div class="admin-tab-panel" data-tab="hitos">
+      <div class="card">
+        <div class="card-title">🏁 <span data-i18n="crm.milestones">Hitos del proyecto</span> <small>{{ milestones|length }} hito{{ milestones|length|pluralize }}</small></div>
+
+        <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:14px">
+          <div class="form-row">
+            <div>
+              <label data-i18n="crm.milestone_title">Título del hito</label>
+              <input type="text" id="msTitle" placeholder="Ej: Entrega de diseño" data-i18n-placeholder="crm.milestone_title_ph">
+            </div>
+            <div>
+              <label data-i18n="crm.due_date">Fecha límite</label>
+              <input type="text" id="msDue" placeholder="YYYY-MM-DD">
+            </div>
+          </div>
+          <div style="margin-bottom:8px">
+            <label data-i18n="crm.initial_status">Estado inicial</label>
+            <select id="msStatus">
+              {% for v, l in milestone_choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+            </select>
+          </div>
+          <button class="btn-sm primary" onclick="addMilestone({{ lead.pk }})" data-i18n="crm.add_milestone">+ Añadir hito</button>
+          <span id="msResult" style="font-size:.78rem;color:#16a34a;margin-left:8px"></span>
+        </div>
+
+        {% if milestones %}
+        {% for m in milestones %}
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f8fafc">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.82rem;font-weight:600">{{ m.title }}</div>
+            <div style="font-size:.72rem;color:#94a3b8">
+              {% if m.due_date %}📅 {{ m.due_date|date:"d/m/Y" }}{% endif %}
+              {% if m.completed_date %} · ✅ {{ m.completed_date|date:"d/m/Y" }}{% endif %}
+            </div>
+          </div>
+          <select style="font-size:.72rem;padding:3px 6px;border-radius:4px;border:1px solid #cbd5e1;background:#fff"
+                  onchange="updateMilestone({{ lead.pk }}, {{ m.pk }}, this.value)">
+            {% for v, l in milestone_choices %}
+            <option value="{{ v }}" {% if v == m.status %}selected{% endif %}>{{ l }}</option>
+            {% endfor %}
+          </select>
+          <span style="font-size:.75rem;padding:2px 7px;border-radius:8px;font-weight:700;
+            {% if m.status == 'done' %}background:#dcfce7;color:#166534
+            {% elif m.status == 'in_progress' %}background:#dbeafe;color:#1e40af
+            {% elif m.status == 'blocked' %}background:#fee2e2;color:#991b1b
+            {% else %}background:#fef3c7;color:#92400e{% endif %}">
+            {{ m.get_status_display }}
+          </span>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0" data-i18n="crm.no_milestones">Sin hitos registrados.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Work Log -->
+    <div class="admin-tab-panel" data-tab="trabajo">
+      <div class="card">
+        <div class="card-title">⏱ <span data-i18n="crm.work_done">Trabajo realizado</span> <small>{{ total_hours|floatformat:1 }}h <span data-i18n="crm.hours_logged">registradas</span></small></div>
+
+        <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:14px">
+          <div class="form-row">
+            <div>
+              <label data-i18n="crm.date">Fecha</label>
+              <input type="text" id="wlDate" placeholder="YYYY-MM-DD">
+            </div>
+            <div>
+              <label data-i18n="crm.hours">Horas</label>
+              <input type="text" id="wlHours" placeholder="1.5" style="width:80px">
+            </div>
+            <div>
+              <label data-i18n="crm.category">Categoría</label>
+              <select id="wlCat">
+                {% for v, l in worklog_categories %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+              </select>
+            </div>
+          </div>
+          <div style="margin-bottom:8px">
+            <label data-i18n="crm.work_desc">Descripción del trabajo</label>
+            <textarea id="wlDesc" rows="2" placeholder="¿Qué se hizo?" data-i18n-placeholder="crm.work_desc_ph"></textarea>
+          </div>
+          <div style="margin-bottom:8px">
+            <label data-i18n="crm.deliverable_url">URL entregable (opcional)</label>
+            <input type="text" id="wlUrl" placeholder="https://…">
+          </div>
+          <button class="btn-sm primary" onclick="addWorklog({{ lead.pk }})" data-i18n="crm.log_hours">+ Registrar horas</button>
+          <span id="wlResult" style="font-size:.78rem;color:#16a34a;margin-left:8px"></span>
+        </div>
+
+        {% if work_logs %}
+        {% for w in work_logs %}
+        <div class="mat-item">
+          <div class="mat-icon">⏱</div>
+          <div class="mat-name">
+            <span style="background:#eff6ff;color:#2563eb;border-radius:8px;padding:1px 6px;font-size:.7rem;font-weight:700">{{ w.get_category_display }}</span>
+            {{ w.description }}
+            {% if w.deliverable_url %}<a href="{{ w.deliverable_url }}" target="_blank" style="font-size:.72rem;margin-left:4px">🔗</a>{% endif %}
+          </div>
+          <div class="mat-meta">
+            <strong>{{ w.hours }}h</strong><br>
+            {{ w.date|date:"d/m/Y" }}
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0" data-i18n="crm.no_work">Sin trabajo registrado.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Payments -->
+    <div class="admin-tab-panel" data-tab="pagos">
+      <div class="card">
+        <div class="card-title">💰 <span data-i18n="crm.payments">Pagos e ingresos</span> <small>{{ total_income }}€ <span data-i18n="crm.received">recibidos</span></small></div>
+
+        <form id="payForm{{ lead.pk }}" style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:14px" enctype="multipart/form-data">
+          <div class="form-row">
+            <div>
+              <label data-i18n="crm.concept">Concepto</label>
+              <input type="text" name="concept" placeholder="Pago inicial 50%">
+            </div>
+            <div>
+              <label data-i18n="crm.amount">Importe (€)</label>
+              <input type="text" name="amount" placeholder="730" style="width:90px">
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label data-i18n="crm.payment_date">Fecha de pago</label>
+              <input type="text" name="payment_date" placeholder="YYYY-MM-DD">
+            </div>
+            <div>
+              <label data-i18n="crm.method">Método</label>
+              <select name="method">
+                {% for v, l in payment_methods %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label data-i18n="crm.reference">Referencia / nº factura</label>
+              <input type="text" name="reference" placeholder="REF-2026-001">
+            </div>
+            <div>
+              <label data-i18n="crm.status">Estado</label>
+              <select name="status">
+                {% for v, l in payment_statuses %}<option value="{{ v }}" {% if v == 'received' %}selected{% endif %}>{{ l }}</option>{% endfor %}
+              </select>
+            </div>
+          </div>
+          <div style="margin-bottom:8px">
+            <label data-i18n="crm.invoice_file">Factura (PDF/imagen, opcional)</label>
+            <input type="file" name="invoice_file" accept=".pdf,.png,.jpg,.jpeg">
+          </div>
+          <button type="button" class="btn-sm primary" onclick="addPayment({{ lead.pk }}, document.getElementById('payForm{{ lead.pk }}'))" data-i18n="crm.log_payment">+ Registrar pago</button>
+          <span id="payResult" style="font-size:.78rem;color:#16a34a;margin-left:8px"></span>
+        </form>
+
+        {% if payments %}
+        {% for p in payments %}
+        <div class="mat-item">
+          <div class="mat-icon">💰</div>
+          <div class="mat-name">
+            {{ p.concept }}<br>
+            <span style="font-size:.72rem;color:#94a3b8">{{ p.get_method_display }} · {{ p.payment_date|date:"d/m/Y" }}
+            {% if p.reference %} · <span data-i18n="crm.ref">Ref:</span> {{ p.reference }}{% endif %}</span>
+          </div>
+          <div class="mat-meta" style="text-align:right">
+            <strong style="color:{% if p.status == 'received' %}#16a34a{% else %}#d97706{% endif %}">{{ p.amount }}€</strong><br>
+            <span id="payStatus{{ p.pk }}" style="font-size:.75rem">{{ p.get_status_display }}</span><br>
+            {% if p.status == 'pending' %}
+            <button onclick="confirmPay({{ p.pk }})" id="confirmBtn{{ p.pk }}" data-i18n="crm.confirm_received"
+                    style="margin-top:4px;background:#16a34a;color:#fff;border:none;border-radius:6px;
+                           padding:4px 10px;font-size:.72rem;font-weight:700;cursor:pointer">
+              ✓ Confirmar recibido
+            </button>
+            {% endif %}
+            {% if p.invoice_file %}<br><a href="/wi/crm/payment/{{ p.pk }}/invoice/" style="font-size:.7rem" data-i18n="crm.invoice">📄 Factura</a>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0" data-i18n="crm.no_payments">Sin pagos registrados.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Evidence Files -->
+    <div class="admin-tab-panel" data-tab="evidencias">
+      <div class="card">
+        <div class="card-title">📎 <span data-i18n="crm.evidence">Evidencias</span> <small>{{ evidence|length }} archivo{{ evidence|length|pluralize }}</small></div>
+
+        <form id="evForm{{ lead.pk }}" style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:14px" enctype="multipart/form-data">
+          <div class="form-row">
+            <div>
+              <label data-i18n="crm.category">Categoría</label>
+              <select name="category">
+                {% for v, l in evidence_categories %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+              </select>
+            </div>
+            <div>
+              <label data-i18n="crm.title">Título</label>
+              <input type="text" name="title" placeholder="Web publicada en producción">
+            </div>
+          </div>
+          <div style="margin-bottom:8px">
+            <label data-i18n="crm.url_optional">URL (opcional)</label>
+            <input type="text" name="url" placeholder="https://cliente.es">
+          </div>
+          <div style="margin-bottom:8px">
+            <label data-i18n="crm.attached_file">Archivo adjunto (opcional)</label>
+            <input type="file" name="file">
+          </div>
+          <div style="margin-bottom:8px">
+            <label data-i18n="crm.notes">Notas</label>
+            <textarea name="notes" rows="2" placeholder="Descripción o contexto…" data-i18n-placeholder="crm.notes_ph"></textarea>
+          </div>
+          <button type="button" class="btn-sm primary" onclick="addEvidence({{ lead.pk }}, document.getElementById('evForm{{ lead.pk }}'))" data-i18n="crm.add_evidence">+ Añadir evidencia</button>
+          <span id="evResult" style="font-size:.78rem;color:#16a34a;margin-left:8px"></span>
+        </form>
+
+        {% if evidence %}
+        {% for e in evidence %}
+        <div class="mat-item">
+          <div class="mat-icon">📎</div>
+          <div class="mat-name">
+            <span style="background:#f3e8ff;color:#7c3aed;border-radius:8px;padding:1px 6px;font-size:.7rem;font-weight:700">{{ e.get_category_display }}</span>
+            {{ e.title }}
+            {% if e.notes %}<br><span style="font-size:.72rem;color:#64748b">{{ e.notes }}</span>{% endif %}
+          </div>
+          <div class="mat-meta">
+            {% if e.file %}
+              <a href="/wi/crm/evidence/{{ e.pk }}/file/" style="font-size:.72rem" data-i18n="crm.download">⬇ Descargar</a><br>
+            {% elif e.url %}
+              <a href="{{ e.url }}" target="_blank" style="font-size:.72rem" data-i18n="crm.open">🔗 Abrir</a><br>
+            {% endif %}
+            {{ e.created_at|date:"d/m/Y" }}
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0" data-i18n="crm.no_evidence">Sin evidencias registradas.</div>
+        {% endif %}
       </div>
     </div>
 
     <!-- Communication log -->
-    <div class="card">
-      <div class="card-title">📨 Comunicaciones <small>últimas 20</small></div>
+    <div class="admin-tab-panel" data-tab="comunicaciones">
+      <div class="card">
+        <div class="card-title">📨 <span data-i18n="crm.communications">Comunicaciones</span> <small data-i18n="crm.last_20">últimas 20</small></div>
 
-      <!-- Quick log form -->
-      <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:14px">
-        <div class="form-row">
-          <div>
-            <label>Dirección</label>
-            <select id="logDir">
-              {% for v, l in comm_dirs %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
-            </select>
+        <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:14px">
+          <div class="form-row">
+            <div>
+              <label data-i18n="crm.direction">Dirección</label>
+              <select id="logDir">
+                {% for v, l in comm_dirs %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+              </select>
+            </div>
+            <div>
+              <label data-i18n="crm.channel">Canal</label>
+              <select id="logChan">
+                {% for v, l in comm_channels %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+              </select>
+            </div>
           </div>
-          <div>
-            <label>Canal</label>
-            <select id="logChan">
-              {% for v, l in comm_channels %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
-            </select>
+          <div style="margin-bottom:8px">
+            <label data-i18n="crm.content">Contenido</label>
+            <textarea id="logContent" rows="2" placeholder="Resumen de la comunicación…" data-i18n-placeholder="crm.content_ph"></textarea>
           </div>
+          <button class="btn-sm primary" onclick="logComm({{ lead.pk }})" data-i18n="crm.log">Registrar</button>
+          <span id="logResult" style="font-size:.78rem;color:#16a34a;margin-left:8px"></span>
         </div>
-        <div style="margin-bottom:8px">
-          <label>Contenido</label>
-          <textarea id="logContent" rows="2" placeholder="Resumen de la comunicación…"></textarea>
-        </div>
-        <button class="btn-sm primary" onclick="logComm({{ lead.pk }})">Registrar</button>
-        <span id="logResult" style="font-size:.78rem;color:#16a34a;margin-left:8px"></span>
-      </div>
 
-      {% if comm_log %}
-      {% for entry in comm_log %}
-      <div class="comm-entry">
-        <div class="comm-dir">
-          {% if entry.direction == 'outbound' %}📤{% else %}📥{% endif %}
-        </div>
-        <div class="comm-body">
-          <div class="comm-content">{{ entry.content }}</div>
-          <div class="comm-meta">
-            <span class="comm-badge">{{ entry.get_channel_display }}</span>
-            {% if entry.template_name %}<span class="comm-badge" style="background:#eff6ff;color:#2563eb">{{ entry.template_name }}</span>{% endif %}
-            {{ entry.created_at|date:"d/m/Y H:i" }}
+        {% if comm_log %}
+        {% for entry in comm_log %}
+        <div class="comm-entry">
+          <div class="comm-dir">
+            {% if entry.direction == 'outbound' %}📤{% else %}📥{% endif %}
+          </div>
+          <div class="comm-body">
+            <div class="comm-content">{{ entry.content }}</div>
+            <div class="comm-meta">
+              <span class="comm-badge">{{ entry.get_channel_display }}</span>
+              {% if entry.template_name %}<span class="comm-badge" style="background:#eff6ff;color:#2563eb">{{ entry.template_name }}</span>{% endif %}
+              {{ entry.created_at|date:"d/m/Y H:i" }}
+            </div>
           </div>
         </div>
+        {% endfor %}
+        {% else %}
+        <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0" data-i18n="crm.no_comms">Sin comunicaciones registradas.</div>
+        {% endif %}
       </div>
-      {% endfor %}
-      {% else %}
-      <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0">Sin comunicaciones registradas.</div>
-      {% endif %}
     </div>
 
-    <!-- Materials -->
-    <div class="card">
-      <div class="card-title">📁 Materiales <small>{{ materials|length }} archivo{{ materials|length|pluralize }}</small></div>
-      {% if materials %}
-      {% for m in materials %}
-      <div class="mat-item">
-        <div class="mat-icon">
-          {% if m.file_type == 'photo' %}🖼️
-          {% elif m.file_type == 'video' %}🎬
-          {% elif m.file_type == 'logo' %}🎨
-          {% elif m.file_type == 'document' %}📄
-          {% elif m.file_type == 'text' %}📝
-          {% else %}📎{% endif %}
-        </div>
-        <div class="mat-name">{{ m.original_filename }}</div>
-        <div class="mat-meta">
-          {{ m.size_display }}<br>
-          <span style="color:#cbd5e1">{{ m.get_source_display }}</span><br>
-          {{ m.created_at|date:"d/m/Y" }}
-        </div>
+    <!-- Raw data -->
+    <div class="admin-tab-panel" data-tab="datos">
+      <div class="card">
+        <div class="card-title">🗄 <span data-i18n="crm.raw_data">Datos originales</span></div>
+        <div class="field-val mono">{{ lead.raw_data }}</div>
       </div>
-      {% endfor %}
-      {% else %}
-      <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0">Sin materiales subidos aún.</div>
-      {% endif %}
-    </div>
-
-    <!-- Milestones -->
-    <div class="card">
-      <div class="card-title">🏁 Hitos del proyecto <small>{{ milestones|length }} hito{{ milestones|length|pluralize }}</small></div>
-
-      <!-- Quick-add form -->
-      <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:14px">
-        <div class="form-row">
-          <div>
-            <label>Título del hito</label>
-            <input type="text" id="msTitle" placeholder="Ej: Entrega de diseño">
-          </div>
-          <div>
-            <label>Fecha límite</label>
-            <input type="text" id="msDue" placeholder="YYYY-MM-DD">
-          </div>
-        </div>
-        <div style="margin-bottom:8px">
-          <label>Estado inicial</label>
-          <select id="msStatus">
-            {% for v, l in milestone_choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
-          </select>
-        </div>
-        <button class="btn-sm primary" onclick="addMilestone({{ lead.pk }})">+ Añadir hito</button>
-        <span id="msResult" style="font-size:.78rem;color:#16a34a;margin-left:8px"></span>
-      </div>
-
-      {% if milestones %}
-      {% for m in milestones %}
-      <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f8fafc">
-        <div style="flex:1;min-width:0">
-          <div style="font-size:.82rem;font-weight:600">{{ m.title }}</div>
-          <div style="font-size:.72rem;color:#94a3b8">
-            {% if m.due_date %}📅 {{ m.due_date|date:"d/m/Y" }}{% endif %}
-            {% if m.completed_date %} · ✅ {{ m.completed_date|date:"d/m/Y" }}{% endif %}
-          </div>
-        </div>
-        <select style="font-size:.72rem;padding:3px 6px;border-radius:4px;border:1px solid #cbd5e1;background:#fff"
-                onchange="updateMilestone({{ lead.pk }}, {{ m.pk }}, this.value)">
-          {% for v, l in milestone_choices %}
-          <option value="{{ v }}" {% if v == m.status %}selected{% endif %}>{{ l }}</option>
-          {% endfor %}
-        </select>
-        <span style="font-size:.75rem;padding:2px 7px;border-radius:8px;font-weight:700;
-          {% if m.status == 'done' %}background:#dcfce7;color:#166534
-          {% elif m.status == 'in_progress' %}background:#dbeafe;color:#1e40af
-          {% elif m.status == 'blocked' %}background:#fee2e2;color:#991b1b
-          {% else %}background:#fef3c7;color:#92400e{% endif %}">
-          {{ m.get_status_display }}
-        </span>
-      </div>
-      {% endfor %}
-      {% else %}
-      <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0">Sin hitos registrados.</div>
-      {% endif %}
-    </div>
-
-    <!-- Work Log -->
-    <div class="card">
-      <div class="card-title">⏱ Trabajo realizado <small>{{ total_hours|floatformat:1 }}h registradas</small></div>
-
-      <!-- Quick-add form -->
-      <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:14px">
-        <div class="form-row">
-          <div>
-            <label>Fecha</label>
-            <input type="text" id="wlDate" placeholder="YYYY-MM-DD">
-          </div>
-          <div>
-            <label>Horas</label>
-            <input type="text" id="wlHours" placeholder="1.5" style="width:80px">
-          </div>
-          <div>
-            <label>Categoría</label>
-            <select id="wlCat">
-              {% for v, l in worklog_categories %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
-            </select>
-          </div>
-        </div>
-        <div style="margin-bottom:8px">
-          <label>Descripción del trabajo</label>
-          <textarea id="wlDesc" rows="2" placeholder="¿Qué se hizo?"></textarea>
-        </div>
-        <div style="margin-bottom:8px">
-          <label>URL entregable (opcional)</label>
-          <input type="text" id="wlUrl" placeholder="https://…">
-        </div>
-        <button class="btn-sm primary" onclick="addWorklog({{ lead.pk }})">+ Registrar horas</button>
-        <span id="wlResult" style="font-size:.78rem;color:#16a34a;margin-left:8px"></span>
-      </div>
-
-      {% if work_logs %}
-      {% for w in work_logs %}
-      <div class="mat-item">
-        <div class="mat-icon">⏱</div>
-        <div class="mat-name">
-          <span style="background:#eff6ff;color:#2563eb;border-radius:8px;padding:1px 6px;font-size:.7rem;font-weight:700">{{ w.get_category_display }}</span>
-          {{ w.description }}
-          {% if w.deliverable_url %}<a href="{{ w.deliverable_url }}" target="_blank" style="font-size:.72rem;margin-left:4px">🔗</a>{% endif %}
-        </div>
-        <div class="mat-meta">
-          <strong>{{ w.hours }}h</strong><br>
-          {{ w.date|date:"d/m/Y" }}
-        </div>
-      </div>
-      {% endfor %}
-      {% else %}
-      <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0">Sin trabajo registrado.</div>
-      {% endif %}
-    </div>
-
-    <!-- Payments -->
-    <div class="card">
-      <div class="card-title">💰 Pagos e ingresos <small>{{ total_income }}€ recibidos</small></div>
-
-      <!-- Quick-add form -->
-      <form id="payForm{{ lead.pk }}" style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:14px" enctype="multipart/form-data">
-        <div class="form-row">
-          <div>
-            <label>Concepto</label>
-            <input type="text" name="concept" placeholder="Pago inicial 50%">
-          </div>
-          <div>
-            <label>Importe (€)</label>
-            <input type="text" name="amount" placeholder="730" style="width:90px">
-          </div>
-        </div>
-        <div class="form-row">
-          <div>
-            <label>Fecha de pago</label>
-            <input type="text" name="payment_date" placeholder="YYYY-MM-DD">
-          </div>
-          <div>
-            <label>Método</label>
-            <select name="method">
-              {% for v, l in payment_methods %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <div>
-            <label>Referencia / nº factura</label>
-            <input type="text" name="reference" placeholder="REF-2026-001">
-          </div>
-          <div>
-            <label>Estado</label>
-            <select name="status">
-              {% for v, l in payment_statuses %}<option value="{{ v }}" {% if v == 'received' %}selected{% endif %}>{{ l }}</option>{% endfor %}
-            </select>
-          </div>
-        </div>
-        <div style="margin-bottom:8px">
-          <label>Factura (PDF/imagen, opcional)</label>
-          <input type="file" name="invoice_file" accept=".pdf,.png,.jpg,.jpeg">
-        </div>
-        <button type="button" class="btn-sm primary" onclick="addPayment({{ lead.pk }}, document.getElementById('payForm{{ lead.pk }}'))">+ Registrar pago</button>
-        <span id="payResult" style="font-size:.78rem;color:#16a34a;margin-left:8px"></span>
-      </form>
-
-      {% if payments %}
-      {% for p in payments %}
-      <div class="mat-item">
-        <div class="mat-icon">💰</div>
-        <div class="mat-name">
-          {{ p.concept }}<br>
-          <span style="font-size:.72rem;color:#94a3b8">{{ p.get_method_display }} · {{ p.payment_date|date:"d/m/Y" }}
-          {% if p.reference %} · Ref: {{ p.reference }}{% endif %}</span>
-        </div>
-        <div class="mat-meta">
-          <strong style="color:{% if p.status == 'received' %}#16a34a{% else %}#d97706{% endif %}">{{ p.amount }}€</strong><br>
-          {{ p.get_status_display }}<br>
-          {% if p.invoice_file %}<a href="/wi/crm/payment/{{ p.pk }}/invoice/" style="font-size:.7rem">📄 Factura</a>{% endif %}
-        </div>
-      </div>
-      {% endfor %}
-      {% else %}
-      <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0">Sin pagos registrados.</div>
-      {% endif %}
-    </div>
-
-    <!-- Evidence Files -->
-    <div class="card">
-      <div class="card-title">📎 Evidencias <small>{{ evidence|length }} archivo{{ evidence|length|pluralize }}</small></div>
-
-      <!-- Quick-add form -->
-      <form id="evForm{{ lead.pk }}" style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:14px" enctype="multipart/form-data">
-        <div class="form-row">
-          <div>
-            <label>Categoría</label>
-            <select name="category">
-              {% for v, l in evidence_categories %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
-            </select>
-          </div>
-          <div>
-            <label>Título</label>
-            <input type="text" name="title" placeholder="Web publicada en producción">
-          </div>
-        </div>
-        <div style="margin-bottom:8px">
-          <label>URL (opcional)</label>
-          <input type="text" name="url" placeholder="https://cliente.es">
-        </div>
-        <div style="margin-bottom:8px">
-          <label>Archivo adjunto (opcional)</label>
-          <input type="file" name="file">
-        </div>
-        <div style="margin-bottom:8px">
-          <label>Notas</label>
-          <textarea name="notes" rows="2" placeholder="Descripción o contexto…"></textarea>
-        </div>
-        <button type="button" class="btn-sm primary" onclick="addEvidence({{ lead.pk }}, document.getElementById('evForm{{ lead.pk }}'))">+ Añadir evidencia</button>
-        <span id="evResult" style="font-size:.78rem;color:#16a34a;margin-left:8px"></span>
-      </form>
-
-      {% if evidence %}
-      {% for e in evidence %}
-      <div class="mat-item">
-        <div class="mat-icon">📎</div>
-        <div class="mat-name">
-          <span style="background:#f3e8ff;color:#7c3aed;border-radius:8px;padding:1px 6px;font-size:.7rem;font-weight:700">{{ e.get_category_display }}</span>
-          {{ e.title }}
-          {% if e.notes %}<br><span style="font-size:.72rem;color:#64748b">{{ e.notes }}</span>{% endif %}
-        </div>
-        <div class="mat-meta">
-          {% if e.file %}
-            <a href="/wi/crm/evidence/{{ e.pk }}/file/" style="font-size:.72rem">⬇ Descargar</a><br>
-          {% elif e.url %}
-            <a href="{{ e.url }}" target="_blank" style="font-size:.72rem">🔗 Abrir</a><br>
-          {% endif %}
-          {{ e.created_at|date:"d/m/Y" }}
-        </div>
-      </div>
-      {% endfor %}
-      {% else %}
-      <div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0">Sin evidencias registradas.</div>
-      {% endif %}
     </div>
 
   </div>
 
-  <!-- ── RIGHT COLUMN (sticky CRM panel) ──────────────────────────────── -->
+  <!-- ── SIDEBAR: compact tab switcher only ───────────────────────────────── -->
   <div class="col-right">
 
-    <!-- Status + notes -->
     <div class="card">
-      <div class="card-title">📋 Estado y notas</div>
-      <form method="post" action="/wi/crm/{{ lead.pk }}/" style="display:flex;flex-direction:column;gap:12px">
-        <div>
-          <label>Estado</label>
-          <select name="status">
-            {% for v, l in statuses %}
-            <option value="{{ v }}" {% if v == lead.status %}selected{% endif %}>{{ l }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div>
-          <label>Canal preferido</label>
-          <select name="preferred_channel">
-            {% for v, l in channels %}
-            <option value="{{ v }}" {% if v == lead.preferred_channel %}selected{% endif %}>{{ l }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div>
-          <label>Notas internas</label>
-          <textarea name="notes">{{ lead.notes }}</textarea>
-        </div>
-        <button type="submit" class="save-btn">Guardar</button>
-      </form>
-
-      {% if next_step %}
-      <hr class="div">
-      <div class="field-label">Próximo paso</div>
-      <div class="next-step">{{ next_step }}</div>
-      {% endif %}
-    </div>
-
-    <!-- Quick actions -->
-    <div class="card">
-      <div class="card-title">⚡ Acciones rápidas</div>
-      {% if lead.phone %}
-      <a href="https://wa.me/34{{ lead.phone|slice:'1:' }}"
-         target="_blank" rel="noopener"
-         style="display:flex;align-items:center;gap:6px;background:#25d366;color:#fff;border-radius:7px;padding:9px 12px;font-weight:700;font-size:.83rem;margin-bottom:8px;text-decoration:none">
-        💬 WhatsApp al cliente
-      </a>
-      {% endif %}
-      {% if lead.email %}
-      <a href="mailto:{{ lead.email }}?subject=Tu proyecto {{ lead.package|urlencode }}"
-         style="display:flex;align-items:center;gap:6px;background:#2563eb;color:#fff;border-radius:7px;padding:9px 12px;font-weight:700;font-size:.83rem;text-decoration:none">
-        ✉ Enviar email
-      </a>
-      {% endif %}
-    </div>
-
-    <!-- Dossier export -->
-    <div class="card">
-      <div class="card-title">📦 Exportar dossier</div>
-      <p style="font-size:.8rem;color:#64748b;margin:0 0 12px">
-        ZIP con informe HTML, CSVs de actividad, pagos, trabajo y evidencias para Extranjería u otro uso.
-      </p>
-      <a href="/wi/crm/{{ lead.pk }}/dossier/" class="btn-sm primary" style="display:block;text-align:center;padding:9px">
-        ⬇ Descargar dossier ZIP
-      </a>
-      <a href="/wi/crm/{{ lead.pk }}/dossier/preview/" target="_blank" class="btn-sm" style="display:block;text-align:center;margin-top:6px;padding:9px">
-        👁 Vista previa HTML
-      </a>
-    </div>
-
-    <!-- Raw data -->
-    <div class="card">
-      <div class="card-title">🗄 Datos originales</div>
-      <div class="field-val mono">{{ lead.raw_data }}</div>
+      <div class="card-title">🗂 <span data-i18n="crm.main_window">Ventana principal</span></div>
+      <div class="admin-tabs">
+        <button class="admin-tab-btn active" data-tab="chat" onclick="showAdminTab('chat')">💬 <span data-i18n="chat.tab">Chat</span></button>
+        <button class="admin-tab-btn" data-tab="herramientas" onclick="showAdminTab('herramientas')">🛠 <span data-i18n="crm.tools">Herramientas</span></button>
+        <button class="admin-tab-btn" data-tab="propuesta" onclick="showAdminTab('propuesta')">📋 <span data-i18n="crm.proposal">Propuesta</span></button>
+        <button class="admin-tab-btn" data-tab="materiales" onclick="showAdminTab('materiales')">📁 <span data-i18n="crm.materials">Materiales</span> <span class="cnt" id="matCntBadge">{{ materials|length }}</span></button>
+        <button class="admin-tab-btn" data-tab="hitos" onclick="showAdminTab('hitos')">🏁 <span data-i18n="crm.milestones_tab">Hitos</span> <span class="cnt">{{ milestones|length }}</span></button>
+        <button class="admin-tab-btn" data-tab="trabajo" onclick="showAdminTab('trabajo')">⏱ <span data-i18n="crm.work_tab">Trabajo</span></button>
+        <button class="admin-tab-btn" data-tab="pagos" onclick="showAdminTab('pagos')">💰 <span data-i18n="crm.payments_tab">Pagos</span> <span class="cnt">{{ payments|length }}</span></button>
+        <button class="admin-tab-btn" data-tab="evidencias" onclick="showAdminTab('evidencias')">📎 <span data-i18n="crm.evidence_tab">Evidencias</span> <span class="cnt">{{ evidence|length }}</span></button>
+        <button class="admin-tab-btn" data-tab="comunicaciones" onclick="showAdminTab('comunicaciones')">📨 <span data-i18n="crm.comms_tab">Comunicaciones</span></button>
+        <button class="admin-tab-btn" data-tab="datos" onclick="showAdminTab('datos')">🗄 <span data-i18n="crm.data_tab">Datos</span></button>
+      </div>
     </div>
 
   </div>
@@ -652,10 +745,58 @@
   'use strict';
 
   var _waMsg = '';
+  var LEAD_PK = {{ lead.pk }};
+
+  var _matIcons = {photo: '🖼️', video: '🎬', logo: '🎨', document: '📄', text: '📝'};
+
+  function loadMaterials() {
+    fetch('/wi/crm/' + LEAD_PK + '/materials/', { headers: { 'Authorization': _getAuth() } })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (!d.ok) return;
+        var _t = window.wiT || function(k){return k;};
+        var _matSourceLabels = {portal: _t('crm.src_portal'), manual: _t('crm.src_manual'), whatsapp: 'WhatsApp'};
+        var list = document.getElementById('matList');
+        var countLabel = document.getElementById('matCountLabel');
+        var countBadge = document.getElementById('matCntBadge');
+        if (countLabel) countLabel.textContent = d.materials.length + ' ' + _t(d.materials.length === 1 ? 'crm.file' : 'crm.files');
+        if (countBadge) countBadge.textContent = d.materials.length;
+        if (!list) return;
+        if (!d.materials.length) {
+          list.innerHTML = '<div style="color:#94a3b8;font-size:.82rem;text-align:center;padding:12px 0">' + _t('crm.no_materials') + '</div>';
+          return;
+        }
+        list.innerHTML = d.materials.map(function(m) {
+          var icon = _matIcons[m.type] || '📎';
+          var source = _matSourceLabels[m.source] || m.source;
+          var date = new Date(m.uploaded).toLocaleDateString(window.WI_LANG === 'ru' ? 'ru-RU' : 'es-ES');
+          return '<div class="mat-item">' +
+            '<div class="mat-icon">' + icon + '</div>' +
+            '<div class="mat-name">' + m.name.replace(/[&<>]/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}) + '</div>' +
+            '<div class="mat-meta">' + m.size + '<br><span style="color:#cbd5e1">' + source + '</span><br>' + date + '</div>' +
+          '</div>';
+        }).join('');
+      })
+      .catch(function() {});
+  }
+  loadMaterials();
+  setInterval(loadMaterials, 8000);
+
+  // ── Tab switcher ──────────────────────────────────────────────────────────
+  window.showAdminTab = function(tab) {
+    document.querySelectorAll('.admin-tab-panel').forEach(function(p) {
+      p.classList.toggle('active', p.dataset.tab === tab);
+    });
+    document.querySelectorAll('.admin-tab-btn').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    if (tab === 'materiales') loadMaterials();
+  };
 
   // ── Generate access link ──────────────────────────────────────────────────
   window.generateAccess = function(pk) {
     var btn = event.target;
+    var _t = window.wiT || function(k){return k;};
     btn.disabled = true;
     btn.textContent = '…';
 
@@ -683,15 +824,16 @@
       }
 
       // Show PIN + WA preview
-      document.getElementById('pinDisplay').textContent = data.pin || '(sin PIN)';
+      document.getElementById('pinDisplay').textContent = data.pin || ('(' + _t('crm.no_pin') + ')');
       document.getElementById('waPreview').textContent  = data.wa_message;
       document.getElementById('accessResult').style.display = 'block';
     })
-    .catch(function(e) { alert('Error de conexión: ' + e); })
-    .finally(function() { btn.disabled = false; btn.textContent = '⚡ Generar nuevo enlace'; });
+    .catch(function(e) { alert(_t('crm.connection_error') + ': ' + e); })
+    .finally(function() { btn.disabled = false; btn.textContent = '⚡ ' + _t('crm.generate_link_btn'); });
   };
 
   window.generateAndRequest = function(pk) {
+    var _t = window.wiT || function(k){return k;};
     var fd = new FormData();
     fd.append('pin_required', 'true');
     fd.append('expires_hours', '72');
@@ -703,7 +845,7 @@
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (!data.ok) { alert('Error generando enlace'); return; }
+      if (!data.ok) { alert(_t('crm.error_generating_link')); return; }
       var lead = { name: document.querySelector('.top-bar h1').textContent.split('—')[1].trim() };
       // Build materials request message using the generated URL
       var msg = '¡Hola ' + lead.name.split(' ')[0] + '! 👋\n\n'
@@ -718,13 +860,14 @@
       _waMsg = msg;
       _showWaMsg(msg);
       _copyToClipboard(msg);
-      alert('Mensaje copiado al portapapeles. Ahora pégalo en WhatsApp.');
+      alert(_t('crm.msg_copied'));
     })
     .catch(function(e) { alert('Error: ' + e); });
   };
 
   window.openWaMessage = function() {
-    if (_waMsg) { _showWaMsg(_waMsg); } else { alert('Genera un enlace primero.'); }
+    var _t = window.wiT || function(k){return k;};
+    if (_waMsg) { _showWaMsg(_waMsg); } else { alert(_t('crm.generate_link_first')); }
   };
 
   window.copyPortalLink = function() {
@@ -743,10 +886,11 @@
 
   // ── Log communication ─────────────────────────────────────────────────────
   window.logComm = function(pk) {
+    var _t = window.wiT || function(k){return k;};
     var dir     = document.getElementById('logDir').value;
     var chan    = document.getElementById('logChan').value;
     var content = document.getElementById('logContent').value.trim();
-    if (!content) { alert('Escribe el contenido de la comunicación.'); return; }
+    if (!content) { alert(_t('crm.write_comm_content')); return; }
 
     var fd = new FormData();
     fd.append('direction', dir);
@@ -762,23 +906,24 @@
     .then(function(data) {
       if (data.ok) {
         document.getElementById('logContent').value = '';
-        document.getElementById('logResult').textContent = '✓ Registrado';
+        document.getElementById('logResult').textContent = '✓ ' + _t('crm.logged');
         setTimeout(function() {
           document.getElementById('logResult').textContent = '';
           location.reload();
         }, 1000);
       } else {
-        alert('Error: ' + (data.error || 'desconocido'));
+        alert('Error: ' + (data.error || _t('crm.unknown')));
       }
     });
   };
 
   // ── Milestone functions ───────────────────────────────────────────────────
   window.addMilestone = function(pk) {
+    var _t = window.wiT || function(k){return k;};
     var title  = document.getElementById('msTitle').value.trim();
     var due    = document.getElementById('msDue').value.trim();
     var status = document.getElementById('msStatus').value;
-    if (!title) { alert('El título del hito es obligatorio.'); return; }
+    if (!title) { alert(_t('crm.milestone_title_required')); return; }
 
     var fd = new FormData();
     fd.append('title', title);
@@ -791,30 +936,32 @@
     .then(function(r) { return r.json(); })
     .then(function(d) {
       if (d.ok) {
-        document.getElementById('msResult').textContent = '✓ Hito añadido';
+        document.getElementById('msResult').textContent = '✓ ' + _t('crm.milestone_added');
         setTimeout(function() { location.reload(); }, 800);
-      } else { alert('Error: ' + (d.error || 'desconocido')); }
+      } else { alert('Error: ' + (d.error || _t('crm.unknown'))); }
     })
     .catch(function(e) { alert('Error: ' + e); });
   };
 
   window.updateMilestone = function(pk, mid, status) {
+    var _t = window.wiT || function(k){return k;};
     var fd = new FormData();
     fd.append('status', status);
     fetch('/wi/crm/' + pk + '/milestone/' + mid + '/', {
       method: 'POST', body: fd, headers: { 'Authorization': _getAuth() }
     })
     .then(function(r) { return r.json(); })
-    .then(function(d) { if (d.ok) location.reload(); else alert('Error al actualizar hito'); })
+    .then(function(d) { if (d.ok) location.reload(); else alert(_t('crm.error_updating_milestone')); })
     .catch(function(e) { alert('Error: ' + e); });
   };
 
   // ── Work log functions ────────────────────────────────────────────────────
   window.addWorklog = function(pk) {
+    var _t = window.wiT || function(k){return k;};
     var wlDate = document.getElementById('wlDate').value.trim();
     var wlDesc = document.getElementById('wlDesc').value.trim();
-    if (!wlDate) { alert('La fecha es obligatoria.'); return; }
-    if (!wlDesc) { alert('La descripción es obligatoria.'); return; }
+    if (!wlDate) { alert(_t('crm.date_required')); return; }
+    if (!wlDesc) { alert(_t('crm.desc_required')); return; }
 
     var fd = new FormData();
     fd.append('date', wlDate);
@@ -830,15 +977,16 @@
     .then(function(r) { return r.json(); })
     .then(function(d) {
       if (d.ok) {
-        document.getElementById('wlResult').textContent = '✓ Registrado';
+        document.getElementById('wlResult').textContent = '✓ ' + _t('crm.logged');
         setTimeout(function() { location.reload(); }, 800);
-      } else { alert('Error: ' + (d.error || 'desconocido')); }
+      } else { alert('Error: ' + (d.error || _t('crm.unknown'))); }
     })
     .catch(function(e) { alert('Error: ' + e); });
   };
 
   // ── Payment functions ─────────────────────────────────────────────────────
   window.addPayment = function(pk, formEl) {
+    var _t = window.wiT || function(k){return k;};
     var fd = new FormData(formEl);
     fetch('/wi/crm/' + pk + '/payment/', {
       method: 'POST', body: fd, headers: { 'Authorization': _getAuth() }
@@ -846,15 +994,34 @@
     .then(function(r) { return r.json(); })
     .then(function(d) {
       if (d.ok) {
-        document.getElementById('payResult').textContent = '✓ Pago registrado';
+        document.getElementById('payResult').textContent = '✓ ' + _t('crm.payment_logged');
         setTimeout(function() { location.reload(); }, 800);
-      } else { alert('Error: ' + (d.error || 'desconocido')); }
+      } else { alert('Error: ' + (d.error || _t('crm.unknown'))); }
+    })
+    .catch(function(e) { alert('Error: ' + e); });
+  };
+
+  window.confirmPay = function(pk) {
+    var _t = window.wiT || function(k){return k;};
+    if (!confirm(_t('crm.confirm_payment_received'))) return;
+    fetch('/wi/crm/payment/' + pk + '/confirm/', {
+      method: 'POST', headers: { 'Authorization': _getAuth() }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        var btn = document.getElementById('confirmBtn' + pk);
+        var st  = document.getElementById('payStatus' + pk);
+        if (btn) btn.remove();
+        if (st) { st.textContent = _t('crm.received') + ' ✓'; st.style.color = '#16a34a'; }
+      } else { alert(_t('crm.error_confirming')); }
     })
     .catch(function(e) { alert('Error: ' + e); });
   };
 
   // ── Evidence functions ────────────────────────────────────────────────────
   window.addEvidence = function(pk, formEl) {
+    var _t = window.wiT || function(k){return k;};
     var fd = new FormData(formEl);
     fetch('/wi/crm/' + pk + '/evidence/', {
       method: 'POST', body: fd, headers: { 'Authorization': _getAuth() }
@@ -862,9 +1029,9 @@
     .then(function(r) { return r.json(); })
     .then(function(d) {
       if (d.ok) {
-        document.getElementById('evResult').textContent = '✓ Evidencia añadida';
+        document.getElementById('evResult').textContent = '✓ ' + _t('crm.evidence_added');
         setTimeout(function() { location.reload(); }, 800);
-      } else { alert('Error: ' + (d.error || 'desconocido')); }
+      } else { alert('Error: ' + (d.error || _t('crm.unknown'))); }
     })
     .catch(function(e) { alert('Error: ' + e); });
   };
@@ -896,6 +1063,379 @@
     sessionStorage.setItem('crm_auth', enc);
     return 'Basic ' + enc;
   }
+})();
+</script>
+
+<script>
+(function() {
+'use strict';
+
+var T = {
+es: {
+  'crm.back': '← Volver',
+  'crm.client': 'Cliente',
+  'crm.name': 'Nombre',
+  'crm.biz_type': 'Tipo de negocio',
+  'crm.email': 'Email',
+  'crm.phone': 'Teléfono',
+  'crm.source': 'Fuente',
+  'crm.status_notes': 'Estado y notas',
+  'crm.status': 'Estado',
+  'crm.preferred_channel': 'Canal preferido',
+  'crm.internal_notes': 'Notas internas',
+  'crm.save': 'Guardar',
+  'crm.next_step': 'Próximo paso',
+  'crm.client_invoice': 'Factura del cliente',
+  'crm.quick_actions': 'Acciones rápidas',
+  'crm.wa_to_client': 'WhatsApp al cliente',
+  'crm.send_email': 'Enviar email',
+  'crm.client_portal': 'Portal del cliente',
+  'crm.secure_link': 'enlace de acceso seguro',
+  'crm.link_active': 'Enlace activo',
+  'crm.expires': 'expira',
+  'crm.last_access': 'Último acceso:',
+  'crm.visits': 'visitas',
+  'crm.link_expired': 'Enlace expirado',
+  'crm.no_link': 'Sin enlace generado',
+  'crm.generate_link': '⚡ Generar nuevo enlace',
+  'crm.generate_link_btn': 'Generar nuevo enlace',
+  'crm.copy_link': '📋 Copiar enlace',
+  'crm.copy_wa_msg': '💬 Copiar mensaje WA',
+  'crm.request_materials': '📦 Solicitar materiales',
+  'crm.copy_wa_full': '📋 Copiar mensaje WhatsApp',
+  'crm.export_dossier': 'Exportar dossier',
+  'crm.dossier_desc': 'ZIP con informe HTML, CSVs de actividad, pagos, trabajo y evidencias para Extranjería u otro uso.',
+  'crm.download_zip': '⬇ Descargar dossier ZIP',
+  'crm.preview_html': '👁 Vista previa HTML',
+  'crm.proposal': 'Propuesta',
+  'crm.edit_proposal': '✏️ Editar propuesta',
+  'crm.view_pdf': '🖨 Ver / PDF',
+  'crm.accepted_by': '✅ Aceptada por',
+  'crm.proposals_count': 'propuestas',
+  'crm.no_proposal': 'Sin propuesta generada aún.',
+  'crm.new_proposal': 'Crear nueva propuesta',
+  'crm.create_proposal': 'Crear propuesta profesional',
+  'crm.budget': 'Presupuesto calculado',
+  'crm.package': 'Paquete',
+  'crm.base_price': 'Precio base',
+  'crm.rush': 'Urgente',
+  'crm.discount': 'Descuento',
+  'crm.maintenance': 'Mantenimiento',
+  'crm.extras': 'Extras',
+  'crm.total_no_vat': 'Total estimado (sin IVA)',
+  'crm.created': 'Creado:',
+  'crm.updated': 'Actualizado:',
+  'crm.materials': 'Materiales',
+  'crm.no_materials': 'Sin materiales subidos aún.',
+  'crm.milestones': 'Hitos del proyecto',
+  'crm.milestone_title': 'Título del hito',
+  'crm.milestone_title_ph': 'Ej: Entrega de diseño',
+  'crm.due_date': 'Fecha límite',
+  'crm.initial_status': 'Estado inicial',
+  'crm.add_milestone': '+ Añadir hito',
+  'crm.no_milestones': 'Sin hitos registrados.',
+  'crm.work_done': 'Trabajo realizado',
+  'crm.hours_logged': 'registradas',
+  'crm.date': 'Fecha',
+  'crm.hours': 'Horas',
+  'crm.category': 'Categoría',
+  'crm.work_desc': 'Descripción del trabajo',
+  'crm.work_desc_ph': '¿Qué se hizo?',
+  'crm.deliverable_url': 'URL entregable (opcional)',
+  'crm.log_hours': '+ Registrar horas',
+  'crm.no_work': 'Sin trabajo registrado.',
+  'crm.payments': 'Pagos e ingresos',
+  'crm.received': 'recibidos',
+  'crm.concept': 'Concepto',
+  'crm.amount': 'Importe (€)',
+  'crm.payment_date': 'Fecha de pago',
+  'crm.method': 'Método',
+  'crm.reference': 'Referencia / nº factura',
+  'crm.invoice_file': 'Factura (PDF/imagen, opcional)',
+  'crm.log_payment': '+ Registrar pago',
+  'crm.ref': 'Ref:',
+  'crm.confirm_received': '✓ Confirmar recibido',
+  'crm.invoice': '📄 Factura',
+  'crm.no_payments': 'Sin pagos registrados.',
+  'crm.evidence': 'Evidencias',
+  'crm.title': 'Título',
+  'crm.url_optional': 'URL (opcional)',
+  'crm.attached_file': 'Archivo adjunto (opcional)',
+  'crm.notes': 'Notas',
+  'crm.notes_ph': 'Descripción o contexto…',
+  'crm.add_evidence': '+ Añadir evidencia',
+  'crm.download': '⬇ Descargar',
+  'crm.open': '🔗 Abrir',
+  'crm.no_evidence': 'Sin evidencias registradas.',
+  'crm.communications': 'Comunicaciones',
+  'crm.last_20': 'últimas 20',
+  'crm.direction': 'Dirección',
+  'crm.channel': 'Canal',
+  'crm.content': 'Contenido',
+  'crm.content_ph': 'Resumen de la comunicación…',
+  'crm.log': 'Registrar',
+  'crm.no_comms': 'Sin comunicaciones registradas.',
+  'crm.raw_data': 'Datos originales',
+  'crm.main_window': 'Ventana principal',
+  'crm.tools': 'Herramientas',
+  'crm.milestones_tab': 'Hitos',
+  'crm.work_tab': 'Trabajo',
+  'crm.payments_tab': 'Pagos',
+  'crm.evidence_tab': 'Evidencias',
+  'crm.comms_tab': 'Comunicaciones',
+  'crm.data_tab': 'Datos',
+  'crm.src_portal': 'Portal del cliente',
+  'crm.src_manual': 'Manual',
+  'crm.file': 'archivo',
+  'crm.files': 'archivos',
+  'crm.no_pin': 'sin PIN',
+  'crm.connection_error': 'Error de conexión',
+  'crm.error_generating_link': 'Error generando enlace',
+  'crm.msg_copied': 'Mensaje copiado al portapapeles. Ahora pégalo en WhatsApp.',
+  'crm.generate_link_first': 'Genera un enlace primero.',
+  'crm.write_comm_content': 'Escribe el contenido de la comunicación.',
+  'crm.logged': 'Registrado',
+  'crm.unknown': 'desconocido',
+  'crm.milestone_title_required': 'El título del hito es obligatorio.',
+  'crm.milestone_added': 'Hito añadido',
+  'crm.error_updating_milestone': 'Error al actualizar hito',
+  'crm.date_required': 'La fecha es obligatoria.',
+  'crm.desc_required': 'La descripción es obligatoria.',
+  'crm.payment_logged': 'Pago registrado',
+  'crm.confirm_payment_received': '¿Confirmar que el pago ha sido recibido?',
+  'crm.error_confirming': 'Error al confirmar',
+  'crm.evidence_added': 'Evidencia añadida',
+  'chat.tab': 'Chat',
+  'chat.client_online': 'Cliente en línea',
+  'chat.client_last_seen_prefix': 'Cliente · últ. vez',
+  'chat.client_offline': 'Cliente sin conexión',
+  'status.nuevo': 'Recibido', 'status.contactado': 'En contacto', 'status.propuesta_enviada': 'Propuesta enviada',
+  'status.negociacion': 'En negociación', 'status.aceptado': 'Aceptado ✓', 'status.en_trabajo': 'En desarrollo 🚧',
+  'status.finalizado': 'Completado ✅', 'status.perdido': 'Cerrado',
+  'next.nuevo': 'Nos ponemos en contacto contigo próximamente.',
+  'next.contactado': 'Estamos preparando tu propuesta personalizada.',
+  'next.propuesta_enviada': 'Revisa la propuesta y coméntanos cualquier ajuste.',
+  'next.negociacion': 'Estamos ultimando los detalles de tu proyecto.',
+  'next.aceptado': 'Por favor, sube los materiales de tu proyecto para comenzar.',
+  'next.en_trabajo': 'Tu proyecto está en desarrollo. Te avisamos en cada avance.',
+  'next.finalizado': '¡Tu proyecto está publicado! Cuéntanos cómo podemos seguir ayudándote.',
+  'next.perdido': 'Gracias por considerarnos. Puedes volver cuando lo necesites.',
+  'pkg.landing-page': 'Landing page', 'pkg.web-profesional': 'Web profesional', 'pkg.web-con-reservas': 'Web con reservas',
+  'pkg.tienda-online': 'Tienda online', 'pkg.proyecto-a-medida': 'Proyecto a medida', 'pkg.proyecto-existente': 'Proyecto existente',
+  'pkg.solo-mantenimiento': 'Solo mantenimiento',
+  'extra.diseno-premium': 'Diseño premium', 'extra.textos-que-venden': 'Textos que venden', 'extra.aparecer-en-google': 'Aparecer en Google',
+  'extra.ficha-en-google-maps': 'Ficha en Google Maps', 'extra.formulario-inteligente': 'Formulario inteligente',
+  'extra.boton-de-whatsapp': 'Botón de WhatsApp', 'extra.citas-y-reservas-online': 'Citas y reservas online',
+  'extra.cobros-y-conexiones-online': 'Cobros y conexiones online', 'extra.web-en-varios-idiomas': 'Web en varios idiomas',
+  'extra.estadisticas-de-ventas': 'Estadísticas de ventas', 'extra.subir-catalogo-completo': 'Subir catálogo completo',
+  'extra.avisos-antes-de-cada-cita': 'Avisos antes de cada cita', 'extra.asistente-automatico-24h': 'Asistente automático 24h',
+  'extra.correo-con-tu-dominio': 'Correo con tu dominio', 'extra.galeria-de-instagram': 'Galería de Instagram',
+  'extra.zona-privada-para-clientes': 'Zona privada para clientes', 'extra.documentos-automaticos-pdf': 'Documentos automáticos PDF',
+  'extra.datos-en-excel-sheets': 'Datos en Excel / Sheets', 'extra.panel-para-tu-equipo': 'Panel para tu equipo',
+  'extra.app-para-movil': 'App para móvil'
+},
+ru: {
+  'crm.back': '← Назад',
+  'crm.client': 'Клиент',
+  'crm.name': 'Имя',
+  'crm.biz_type': 'Тип бизнеса',
+  'crm.email': 'Email',
+  'crm.phone': 'Телефон',
+  'crm.source': 'Источник',
+  'crm.status_notes': 'Статус и заметки',
+  'crm.status': 'Статус',
+  'crm.preferred_channel': 'Предпочитаемый канал',
+  'crm.internal_notes': 'Внутренние заметки',
+  'crm.save': 'Сохранить',
+  'crm.next_step': 'Следующий шаг',
+  'crm.client_invoice': 'Счёт клиента',
+  'crm.quick_actions': 'Быстрые действия',
+  'crm.wa_to_client': 'WhatsApp клиенту',
+  'crm.send_email': 'Отправить email',
+  'crm.client_portal': 'Портал клиента',
+  'crm.secure_link': 'защищённая ссылка доступа',
+  'crm.link_active': 'Ссылка активна',
+  'crm.expires': 'истекает',
+  'crm.last_access': 'Последний вход:',
+  'crm.visits': 'визитов',
+  'crm.link_expired': 'Ссылка истекла',
+  'crm.no_link': 'Ссылка не создана',
+  'crm.generate_link': '⚡ Создать новую ссылку',
+  'crm.generate_link_btn': 'Создать новую ссылку',
+  'crm.copy_link': '📋 Копировать ссылку',
+  'crm.copy_wa_msg': '💬 Копировать сообщение WA',
+  'crm.request_materials': '📦 Запросить материалы',
+  'crm.copy_wa_full': '📋 Копировать сообщение WhatsApp',
+  'crm.export_dossier': 'Экспорт досье',
+  'crm.dossier_desc': 'ZIP с HTML-отчётом, CSV активности, платежей, работы и доказательств для миграционной службы или другого использования.',
+  'crm.download_zip': '⬇ Скачать досье ZIP',
+  'crm.preview_html': '👁 Предпросмотр HTML',
+  'crm.proposal': 'Предложение',
+  'crm.edit_proposal': '✏️ Редактировать предложение',
+  'crm.view_pdf': '🖨 Смотреть / PDF',
+  'crm.accepted_by': '✅ Принято',
+  'crm.proposals_count': 'предложений',
+  'crm.no_proposal': 'Предложение ещё не создано.',
+  'crm.new_proposal': 'Создать новое предложение',
+  'crm.create_proposal': 'Создать профессиональное предложение',
+  'crm.budget': 'Рассчитанный бюджет',
+  'crm.package': 'Пакет',
+  'crm.base_price': 'Базовая цена',
+  'crm.rush': 'Срочно',
+  'crm.discount': 'Скидка',
+  'crm.maintenance': 'Обслуживание',
+  'crm.extras': 'Допы',
+  'crm.total_no_vat': 'Итого (без НДС)',
+  'crm.created': 'Создано:',
+  'crm.updated': 'Обновлено:',
+  'crm.materials': 'Материалы',
+  'crm.no_materials': 'Пока нет загруженных материалов.',
+  'crm.milestones': 'Вехи проекта',
+  'crm.milestone_title': 'Название вехи',
+  'crm.milestone_title_ph': 'Напр.: сдача дизайна',
+  'crm.due_date': 'Срок',
+  'crm.initial_status': 'Начальный статус',
+  'crm.add_milestone': '+ Добавить веху',
+  'crm.no_milestones': 'Вех пока нет.',
+  'crm.work_done': 'Выполненная работа',
+  'crm.hours_logged': 'записано',
+  'crm.date': 'Дата',
+  'crm.hours': 'Часы',
+  'crm.category': 'Категория',
+  'crm.work_desc': 'Описание работы',
+  'crm.work_desc_ph': 'Что было сделано?',
+  'crm.deliverable_url': 'Ссылка на результат (необязательно)',
+  'crm.log_hours': '+ Записать часы',
+  'crm.no_work': 'Работа не зарегистрирована.',
+  'crm.payments': 'Платежи и доходы',
+  'crm.received': 'получено',
+  'crm.concept': 'Назначение',
+  'crm.amount': 'Сумма (€)',
+  'crm.payment_date': 'Дата платежа',
+  'crm.method': 'Метод',
+  'crm.reference': 'Референс / № счёта',
+  'crm.invoice_file': 'Счёт (PDF/изображение, необязательно)',
+  'crm.log_payment': '+ Зарегистрировать платёж',
+  'crm.ref': 'Реф:',
+  'crm.confirm_received': '✓ Подтвердить получение',
+  'crm.invoice': '📄 Счёт',
+  'crm.no_payments': 'Платежи не зарегистрированы.',
+  'crm.evidence': 'Доказательства',
+  'crm.title': 'Заголовок',
+  'crm.url_optional': 'URL (необязательно)',
+  'crm.attached_file': 'Прикреплённый файл (необязательно)',
+  'crm.notes': 'Заметки',
+  'crm.notes_ph': 'Описание или контекст…',
+  'crm.add_evidence': '+ Добавить доказательство',
+  'crm.download': '⬇ Скачать',
+  'crm.open': '🔗 Открыть',
+  'crm.no_evidence': 'Доказательства не зарегистрированы.',
+  'crm.communications': 'Коммуникации',
+  'crm.last_20': 'последние 20',
+  'crm.direction': 'Направление',
+  'crm.channel': 'Канал',
+  'crm.content': 'Содержание',
+  'crm.content_ph': 'Краткое содержание коммуникации…',
+  'crm.log': 'Зарегистрировать',
+  'crm.no_comms': 'Коммуникации не зарегистрированы.',
+  'crm.raw_data': 'Исходные данные',
+  'crm.main_window': 'Главное окно',
+  'crm.tools': 'Инструменты',
+  'crm.milestones_tab': 'Вехи',
+  'crm.work_tab': 'Работа',
+  'crm.payments_tab': 'Платежи',
+  'crm.evidence_tab': 'Доказательства',
+  'crm.comms_tab': 'Коммуникации',
+  'crm.data_tab': 'Данные',
+  'crm.src_portal': 'Портал клиента',
+  'crm.src_manual': 'Вручную',
+  'crm.file': 'файл',
+  'crm.files': 'файлов',
+  'crm.no_pin': 'без PIN',
+  'crm.connection_error': 'Ошибка соединения',
+  'crm.error_generating_link': 'Ошибка при создании ссылки',
+  'crm.msg_copied': 'Сообщение скопировано в буфер обмена. Теперь вставьте его в WhatsApp.',
+  'crm.generate_link_first': 'Сначала создайте ссылку.',
+  'crm.write_comm_content': 'Напишите содержание коммуникации.',
+  'crm.logged': 'Зарегистрировано',
+  'crm.unknown': 'неизвестно',
+  'crm.milestone_title_required': 'Название вехи обязательно.',
+  'crm.milestone_added': 'Веха добавлена',
+  'crm.error_updating_milestone': 'Ошибка обновления вехи',
+  'crm.date_required': 'Дата обязательна.',
+  'crm.desc_required': 'Описание обязательно.',
+  'crm.payment_logged': 'Платёж зарегистрирован',
+  'crm.confirm_payment_received': 'Подтвердить, что платёж получен?',
+  'crm.error_confirming': 'Ошибка подтверждения',
+  'crm.evidence_added': 'Доказательство добавлено',
+  'chat.tab': 'Чат',
+  'chat.client_online': 'Клиент в сети',
+  'chat.client_last_seen_prefix': 'Клиент · был(а) в сети',
+  'chat.client_offline': 'Клиент не в сети',
+  'status.nuevo': 'Получено', 'status.contactado': 'На связи', 'status.propuesta_enviada': 'Предложение отправлено',
+  'status.negociacion': 'Переговоры', 'status.aceptado': 'Принято ✓', 'status.en_trabajo': 'В разработке 🚧',
+  'status.finalizado': 'Завершено ✅', 'status.perdido': 'Закрыто',
+  'next.nuevo': 'Мы свяжемся с вами в ближайшее время.',
+  'next.contactado': 'Мы готовим ваше персональное предложение.',
+  'next.propuesta_enviada': 'Ознакомьтесь с предложением и сообщите нам о любых правках.',
+  'next.negociacion': 'Мы дорабатываем детали вашего проекта.',
+  'next.aceptado': 'Пожалуйста, загрузите материалы для вашего проекта, чтобы начать работу.',
+  'next.en_trabajo': 'Ваш проект в разработке. Будем держать вас в курсе на каждом этапе.',
+  'next.finalizado': 'Ваш проект опубликован! Расскажите, чем ещё можем помочь.',
+  'next.perdido': 'Спасибо, что рассматривали нас. Возвращайтесь, когда понадобится.',
+  'pkg.landing-page': 'Landing page', 'pkg.web-profesional': 'Бизнес-сайт', 'pkg.web-con-reservas': 'Сайт с бронированием',
+  'pkg.tienda-online': 'Интернет-магазин', 'pkg.proyecto-a-medida': 'Проект на заказ', 'pkg.proyecto-existente': 'Уже существующий проект',
+  'pkg.solo-mantenimiento': 'Только поддержка',
+  'extra.diseno-premium': 'Премиум дизайн', 'extra.textos-que-venden': 'Тексты, которые продают', 'extra.aparecer-en-google': 'Появиться в Google',
+  'extra.ficha-en-google-maps': 'Карточка в Google Картах', 'extra.formulario-inteligente': 'Умная форма обратной связи',
+  'extra.boton-de-whatsapp': 'Кнопка WhatsApp', 'extra.citas-y-reservas-online': 'Онлайн-запись на приём',
+  'extra.cobros-y-conexiones-online': 'Онлайн-оплата и подключения', 'extra.web-en-varios-idiomas': 'Сайт на нескольких языках',
+  'extra.estadisticas-de-ventas': 'Статистика продаж', 'extra.subir-catalogo-completo': 'Загрузить весь каталог',
+  'extra.avisos-antes-de-cada-cita': 'Напоминания перед визитом', 'extra.asistente-automatico-24h': 'Автоматический помощник 24ч',
+  'extra.correo-con-tu-dominio': 'Почта с вашим доменом', 'extra.galeria-de-instagram': 'Галерея Instagram',
+  'extra.zona-privada-para-clientes': 'Личный кабинет клиентов', 'extra.documentos-automaticos-pdf': 'Автоматические документы PDF',
+  'extra.datos-en-excel-sheets': 'Данные в Excel / Sheets', 'extra.panel-para-tu-equipo': 'Панель для команды',
+  'extra.app-para-movil': 'Мобильное приложение'
+}
+};
+
+var LANG = localStorage.getItem('wi_crm_lang') || 'es';
+
+function t(key) {
+  var cur = T[LANG], fb = T.es;
+  var v = (cur && cur[key] !== undefined) ? cur[key] : (fb && fb[key]);
+  return v !== undefined ? v : key;
+}
+window.wiT = t;
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    if (key) el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n-placeholder');
+    if (key) el.placeholder = t(key);
+  });
+}
+
+function setLang(lang) {
+  LANG = lang;
+  window.WI_LANG = lang;
+  localStorage.setItem('wi_crm_lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(function(b) {
+    b.classList.toggle('lang-current', b.dataset.lang === lang);
+  });
+  applyTranslations();
+}
+window.wiSetLang = setLang;
+
+document.querySelectorAll('.lang-btn').forEach(function(b) {
+  b.addEventListener('click', function() { setLang(this.dataset.lang); });
+});
+
+window.WI_LANG = LANG;
+setLang(LANG);
 })();
 </script>
 </body>

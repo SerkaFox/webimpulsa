@@ -1,0 +1,14 @@
+<div style="display:flex;justify-content:space-between;align-items:center;
+            padding:10px 14px;background:#f8fafc;border-radius:8px;gap:10px">
+  <div>
+    <div style="font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;
+                letter-spacing:.05em;margin-bottom:3px" {% if i18n_key %}data-i18n="{{ i18n_key }}"{% endif %}>{{ label }}</div>
+    <div style="font-size:.92rem;font-weight:800;color:#0c1c42" id="val_{{ id }}">{{ value }}</div>
+  </div>
+  <button onclick="copyVal('val_{{ id }}','btn_{{ id }}')" id="btn_{{ id }}"
+          style="border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;
+                 padding:7px 14px;font-size:.78rem;font-weight:700;cursor:pointer;
+                 color:#1760d6;white-space:nowrap;flex-shrink:0" data-i18n="pay.copy_btn">
+    Copiar
+  </button>
+</div>

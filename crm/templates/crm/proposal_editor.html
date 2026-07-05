@@ -134,6 +134,10 @@
         <select class="fsel" id="fRush">
           <option value="0">No</option><option value="1">Sí</option>
         </select></div>
+      <div class="fg-full">
+        <label class="fl">Precio final CON IVA (€) — opcional</label>
+        <input class="fi" type="number" id="fFinalPrice" min="0" placeholder="Ej: 600 — el precio base se calcula solo">
+      </div>
     </div>
     <label class="fl" style="margin-top:10px">Extras</label>
     <div id="extrasContainer"></div>
@@ -159,8 +163,8 @@
       <div class="fg-full"><label class="fl">Forma de pago</label>
         <select class="fsel" id="fPayment" onchange="toggleCustomPay()">
           <option value="50-50">50% inicio + 50% entrega</option>
-          <option value="40-40-20">40%+40%+20%</option>
-          <option value="single">Pago único</option>
+          <option value="3-way">3 pagos (33% cada uno)</option>
+          <option value="full">Pago único</option>
           <option value="custom">Personalizado</option>
         </select></div>
       <div class="fg-full" id="customPayRow" style="display:none">
@@ -310,10 +314,61 @@ function boot() {
   if (waBox) waBox.textContent = _waMsg;
 
   document.querySelectorAll('.fi,.fsel,.fta').forEach(function(el) {
+    if (el.id === 'fFinalPrice') return;   // handled separately below
     el.addEventListener('input', _debounce(refreshPreview, 350));
   });
 
+  document.getElementById('fFinalPrice').addEventListener('input', _debounce(function() {
+    _applyFinalPrice();
+    refreshPreview();
+  }, 350));
+
   refreshPreview();
+}
+
+// ── Reverse-calc: given a target total WITH VAT, back out the base price ──────
+function _forwardTotal(base, extrasTotal, discPct, rush, ivaPct) {
+  var subtot = base + extrasTotal;
+  var rushAmt = rush ? Math.round(subtot * 0.25) : 0;
+  subtot += rushAmt;
+  var discAmt = Math.round(subtot * discPct / 100);
+  var taxable = subtot - discAmt;
+  var vat = Math.round(taxable * ivaPct / 100);
+  return taxable + vat;
+}
+
+function _applyFinalPrice() {
+  var finalEl = document.getElementById('fFinalPrice');
+  var target = parseInt(finalEl.value || 0, 10);
+  if (!target) return;
+
+  var extrasTotal = _collectExtras().reduce(function(s, e) { return s + e.price; }, 0);
+  var discPct = parseInt(document.getElementById('fDiscount').value || 0, 10);
+  var rush    = document.getElementById('fRush').value === '1';
+  var ivaPct  = 21;
+
+  var taxableGuess    = target / (1 + ivaPct / 100);
+  var beforeDiscount  = discPct < 100 ? taxableGuess / (1 - discPct / 100) : taxableGuess;
+  var beforeRush      = rush ? beforeDiscount / 1.25 : beforeDiscount;
+  var base = Math.max(0, Math.round(beforeRush - extrasTotal));
+
+  // Nudge the guess towards an exact match. With a discount involved, some
+  // target totals are literally unreachable by any integer base (rounding
+  // compounds). If so, prefer the closest total that does NOT exceed the
+  // target (round down, in the client's favor) over one that goes above it.
+  var scale = (1 - discPct / 100) * (rush ? 1.25 : 1) * (1 + ivaPct / 100);
+  var bestBase = null, bestDiff = Infinity;       // closest total <= target
+  var fallbackBase = base, fallbackDiff = Infinity; // closest total overall (safety net)
+  for (var i = 0; i < 10; i++) {
+    var diff = target - _forwardTotal(base, extrasTotal, discPct, rush, ivaPct);
+    if (Math.abs(diff) < fallbackDiff) { fallbackDiff = Math.abs(diff); fallbackBase = base; }
+    if (diff >= 0 && diff < bestDiff) { bestDiff = diff; bestBase = base; }
+    if (diff === 0) break;
+    base = Math.max(0, base + (Math.round(diff / scale) || (diff > 0 ? 1 : -1)));
+  }
+  base = bestBase !== null ? bestBase : fallbackBase;
+
+  document.getElementById('fBasePrice').value = bestBase;
 }
 
 // ── Extras ────────────────────────────────────────────────────────────────────

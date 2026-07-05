@@ -1,0 +1,343 @@
+<!-- Reusable WhatsApp-style chat widget. Requires `access` and `lead` in context. -->
+<div class="wi-card" style="padding:0;overflow:hidden;display:flex;flex-direction:column;height:min(72vh,640px)">
+
+  <!-- Chat header -->
+  <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;
+              border-bottom:1px solid #e8eef6;background:#f8fafc;flex-shrink:0">
+    <div class="chat-avatar">T</div>
+    <div>
+      <div style="font-weight:800;font-size:.88rem;color:#0c1c42">Tatiana</div>
+      <div style="font-size:.74rem;color:#5a6d8c">
+        Web-Impulsa · <span id="chatPresence" style="color:#16a34a;font-weight:700">● <span data-i18n="chat.online">En línea</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message thread (rendered by JS from /messages/ poll) -->
+  <div id="chatThread" data-token="{{ access.token }}" data-client-name="{{ lead.name|escapejs }}"
+       style="flex:1;overflow-y:auto;padding:14px 14px 8px;
+              display:flex;flex-direction:column;gap:4px;min-height:0">
+    <div style="text-align:center;color:#94a3b8;font-size:.78rem;padding:20px 0" data-i18n="chat.loading">Cargando mensajes…</div>
+  </div>
+
+  <!-- Reply preview bar -->
+  <div id="chatReplyBar" style="display:none;padding:8px 12px;background:#eff6ff;border-top:1px solid #dbeafe;
+                                 font-size:.76rem;color:#1e293b;align-items:center;justify-content:space-between;gap:8px">
+    <div style="overflow:hidden">
+      <div style="font-weight:700;color:#2563eb" data-i18n="chat.replying">Respondiendo</div>
+      <div id="chatReplyText" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+    </div>
+    <button onclick="chatCancelReply()" style="border:none;background:none;color:#94a3b8;font-size:1rem;cursor:pointer;flex-shrink:0">✕</button>
+  </div>
+
+  <!-- Reaction picker (position:fixed so the card's overflow:hidden can't clip it) -->
+  <div id="chatReactionPicker" style="display:none;position:fixed;background:#fff;border:1px solid #e2e8f0;
+                                       border-radius:14px;padding:6px;box-shadow:0 4px 14px rgba(0,0,0,.12);
+                                       gap:2px;z-index:1000;flex-wrap:wrap;max-width:216px">
+  </div>
+
+  <!-- Input area -->
+  <div style="border-top:1px solid #e8eef6;padding:10px 12px;flex-shrink:0">
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <textarea id="chatInput" rows="2"
+                style="flex:1;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 11px;
+                       font-size:.82rem;font-family:inherit;resize:none;outline:none;
+                       line-height:1.45"
+                placeholder="Escribe un mensaje…" data-i18n-placeholder="chat.input_placeholder"></textarea>
+      <button onclick="chatSend()" id="chatSendBtn"
+              style="background:#2563eb;color:#fff;border:none;border-radius:10px;
+                     padding:8px 14px;font-size:.82rem;font-weight:800;cursor:pointer;
+                     white-space:nowrap;flex-shrink:0;align-self:flex-end" data-i18n="chat.send_btn">
+        Enviar →
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+  if (window._wiChatInit) return;   // avoid double-init if included twice on the same page
+  window._wiChatInit = true;
+
+  var threadEl = document.getElementById('chatThread');
+  var TOKEN = threadEl.dataset.token;
+  var replyToId = null;
+  var knownIds = {};
+  var firstLoad = true;
+  var EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '🎉', '😍', '👏',
+                '😊', '😅', '🤔', '🙌', '💪', '👀', '✅', '💯', '🥳', '😁'];
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function renderContent(raw) {
+    var urlRe = /(https?:\/\/[^\s<]+)/g;
+    var parts = String(raw).split(urlRe);
+    var html = '';
+    parts.forEach(function(part, i) {
+      if (i % 2 === 1) {
+        var safeUrl = escapeHtml(part);
+        var isImg = /\.(png|jpe?g|gif|webp)(\?.*)?$/i.test(part);
+        if (isImg) {
+          html += '<a href="' + safeUrl + '" target="_blank" rel="noopener">' +
+                  '<img src="' + safeUrl + '" style="max-width:220px;border-radius:8px;display:block;margin-top:6px" loading="lazy"></a>';
+        } else {
+          html += '<a href="' + safeUrl + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">' + safeUrl + '</a>';
+        }
+      } else {
+        html += escapeHtml(part).replace(/\n/g, '<br>');
+      }
+    });
+    return html;
+  }
+
+  function _locale() {
+    var m = {es: 'es-ES', en: 'en-GB', eu: 'eu-ES', ru: 'ru-RU'};
+    return m[window.WI_LANG] || 'es-ES';
+  }
+  function _t(key, fallback) {
+    return window.wiT ? window.wiT(key) : fallback;
+  }
+  var _materialRe = /^Material subido: (.+) \(([^)]+)\)$/;
+  function translateSystemContent(raw) {
+    var m = _materialRe.exec(raw);
+    if (m) return _t('chat.material_uploaded', 'Material subido:') + ' ' + m[1] + ' (' + m[2] + ')';
+    return null;
+  }
+  function renderBody(m) {
+    if (m.deleted) return _t('chat.deleted', 'Mensaje eliminado');
+    var sys = translateSystemContent(m.content);
+    return sys !== null ? escapeHtml(sys) : renderContent(m.content);
+  }
+  function fmtTime(iso) {
+    var d = new Date(iso);
+    return d.toLocaleTimeString(_locale(), {hour: '2-digit', minute: '2-digit'});
+  }
+  function dayKey(iso) {
+    return new Date(iso).toDateString();
+  }
+  function dayLabel(iso) {
+    var d = new Date(iso), today = new Date(), yest = new Date(); yest.setDate(today.getDate() - 1);
+    if (d.toDateString() === today.toDateString()) return _t('chat.today', 'Hoy');
+    if (d.toDateString() === yest.toDateString()) return _t('chat.yesterday', 'Ayer');
+    return d.toLocaleDateString(_locale(), {day: '2-digit', month: 'long'});
+  }
+
+  function beep() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.frequency.value = 880;
+      osc.connect(gain); gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .35);
+      osc.start(); osc.stop(ctx.currentTime + .35);
+    } catch (e) {}
+  }
+
+  function renderBubble(m, prevDay, isNew) {
+    var mine = m.direction === 'inbound';
+    var wrap = document.createElement('div');
+    var showDivider = prevDay !== dayKey(m.created_at);
+    var dividerHtml = showDivider
+      ? '<div style="text-align:center;margin:10px 0 4px"><span style="background:#f1f5f9;color:#94a3b8;' +
+        'font-size:.7rem;font-weight:700;padding:3px 12px;border-radius:10px">' + dayLabel(m.created_at) + '</span></div>'
+      : '';
+
+    var replyHtml = '';
+    if (m.reply_to) {
+      replyHtml = '<div style="font-size:.72rem;opacity:.8;border-left:2px solid currentColor;' +
+                  'padding:2px 8px;margin-bottom:4px;border-radius:2px;background:rgba(0,0,0,.05)">' +
+                  escapeHtml((m.reply_to.content || '').slice(0, 80)) + '</div>';
+    }
+
+    var ticksHtml = '';
+    if (mine) {
+      ticksHtml = m.read_at
+        ? '<span style="color:#53bdeb" title="' + _t('chat.read_title', 'Leído') + '">✓✓</span>'
+        : '<span style="color:#94a3b8" title="' + _t('chat.sent_title', 'Enviado') + '">✓</span>';
+    }
+
+    var reactHtml = '';
+    if (m.reactions && m.reactions.length) {
+      reactHtml = '<div style="margin-top:3px">' + m.reactions.map(function(r) {
+        return '<span style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;' +
+               'padding:0 6px;font-size:.78rem;margin-right:3px">' + r.emoji + '</span>';
+      }).join('') + '</div>';
+    }
+
+    var actionsHtml =
+      '<span class="chat-act" data-act="react" title="' + _t('chat.tooltip_react', 'Reaccionar') + '" style="cursor:pointer;margin-right:8px">🙂</span>' +
+      '<span class="chat-act" data-act="reply" title="' + _t('chat.tooltip_reply', 'Responder') + '" style="cursor:pointer;margin-right:8px">↩</span>' +
+      (mine ? '<span class="chat-act" data-act="delete" title="' + _t('chat.tooltip_delete', 'Eliminar') + '" style="cursor:pointer">🗑</span>' : '');
+
+    var bubbleColor = m.deleted
+      ? (mine ? 'background:#2563eb;opacity:.55;color:#fff' : 'background:#f1f5f9;opacity:.6;color:#64748b;font-style:italic')
+      : (mine ? 'background:#2563eb;color:#fff' : 'background:#f0f4ff;color:#1e293b');
+    var radius = mine ? '14px 14px 3px 14px' : '14px 14px 14px 3px';
+
+    wrap.innerHTML = dividerHtml +
+      '<div class="' + (isNew ? 'msg-in' : '') + '" style="display:flex;' + (mine ? 'justify-content:flex-end' : 'gap:8px;align-items:flex-end') + '" data-msg-id="' + m.id + '">' +
+      (mine ? '' : '<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#1760d6,#2563eb);' +
+                   'color:#fff;font-size:.78rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">T</div>') +
+      '<div style="max-width:78%">' +
+        '<div class="chat-bubble-el" style="' + bubbleColor + ';border-radius:' + radius + ';padding:9px 13px;font-size:.83rem;line-height:1.5">' +
+          replyHtml +
+          '<div class="chat-content-el">' + renderBody(m) + '</div>' +
+          '<div style="font-size:.68rem;opacity:.75;margin-top:3px;text-align:right;display:flex;gap:5px;justify-content:flex-end;align-items:center">' +
+            '<span>' + fmtTime(m.created_at) + '</span>' + ticksHtml +
+          '</div>' +
+        '</div>' +
+        (m.deleted ? '' : '<div style="font-size:.72rem;color:#94a3b8;margin-top:2px;' + (mine ? 'text-align:right' : '') + '">' + actionsHtml + '</div>') +
+        reactHtml +
+      '</div>' +
+      '</div>';
+    return wrap;
+  }
+
+  function render(messages) {
+    var hadNewOutbound = false;
+    if (!firstLoad) {
+      messages.forEach(function(m) {
+        if (!knownIds[m.id] && m.direction === 'outbound') hadNewOutbound = true;
+      });
+    }
+
+    threadEl.innerHTML = '';
+    var prevDay = null;
+    if (!messages.length) {
+      threadEl.innerHTML = '<div style="text-align:center;color:#94a3b8;font-size:.78rem;padding:20px 0">' +
+        _t('chat.empty_state', 'Aún no hay mensajes. ¡Escríbenos!') + '</div>';
+    }
+    messages.forEach(function(m) {
+      var isNew = !knownIds[m.id];
+      var el = renderBubble(m, prevDay, isNew);
+      prevDay = dayKey(m.created_at);
+      threadEl.appendChild(el);
+      knownIds[m.id] = true;
+    });
+    threadEl.scrollTop = threadEl.scrollHeight;
+
+    if (hadNewOutbound) beep();
+    firstLoad = false;
+  }
+
+  function updatePresence(online, lastSeenIso) {
+    var el = document.getElementById('chatPresence');
+    if (!el) return;
+    if (online) {
+      el.style.color = '#16a34a';
+      el.innerHTML = '● <span>' + _t('chat.online', 'En línea') + '</span>';
+    } else {
+      el.style.color = '#94a3b8';
+      var when = lastSeenIso ? (dayLabel(lastSeenIso) + ' ' + fmtTime(lastSeenIso)) : null;
+      el.innerHTML = '○ <span>' + (when
+        ? _t('chat.last_seen_prefix', 'Últ. vez') + ' ' + when
+        : _t('chat.offline', 'Desconectado')) + '</span>';
+    }
+  }
+
+  function poll() {
+    fetch('/p/' + TOKEN + '/messages/')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.ok) {
+          render(d.messages);
+          updatePresence(d.admin_online, d.admin_last_seen);
+        }
+      })
+      .catch(function() {});
+  }
+
+  window.chatSend = function() {
+    var input = document.getElementById('chatInput');
+    var text = input.value.trim();
+    if (!text) return;
+    var btn = document.getElementById('chatSendBtn');
+    btn.disabled = true;
+    var body = new URLSearchParams({message: text});
+    if (replyToId) body.append('reply_to', replyToId);
+    fetch('/p/' + TOKEN + '/message/', {method: 'POST', body: body})
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        btn.disabled = false;
+        if (d.ok) {
+          input.value = '';
+          chatCancelReply();
+          poll();
+        } else {
+          alert(d.error || _t('chat.send_error', 'No se pudo enviar el mensaje.'));
+        }
+      })
+      .catch(function() { btn.disabled = false; });
+  };
+
+  window.chatCancelReply = function() {
+    replyToId = null;
+    document.getElementById('chatReplyBar').style.display = 'none';
+  };
+
+  document.getElementById('chatInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); chatSend(); }
+  });
+
+  var picker = document.getElementById('chatReactionPicker');
+  // Move to <body> — position:fixed only stays viewport-relative if no ancestor
+  // has a transform (the card's 3D hover-tilt sets one), otherwise it positions
+  // relative to that transformed ancestor and ends up in the wrong place.
+  document.body.appendChild(picker);
+  picker.innerHTML = EMOJIS.map(function(e) {
+    return '<span data-emoji="' + e + '" style="cursor:pointer;padding:2px 3px;font-size:1.1rem">' + e + '</span>';
+  }).join('');
+  var pickerTargetId = null;
+  picker.addEventListener('click', function(e) {
+    var emoji = e.target.dataset.emoji;
+    if (!emoji || !pickerTargetId) return;
+    var body = new URLSearchParams({emoji: emoji});
+    fetch('/p/' + TOKEN + '/message/' + pickerTargetId + '/react/', {method: 'POST', body: body})
+      .then(function() { picker.style.display = 'none'; poll(); });
+  });
+  document.addEventListener('click', function(e) {
+    if (!picker.contains(e.target) && e.target.dataset.act !== 'react') picker.style.display = 'none';
+  });
+
+  threadEl.addEventListener('click', function(e) {
+    var act = e.target.dataset.act;
+    if (!act) return;
+    var row = e.target.closest('[data-msg-id]');
+    var id = row && row.dataset.msgId;
+    if (!id) return;
+
+    if (act === 'reply') {
+      replyToId = id;
+      var bubble = row.querySelector('.chat-content-el');
+      document.getElementById('chatReplyText').textContent = bubble ? bubble.textContent.trim().slice(0, 100) : '';
+      document.getElementById('chatReplyBar').style.display = 'flex';
+      document.getElementById('chatInput').focus();
+    } else if (act === 'delete') {
+      if (!confirm(_t('chat.delete_confirm', '¿Eliminar este mensaje?'))) return;
+      fetch('/p/' + TOKEN + '/message/' + id + '/delete/', {method: 'POST'}).then(poll);
+    } else if (act === 'react') {
+      pickerTargetId = id;
+      var rect = e.target.getBoundingClientRect();
+      picker.style.display = 'flex';
+      var pw = picker.offsetWidth, ph = picker.offsetHeight;
+      var left = Math.min(Math.max(8, rect.left - pw / 2), window.innerWidth - pw - 8);
+      var top  = Math.max(8, rect.top - ph - 8);
+      picker.style.left = left + 'px';
+      picker.style.top  = top + 'px';
+    }
+  });
+
+  poll();
+  setInterval(poll, 5000);
+
+  window.WI_LANG_HOOKS = window.WI_LANG_HOOKS || [];
+  window.WI_LANG_HOOKS.push(poll);
+})();
+</script>

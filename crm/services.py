@@ -8,6 +8,7 @@ Designed for extension:
 """
 import hashlib
 import logging
+import math
 import os
 import random
 import secrets
@@ -22,6 +23,10 @@ logger = logging.getLogger(__name__)
 _DISCOUNT  = 0.15
 _RUSH_MULT = 1.25
 
+def _js_round(x: float) -> int:
+    """Round the same way JS Math.round does (half-up, not banker's rounding)."""
+    return math.floor(x + 0.5)
+
 _PORTAL_BASE_URL = os.getenv('WI_BASE_URL', 'https://webimpulsa.es')
 
 # ── Lead creation ─────────────────────────────────────────────────────────────
@@ -35,8 +40,8 @@ def extract_calc_data(payload: dict) -> dict:
 
     subtotal = base + extras_price
     if rush:
-        subtotal = round(subtotal * _RUSH_MULT)
-    discount = round(subtotal * _DISCOUNT)
+        subtotal = _js_round(subtotal * _RUSH_MULT)
+    discount = _js_round(subtotal * _DISCOUNT)
     total    = subtotal - discount
 
     return {
@@ -164,6 +169,20 @@ def record_portal_visit(access: ClientAccess) -> None:
     access.save(update_fields=['last_access', 'access_count'])
 
 
+# A poll within this window counts as "currently online" — mirrors the admin-side
+# _ADMIN_ONLINE_WINDOW in views_portal.py.
+CLIENT_ONLINE_WINDOW = 20  # seconds
+
+
+def client_presence(lead: Lead):
+    """Return (is_online, last_seen) for the client, based on ClientAccess.last_access,
+    which is bumped on every client /messages/ poll while the portal chat is open."""
+    access = lead.access_tokens.filter(is_active=True).order_by('-created_at').first()
+    last_seen = access.last_access if access else None
+    online = bool(last_seen and (timezone.now() - last_seen).total_seconds() < CLIENT_ONLINE_WINDOW)
+    return online, last_seen
+
+
 # ── Communication logging ─────────────────────────────────────────────────────
 
 def log_communication(
@@ -266,12 +285,12 @@ def create_proposal_from_lead(lead: Lead):
     ]
 
     subtotal     = lead.package_base_price + lead.extras_price
-    rush_amount  = round(subtotal * 0.25) if lead.rush else 0
+    rush_amount  = _js_round(subtotal * 0.25) if lead.rush else 0
     if lead.rush:
         subtotal += rush_amount
-    discount_amt = round(subtotal * lead.discount_pct / 100)
+    discount_amt = _js_round(subtotal * lead.discount_pct / 100)
     taxable_base = subtotal - discount_amt
-    iva_amount   = round(taxable_base * 0.21)
+    iva_amount   = _js_round(taxable_base * 0.21)
     total        = taxable_base + iva_amount
 
     proposal = Proposal.objects.create(
@@ -382,6 +401,65 @@ def mark_proposal_sent(proposal) -> None:
     )
 
 
+PAYMENT_PLAN_CHOICES = [
+    ('full',  'Pago único'),
+    ('50-50', '50% ahora + 50% a la entrega'),
+    ('3-way', '3 pagos (33% cada uno)'),
+]
+_PAYMENT_PLAN_CODES = {code for code, _ in PAYMENT_PLAN_CHOICES}
+
+
+def payment_schedule(proposal) -> dict:
+    """Return {first_amount, first_label, schedule_text} for the proposal's payment_method."""
+    total = proposal.total_with_iva
+    plan  = proposal.payment_method if proposal.payment_method in _PAYMENT_PLAN_CODES else '50-50'
+
+    if plan == 'full':
+        return {
+            'plan': plan,
+            'first_amount': total,
+            'first_label': 'Pago único',
+            'schedule_text': 'Pago completo — sin más pagos pendientes.',
+        }
+    if plan == '3-way':
+        third = total // 3
+        return {
+            'plan': plan,
+            'first_amount': third,
+            'first_label': 'Primer pago (1 de 3)',
+            'schedule_text': f'3 pagos de {third}€: ahora, al 50% del proyecto y a la entrega.',
+        }
+    # default '50-50'
+    half = total // 2
+    return {
+        'plan': plan,
+        'first_amount': half,
+        'first_label': 'Primer pago (50%)',
+        'schedule_text': f'Segundo pago de {total - half}€ a la entrega.',
+    }
+
+
+def serialize_chat_message(m) -> dict:
+    """Shared JSON shape for portal-channel chat messages (client portal + CRM admin)."""
+    reply_snippet = None
+    if m.reply_to_id and m.reply_to:
+        reply_snippet = {
+            'id': m.reply_to_id,
+            'content': (m.reply_to.content[:120] if not m.reply_to.deleted else 'Mensaje eliminado'),
+            'direction': m.reply_to.direction,
+        }
+    return {
+        'id':        m.pk,
+        'direction': m.direction,
+        'content':   ('Mensaje eliminado' if m.deleted else m.content),
+        'deleted':   m.deleted,
+        'created_at': m.created_at.isoformat(),
+        'read_at':    m.read_at.isoformat() if m.read_at else None,
+        'reactions':  m.reactions or [],
+        'reply_to':   reply_snippet,
+    }
+
+
 def accept_proposal(proposal, name: str, nif: str, signature: str) -> None:
     """Record client acceptance: update proposal + lead status + log."""
     proposal.status             = proposal.ST_ACCEPTED
@@ -457,4 +535,16 @@ CLIENT_NEXT_STEP = {
     Lead.ST_EN_TRABAJO:   'Tu proyecto está en desarrollo. Te avisamos en cada avance.',
     Lead.ST_FINALIZADO:   '¡Tu proyecto está publicado! Cuéntanos cómo podemos seguir ayudándote.',
     Lead.ST_PERDIDO:      'Gracias por considerarnos. Puedes volver cuando lo necesites.',
+}
+
+# Fallback progress (%) by pipeline stage, used when a lead has no explicit
+# milestones yet. ST_PERDIDO is intentionally absent — no progress bar for closed leads.
+CLIENT_STAGE_PROGRESS = {
+    Lead.ST_NUEVO:        5,
+    Lead.ST_CONTACTADO:   15,
+    Lead.ST_PROPUESTA:    30,
+    Lead.ST_NEGOCIACION:  40,
+    Lead.ST_ACEPTADO:     55,
+    Lead.ST_EN_TRABAJO:   75,
+    Lead.ST_FINALIZADO:   100,
 }
