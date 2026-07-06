@@ -70,6 +70,9 @@ class Lead(models.Model):
     rush               = models.BooleanField(default=False)
     maintenance_plan   = models.CharField(max_length=50, blank=True)
     maintenance_price  = models.IntegerField(default=0)
+    hours_plan_name    = models.CharField(max_length=50, blank=True)
+    hours_plan_price   = models.IntegerField(default=0)
+    hosting_price      = models.IntegerField(default=0)
     estimated_price    = models.IntegerField(default=0)
     discount_pct       = models.IntegerField(default=15)
 
@@ -373,6 +376,9 @@ class Proposal(models.Model):
     total_with_iva     = models.IntegerField(default=0)
     maintenance_plan   = models.CharField(max_length=50, blank=True)
     maintenance_price  = models.IntegerField(default=0)
+    hours_plan_name    = models.CharField(max_length=50, blank=True)
+    hours_plan_price   = models.IntegerField(default=0)
+    hosting_price      = models.IntegerField(default=0)
 
     notes = models.TextField(blank=True)
 

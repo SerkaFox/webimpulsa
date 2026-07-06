@@ -45,6 +45,17 @@ EXTRAS_PRICES = {
     'App para móvil':              590,
 }
 
+# ── Hours package / hosting ── mirrors HOURS_CONFIG / calcHostingToggle in tatiana.html ──
+HOURS_PACKAGES = {
+    'Bolsa 5 horas':  175,
+    'Bolsa 10 horas': 320,
+    'Bolsa 20 horas': 560,
+    'Bolsa 40 horas': 1000,
+}
+
+HOSTING_PLAN_NAME  = 'Dominio + Hosting'
+HOSTING_PLAN_PRICE = 15
+
 # ── Project scope ── mirrors PROJECT_SCOPES in proposal-template.js ───────────
 PROJECT_SCOPES = {
     'Landing page': [

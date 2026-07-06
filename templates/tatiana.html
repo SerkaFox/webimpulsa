@@ -405,6 +405,7 @@
 
     /* Maintenance cards */
     .calc-maint-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: .5rem; }
+    .calc-hours-grid { grid-template-columns: repeat(5,1fr); }
     .calc-maint-opt {
       display: block; border: 2px solid rgba(23,96,214,.12);
       border-radius: 12px; background: var(--wi-surface);
@@ -573,6 +574,7 @@
       .quiz-options { grid-template-columns: repeat(2,1fr); }
       .calc-extras-grid { grid-template-columns: 1fr; }
       .calc-maint-grid { grid-template-columns: 1fr; }
+      .calc-hours-grid { grid-template-columns: repeat(2,1fr); }
       .calc-project-grid { grid-template-columns: repeat(3,1fr); }
     }
     @media (max-width: 460px) {
@@ -1207,6 +1209,61 @@
               <button class="btn btn-outline-primary btn-sm" style="font-size:.72rem" onclick="showInfoById('calcMaintGrid','Plus')">ℹ Qué incluye Plus</button>
             </div>
 
+            <!-- Hours package -->
+            <div class="calc-label" style="margin-top:1rem">4 · Bolsa de horas mensual (opcional)</div>
+            <div class="calc-maint-grid calc-hours-grid" id="calcHoursGrid">
+              <div class="calc-maint-opt selected" data-price="0" data-name="">
+                <img src="/static/wi/icons/icon-support.webp" class="calc-maint-icon" alt="">
+                <div class="calc-maint-name">Sin bolsa</div>
+                <div class="calc-maint-price">0€/mes</div>
+              </div>
+              <div class="calc-maint-opt" data-price="175" data-name="Bolsa 5 horas"
+                   data-info-title="Bolsa 5 horas — 175€/mes"
+                   data-info="5 horas al mes para arreglar errores, hacer mejoras o pequeños desarrollos en tu web. Ideal si necesitas cambios puntuales de vez en cuando.">
+                <img src="/static/wi/icons/icon-support.webp" class="calc-maint-icon" alt="">
+                <div class="calc-maint-name">5h</div>
+                <div class="calc-maint-price">175€/mes</div>
+              </div>
+              <div class="calc-maint-opt" data-price="320" data-name="Bolsa 10 horas"
+                   data-info-title="Bolsa 10 horas — 320€/mes"
+                   data-info="10 horas al mes de desarrollo: corrección de errores, mejoras de código, pequeñas funcionalidades nuevas. Para negocios con necesidades más frecuentes.">
+                <img src="/static/wi/icons/icon-support.webp" class="calc-maint-icon" alt="">
+                <div class="calc-maint-name">10h</div>
+                <div class="calc-maint-price">320€/mes</div>
+              </div>
+              <div class="calc-maint-opt" data-price="560" data-name="Bolsa 20 horas"
+                   data-info-title="Bolsa 20 horas — 560€/mes"
+                   data-info="20 horas al mes de trabajo de desarrollo dedicado a tu proyecto. Para negocios que necesitan evolucionar su web de forma constante.">
+                <img src="/static/wi/icons/icon-support.webp" class="calc-maint-icon" alt="">
+                <div class="calc-maint-name">20h</div>
+                <div class="calc-maint-price">560€/mes</div>
+              </div>
+              <div class="calc-maint-opt" data-price="1000" data-name="Bolsa 40 horas"
+                   data-info-title="Bolsa 40 horas — 1000€/mes"
+                   data-info="40 horas al mes — prácticamente un desarrollador a tiempo parcial dedicado a tu proyecto. Para negocios con desarrollo activo y continuo.">
+                <img src="/static/wi/icons/icon-support.webp" class="calc-maint-icon" alt="">
+                <div class="calc-maint-name">40h</div>
+                <div class="calc-maint-price">1000€/mes</div>
+              </div>
+            </div>
+            <div class="d-flex gap-2 mt-2 flex-wrap">
+              <button class="btn btn-outline-primary btn-sm" style="font-size:.72rem" onclick="showInfoById('calcHoursGrid','Bolsa 5 horas')">ℹ Bolsa 5h</button>
+              <button class="btn btn-outline-primary btn-sm" style="font-size:.72rem" onclick="showInfoById('calcHoursGrid','Bolsa 10 horas')">ℹ Bolsa 10h</button>
+              <button class="btn btn-outline-primary btn-sm" style="font-size:.72rem" onclick="showInfoById('calcHoursGrid','Bolsa 20 horas')">ℹ Bolsa 20h</button>
+              <button class="btn btn-outline-primary btn-sm" style="font-size:.72rem" onclick="showInfoById('calcHoursGrid','Bolsa 40 horas')">ℹ Bolsa 40h</button>
+            </div>
+
+            <!-- Hosting + domain -->
+            <div class="calc-label" style="margin-top:1rem">5 · Dominio + Hosting (opcional)</div>
+            <div class="calc-extra" id="calcHostingToggle" data-price="15"
+                 data-info-title="Dominio + Hosting — 15€/mes"
+                 data-info="Para que tu web tenga un nombre propio (tudominio.com) y esté funcionando online, sin caídas ni sorpresas. Nosotros nos encargamos de todo lo técnico: renovación del dominio, el servidor y las copias de seguridad.">
+              <span class="calc-info-btn" onclick="showInfo(event,this)">ℹ</span>
+              <img src="/static/wi/icons/ic-launch.webp" class="calc-extra-icon" alt="">
+              <div class="calc-extra-body"><div class="calc-extra-name">Dominio + Hosting</div><div class="calc-extra-price">+15€/mes</div></div>
+              <div class="calc-extra-check">✓</div>
+            </div>
+
           </div>
         </div>
 
@@ -1238,6 +1295,14 @@
             <div class="calc-price-row calc-maint-summary" id="calcMaintRow" style="display:none">
               <span class="label"><img src="/static/wi/icons/feat-booking.webp" style="width:13px;height:13px;object-fit:contain;vertical-align:middle;margin-right:.2rem" alt=""> Mantenimiento mensual</span>
               <span class="value" id="calcMaintVal">39€/mes</span>
+            </div>
+            <div class="calc-price-row calc-maint-summary" id="calcHoursRow" style="display:none">
+              <span class="label"><img src="/static/wi/icons/icon-support.webp" style="width:13px;height:13px;object-fit:contain;vertical-align:middle;margin-right:.2rem" alt=""> Bolsa de horas</span>
+              <span class="value" id="calcHoursVal">0€/mes</span>
+            </div>
+            <div class="calc-price-row calc-maint-summary" id="calcHostingRow" style="display:none">
+              <span class="label"><img src="/static/wi/icons/ic-launch.webp" style="width:13px;height:13px;object-fit:contain;vertical-align:middle;margin-right:.2rem" alt=""> Dominio + Hosting</span>
+              <span class="value" id="calcHostingVal">0€/mes</span>
             </div>
 
             <p style="font-size:.76rem;color:var(--wi-muted);margin:.9rem 0 0;line-height:1.5">
@@ -1550,6 +1615,18 @@ en:{basic:{title:'Basic Maintenance — €39/mo',info:"Security updates, techni
 eu:{basic:{title:'Oinarrizko Mantentze-lana — 39€/hil.',info:'Segurtasun eguneraketak, akats teknikoen zuzenketa, hilero 1 ordura arteko eduki aldaketak eta hileko babeskopia. Lasaitasuna nahi baduzu konpromiso handirik gabe.'},plus:{title:'Plus Mantentze-lana — 79€/hil.',info:'Oinarrizkoaren guztia gehi hilero 3 ordura arteko aldaketak, lehentasunezko erantzuna, webaren 24h monitorizazioa eta asteko babeskopia.'}},
 ru:{basic:{title:'Базовое обслуживание — 39€/мес',info:'Обновления безопасности, исправление технических ошибок, до 1 часа в месяц изменений контента и ежемесячная резервная копия. Идеально для спокойствия без больших обязательств.'},plus:{title:'Plus обслуживание — 79€/мес',info:'Всё из базового плюс до 3 часов правок в месяц, максимальный приоритет ответа, мониторинг доступности сайта 24ч и еженедельное резервное копирование.'}}
 };
+var hours={
+es:{h5:{title:'Bolsa 5 horas — 175€/mes',info:'5 horas al mes para arreglar errores, hacer mejoras o pequeños desarrollos en tu web. Ideal si necesitas cambios puntuales de vez en cuando.'},h10:{title:'Bolsa 10 horas — 320€/mes',info:'10 horas al mes de desarrollo: corrección de errores, mejoras de código, pequeñas funcionalidades nuevas. Para negocios con necesidades más frecuentes.'},h20:{title:'Bolsa 20 horas — 560€/mes',info:'20 horas al mes de trabajo de desarrollo dedicado a tu proyecto. Para negocios que necesitan evolucionar su web de forma constante.'},h40:{title:'Bolsa 40 horas — 1000€/mes',info:'40 horas al mes — prácticamente un desarrollador a tiempo parcial dedicado a tu proyecto. Para negocios con desarrollo activo y continuo.'}},
+en:{h5:{title:'5-hour package — €175/mo',info:'5 hours a month to fix bugs, make improvements or small developments on your site. Ideal if you need occasional, one-off changes.'},h10:{title:'10-hour package — €320/mo',info:'10 hours a month of development: bug fixes, code improvements, small new features. For businesses with more frequent needs.'},h20:{title:'20-hour package — €560/mo',info:'20 hours a month of development work dedicated to your project. For businesses that need their website to keep evolving constantly.'},h40:{title:'40-hour package — €1000/mo',info:"40 hours a month — practically a part-time developer dedicated to your project. For businesses with active, continuous development."}},
+eu:{h5:{title:'5 orduko poltsa — 175€/hil.',info:'Hilero 5 ordu akatsak konpontzeko, hobekuntzak egiteko edo garapen txikiak egiteko zure webean. Noizbehinkako aldaketak behar dituzunean aproposa.'},h10:{title:'10 orduko poltsa — 320€/hil.',info:'Hilero 10 ordu garapenerako: akatsen zuzenketa, kodearen hobekuntzak, funtzionalitate txiki berriak. Behar maizagoak dituzten negozioentzat.'},h20:{title:'20 orduko poltsa — 560€/hil.',info:'Hilero 20 ordu zure proiektura dedikatutako garapen lanerako. Etengabe eboluzionatu behar duen webgunea duten negozioentzat.'},h40:{title:'40 orduko poltsa — 1000€/hil.',info:'Hilero 40 ordu — ia zure proiektura dedikatutako lanaldi partzialeko garatzaile bat. Garapen aktibo eta jarraitua duten negozioentzat.'}},
+ru:{h5:{title:'Пакет 5 часов — 175€/мес',info:'5 часов в месяц на исправление ошибок, улучшения или небольшие доработки сайта. Идеально для точечных изменений время от времени.'},h10:{title:'Пакет 10 часов — 320€/мес',info:'10 часов в месяц на разработку: исправление ошибок, улучшение кода, небольшие новые функции. Для бизнеса с более частыми потребностями.'},h20:{title:'Пакет 20 часов — 560€/мес',info:'20 часов в месяц работы разработчика, посвящённой вашему проекту. Для бизнеса, которому нужно постоянное развитие сайта.'},h40:{title:'Пакет 40 часов — 1000€/мес',info:'40 часов в месяц — практически разработчик на part-time, посвящённый вашему проекту. Для бизнеса с активной непрерывной разработкой.'}}
+};
+var hosting={
+es:{title:'Dominio + Hosting — 15€/mes',info:'Para que tu web tenga un nombre propio (tudominio.com) y esté funcionando online, sin caídas ni sorpresas. Nosotros nos encargamos de todo lo técnico: renovación del dominio, el servidor y las copias de seguridad.'},
+en:{title:'Domain + Hosting — €15/mo',info:"So your website has its own name (yourdomain.com) and stays online, with no downtime or surprises. We take care of everything technical: domain renewal, the server and backups."},
+eu:{title:'Domeinua + Hostinga — 15€/hil.',info:'Zure webak izen propioa izan dezan (zuredomeinua.com) eta online funtzionatzen jarrai dezan, etenik gabe. Guk arduratzen gara alderdi tekniko guztiaz: domeinuaren berritzea, zerbitzaria eta babeskopiak.'},
+ru:{title:'Домен + Хостинг — 15€/мес',info:'Чтобы у вашего сайта было своё имя (vashdomen.com) и он стабильно работал онлайн, без сбоев и сюрпризов. Мы берём на себя всё техническое: продление домена, сервер и резервные копии.'}
+};
 var port={
 en:[
 {badge:'Beauty salon',desc:'Online booking system for a premium beauty studio: 24/7 calendar, automatic WhatsApp reminders, employee area and multilingual presence. Clients book on their own, no calls needed.',price:'approx. €950'},
@@ -1587,7 +1664,7 @@ ru:[
 };
 // reverse map: Spanish extra name → config key
 var nameToKey={'Diseño premium':'diseno','Textos que venden':'textos','Aparecer en Google':'seo','Ficha en Google Maps':'google','Formulario inteligente':'formulario','Botón de WhatsApp':'whatsapp','Citas y reservas online':'reservas','Cobros y conexiones online':'integracion','Web en varios idiomas':'multiidioma','Estadísticas de ventas':'analytics','Subir catálogo completo':'importacion','Avisos antes de cada cita':'recordatorios','Asistente automático 24h':'bot','Correo con tu dominio':'correo','Galería de Instagram':'instagram','Zona privada para clientes':'area_privada','Documentos automáticos PDF':'pdf_auto','Datos en Excel / Sheets':'sheets','Panel para tu equipo':'panel_emp','App para móvil':'app_android'};
-window.WI_L10N={extras:ex,quiz:quiz,maint:maint,portfolio:port,nameToKey:nameToKey};
+window.WI_L10N={extras:ex,quiz:quiz,maint:maint,hours:hours,hosting:hosting,portfolio:port,nameToKey:nameToKey};
 // Hooks called by setLang() after language change
 window.WI_LANG_HOOKS=window.WI_LANG_HOOKS||[];
 window.WI_LANG_HOOKS.push(function(){
@@ -1603,6 +1680,19 @@ window.WI_LANG_HOOKS.push(function(){
   var maintOpts=document.querySelectorAll('#calcMaintGrid .calc-maint-opt');
   if(maintOpts[1]&&mData.basic){maintOpts[1].dataset.infoTitle=mData.basic.title;maintOpts[1].dataset.info=mData.basic.info;}
   if(maintOpts[2]&&mData.plus){maintOpts[2].dataset.infoTitle=mData.plus.title;maintOpts[2].dataset.info=mData.plus.info;}
+  // Update hours-package modal data attributes
+  var hL=window.WI_L10N&&window.WI_L10N.hours;
+  var hData=(hL&&hL[lang])||(hL&&hL.es)||{};
+  var hoursOpts=document.querySelectorAll('#calcHoursGrid .calc-maint-opt');
+  if(hoursOpts[1]&&hData.h5){hoursOpts[1].dataset.infoTitle=hData.h5.title;hoursOpts[1].dataset.info=hData.h5.info;}
+  if(hoursOpts[2]&&hData.h10){hoursOpts[2].dataset.infoTitle=hData.h10.title;hoursOpts[2].dataset.info=hData.h10.info;}
+  if(hoursOpts[3]&&hData.h20){hoursOpts[3].dataset.infoTitle=hData.h20.title;hoursOpts[3].dataset.info=hData.h20.info;}
+  if(hoursOpts[4]&&hData.h40){hoursOpts[4].dataset.infoTitle=hData.h40.title;hoursOpts[4].dataset.info=hData.h40.info;}
+  // Update hosting toggle modal data attributes
+  var hoL=window.WI_L10N&&window.WI_L10N.hosting;
+  var hoData=(hoL&&hoL[lang])||(hoL&&hoL.es);
+  var hostingToggle=document.getElementById('calcHostingToggle');
+  if(hostingToggle&&hoData){hostingToggle.dataset.infoTitle=hoData.title;hostingToggle.dataset.info=hoData.info;}
   // Update ring card badges and prices
   var portTr=window.WI_L10N&&window.WI_L10N.portfolio;
   document.querySelectorAll('.ring-card').forEach(function(card,i){
@@ -1883,7 +1973,7 @@ window.WI_LANG_HOOKS.push(function(){
   // ---- CALCULATOR ----
   const DISC = 0.15;
   const RUSH = 1.25;
-  const calc = { base: 390, baseName: 'Landing page', extras: 0, extraNames: [], rush: false, maint: 0, maintName: '' };
+  const calc = { base: 390, baseName: 'Landing page', extras: 0, extraNames: [], rush: false, maint: 0, maintName: '', hours: 0, hoursName: '', hosting: 0 };
 
   // Extras catalogue
   const EXTRAS_CONFIG = {
@@ -1989,6 +2079,14 @@ window.WI_LANG_HOOKS.push(function(){
     const _mLang = window.WI_LANG || localStorage.getItem('wi_lang') || 'es';
     const _mesSuffix = {es:'€/mes',eu:'€/hil.',en:'€/mo',ru:'€/мес'}[_mLang] || '€/mes';
     document.getElementById('calcMaintVal').textContent = calc.maint + _mesSuffix;
+
+    const hoursRow = document.getElementById('calcHoursRow');
+    hoursRow.style.display = calc.hours > 0 ? '' : 'none';
+    document.getElementById('calcHoursVal').textContent = calc.hours + _mesSuffix;
+
+    const hostingRow = document.getElementById('calcHostingRow');
+    hostingRow.style.display = calc.hosting > 0 ? '' : 'none';
+    document.getElementById('calcHostingVal').textContent = calc.hosting + _mesSuffix;
   }
 
   function fmt(n) { return n.toLocaleString('es-ES'); }
@@ -2025,6 +2123,25 @@ window.WI_LANG_HOOKS.push(function(){
     });
   });
 
+  // Hours package (bolsa de horas)
+  document.querySelectorAll('#calcHoursGrid .calc-maint-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('#calcHoursGrid .calc-maint-opt').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      calc.hours = parseInt(opt.dataset.price);
+      calc.hoursName = opt.dataset.name;
+      calcUpdate();
+    });
+  });
+
+  // Hosting + domain (toggle)
+  document.getElementById('calcHostingToggle')?.addEventListener('click', function(ev) {
+    if (ev.target.classList.contains('calc-info-btn')) return;
+    this.classList.toggle('selected');
+    calc.hosting = this.classList.contains('selected') ? parseInt(this.dataset.price) : 0;
+    calcUpdate();
+  });
+
   // Info modal helper
   window.showInfo = function(e, btn) {
     e.stopPropagation();
@@ -2052,6 +2169,8 @@ window.WI_LANG_HOOKS.push(function(){
     if (calc.rush) txt += `Entrega urgente: sí\n`;
     txt += `Precio estimado: ${fmt(total)}€ (descuento lanzamiento −15%)`;
     if (calc.maint > 0) txt += `\nMantenimiento ${calc.maintName}: ${calc.maint}€/mes`;
+    if (calc.hours > 0) txt += `\n${calc.hoursName}: ${calc.hours}€/mes`;
+    if (calc.hosting > 0) txt += `\nDominio + Hosting: ${calc.hosting}€/mes`;
     return txt;
   }
 
@@ -2310,6 +2429,12 @@ es:{
   'calc.l3':'3 · Mantenimiento mensual (opcional)',
   'calc.maint.no':'Sin mant.','calc.maint.basic':'Básico','calc.maint.plus':'Plus',
   'calc.maint.btn1':'ℹ Qué incluye Básico','calc.maint.btn2':'ℹ Qué incluye Plus',
+  'calc.l4':'4 · Bolsa de horas mensual (opcional)',
+  'calc.hours.no':'Sin bolsa','calc.hours.5':'5h','calc.hours.10':'10h','calc.hours.20':'20h','calc.hours.40':'40h',
+  'calc.hours.btn1':'ℹ Bolsa 5h','calc.hours.btn2':'ℹ Bolsa 10h','calc.hours.btn3':'ℹ Bolsa 20h','calc.hours.btn4':'ℹ Bolsa 40h',
+  'calc.hours.label':'Bolsa de horas',
+  'calc.l5':'5 · Dominio + Hosting (opcional)',
+  'calc.hosting.name':'Dominio + Hosting','calc.hosting.label':'Dominio + Hosting',
   'calc.sum':'Resumen del presupuesto','calc.extras':'Extras seleccionados',
   'calc.rush.label':'Urgente +25%','calc.discount':'Descuento lanzamiento −15%',
   'calc.total':'Total estimado','calc.maint.label':'Mantenimiento mensual',
@@ -2459,6 +2584,12 @@ eu:{
   'calc.l3':'3 · Hileko mantentze-lana (hautazkoa)',
   'calc.maint.no':'Mantentzarik ez','calc.maint.basic':'Oinarrizkoa','calc.maint.plus':'Plus',
   'calc.maint.btn1':'ℹ Oinarrizkoak zer barne hartzen duen','calc.maint.btn2':'ℹ Plus-ek zer barne hartzen duen',
+  'calc.l4':'4 · Hileko ordu-poltsa (hautazkoa)',
+  'calc.hours.no':'Poltsarik ez','calc.hours.5':'5h','calc.hours.10':'10h','calc.hours.20':'20h','calc.hours.40':'40h',
+  'calc.hours.btn1':'ℹ 5h poltsa','calc.hours.btn2':'ℹ 10h poltsa','calc.hours.btn3':'ℹ 20h poltsa','calc.hours.btn4':'ℹ 40h poltsa',
+  'calc.hours.label':'Ordu-poltsa',
+  'calc.l5':'5 · Domeinua + Hostinga (hautazkoa)',
+  'calc.hosting.name':'Domeinua + Hostinga','calc.hosting.label':'Domeinua + Hostinga',
   'calc.sum':'Aurrekontua laburpena','calc.extras':'Hautatutako gehigarriak',
   'calc.rush.label':'Urgentea +%25','calc.discount':'Abian jartzeko deskontua −%15',
   'calc.total':'Guztira estimatua','calc.maint.label':'Hileko mantentze-lana',
@@ -2606,6 +2737,12 @@ en:{
   'calc.l3':'3 · Monthly maintenance (optional)',
   'calc.maint.no':'No maint.','calc.maint.basic':'Basic','calc.maint.plus':'Plus',
   'calc.maint.btn1':'ℹ What Basic includes','calc.maint.btn2':'ℹ What Plus includes',
+  'calc.l4':'4 · Monthly hours package (optional)',
+  'calc.hours.no':'No package','calc.hours.5':'5h','calc.hours.10':'10h','calc.hours.20':'20h','calc.hours.40':'40h',
+  'calc.hours.btn1':'ℹ 5h package','calc.hours.btn2':'ℹ 10h package','calc.hours.btn3':'ℹ 20h package','calc.hours.btn4':'ℹ 40h package',
+  'calc.hours.label':'Hours package',
+  'calc.l5':'5 · Domain + Hosting (optional)',
+  'calc.hosting.name':'Domain + Hosting','calc.hosting.label':'Domain + Hosting',
   'calc.sum':'Budget summary','calc.extras':'Selected extras',
   'calc.rush.label':'Urgent +25%','calc.discount':'Launch discount −15%',
   'calc.total':'Estimated total','calc.maint.label':'Monthly maintenance',
@@ -2753,6 +2890,12 @@ ru:{
   'calc.l3':'3 · Ежемесячное обслуживание (по желанию)',
   'calc.maint.no':'Без обслуж.','calc.maint.basic':'Базовое','calc.maint.plus':'Plus',
   'calc.maint.btn1':'ℹ Что входит в Базовое','calc.maint.btn2':'ℹ Что входит в Plus',
+  'calc.l4':'4 · Пакет часов в месяц (по желанию)',
+  'calc.hours.no':'Без пакета','calc.hours.5':'5ч','calc.hours.10':'10ч','calc.hours.20':'20ч','calc.hours.40':'40ч',
+  'calc.hours.btn1':'ℹ Пакет 5ч','calc.hours.btn2':'ℹ Пакет 10ч','calc.hours.btn3':'ℹ Пакет 20ч','calc.hours.btn4':'ℹ Пакет 40ч',
+  'calc.hours.label':'Пакет часов',
+  'calc.l5':'5 · Домен + Хостинг (по желанию)',
+  'calc.hosting.name':'Домен + Хостинг','calc.hosting.label':'Домен + Хостинг',
   'calc.sum':'Сводка бюджета','calc.extras':'Выбранные опции',
   'calc.rush.label':'Срочно +25%','calc.discount':'Скидка запуска −15%',
   'calc.total':'Итого (оценка)','calc.maint.label':'Ежемесячное обслуживание',
@@ -2959,6 +3102,8 @@ function applyTranslations(){
     if(clabels[0]) clabels[0].textContent=t('calc.l1');
     if(clabels[1]){ clabels[1].textContent=t('calc.l2')+' '; var hint=document.createElement('span'); hint.style.cssText='font-weight:500;text-transform:none;letter-spacing:0;color:var(--wi-muted);font-size:.78rem'; hint.textContent=t('calc.l2hint'); clabels[1].appendChild(hint); }
     if(clabels[2]) clabels[2].textContent=t('calc.l3');
+    if(clabels[3]) clabels[3].textContent=t('calc.l4');
+    if(clabels[4]) clabels[4].textContent=t('calc.l5');
     var rushTitle=calcSec.querySelector('#calcRush div:first-child'); if(rushTitle) rushTitle.textContent=t('calc.rush.title');
     var rushDesc=calcSec.querySelector('#calcRush div:last-child'); if(rushDesc) rushDesc.textContent=t('calc.rush.desc');
     var projs=calcSec.querySelectorAll('.calc-project');
@@ -2970,9 +3115,19 @@ function applyTranslations(){
     if(mnames[0]) mnames[0].textContent=t('calc.maint.no');
     if(mnames[1]) mnames[1].textContent=t('calc.maint.basic');
     if(mnames[2]) mnames[2].textContent=t('calc.maint.plus');
+    if(mnames[3]) mnames[3].textContent=t('calc.hours.no');
+    if(mnames[4]) mnames[4].textContent=t('calc.hours.5');
+    if(mnames[5]) mnames[5].textContent=t('calc.hours.10');
+    if(mnames[6]) mnames[6].textContent=t('calc.hours.20');
+    if(mnames[7]) mnames[7].textContent=t('calc.hours.40');
     var mbts=calcSec.querySelectorAll('.d-flex.gap-2.mt-2 button');
     if(mbts[0]) mbts[0].textContent=t('calc.maint.btn1');
     if(mbts[1]) mbts[1].textContent=t('calc.maint.btn2');
+    if(mbts[2]) mbts[2].textContent=t('calc.hours.btn1');
+    if(mbts[3]) mbts[3].textContent=t('calc.hours.btn2');
+    if(mbts[4]) mbts[4].textContent=t('calc.hours.btn3');
+    if(mbts[5]) mbts[5].textContent=t('calc.hours.btn4');
+    var hostingName=calcSec.querySelector('#calcHostingToggle .calc-extra-name'); if(hostingName) hostingName.textContent=t('calc.hosting.name');
     var panTitle=calcSec.querySelector('.calc-price-panel-title'); if(panTitle) panTitle.textContent=t('calc.sum');
     var extRow=calcSec.querySelector('#calcExtrasRow .label'); if(extRow) extRow.textContent=t('calc.extras');
     var discLabel=calcSec.querySelector('.calc-discount-row .label');
@@ -2980,6 +3135,10 @@ function applyTranslations(){
     var totLabel=calcSec.querySelector('.calc-total-row .label'); if(totLabel) totLabel.textContent=t('calc.total');
     var maintLabel=calcSec.querySelector('#calcMaintRow .label');
     if(maintLabel){ var mimg=maintLabel.querySelector('img'); maintLabel.textContent=' '+t('calc.maint.label'); if(mimg) maintLabel.insertBefore(mimg,maintLabel.firstChild); }
+    var hoursLabel=calcSec.querySelector('#calcHoursRow .label');
+    if(hoursLabel){ var himg=hoursLabel.querySelector('img'); hoursLabel.textContent=' '+t('calc.hours.label'); if(himg) hoursLabel.insertBefore(himg,hoursLabel.firstChild); }
+    var hostingLabel=calcSec.querySelector('#calcHostingRow .label');
+    if(hostingLabel){ var hoimg=hostingLabel.querySelector('img'); hostingLabel.textContent=' '+t('calc.hosting.label'); if(hoimg) hostingLabel.insertBefore(hoimg,hostingLabel.firstChild); }
     var cnote=calcSec.querySelector('p[style*="font-size:.76rem"]'); if(cnote) cnote.textContent=t('calc.note');
     var leadBtn=document.getElementById('calcLeadBtn');
     if(leadBtn) leadBtn.textContent='📨 '+t('calc.lead');
@@ -4275,6 +4434,9 @@ window.WI_LANG_HOOKS.push(function() {
         rush:         c.rush || false,
         maint:        c.maint || 0,
         maint_name:   c.maintName || '',
+        hours:        c.hours || 0,
+        hours_name:   c.hoursName || '',
+        hosting:      c.hosting || 0,
         total:        total
       }
     };

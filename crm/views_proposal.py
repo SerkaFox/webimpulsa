@@ -108,9 +108,12 @@ def proposal_save(request, pid):
         'client_nif', 'client_address', 'client_city',
         'project_name', 'project_goal', 'biz_description', 'selected_features',
         'timeline', 'start_date', 'payment_method', 'payment_custom',
-        'package', 'maintenance_plan', 'notes',
+        'package', 'maintenance_plan', 'hours_plan_name', 'notes',
     }
-    _INT = {'package_base_price', 'discount_pct', 'maintenance_price', 'valid_days'}
+    _INT = {
+        'package_base_price', 'discount_pct', 'maintenance_price', 'valid_days',
+        'hours_plan_price', 'hosting_price',
+    }
 
     for field in _STR:
         if field in data:
@@ -155,10 +158,14 @@ def proposal_save(request, pid):
     lead.discount_pct       = proposal.discount_pct
     lead.maintenance_plan   = proposal.maintenance_plan
     lead.maintenance_price  = proposal.maintenance_price
+    lead.hours_plan_name    = proposal.hours_plan_name
+    lead.hours_plan_price   = proposal.hours_plan_price
+    lead.hosting_price      = proposal.hosting_price
     lead.estimated_price    = proposal.taxable_base
     lead.save(update_fields=[
         'package', 'package_base_price', 'extras', 'extras_price', 'rush',
-        'discount_pct', 'maintenance_plan', 'maintenance_price', 'estimated_price',
+        'discount_pct', 'maintenance_plan', 'maintenance_price',
+        'hours_plan_name', 'hours_plan_price', 'hosting_price', 'estimated_price',
         'updated_at',
     ])
 

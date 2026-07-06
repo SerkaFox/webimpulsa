@@ -362,6 +362,18 @@ body {
       <td class="right" style="padding-top:8pt">{{ proposal.maintenance_price }} €/mes</td>
     </tr>
     {% endif %}
+    {% if proposal.hours_plan_name %}
+    <tr class="maint-row">
+      <td style="padding-top:8pt">{{ proposal.hours_plan_name }}</td>
+      <td class="right" style="padding-top:8pt">{{ proposal.hours_plan_price }} €/mes</td>
+    </tr>
+    {% endif %}
+    {% if proposal.hosting_price %}
+    <tr class="maint-row">
+      <td style="padding-top:8pt">Dominio + Hosting</td>
+      <td class="right" style="padding-top:8pt">{{ proposal.hosting_price }} €/mes</td>
+    </tr>
+    {% endif %}
   </tbody>
 </table>
 

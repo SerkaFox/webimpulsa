@@ -149,6 +149,13 @@
       <div><label class="fl">Precio/mes €</label>
         <input class="fi" type="number" id="fMaintPrice" min="0"></div>
     </div>
+    <div class="fg" style="margin-top:10px">
+      <div><label class="fl">Bolsa de horas</label><input class="fi" id="fHoursName"></div>
+      <div><label class="fl">Precio/mes €</label>
+        <input class="fi" type="number" id="fHoursPrice" min="0"></div>
+      <div><label class="fl">Dominio + Hosting €/mes</label>
+        <input class="fi" type="number" id="fHostingPrice" min="0"></div>
+    </div>
   </div>
 
   <div class="fsec">
@@ -288,6 +295,9 @@ function boot() {
   _v('fRush',          {{ proposal.rush|yesno:"1,0" }});
   _v('fMaintName',     _tmplInput.maintenanceName);
   _v('fMaintPrice',    _tmplInput.maintenancePrice || 0);
+  _v('fHoursName',     _tmplInput.hoursPlanName);
+  _v('fHoursPrice',    _tmplInput.hoursPlanPrice || 0);
+  _v('fHostingPrice',  _tmplInput.hostingPrice || 0);
   _v('fTimeline',      _tmplInput.deadline);
   _v('fStartDate',     _tmplInput.startDate);
   _v('fValidDays',     _tmplInput.validDays || 15);
@@ -421,6 +431,9 @@ function collectInput() {
     maintenanceName:     document.getElementById('fMaintName').value,
     maintenancePrice:    parseInt(document.getElementById('fMaintPrice').value || 0, 10),
     maintenanceInfo:     '',
+    hoursPlanName:       document.getElementById('fHoursName').value,
+    hoursPlanPrice:      parseInt(document.getElementById('fHoursPrice').value || 0, 10),
+    hostingPrice:        parseInt(document.getElementById('fHostingPrice').value || 0, 10),
     budgetNumber:        _budgetNum,
     issueDate:           _issueDate,
     validDays:           parseInt(document.getElementById('fValidDays').value || 15, 10),
@@ -497,6 +510,9 @@ window.saveDraft = function() {
     extras:            extras,
     maintenance_plan:  document.getElementById('fMaintName').value,
     maintenance_price: parseInt(document.getElementById('fMaintPrice').value || 0, 10),
+    hours_plan_name:   document.getElementById('fHoursName').value,
+    hours_plan_price:  parseInt(document.getElementById('fHoursPrice').value || 0, 10),
+    hosting_price:     parseInt(document.getElementById('fHostingPrice').value || 0, 10),
     timeline:          document.getElementById('fTimeline').value,
     start_date:        document.getElementById('fStartDate').value,
     valid_days:        parseInt(document.getElementById('fValidDays').value || 15, 10),

@@ -365,6 +365,18 @@
             <div class="field-val muted">{{ lead.maintenance_plan }} {{ lead.maintenance_price }}€/mes</div>
           </div>
           {% endif %}
+          {% if lead.hours_plan_name %}
+          <div class="field-row">
+            <div class="field-label" data-i18n="crm.hours_plan">Bolsa de horas</div>
+            <div class="field-val muted">{{ lead.hours_plan_name }} {{ lead.hours_plan_price }}€/mes</div>
+          </div>
+          {% endif %}
+          {% if lead.hosting_price %}
+          <div class="field-row">
+            <div class="field-label" data-i18n="crm.hosting">Dominio + Hosting</div>
+            <div class="field-val muted">{{ lead.hosting_price }}€/mes</div>
+          </div>
+          {% endif %}
         </div>
         {% if lead.extras %}
         <div class="field-label" style="margin-bottom:5px"><span data-i18n="crm.extras">Extras</span> (+{{ lead.extras_price }}€)</div>
@@ -1121,6 +1133,8 @@ es: {
   'crm.rush': 'Urgente',
   'crm.discount': 'Descuento',
   'crm.maintenance': 'Mantenimiento',
+  'crm.hours_plan': 'Bolsa de horas',
+  'crm.hosting': 'Dominio + Hosting',
   'crm.extras': 'Extras',
   'crm.total_no_vat': 'Total estimado (sin IVA)',
   'crm.created': 'Creado:',
@@ -1284,6 +1298,8 @@ ru: {
   'crm.rush': 'Срочно',
   'crm.discount': 'Скидка',
   'crm.maintenance': 'Обслуживание',
+  'crm.hours_plan': 'Пакет часов',
+  'crm.hosting': 'Домен + хостинг',
   'crm.extras': 'Допы',
   'crm.total_no_vat': 'Итого (без НДС)',
   'crm.created': 'Создано:',

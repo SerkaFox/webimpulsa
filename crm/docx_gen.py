@@ -267,6 +267,12 @@ def generate_proposal_docx(proposal) -> bytes | None:
         if proposal.maintenance_plan:
             price_rows.append((f'Mantenimiento: {proposal.maintenance_plan}',
                                f'{proposal.maintenance_price} €/mes', False, False, False, True))
+        if proposal.hours_plan_name:
+            price_rows.append((proposal.hours_plan_name,
+                               f'{proposal.hours_plan_price} €/mes', False, False, False, True))
+        if proposal.hosting_price:
+            price_rows.append(('Dominio + Hosting',
+                               f'{proposal.hosting_price} €/mes', False, False, False, True))
 
         pt = doc.add_table(rows=len(price_rows), cols=2)
         pt.alignment = WD_TABLE_ALIGNMENT.CENTER

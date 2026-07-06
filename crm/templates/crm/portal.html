@@ -1256,6 +1256,8 @@ function copyVal(id, btnId) {
         {% if lead.biz_type %}<span>{{ lead.biz_type }}</span>{% endif %}
         {% if lead.estimated_price %}<span>{{ lead.estimated_price }}€ <span data-i18n="cabinet.estimated">estimado</span></span>{% endif %}
         {% if lead.maintenance_plan %}<span><span data-i18n="cabinet.maint_prefix">Mant.</span> {{ lead.maintenance_plan }}</span>{% endif %}
+        {% if lead.hours_plan_name %}<span>{{ lead.hours_plan_name }}</span>{% endif %}
+        {% if lead.hosting_price %}<span>Dominio + Hosting</span>{% endif %}
       </div>
 
       {% if lead.extras %}

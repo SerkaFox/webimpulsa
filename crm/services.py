@@ -52,6 +52,9 @@ def extract_calc_data(payload: dict) -> dict:
         'rush':                rush,
         'maintenance_plan':    str(calc.get('maint_name') or '').strip()[:50],
         'maintenance_price':   int(calc.get('maint') or 0),
+        'hours_plan_name':     str(calc.get('hours_name') or '').strip()[:50],
+        'hours_plan_price':    int(calc.get('hours') or 0),
+        'hosting_price':       int(calc.get('hosting') or 0),
         'estimated_price':     total,
         'discount_pct':        15,
     }
@@ -74,7 +77,10 @@ def lead_from_payload(payload: dict) -> Lead:
                 "extras_price": int,
                 "rush":         bool,
                 "maint":        int,
-                "maint_name":   str
+                "maint_name":   str,
+                "hours":        int,
+                "hours_name":   str,
+                "hosting":      int
             }
         }
     """
@@ -304,7 +310,10 @@ def create_proposal_from_lead(lead: Lead):
         company_data       = WI_COMPANY.copy(),
         project_name       = lead.package or 'Proyecto web',
         scope              = PROJECT_SCOPES.get(lead.package, DEFAULT_SCOPE)[:],
-        out_of_scope       = OUT_OF_SCOPE[:],
+        out_of_scope       = [
+            item for item in OUT_OF_SCOPE
+            if not (lead.hosting_price and item in ('Compra de dominio', 'Hosting'))
+        ],
         phases             = PHASES[:],
         conditions         = CONDITIONS[:],
         timeline           = DEADLINES.get(lead.package, 'Según alcance'),
@@ -322,6 +331,9 @@ def create_proposal_from_lead(lead: Lead):
         total_with_iva     = total,
         maintenance_plan   = lead.maintenance_plan,
         maintenance_price  = lead.maintenance_price,
+        hours_plan_name    = lead.hours_plan_name,
+        hours_plan_price   = lead.hours_plan_price,
+        hosting_price      = lead.hosting_price,
     )
 
     log_communication(
@@ -347,6 +359,9 @@ def proposal_to_template_input(proposal) -> dict:
         'maintenanceName':     proposal.maintenance_plan,
         'maintenancePrice':    proposal.maintenance_price,
         'maintenanceInfo':     '',
+        'hoursPlanName':       proposal.hours_plan_name,
+        'hoursPlanPrice':      proposal.hours_plan_price,
+        'hostingPrice':        proposal.hosting_price,
         'budgetNumber':        proposal.number,
         'issueDate':           proposal.issued_at.strftime('%Y-%m-%d') if proposal.issued_at else '',
         'validDays':           proposal.valid_days,
