@@ -10,6 +10,23 @@ def home(request):
     return render(request, "tatiana.html")
 
 
+def _wi_company_context():
+    from crm.proposal_content import WI_COMPANY
+    return {'company': WI_COMPANY}
+
+
+def legal_notice(request):
+    return render(request, "legal/aviso_legal.html", _wi_company_context())
+
+
+def privacy_policy(request):
+    return render(request, "legal/privacidad.html", _wi_company_context())
+
+
+def cookies_policy(request):
+    return render(request, "legal/cookies.html", _wi_company_context())
+
+
 @csrf_exempt
 @require_POST
 def contact(request):

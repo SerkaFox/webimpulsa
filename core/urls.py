@@ -5,6 +5,9 @@ from .views_chat import start_chat, send_message, poll_messages, lookup_session,
 urlpatterns = [
     path('', views.home, name='home'),
     path('contact/', views.contact, name='contact'),
+    path('aviso-legal/', views.legal_notice, name='legal_notice'),
+    path('privacidad/', views.privacy_policy, name='privacy_policy'),
+    path('cookies/', views.cookies_policy, name='cookies_policy'),
 
     # Live chat API
     path('wi/chat/start/',  start_chat,    name='chat_start'),

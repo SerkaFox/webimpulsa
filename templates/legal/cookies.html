@@ -1,0 +1,46 @@
+{% extends "legal/_base.html" %}
+{% block title %}Política de cookies{% endblock %}
+{% block heading %}Política de cookies{% endblock %}
+{% block content %}
+<h2>1. ¿Qué son las cookies?</h2>
+<p>
+  Las cookies son pequeños archivos que un sitio web guarda en tu navegador para recordar información entre
+  visitas. También usamos <em>almacenamiento local</em> (localStorage) del navegador para el mismo tipo de
+  propósitos.
+</p>
+
+<h2>2. Cookies y almacenamiento que utilizamos</h2>
+<table>
+  <tr><th>Nombre</th><th>Tipo</th><th>Finalidad</th><th>Duración</th></tr>
+  <tr><td>wi_lang</td><td>Necesaria (localStorage)</td><td>Recordar el idioma elegido para mostrar la web</td><td>Hasta que la borres</td></tr>
+  <tr><td>wi_cookie_consent</td><td>Necesaria (localStorage)</td><td>Recordar tu preferencia de cookies</td><td>Hasta que la cambies</td></tr>
+  <tr><td>sessionid</td><td>Necesaria (cookie)</td><td>Mantener la sesión iniciada en el panel de cliente o de gestión</td><td>Sesión de navegador</td></tr>
+  <tr><td>Análisis (Google Analytics u otro)</td><td>Opcional</td><td>Estadísticas de visitas anónimas</td><td>Solo si la activas</td></tr>
+</table>
+<p>
+  Las cookies/almacenamiento marcados como <strong>necesarios</strong> no requieren consentimiento porque son
+  imprescindibles para el funcionamiento del sitio. Las <strong>opcionales</strong> (por ejemplo, de análisis)
+  solo se activan si das tu consentimiento explícito, y actualmente están desactivadas por defecto.
+</p>
+
+<h2>3. Cómo gestionar tus preferencias</h2>
+<p>
+  Puedes cambiar tu elección en cualquier momento pulsando el siguiente botón:
+</p>
+<p>
+  <button onclick="window.wiOpenCookieSettings && window.wiOpenCookieSettings()"
+          style="background:var(--wi-primary);color:#fff;border:none;border-radius:10px;padding:.6rem 1.2rem;font-weight:700;cursor:pointer">
+    ⚙ Configurar cookies
+  </button>
+</p>
+<p>
+  También puedes bloquear o eliminar las cookies desde la configuración de tu navegador en cualquier momento,
+  aunque esto podría afectar al funcionamiento de algunas partes del sitio (por ejemplo, el panel de cliente).
+</p>
+
+<h2>4. Más información</h2>
+<p>
+  Para saber cómo tratamos tus datos personales, consulta nuestra
+  <a href="/privacidad/">política de privacidad</a>.
+</p>
+{% endblock %}

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{% endblock %} · Web-Impulsa</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/static/wi/img/favicon.png">
+<style>
+  :root {
+    --wi-bg:      #edf4ff;
+    --wi-surface: #f5f9ff;
+    --wi-card:    #ffffff;
+    --wi-border:  rgba(10,50,150,.12);
+    --wi-primary: #1760d6;
+    --wi-accent:  #00a8cc;
+    --wi-text:    #0c1c42;
+    --wi-muted:   #5a6d8c;
+    --wi-line:    rgba(0,0,0,.08);
+    --wi-shadow:  0 2px 20px rgba(10,50,150,.09);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--wi-text); background: var(--wi-bg);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.6;
+  }
+  header {
+    background: var(--wi-card); border-bottom: 1px solid var(--wi-line);
+    padding: 1rem 0;
+  }
+  header .wrap { max-width: 760px; margin: 0 auto; padding: 0 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+  header img { height: 28px; }
+  header a.back { color: var(--wi-primary); font-weight: 650; font-size: .9rem; text-decoration: none; }
+  header a.back:hover { text-decoration: underline; }
+  main { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.25rem 3.5rem; }
+  main h1 { font-size: 1.7rem; font-weight: 900; margin-bottom: .3rem; }
+  main .updated { color: var(--wi-muted); font-size: .85rem; margin-bottom: 2rem; }
+  main h2 { font-size: 1.15rem; font-weight: 800; margin: 2rem 0 .6rem; color: var(--wi-primary); }
+  main p, main li { color: var(--wi-text); font-size: .95rem; }
+  main ul { padding-left: 1.3rem; }
+  main a { color: var(--wi-primary); }
+  main table { border-collapse: collapse; width: 100%; margin: .8rem 0; font-size: .9rem; }
+  main table th, main table td { border: 1px solid var(--wi-border); padding: .5rem .7rem; text-align: left; }
+  main table th { background: var(--wi-surface); }
+  .card { background: var(--wi-card); border: 1px solid var(--wi-border); border-radius: 14px; padding: 1.4rem 1.5rem; box-shadow: var(--wi-shadow); }
+  footer { padding: 2rem 0; text-align: center; color: rgba(255,255,255,.7); background: var(--wi-text); }
+  footer .wrap { max-width: 760px; margin: 0 auto; padding: 0 1.25rem; display: flex; flex-wrap: wrap; gap: .8rem 1.5rem; align-items: center; justify-content: center; }
+  footer a { color: rgba(255,255,255,.85); font-size: .84rem; text-decoration: none; }
+  footer a:hover { color: #fff; }
+  footer .sep { opacity: .4; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a href="/" style="display:flex;align-items:center;gap:.5rem;text-decoration:none">
+      <img src="/static/wi/img/logo.webp" alt="Web-Impulsa">
+    </a>
+    <a class="back" href="/">← Volver al inicio</a>
+  </div>
+</header>
+<main>
+  <div class="card">
+    <h1>{% block heading %}{% endblock %}</h1>
+    <div class="updated">Última actualización: 7 de julio de 2026</div>
+    {% block content %}{% endblock %}
+  </div>
+</main>
+<footer>
+  <div class="wrap">
+    <span>© 2026 Web-Impulsa · webimpulsa.es</span>
+    <span class="sep">·</span>
+    <a href="tel:+34613708322">613 708 322</a>
+    <span class="sep">·</span>
+    <a href="mailto:info@webimpulsa.es">info@webimpulsa.es</a>
+    <span class="sep">·</span>
+    <a href="/aviso-legal/">Aviso legal</a>
+    <span class="sep">·</span>
+    <a href="/privacidad/">Privacidad</a>
+    <span class="sep">·</span>
+    <a href="/cookies/">Cookies</a>
+  </div>
+</footer>
+<script src="/static/wi/js/cookie-consent.js"></script>
+</body>
+</html>

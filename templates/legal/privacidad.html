@@ -1,0 +1,77 @@
+{% extends "legal/_base.html" %}
+{% block title %}Política de privacidad{% endblock %}
+{% block heading %}Política de privacidad{% endblock %}
+{% block content %}
+<h2>1. Responsable del tratamiento</h2>
+<ul>
+  <li><strong>Responsable:</strong> {{ company.legal_name }} ({{ company.trade_name }})</li>
+  <li><strong>NIF:</strong> {{ company.nif }}</li>
+  <li><strong>Domicilio:</strong> {{ company.address }}, {{ company.city }}</li>
+  <li><strong>Email de contacto:</strong> <a href="mailto:{{ company.email }}">{{ company.email }}</a></li>
+</ul>
+
+<h2>2. Qué datos recogemos</h2>
+<p>Recogemos los datos que nos facilitas voluntariamente a través de:</p>
+<ul>
+  <li>El formulario/calculadora de presupuesto y el formulario de contacto (nombre, email y/o teléfono, tipo de negocio, detalles del proyecto).</li>
+  <li>El chat en directo del sitio web o WhatsApp (nombre, teléfono, contenido de la conversación).</li>
+  <li>El acceso al portal de cliente (email, materiales y documentos que subas para tu proyecto).</li>
+</ul>
+<p>No recogemos datos de menores de edad ni categorías especiales de datos.</p>
+
+<h2>3. Para qué usamos tus datos</h2>
+<ul>
+  <li>Responder a tus consultas y elaborar presupuestos.</li>
+  <li>Gestionar la relación contractual si contratas un proyecto (comunicación, seguimiento, entrega, facturación).</li>
+  <li>Dar soporte y mantenimiento a proyectos activos.</li>
+  <li>Enviar comunicaciones relacionadas con tu proyecto por email, WhatsApp o Telegram.</li>
+</ul>
+<p>No utilizamos tus datos para fines publicitarios ni los vendemos ni cedemos a terceros con fines comerciales.</p>
+
+<h2>4. Base legal</h2>
+<p>
+  El tratamiento se basa en tu consentimiento (al enviar un formulario o iniciar una conversación) y, en su caso,
+  en la ejecución de la relación contractual una vez aceptado un presupuesto.
+</p>
+
+<h2>5. Cuánto tiempo conservamos tus datos</h2>
+<ul>
+  <li><strong>Consultas y presupuestos no aceptados:</strong> se conservan hasta 12 meses desde el último contacto, tras los cuales se eliminan salvo que solicites lo contrario.</li>
+  <li><strong>Clientes con proyecto activo o finalizado:</strong> se conservan durante la relación comercial y, después, durante los plazos legales de prescripción (generalmente hasta 6 años por obligaciones fiscales y mercantiles).</li>
+  <li><strong>Conversaciones de chat/WhatsApp:</strong> se conservan mientras sean relevantes para el soporte del proyecto, y se eliminan a petición del usuario conforme al punto 7.</li>
+</ul>
+
+<h2>6. Con quién compartimos tus datos</h2>
+<p>
+  Utilizamos proveedores tecnológicos que actúan como encargados del tratamiento (por ejemplo, WhatsApp/Meta y
+  Telegram para mensajería, y el proveedor de alojamiento del sitio web y del correo electrónico). No compartimos
+  tus datos con terceros para fines distintos a la prestación del servicio.
+</p>
+
+<h2>7. Tus derechos</h2>
+<p>Puedes ejercer en cualquier momento y de forma gratuita los siguientes derechos escribiendo a
+  <a href="mailto:{{ company.email }}">{{ company.email }}</a>:</p>
+<ul>
+  <li><strong>Acceso:</strong> saber qué datos tuyos tenemos.</li>
+  <li><strong>Rectificación:</strong> corregir datos inexactos.</li>
+  <li><strong>Supresión (derecho al olvido):</strong> solicitar la eliminación de tus datos.</li>
+  <li><strong>Oposición y limitación:</strong> oponerte a un tratamiento concreto o limitarlo.</li>
+  <li><strong>Portabilidad:</strong> recibir tus datos en un formato estructurado.</li>
+</ul>
+<p>
+  Si consideras que no hemos atendido correctamente tu solicitud, puedes presentar una reclamación ante la
+  Agencia Española de Protección de Datos (<a href="https://www.aepd.es" target="_blank" rel="noopener">www.aepd.es</a>).
+</p>
+
+<h2>8. Cookies</h2>
+<p>
+  Este sitio utiliza cookies propias y, en su caso, de análisis. Puedes consultar el detalle y configurar tus
+  preferencias en nuestra <a href="/cookies/">política de cookies</a>.
+</p>
+
+<h2>9. Seguridad</h2>
+<p>
+  Aplicamos medidas técnicas y organizativas razonables para proteger tus datos frente a accesos no autorizados,
+  pérdida o alteración.
+</p>
+{% endblock %}
