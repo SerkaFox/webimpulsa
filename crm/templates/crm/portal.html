@@ -979,26 +979,92 @@ function copyVal(id, btnId) {
         <!-- Form fields -->
         <div style="padding:16px">
           <form method="post" action="/p/{{ access.token }}/proposal/accept/" id="acceptForm">
+
+            <!-- Tipo de cliente -->
+            <div style="margin-bottom:12px">
+              <div style="font-size:.76rem;font-weight:700;color:#5a6d8c;text-transform:uppercase;
+                          letter-spacing:.05em;margin-bottom:6px" data-i18n="form.client_type_question">¿Qué tipo de cliente eres?</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;
+                              border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem">
+                  <input type="radio" name="client_type" value="particular" required
+                         onchange="wiOnClientTypeChange()" style="accent-color:#2563eb">
+                  <span data-i18n="form.client_type_particular">Particular</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;
+                              border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem">
+                  <input type="radio" name="client_type" value="autonomo"
+                         onchange="wiOnClientTypeChange()" style="accent-color:#2563eb">
+                  <span data-i18n="form.client_type_autonomo">Autónomo</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;
+                              border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem">
+                  <input type="radio" name="client_type" value="empresa"
+                         onchange="wiOnClientTypeChange()" style="accent-color:#2563eb">
+                  <span data-i18n="form.client_type_empresa">Empresa</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Identidad + NIF -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-              <input type="text" name="accept_name" placeholder="Nombre / Empresa *" required
+              <input type="text" name="accept_name" placeholder="Nombre y apellidos / Razón social *" required
                      data-i18n-placeholder="form.name_placeholder"
                      style="border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
                             font-size:.84rem;outline:none;font-family:inherit;width:100%">
-              <input type="text" name="accept_nif" placeholder="NIF / CIF (para factura)"
+              <input type="text" name="accept_nif" placeholder="NIF / NIE / CIF *" required
                      data-i18n-placeholder="form.nif_placeholder"
                      style="border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
                             font-size:.84rem;outline:none;font-family:inherit;width:100%">
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-              <input type="text" name="accept_address" placeholder="Dirección fiscal"
+
+            <!-- Domicilio fiscal completo -->
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:8px">
+              <input type="text" name="accept_address" placeholder="Domicilio fiscal (calle, número, piso) *" required
                      data-i18n-placeholder="form.address_placeholder"
                      style="border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
                             font-size:.84rem;outline:none;font-family:inherit;width:100%">
-              <input type="text" name="accept_city" placeholder="CP y ciudad"
-                     data-i18n-placeholder="form.city_placeholder"
+              <input type="text" name="accept_postal_code" placeholder="Código postal *" required
+                     data-i18n-placeholder="form.postal_code_placeholder"
                      style="border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
                             font-size:.84rem;outline:none;font-family:inherit;width:100%">
             </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+              <input type="text" name="accept_municipality" placeholder="Municipio *" required
+                     data-i18n-placeholder="form.municipality_placeholder"
+                     style="border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
+                            font-size:.84rem;outline:none;font-family:inherit;width:100%">
+              <input type="text" name="accept_province" placeholder="Provincia *" required
+                     data-i18n-placeholder="form.province_placeholder"
+                     style="border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
+                            font-size:.84rem;outline:none;font-family:inherit;width:100%">
+              <input type="text" name="accept_country" placeholder="País *" required value="España"
+                     data-i18n-placeholder="form.country_placeholder"
+                     style="border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
+                            font-size:.84rem;outline:none;font-family:inherit;width:100%">
+            </div>
+
+            <!-- Representante — solo empresa -->
+            <div id="repBlock" style="display:none;border:1px dashed #c7d2e0;border-radius:8px;
+                        padding:10px;margin-bottom:8px">
+              <div style="font-size:.74rem;font-weight:700;color:#5a6d8c;text-transform:uppercase;
+                          letter-spacing:.04em;margin-bottom:6px" data-i18n="form.rep_section_title">Datos del representante de la empresa</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                <input type="text" name="accept_rep_name" placeholder="Nombre y apellidos *"
+                       data-i18n-placeholder="form.rep_name_placeholder"
+                       style="border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
+                              font-size:.84rem;outline:none;font-family:inherit;width:100%">
+                <input type="text" name="accept_rep_nif" placeholder="NIF / NIE *"
+                       data-i18n-placeholder="form.rep_nif_placeholder"
+                       style="border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
+                              font-size:.84rem;outline:none;font-family:inherit;width:100%">
+              </div>
+              <input type="text" name="accept_rep_position" placeholder="Cargo en la empresa *"
+                     data-i18n-placeholder="form.rep_position_placeholder"
+                     style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
+                            font-size:.84rem;outline:none;font-family:inherit">
+            </div>
+
             <input type="text" name="accept_signature" placeholder="Firma digital — escribe tu nombre completo *" required
                    data-i18n-placeholder="form.signature_placeholder"
                    style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
@@ -1011,34 +1077,47 @@ function copyVal(id, btnId) {
               <div style="display:grid;gap:6px" id="paymentPlanOptions">
                 <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;
                               border:1.5px solid #e2e8f0;border-radius:8px;font-size:.83rem">
-                  <input type="radio" name="accept_payment_plan" value="50-50" checked
+                  <input type="radio" name="accept_payment_plan" value="50-50" {% if proposal.payment_method != '3-way' and proposal.payment_method != 'full' %}checked{% endif %}
                          onchange="updatePaymentPlanNote()" style="accent-color:#2563eb">
                   <span data-i18n="form.plan_5050">50% ahora + 50% a la entrega</span>
                 </label>
                 <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;
                               border:1.5px solid #e2e8f0;border-radius:8px;font-size:.83rem">
-                  <input type="radio" name="accept_payment_plan" value="3-way"
+                  <input type="radio" name="accept_payment_plan" value="3-way" {% if proposal.payment_method == '3-way' %}checked{% endif %}
                          onchange="updatePaymentPlanNote()" style="accent-color:#2563eb">
                   <span data-i18n="form.plan_3way">3 pagos (33% cada uno)</span>
                 </label>
                 <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;
                               border:1.5px solid #e2e8f0;border-radius:8px;font-size:.83rem">
-                  <input type="radio" name="accept_payment_plan" value="full"
+                  <input type="radio" name="accept_payment_plan" value="full" {% if proposal.payment_method == 'full' %}checked{% endif %}
                          onchange="updatePaymentPlanNote()" style="accent-color:#2563eb">
                   <span data-i18n="form.plan_full">Pago único</span>
                 </label>
               </div>
+              <div style="font-size:.78rem;color:#5a6d8c;margin-top:6px">
+                <span data-i18n="form.plan_note_prefix">Primer pago:</span> <strong id="paymentPlanNote">el 50% del importe</strong>
+              </div>
             </div>
 
-            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;
-                          margin-bottom:14px;font-size:.83rem;color:#1e293b;line-height:1.45">
-              <input type="checkbox" name="agree" id="agreeCheck" required
-                     style="margin-top:2px;width:17px;height:17px;flex-shrink:0;accent-color:#2563eb">
-              <span>
-                <span data-i18n="form.agree_text_prefix">Acepto el alcance, presupuesto y condiciones de esta propuesta.
-                Me comprometo a abonar</span> <strong id="paymentPlanNote">el 50% del importe</strong> <span data-i18n="form.agree_text_suffix">antes del inicio de los trabajos.</span>
-              </span>
-            </label>
+            <!-- Consentimiento combinado -->
+            <div style="margin-bottom:12px">
+              <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;margin-bottom:8px;
+                            font-size:.82rem;color:#1e293b;line-height:1.4">
+                <input type="checkbox" name="consent_all" required
+                       style="margin-top:2px;width:16px;height:16px;flex-shrink:0;accent-color:#2563eb">
+                <span>
+                  <span data-i18n="form.consents_title">Confirmo que he leído y acepto los datos fiscales, el alcance, el precio, las condiciones de pago, hosting/soporte y la protección de datos de esta propuesta.</span>
+                  <a href="#" onclick="event.preventDefault();toggleConsentsModal()" style="color:#1760d6;font-weight:700;white-space:nowrap" data-i18n="form.consents_info_btn">ℹ Ver detalle</a>
+                </span>
+              </label>
+              <label id="withdrawalBlock" style="display:none;align-items:flex-start;gap:8px;cursor:pointer;
+                            margin-bottom:8px;font-size:.82rem;color:#1e293b;line-height:1.4">
+                <input type="checkbox" name="consent_withdrawal"
+                       style="margin-top:2px;width:16px;height:16px;flex-shrink:0;accent-color:#2563eb">
+                <span>{{ withdrawal_consent_text }}</span>
+              </label>
+            </div>
+
             <button type="submit" class="btn-primary" data-i18n="form.submit">✍️ Firmar y aceptar propuesta</button>
             <script>
               function updatePaymentPlanNote() {
@@ -1048,6 +1127,21 @@ function copyVal(id, btnId) {
                 if (v === 'full')       note.textContent = _t('form.plan_note_full');
                 else if (v === '3-way') note.textContent = _t('form.plan_note_3way');
                 else                    note.textContent = _t('form.plan_note_5050');
+                if (window.wiSetProposalPaymentMethod) window.wiSetProposalPaymentMethod(v);
+              }
+              function wiOnClientTypeChange() {
+                var checked = document.querySelector('[name="client_type"]:checked');
+                var type = checked ? checked.value : '';
+                var isEmpresa = (type === 'empresa');
+                var isParticular = (type === 'particular');
+                var repBlock = document.getElementById('repBlock');
+                var wBlock = document.getElementById('withdrawalBlock');
+                repBlock.style.display = isEmpresa ? 'block' : 'none';
+                repBlock.querySelectorAll('input').forEach(function(i) { i.required = isEmpresa; });
+                wBlock.style.display = isParticular ? 'flex' : 'none';
+                var wInput = wBlock.querySelector('input');
+                if (wInput) wInput.required = isParticular;
+                if (window.wiSetProposalConditionsVariant) window.wiSetProposalConditionsVariant(type);
               }
             </script>
           </form>
@@ -1406,6 +1500,40 @@ function copyVal(id, btnId) {
 
 {% endif %}{# end portal_mode #}
 
+{% if proposal and consent_labels %}
+<!-- Consents detail modal — kept as a top-level sibling of .wi-main (not
+     nested inside .wi-card) because .wi-card has will-change:transform,
+     which creates a new containing block for position:fixed and would pin
+     the modal to the top of that (tall) card instead of the current
+     viewport, regardless of where the trigger link is scrolled to. -->
+<div id="consentsModalBackdrop" class="wi-modal-backdrop" style="display:none" onclick="if(event.target===this) toggleConsentsModal()">
+  <div class="wi-modal">
+    <div class="wi-modal-header">
+      <div style="font-weight:900;color:#0c1c42;font-size:.95rem" data-i18n="form.consents_modal_title">Qué estás confirmando</div>
+      <button type="button" class="wi-modal-close" onclick="toggleConsentsModal()">✕</button>
+    </div>
+    <ul style="margin:12px 0 0;padding-left:18px">
+      {% for key, label in consent_labels.items %}
+      <li style="font-size:.83rem;color:#334155;line-height:1.5;margin-bottom:8px">{{ label }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+<script>
+  window.toggleConsentsModal = function() {
+    var el = document.getElementById('consentsModalBackdrop');
+    if (!el) return;
+    var show = el.style.display === 'none' || !el.style.display;
+    el.style.display = show ? 'flex' : 'none';
+  };
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    var el = document.getElementById('consentsModalBackdrop');
+    if (el && el.style.display !== 'none') el.style.display = 'none';
+  });
+</script>
+{% endif %}
+
 </div>{# end .wi-main #}
 
 <div class="wi-footer">
@@ -1538,6 +1666,32 @@ function _renderPreview() {
 }
 _renderPreview();
 
+// Swap the legal-conditions text shown in the live preview as soon as the
+// client picks their client_type in the acceptance form below — the actual
+// variant that gets frozen into the signed PDF is decided server-side at
+// acceptance, this only keeps the on-screen preview honest beforehand.
+window.wiSetProposalConditionsVariant = function(clientType) {
+  if (clientType === 'autonomo' || clientType === 'empresa') {
+    data.conditions = P.conditionsBusiness || P.conditions;
+  } else if (clientType === 'particular') {
+    data.conditions = P.conditionsConsumer || P.conditions;
+  } else {
+    data.conditions = P.conditions;
+  }
+  _renderPreview();
+};
+
+// Keep the "Forma de pago" text in the A4 preview in sync with whichever
+// plan the client actually selects in the acceptance form below — it used
+// to stay frozen on the proposal's original payment_method.
+window.wiSetProposalPaymentMethod = function(planValue) {
+  data.project.paymentMethod = planValue;
+  _renderPreview();
+};
+// Sync the small "Primer pago" note next to the radios with whichever plan
+// is actually checked on load (radios are pre-checked from proposal.payment_method).
+if (window.updatePaymentPlanNote) window.updatePaymentPlanNote();
+
 // Scroll chat thread to bottom
 var thread = document.getElementById('portalChatThread');
 if (thread) thread.scrollTop = thread.scrollHeight;
@@ -1562,15 +1716,18 @@ function _syncFields() {
     var fName = document.querySelector('[name="accept_name"]');
     var fNif  = document.querySelector('[name="accept_nif"]');
     var fAddr = document.querySelector('[name="accept_address"]');
-    var fCity = document.querySelector('[name="accept_city"]');
+    var fPC   = document.querySelector('[name="accept_postal_code"]');
+    var fMun  = document.querySelector('[name="accept_municipality"]');
+    var fProv = document.querySelector('[name="accept_province"]');
     if (fName && fName.value) data.client.name = fName.value;
     if (fNif)  data.client.taxId   = fNif.value  || '';
     if (fAddr) data.client.address = fAddr.value || '';
-    if (fCity) data.client.city    = fCity.value || '';
+    var cityBits = [fPC && fPC.value, fMun && fMun.value, fProv && fProv.value].filter(Boolean);
+    data.client.city = cityBits.join(' ');
     _renderPreview();
   }, 300);
 }
-['accept_name','accept_nif','accept_address','accept_city'].forEach(function(n) {
+['accept_name','accept_nif','accept_address','accept_postal_code','accept_municipality','accept_province'].forEach(function(n) {
   var inp = document.querySelector('[name="' + n + '"]');
   if (inp) inp.addEventListener('input', _syncFields);
 });
@@ -1635,20 +1792,33 @@ es: {
   'proposal.total_iva_short': 'Total con IVA:',
   'proposal.preparing_title': 'Preparando tu propuesta',
   'proposal.preparing_body': 'En breve recibirás la propuesta personalizada para tu proyecto.',
-  'form.name_placeholder': 'Nombre / Empresa *',
-  'form.nif_placeholder': 'NIF / CIF (para factura)',
-  'form.address_placeholder': 'Dirección fiscal',
-  'form.city_placeholder': 'CP y ciudad',
+  'form.client_type_question': '¿Qué tipo de cliente eres?',
+  'form.client_type_particular': 'Particular',
+  'form.client_type_autonomo': 'Autónomo',
+  'form.client_type_empresa': 'Empresa',
+  'form.name_placeholder': 'Nombre y apellidos / Razón social *',
+  'form.nif_placeholder': 'NIF / NIE / CIF *',
+  'form.address_placeholder': 'Domicilio fiscal (calle, número, piso) *',
+  'form.postal_code_placeholder': 'Código postal *',
+  'form.municipality_placeholder': 'Municipio *',
+  'form.province_placeholder': 'Provincia *',
+  'form.country_placeholder': 'País *',
+  'form.rep_section_title': 'Datos del representante de la empresa',
+  'form.rep_name_placeholder': 'Nombre y apellidos *',
+  'form.rep_nif_placeholder': 'NIF / NIE *',
+  'form.rep_position_placeholder': 'Cargo en la empresa *',
   'form.signature_placeholder': 'Firma digital — escribe tu nombre completo *',
   'form.payment_plan_question': '¿Cómo prefieres pagar?',
   'form.plan_5050': '50% ahora + 50% a la entrega',
   'form.plan_3way': '3 pagos (33% cada uno)',
   'form.plan_full': 'Pago único',
-  'form.agree_text_prefix': 'Acepto el alcance, presupuesto y condiciones de esta propuesta. Me comprometo a abonar',
-  'form.agree_text_suffix': 'antes del inicio de los trabajos.',
+  'form.plan_note_prefix': 'Primer pago:',
   'form.plan_note_5050': 'el 50% del importe',
   'form.plan_note_3way': 'el primer tercio (33%) del importe',
   'form.plan_note_full': 'el importe completo',
+  'form.consents_title': 'Confirmo que he leído y acepto los datos fiscales, el alcance, el precio, las condiciones de pago, hosting/soporte y la protección de datos de esta propuesta.',
+  'form.consents_info_btn': 'ℹ Ver detalle',
+  'form.consents_modal_title': 'Qué estás confirmando',
   'form.submit': '✍️ Firmar y aceptar propuesta',
   'cabinet.progress_title': 'Progreso del proyecto',
   'cabinet.materials_title': 'Materiales del proyecto',
@@ -1804,20 +1974,33 @@ en: {
   'proposal.total_iva_short': 'Total with VAT:',
   'proposal.preparing_title': 'Preparing your proposal',
   'proposal.preparing_body': "You'll receive your personalised proposal shortly.",
-  'form.name_placeholder': 'Name / Company *',
-  'form.nif_placeholder': 'Tax ID (for invoice)',
-  'form.address_placeholder': 'Billing address',
-  'form.city_placeholder': 'Postcode and city',
+  'form.client_type_question': 'What type of client are you?',
+  'form.client_type_particular': 'Individual',
+  'form.client_type_autonomo': 'Self-employed',
+  'form.client_type_empresa': 'Company',
+  'form.name_placeholder': 'Full name / Company name *',
+  'form.nif_placeholder': 'Tax ID *',
+  'form.address_placeholder': 'Billing address (street, number, floor) *',
+  'form.postal_code_placeholder': 'Postal code *',
+  'form.municipality_placeholder': 'Town/City *',
+  'form.province_placeholder': 'Province *',
+  'form.country_placeholder': 'Country *',
+  'form.rep_section_title': "Company representative's details",
+  'form.rep_name_placeholder': 'Full name *',
+  'form.rep_nif_placeholder': 'Tax ID *',
+  'form.rep_position_placeholder': 'Position in the company *',
   'form.signature_placeholder': 'Digital signature — type your full name *',
   'form.payment_plan_question': 'How would you prefer to pay?',
   'form.plan_5050': '50% now + 50% on delivery',
   'form.plan_3way': '3 payments (33% each)',
   'form.plan_full': 'Full payment',
-  'form.agree_text_prefix': 'I accept the scope, budget and terms of this proposal. I agree to pay',
-  'form.agree_text_suffix': 'before work begins.',
+  'form.plan_note_prefix': 'First payment:',
   'form.plan_note_5050': '50% of the amount',
   'form.plan_note_3way': 'the first third (33%) of the amount',
   'form.plan_note_full': 'the full amount',
+  'form.consents_title': 'I confirm that I have read and accept the tax details, scope, price, payment terms, hosting/support and data protection information in this proposal.',
+  'form.consents_info_btn': 'ℹ View details',
+  'form.consents_modal_title': 'What you are confirming',
   'form.submit': '✍️ Sign and accept proposal',
   'cabinet.progress_title': 'Project progress',
   'cabinet.materials_title': 'Project materials',
@@ -1973,20 +2156,33 @@ eu: {
   'proposal.total_iva_short': 'Guztira BEZ-arekin:',
   'proposal.preparing_title': 'Zure proposamena prestatzen',
   'proposal.preparing_body': 'Laster zure proiekturako proposamen pertsonalizatua jasoko duzu.',
-  'form.name_placeholder': 'Izena / Enpresa *',
-  'form.nif_placeholder': 'NAN/IFZ (fakturarako)',
-  'form.address_placeholder': 'Helbide fiskala',
-  'form.city_placeholder': 'PK eta hiria',
+  'form.client_type_question': 'Zer bezero mota zara?',
+  'form.client_type_particular': 'Partikularra',
+  'form.client_type_autonomo': 'Autonomoa',
+  'form.client_type_empresa': 'Enpresa',
+  'form.name_placeholder': 'Izen-abizenak / Sozietatearen izena *',
+  'form.nif_placeholder': 'NAN / AIZ / IFZ *',
+  'form.address_placeholder': 'Helbide fiskala (kalea, zenbakia, solairua) *',
+  'form.postal_code_placeholder': 'Posta kodea *',
+  'form.municipality_placeholder': 'Udalerria *',
+  'form.province_placeholder': 'Probintzia *',
+  'form.country_placeholder': 'Herrialdea *',
+  'form.rep_section_title': 'Enpresaren ordezkariaren datuak',
+  'form.rep_name_placeholder': 'Izen-abizenak *',
+  'form.rep_nif_placeholder': 'NAN / AIZ *',
+  'form.rep_position_placeholder': 'Enpresako kargua *',
   'form.signature_placeholder': 'Sinadura digitala — idatzi zure izen-abizen osoa *',
   'form.payment_plan_question': 'Nola ordaindu nahi duzu?',
   'form.plan_5050': '%50 orain + %50 entregan',
   'form.plan_3way': '3 ordainketa (%33 bakoitza)',
   'form.plan_full': 'Ordainketa bakarra',
-  'form.agree_text_prefix': 'Proposamen honen norainokoa, aurrekontua eta baldintzak onartzen ditut. Ordaintzeko konpromisoa hartzen dut',
-  'form.agree_text_suffix': 'lanak hasi aurretik.',
+  'form.plan_note_prefix': 'Lehen ordainketa:',
   'form.plan_note_5050': 'zenbatekoaren %50a',
   'form.plan_note_3way': 'zenbatekoaren lehen herena (%33)',
   'form.plan_note_full': 'zenbateko osoa',
+  'form.consents_title': 'Baieztatzen dut proposamen honetako datu fiskalak, norainokoa, prezioa, ordainketa-baldintzak, hostinga/laguntza eta datu-babesaren informazioa irakurri eta onartzen ditudala.',
+  'form.consents_info_btn': 'ℹ Xehetasunak ikusi',
+  'form.consents_modal_title': 'Zer baieztatzen ari zaren',
   'form.submit': '✍️ Sinatu eta onartu proposamena',
   'cabinet.progress_title': 'Proiektuaren aurrerapena',
   'cabinet.materials_title': 'Proiektuaren materialak',
@@ -2142,20 +2338,33 @@ ru: {
   'proposal.total_iva_short': 'Итого с НДС:',
   'proposal.preparing_title': 'Готовим ваше предложение',
   'proposal.preparing_body': 'Скоро вы получите персональное предложение для вашего проекта.',
-  'form.name_placeholder': 'Имя / Компания *',
-  'form.nif_placeholder': 'NIF/CIF (для счёта)',
-  'form.address_placeholder': 'Юридический адрес',
-  'form.city_placeholder': 'Индекс и город',
+  'form.client_type_question': 'Кто вы как клиент?',
+  'form.client_type_particular': 'Физлицо',
+  'form.client_type_autonomo': 'ИП (autónomo)',
+  'form.client_type_empresa': 'Компания',
+  'form.name_placeholder': 'Имя и фамилия / Название компании *',
+  'form.nif_placeholder': 'NIF / NIE / CIF *',
+  'form.address_placeholder': 'Юридический адрес (улица, номер, этаж) *',
+  'form.postal_code_placeholder': 'Почтовый индекс *',
+  'form.municipality_placeholder': 'Город/муниципалитет *',
+  'form.province_placeholder': 'Провинция *',
+  'form.country_placeholder': 'Страна *',
+  'form.rep_section_title': 'Данные представителя компании',
+  'form.rep_name_placeholder': 'Имя и фамилия *',
+  'form.rep_nif_placeholder': 'NIF / NIE *',
+  'form.rep_position_placeholder': 'Должность в компании *',
   'form.signature_placeholder': 'Электронная подпись — введите ваше полное имя *',
   'form.payment_plan_question': 'Как вам удобнее оплатить?',
   'form.plan_5050': '50% сейчас + 50% при сдаче',
   'form.plan_3way': '3 платежа (по 33%)',
   'form.plan_full': 'Полная оплата сразу',
-  'form.agree_text_prefix': 'Я принимаю объём работ, бюджет и условия этого предложения. Обязуюсь оплатить',
-  'form.agree_text_suffix': 'до начала работ.',
+  'form.plan_note_prefix': 'Первый платёж:',
   'form.plan_note_5050': '50% от суммы',
   'form.plan_note_3way': 'первую треть (33%) от суммы',
   'form.plan_note_full': 'полную сумму',
+  'form.consents_title': 'Подтверждаю, что ознакомился(-лась) и согласен(-на) с налоговыми данными, объёмом работ, ценой, условиями оплаты, хостингом/поддержкой и обработкой персональных данных в этом предложении.',
+  'form.consents_info_btn': 'ℹ Подробнее',
+  'form.consents_modal_title': 'Что именно вы подтверждаете',
   'form.submit': '✍️ Подписать и принять предложение',
   'cabinet.progress_title': 'Прогресс проекта',
   'cabinet.materials_title': 'Материалы проекта',

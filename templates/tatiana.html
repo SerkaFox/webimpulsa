@@ -658,7 +658,7 @@
     }
     .ring-card-title { font-size: .86rem; font-weight: 800; line-height: 1.25; color: var(--wi-text); margin-bottom: .18rem; }
     .ring-card-price { font-size: .75rem; color: var(--wi-primary); font-weight: 700; }
-    .ring-dots { display: flex; justify-content: center; gap: .42rem; margin-top: 1.2rem; }
+    .ring-dots { display: flex; justify-content: center; gap: .42rem; margin-top: 1.2rem; position: relative; z-index: 5; }
     .ring-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--wi-border); cursor: pointer; transition: background .2s, transform .2s; }
     .ring-dot.active { background: var(--wi-primary); transform: scale(1.35); }
     .ring-hint { text-align: center; color: var(--wi-muted); font-size: .8rem; margin-bottom: .8rem; }
@@ -774,13 +774,13 @@
         <ul class="navbar-nav me-3 gap-1">
           <li class="nav-item"><a class="nav-link" href="#servicios" data-i18n="nav.services">Servicios</a></li>
           <li class="nav-item"><a class="nav-link" href="#quiz" data-i18n="nav.foryou">Para ti</a></li>
-          <!-- PORTFOLIO NAV HIDDEN TEMPORARILY — pending client permission -->
-          <!-- <li class="nav-item"><a class="nav-link" href="#casos" data-i18n="nav.portfolio">Portafolio</a></li> -->
+          <li class="nav-item"><a class="nav-link" href="#casos" data-i18n="nav.portfolio">Portafolio</a></li>
           <li class="nav-item"><a class="nav-link" href="#proceso" data-i18n="nav.how">Cómo funciona</a></li>
           <li class="nav-item"><a class="nav-link" href="#precios" data-i18n="nav.prices">Precios</a></li>
           <li class="nav-item"><a class="nav-link" href="#contacto" data-i18n="nav.contact">Contacto</a></li>
         </ul>
         <div class="d-flex align-items-center gap-2">
+          <a href="/tarjeta-ar/" class="btn btn-outline-dark-wi btn-sm px-3" data-i18n="nav.arcard">📇 Tarjeta AR</a>
           <a href="#contacto" class="btn btn-primary btn-sm px-3" data-i18n="nav.cta">Hablemos →</a>
           <div class="lang-switcher">
             <button class="lang-btn" data-lang="es">ES</button>
@@ -1064,13 +1064,14 @@
     </div>
   </section>
 
-  <!-- PORTAFOLIO / CAROUSEL — hidden temporarily, pending client permission to publish
+  <!-- PORTAFOLIO / CAROUSEL — only the interactive demo project is shown for now; real client projects
+       remain commented out inside the PORTFOLIO array below, pending each client's permission to publish -->
   <section id="casos" class="section-shell section-wave-2">
     <div class="container">
-      <div class="section-kicker">Portafolio real</div>
-      <h2 class="section-title mb-2">Proyectos que ya funcionan — y generan resultados.</h2>
-      <p class="section-subtitle mb-1">Webs y plataformas en producción, con clientes reales. Sitios web para negocios locales en España: restaurantes, talleres, salones de belleza, clínicas, academias y tiendas online.</p>
-      <p class="ring-hint">← Arrastra o desliza para explorar · Pulsa un proyecto para ver detalles →</p>
+      <div class="section-kicker">Pruébalo tú mismo</div>
+      <h2 class="section-title mb-2">Así es un proyecto real de Web-Impulsa.</h2>
+      <p class="section-subtitle mb-1">Esto no es una maqueta: es una web completa y funcional, igual que la que podemos construir para tu negocio. Entra, haz clic donde quieras y prueba a reservar una cita — todo funciona de verdad.</p>
+      <p class="ring-hint">Pulsa el proyecto para ver detalles →</p>
       <div class="ring-scene" id="ringScene" tabindex="0" aria-label="Carrusel de proyectos, usa flechas para navegar">
         <div class="ring-stage">
           <div class="ring-inner" id="ringInner"></div>
@@ -1079,7 +1080,6 @@
       </div>
     </div>
   </section>
-  -->
 
   <!-- PROCESO -->
   <section id="proceso" class="section-shell">
@@ -1254,14 +1254,31 @@
             </div>
 
             <!-- Hosting + domain -->
-            <div class="calc-label" style="margin-top:1rem">5 · Dominio + Hosting (opcional)</div>
-            <div class="calc-extra" id="calcHostingToggle" data-price="15"
-                 data-info-title="Dominio + Hosting — 15€/mes"
-                 data-info="Para que tu web tenga un nombre propio (tudominio.com) y esté funcionando online, sin caídas ni sorpresas. Nosotros nos encargamos de todo lo técnico: renovación del dominio, el servidor y las copias de seguridad.">
-              <span class="calc-info-btn" onclick="showInfo(event,this)">ℹ</span>
-              <img src="/static/wi/icons/ic-launch.webp" class="calc-extra-icon" alt="">
-              <div class="calc-extra-body"><div class="calc-extra-name">Dominio + Hosting</div><div class="calc-extra-price">+15€/mes</div></div>
-              <div class="calc-extra-check">✓</div>
+            <div class="calc-label" style="margin-top:1rem">5 · Dominio y Hosting (opcional)</div>
+            <div class="calc-maint-grid" id="calcHostingGrid">
+              <div class="calc-maint-opt selected" data-price="0" data-name="">
+                <img src="/static/wi/icons/ic-lock.webp" class="calc-maint-icon" alt="">
+                <div class="calc-maint-name">Sin hosting</div>
+                <div class="calc-maint-price">0€/mes</div>
+              </div>
+              <div class="calc-maint-opt" data-price="10" data-name="Solo Hosting"
+                   data-info-title="Solo Hosting — 10€/mes"
+                   data-info="Para cuando ya tienes tu propio dominio (lo compraste tú) y solo necesitas que tu web esté alojada y funcionando online, sin caídas. Nos encargamos del servidor, la seguridad y las copias de seguridad; la renovación del dominio la sigues pagando tú donde lo compraste.">
+                <img src="/static/wi/icons/ic-shield.webp" class="calc-maint-icon" alt="">
+                <div class="calc-maint-name">Solo Hosting</div>
+                <div class="calc-maint-price">10€/mes</div>
+              </div>
+              <div class="calc-maint-opt" data-price="15" data-name="Dominio + Hosting"
+                   data-info-title="Dominio + Hosting — 15€/mes"
+                   data-info="Para que tu web tenga un nombre propio (tudominio.com) y esté funcionando online, sin caídas ni sorpresas. Nosotros nos encargamos de todo lo técnico: renovación del dominio, el servidor y las copias de seguridad.">
+                <img src="/static/wi/icons/ic-launch.webp" class="calc-maint-icon" alt="">
+                <div class="calc-maint-name">Dominio + Hosting</div>
+                <div class="calc-maint-price">15€/mes</div>
+              </div>
+            </div>
+            <div class="d-flex gap-2 mt-2">
+              <button class="btn btn-outline-primary btn-sm" style="font-size:.72rem" onclick="showInfoById('calcHostingGrid','Solo Hosting')">ℹ Qué incluye Solo Hosting</button>
+              <button class="btn btn-outline-primary btn-sm" style="font-size:.72rem" onclick="showInfoById('calcHostingGrid','Dominio + Hosting')">ℹ Qué incluye Dominio + Hosting</button>
             </div>
 
           </div>
@@ -1301,7 +1318,7 @@
               <span class="value" id="calcHoursVal">0€/mes</span>
             </div>
             <div class="calc-price-row calc-maint-summary" id="calcHostingRow" style="display:none">
-              <span class="label"><img src="/static/wi/icons/ic-launch.webp" style="width:13px;height:13px;object-fit:contain;vertical-align:middle;margin-right:.2rem" alt=""> Dominio + Hosting</span>
+              <span class="label"><img src="/static/wi/icons/ic-launch.webp" style="width:13px;height:13px;object-fit:contain;vertical-align:middle;margin-right:.2rem" alt=""> Hosting</span>
               <span class="value" id="calcHostingVal">0€/mes</span>
             </div>
 
@@ -1594,7 +1611,14 @@
       <span>·</span>
       <a href="/cookies/" style="color:inherit">Cookies</a>
       <span>·</span>
+      <a href="/terminos/" style="color:inherit" id="footerTermsLink">Términos y condiciones</a>
+      <span>·</span>
       <a href="javascript:void(0)" onclick="window.wiOpenCookieSettings&&window.wiOpenCookieSettings()" style="color:inherit">⚙ Configurar cookies</a>
+      <span>·</span>
+      <a href="/chequeo-digital/" style="color:inherit">Chequeo digital</a>
+    </div>
+    <div class="container d-flex flex-wrap justify-content-center mt-2" style="font-size:.72rem;opacity:.5;text-align:center">
+      <span id="footerAiNote">Usamos IA como apoyo en el desarrollo; todo resultado se revisa por una persona.</span>
     </div>
   </footer>
 
@@ -1633,12 +1657,30 @@ eu:{h5:{title:'5 orduko poltsa — 175€/hil.',info:'Hilero 5 ordu akatsak konp
 ru:{h5:{title:'Пакет 5 часов — 175€/мес',info:'5 часов в месяц на исправление ошибок, улучшения или небольшие доработки сайта. Идеально для точечных изменений время от времени.'},h10:{title:'Пакет 10 часов — 320€/мес',info:'10 часов в месяц на разработку: исправление ошибок, улучшение кода, небольшие новые функции. Для бизнеса с более частыми потребностями.'},h20:{title:'Пакет 20 часов — 560€/мес',info:'20 часов в месяц работы разработчика, посвящённой вашему проекту. Для бизнеса, которому нужно постоянное развитие сайта.'},h40:{title:'Пакет 40 часов — 1000€/мес',info:'40 часов в месяц — практически разработчик на part-time, посвящённый вашему проекту. Для бизнеса с активной непрерывной разработкой.'}}
 };
 var hosting={
-es:{title:'Dominio + Hosting — 15€/mes',info:'Para que tu web tenga un nombre propio (tudominio.com) y esté funcionando online, sin caídas ni sorpresas. Nosotros nos encargamos de todo lo técnico: renovación del dominio, el servidor y las copias de seguridad.'},
-en:{title:'Domain + Hosting — €15/mo',info:"So your website has its own name (yourdomain.com) and stays online, with no downtime or surprises. We take care of everything technical: domain renewal, the server and backups."},
-eu:{title:'Domeinua + Hostinga — 15€/hil.',info:'Zure webak izen propioa izan dezan (zuredomeinua.com) eta online funtzionatzen jarrai dezan, etenik gabe. Guk arduratzen gara alderdi tekniko guztiaz: domeinuaren berritzea, zerbitzaria eta babeskopiak.'},
-ru:{title:'Домен + Хостинг — 15€/мес',info:'Чтобы у вашего сайта было своё имя (vashdomen.com) и он стабильно работал онлайн, без сбоев и сюрпризов. Мы берём на себя всё техническое: продление домена, сервер и резервные копии.'}
+es:{only:{title:'Solo Hosting — 10€/mes',info:'Para cuando ya tienes tu propio dominio (lo compraste tú) y solo necesitas que tu web esté alojada y funcionando online, sin caídas. Nos encargamos del servidor, la seguridad y las copias de seguridad; la renovación del dominio la sigues pagando tú donde lo compraste.'},full:{title:'Dominio + Hosting — 15€/mes',info:'Para que tu web tenga un nombre propio (tudominio.com) y esté funcionando online, sin caídas ni sorpresas. Nosotros nos encargamos de todo lo técnico: renovación del dominio, el servidor y las copias de seguridad.'}},
+en:{only:{title:'Hosting only — €10/mo',info:"For when you already own your domain (you bought it yourself) and just need your website hosted and running online, with no downtime. We take care of the server, security and backups; you keep paying the domain renewal wherever you bought it."},full:{title:'Domain + Hosting — €15/mo',info:"So your website has its own name (yourdomain.com) and stays online, with no downtime or surprises. We take care of everything technical: domain renewal, the server and backups."}},
+eu:{only:{title:'Hostinga soilik — 10€/hil.',info:'Jada zeure domeinua baduzunean (zuk erosi zenuen) eta zure webak online alojatuta eta funtzionatzen egotea besterik behar ez duzunean. Guk arduratzen gara zerbitzariaz, segurtasunaz eta babeskopiez; domeinuaren berritzea zuk ordaintzen jarraitzen duzu erosi zenuen tokian.'},full:{title:'Domeinua + Hostinga — 15€/hil.',info:'Zure webak izen propioa izan dezan (zuredomeinua.com) eta online funtzionatzen jarrai dezan, etenik gabe. Guk arduratzen gara alderdi tekniko guztiaz: domeinuaren berritzea, zerbitzaria eta babeskopiak.'}},
+ru:{only:{title:'Только хостинг — 10€/мес',info:'Для тех, у кого уже есть свой домен (куплен самостоятельно) и нужно только, чтобы сайт был размещён и стабильно работал онлайн, без сбоев. Мы берём на себя сервер, безопасность и резервные копии; продление домена вы по-прежнему оплачиваете там, где его купили.'},full:{title:'Домен + Хостинг — 15€/мес',info:'Чтобы у вашего сайта было своё имя (vashdomen.com) и он стабильно работал онлайн, без сбоев и сюрпризов. Мы берём на себя всё техническое: продление домена, сервер и резервные копии.'}}
 };
 var port={
+en:[
+{badge:'Interactive demo',desc:"Booking website for a beauty salon: 24/7 online calendar, deposit payment, automatic reminders and a team panel. This isn't a mockup — go in, click around and try booking an appointment, everything really works.",price:'approx. €890'},
+{badge:'Interactive demo',desc:"Complete website for a car workshop: homepage, 6 independent service pages (better for Google), work gallery, reviews, map and direct contact. This isn't a mockup — go in, browse the services and check that everything really works.",price:'approx. €500'},
+{badge:'Interactive demo',desc:"Educational SaaS platform for training centres: student and teacher management, calendar by modules, downloadable materials, chat and an integrated AI assistant. This isn't a mockup — explore the campus with no registration needed, everything really works.",price:'approx. €1,450'}
+],
+eu:[
+{badge:'Demo interaktiboa',desc:'Edertasun-saloi baterako erreserba webgunea: 24/7 online egutegia, seinalearen ordainketa, gogorarazpen automatikoak eta taldearentzako panela. Hau ez da maketa bat — sartu, sakatu nahi duzun tokian eta saiatu hitzordu bat erreserbatzen, dena benetan funtzionatzen du.',price:'gutxi g. 890€'},
+{badge:'Demo interaktiboa',desc:'Mekanika tailer baterako web osoa: hasiera orria, 6 zerbitzu-orrialde independente (hobea Google-rentzat), lan-galeria, iritziak, mapa eta kontaktu zuzena. Hau ez da maketa bat — sartu, zerbitzuetan nabigatu eta egiaztatu dena benetan funtzionatzen duela.',price:'gutxi g. 500€'},
+{badge:'Demo interaktiboa',desc:'Prestakuntza zentroentzako hezkuntza SaaS plataforma: ikasleen eta irakasleen kudeaketa, moduluka egutegia, deskargatu daitezkeen materialak, txata eta IA laguntzaile integratua. Hau ez da maketa bat — sartu izena eman gabe eta arakatu campusa, dena benetan funtzionatzen du.',price:'gutxi g. 1.450€'}
+],
+ru:[
+{badge:'Интерактивное демо',desc:'Сайт-запись для салона красоты: онлайн-календарь 24/7, оплата депозита, автонапоминания и панель для команды. Это не макет — заходи, нажимай что хочешь и попробуй записаться на приём, всё работает по-настоящему.',price:'около 890€'},
+{badge:'Интерактивное демо',desc:'Полный сайт для автомастерской: главная страница, 6 отдельных страниц услуг (лучше для Google), галерея работ, отзывы, карта и прямой контакт. Это не макет — заходи, изучай услуги и проверь, что всё работает по-настоящему.',price:'около 500€'},
+{badge:'Интерактивное демо',desc:'Образовательная SaaS-платформа для учебных центров: управление студентами и преподавателями, календарь по модулям, материалы для скачивания, чат и встроенный ИИ-ассистент. Это не макет — заходи без регистрации и изучай кампус, всё работает по-настоящему.',price:'около 1 450€'}
+]
+};
+/* Real client project translations — restore alongside PORTFOLIO_REAL_PENDING entries when re-enabled.
+var port_real_pending={
 en:[
 {badge:'Beauty salon',desc:'Online booking system for a premium beauty studio: 24/7 calendar, automatic WhatsApp reminders, employee area and multilingual presence. Clients book on their own, no calls needed.',price:'approx. €950'},
 {badge:'Electrical company',desc:'Corporate website for an electrical installations and renewable energy company. Premium design, lead capture via form, local SEO and optimised Google Business profile.',price:'approx. €750'},
@@ -1673,6 +1715,7 @@ ru:[
 {badge:'Образовательная SaaS-платформа',desc:'Образовательный SaaS для учебных центров: управление студентами, преподавателями и администраторами, материалы курсов, отслеживание прогресса, посещаемость и ИИ-консультант.',price:'около 1 450€'}
 ]
 };
+*/
 // reverse map: Spanish extra name → config key
 var nameToKey={'Diseño premium':'diseno','Textos que venden':'textos','Aparecer en Google':'seo','Ficha en Google Maps':'google','Formulario inteligente':'formulario','Botón de WhatsApp':'whatsapp','Citas y reservas online':'reservas','Cobros y conexiones online':'integracion','Web en varios idiomas':'multiidioma','Estadísticas de ventas':'analytics','Subir catálogo completo':'importacion','Avisos antes de cada cita':'recordatorios','Asistente automático 24h':'bot','Correo con tu dominio':'correo','Galería de Instagram':'instagram','Zona privada para clientes':'area_privada','Documentos automáticos PDF':'pdf_auto','Datos en Excel / Sheets':'sheets','Panel para tu equipo':'panel_emp','App para móvil':'app_android'};
 window.WI_L10N={extras:ex,quiz:quiz,maint:maint,hours:hours,hosting:hosting,portfolio:port,nameToKey:nameToKey};
@@ -1699,11 +1742,12 @@ window.WI_LANG_HOOKS.push(function(){
   if(hoursOpts[2]&&hData.h10){hoursOpts[2].dataset.infoTitle=hData.h10.title;hoursOpts[2].dataset.info=hData.h10.info;}
   if(hoursOpts[3]&&hData.h20){hoursOpts[3].dataset.infoTitle=hData.h20.title;hoursOpts[3].dataset.info=hData.h20.info;}
   if(hoursOpts[4]&&hData.h40){hoursOpts[4].dataset.infoTitle=hData.h40.title;hoursOpts[4].dataset.info=hData.h40.info;}
-  // Update hosting toggle modal data attributes
+  // Update hosting grid modal data attributes
   var hoL=window.WI_L10N&&window.WI_L10N.hosting;
-  var hoData=(hoL&&hoL[lang])||(hoL&&hoL.es);
-  var hostingToggle=document.getElementById('calcHostingToggle');
-  if(hostingToggle&&hoData){hostingToggle.dataset.infoTitle=hoData.title;hostingToggle.dataset.info=hoData.info;}
+  var hoData=(hoL&&hoL[lang])||(hoL&&hoL.es)||{};
+  var hostingOpts=document.querySelectorAll('#calcHostingGrid .calc-maint-opt');
+  if(hostingOpts[1]&&hoData.only){hostingOpts[1].dataset.infoTitle=hoData.only.title;hostingOpts[1].dataset.info=hoData.only.info;}
+  if(hostingOpts[2]&&hoData.full){hostingOpts[2].dataset.infoTitle=hoData.full.title;hostingOpts[2].dataset.info=hoData.full.info;}
   // Update ring card badges and prices
   var portTr=window.WI_L10N&&window.WI_L10N.portfolio;
   document.querySelectorAll('.ring-card').forEach(function(card,i){
@@ -1984,7 +2028,7 @@ window.WI_LANG_HOOKS.push(function(){
   // ---- CALCULATOR ----
   const DISC = 0.15;
   const RUSH = 1.25;
-  const calc = { base: 390, baseName: 'Landing page', extras: 0, extraNames: [], rush: false, maint: 0, maintName: '', hours: 0, hoursName: '', hosting: 0 };
+  const calc = { base: 390, baseName: 'Landing page', extras: 0, extraNames: [], rush: false, maint: 0, maintName: '', hours: 0, hoursName: '', hosting: 0, hostingName: '' };
 
   // Extras catalogue
   const EXTRAS_CONFIG = {
@@ -2145,12 +2189,15 @@ window.WI_LANG_HOOKS.push(function(){
     });
   });
 
-  // Hosting + domain (toggle)
-  document.getElementById('calcHostingToggle')?.addEventListener('click', function(ev) {
-    if (ev.target.classList.contains('calc-info-btn')) return;
-    this.classList.toggle('selected');
-    calc.hosting = this.classList.contains('selected') ? parseInt(this.dataset.price) : 0;
-    calcUpdate();
+  // Hosting + domain
+  document.querySelectorAll('#calcHostingGrid .calc-maint-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('#calcHostingGrid .calc-maint-opt').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      calc.hosting = parseInt(opt.dataset.price);
+      calc.hostingName = opt.dataset.name;
+      calcUpdate();
+    });
   });
 
   // Info modal helper
@@ -2181,7 +2228,7 @@ window.WI_LANG_HOOKS.push(function(){
     txt += `Precio estimado: ${fmt(total)}€ (descuento lanzamiento −15%)`;
     if (calc.maint > 0) txt += `\nMantenimiento ${calc.maintName}: ${calc.maint}€/mes`;
     if (calc.hours > 0) txt += `\n${calc.hoursName}: ${calc.hours}€/mes`;
-    if (calc.hosting > 0) txt += `\nDominio + Hosting: ${calc.hosting}€/mes`;
+    if (calc.hosting > 0) txt += `\n${calc.hostingName}: ${calc.hosting}€/mes`;
     return txt;
   }
 
@@ -2305,8 +2352,6 @@ window.WI_LANG_HOOKS.push(function(){
 })();
 </script>
 
-<!--
-Ring detail overlay — hidden temporarily with carousel
 <div class="ring-overlay" id="ringOverlay" role="dialog" aria-modal="true" aria-label="Detalle del proyecto">
   <div class="ring-detail">
     <button class="ring-detail-close" id="ringClose" aria-label="Cerrar">&times;</button>
@@ -2318,6 +2363,7 @@ Ring detail overlay — hidden temporarily with carousel
       <div class="ring-detail-meta">
         <span class="ring-detail-price" id="rdPrice"></span>
         <a class="ring-detail-url" id="rdUrl" href="#" target="_blank" rel="noopener noreferrer">Ver web en vivo →</a>
+        <a class="ring-detail-url" id="rdApk" href="#" download style="display:none">📲 Descargar app (APK) →</a>
       </div>
       <div class="d-flex gap-2 flex-wrap">
         <button class="btn btn-primary" id="rdCalcBtn">Crear proyecto similar →</button>
@@ -2326,7 +2372,6 @@ Ring detail overlay — hidden temporarily with carousel
     </div>
   </div>
 </div>
--->
 
 <!-- I18N -->
 <script>
@@ -2338,7 +2383,7 @@ var LANG = localStorage.getItem('wi_lang') || 'es';
 var T = {
 es:{
   'nav.services':'Servicios','nav.foryou':'Para ti','nav.portfolio':'Portafolio',
-  'nav.how':'Cómo funciona','nav.prices':'Precios','nav.contact':'Contacto','nav.cta':'Hablemos →',
+  'nav.how':'Cómo funciona','nav.prices':'Precios','nav.contact':'Contacto','nav.cta':'Hablemos →','nav.arcard':'📇 Tarjeta AR',
   'hero.kicker':'Digitalización · Automatización · Crecimiento',
   'hero.h1':'¡Mejoremos tu negocio juntos!<br><span class="hero-highlight">Más ingresos.<br>Menos trabajo.</span>',
   'hero.lead1':'Webs que venden. Sistemas que ahorran tiempo. Reservas online. Aplicaciones a medida. Automatización de procesos.',
@@ -2419,11 +2464,11 @@ es:{
   'quiz.s3.2':'5 a 20 personas','quiz.s3.3':'Más de 20',
   'quiz.s4.0':'Lo antes posible','quiz.s4.1':'Este mes',
   'quiz.s4.2':'Estoy planificando','quiz.s4.3':'Solo quiero información',
-  'port.kicker':'Portafolio real',
-  'port.title':'Proyectos que ya funcionan — y generan resultados.',
-  'port.subtitle':'Webs y plataformas en producción, con clientes reales. Sitios web para negocios locales en España: restaurantes, talleres, salones de belleza, clínicas, academias y tiendas online.',
-  'port.hint':'← Arrastra o desliza para explorar · Pulsa un proyecto para ver detalles →',
-  'port.viewlive':'Ver web en vivo →','port.similar':'Crear proyecto similar →','port.close':'Cerrar',
+  'port.kicker':'Pruébalo tú mismo',
+  'port.title':'Así es un proyecto real de Web-Impulsa.',
+  'port.subtitle':'Esto no es una maqueta: es una web completa y funcional, igual que la que podemos construir para tu negocio. Entra, haz clic donde quieras y prueba a reservar una cita — todo funciona de verdad.',
+  'port.hint':'Pulsa el proyecto para ver detalles →',
+  'port.viewlive':'Ver web en vivo →','port.similar':'Crear proyecto similar →','port.close':'Cerrar','port.downloadapk':'📲 Descargar app (APK) →',
   'proc.kicker':'Cómo trabajamos','proc.title':'Sencillo, claro y sin sorpresas.',
   'proc.subtitle':'No necesitas saber de tecnología. Tú nos explicas tu negocio y sus problemas — nosotros te decimos qué hacer y lo construimos.',
   'proc.0h':'Conversación inicial','proc.0p':'Nos cuentas qué tienes, qué falla y qué quieres conseguir. Sin tecnicismos. Escuchamos y hacemos preguntas.',
@@ -2444,8 +2489,9 @@ es:{
   'calc.hours.no':'Sin bolsa','calc.hours.5':'5h','calc.hours.10':'10h','calc.hours.20':'20h','calc.hours.40':'40h',
   'calc.hours.btn1':'ℹ Bolsa 5h','calc.hours.btn2':'ℹ Bolsa 10h','calc.hours.btn3':'ℹ Bolsa 20h','calc.hours.btn4':'ℹ Bolsa 40h',
   'calc.hours.label':'Bolsa de horas',
-  'calc.l5':'5 · Dominio + Hosting (opcional)',
-  'calc.hosting.name':'Dominio + Hosting','calc.hosting.label':'Dominio + Hosting',
+  'calc.l5':'5 · Dominio y Hosting (opcional)',
+  'calc.hosting.no':'Sin hosting','calc.hosting.only':'Solo Hosting','calc.hosting.name':'Dominio + Hosting','calc.hosting.label':'Hosting',
+  'calc.hosting.btn1':'ℹ Qué incluye Solo Hosting','calc.hosting.btn2':'ℹ Qué incluye Dominio + Hosting',
   'calc.sum':'Resumen del presupuesto','calc.extras':'Extras seleccionados',
   'calc.rush.label':'Urgente +25%','calc.discount':'Descuento lanzamiento −15%',
   'calc.total':'Total estimado','calc.maint.label':'Mantenimiento mensual',
@@ -2499,7 +2545,7 @@ es:{
 },
 eu:{
   'nav.services':'Zerbitzuak','nav.foryou':'Zuretzat','nav.portfolio':'Portfolioa',
-  'nav.how':'Nola funtzionatzen du','nav.prices':'Prezioak','nav.contact':'Kontaktua','nav.cta':'Hitz egin →',
+  'nav.how':'Nola funtzionatzen du','nav.prices':'Prezioak','nav.contact':'Kontaktua','nav.cta':'Hitz egin →','nav.arcard':'📇 AR txartela',
   'hero.kicker':'Digitalizazioa · Automatizazioa · Hazkundea',
   'hero.h1':'Hobetu dezagun zure negozioa batera!<br><span class="hero-highlight">Diru-sarrera gehiago.<br>Lan gutxiago.</span>',
   'hero.lead1':'Saltzen duten webak. Denbora aurrezten duten sistemak. Lineako erreserbak. Neurriko aplikazioak. Prozesu-automatizazioa.',
@@ -2574,11 +2620,11 @@ eu:{
   'quiz.s3.2':'5 eta 20 pertsona artean','quiz.s3.3':'20 baino gehiago',
   'quiz.s4.0':'Ahal bezain laster','quiz.s4.1':'Hilabete honetan',
   'quiz.s4.2':'Planifikatzen ari naiz','quiz.s4.3':'Informazioa nahi dut bakarrik',
-  'port.kicker':'Benetako portfolioa',
-  'port.title':'Dagoeneko funtzionatzen duten proiektuak — eta emaitzak sortzen.',
-  'port.subtitle':'Produkzioan dauden web eta plataformak, bezero errealekin. Espainiako negozio lokalentzako webguneak: jatetxeak, tailerrak, apaindegiak, klinikak, akademiak eta lineako dendak.',
-  'port.hint':'← Arrastatu edo mugitu esploratzeko · Sakatu proiektu bat xehetasunak ikusteko →',
-  'port.viewlive':'Web-a zuzenean ikusi →','port.similar':'Antzeko proiektua sortu →','port.close':'Itxi',
+  'port.kicker':'Probatu zeuk',
+  'port.title':'Hau da Web-Impulsa-ko benetako proiektu bat.',
+  'port.subtitle':'Hau ez da maketa bat: zure negoziorentzat eraiki dezakegun bezalako web osoa eta funtzionala da. Sartu, sakatu nahi duzun tokian eta saiatu hitzordu bat erreserbatzen — dena benetan funtzionatzen du.',
+  'port.hint':'Sakatu proiektua xehetasunak ikusteko →',
+  'port.viewlive':'Web-a zuzenean ikusi →','port.similar':'Antzeko proiektua sortu →','port.close':'Itxi','port.downloadapk':'📲 App deskargatu (APK) →',
   'proc.kicker':'Nola lan egiten dugu','proc.title':'Sinplea, argia eta sorpresarik gabe.',
   'proc.subtitle':'Ez duzu teknologia ezagutu behar. Zuk azaltzen diguzu zure negozioa eta arazoak — guk esaten dizugu zer egin eta eraikitzen dugu.',
   'proc.0h':'Hasierako elkarrizketa','proc.0p':'Esaten diguzu zer duzun, zer huts egiten du eta zer lortu nahi duzun. Teknizismorik gabe. Entzuten dugu eta galderak egiten ditugu.',
@@ -2599,8 +2645,9 @@ eu:{
   'calc.hours.no':'Poltsarik ez','calc.hours.5':'5h','calc.hours.10':'10h','calc.hours.20':'20h','calc.hours.40':'40h',
   'calc.hours.btn1':'ℹ 5h poltsa','calc.hours.btn2':'ℹ 10h poltsa','calc.hours.btn3':'ℹ 20h poltsa','calc.hours.btn4':'ℹ 40h poltsa',
   'calc.hours.label':'Ordu-poltsa',
-  'calc.l5':'5 · Domeinua + Hostinga (hautazkoa)',
-  'calc.hosting.name':'Domeinua + Hostinga','calc.hosting.label':'Domeinua + Hostinga',
+  'calc.l5':'5 · Domeinua eta Hostinga (hautazkoa)',
+  'calc.hosting.no':'Hostingik ez','calc.hosting.only':'Hostinga soilik','calc.hosting.name':'Domeinua + Hostinga','calc.hosting.label':'Hostinga',
+  'calc.hosting.btn1':'ℹ Hostinga soilik zer barne hartzen duen','calc.hosting.btn2':'ℹ Domeinua + Hostingak zer barne hartzen duen',
   'calc.sum':'Aurrekontua laburpena','calc.extras':'Hautatutako gehigarriak',
   'calc.rush.label':'Urgentea +%25','calc.discount':'Abian jartzeko deskontua −%15',
   'calc.total':'Guztira estimatua','calc.maint.label':'Hileko mantentze-lana',
@@ -2652,7 +2699,7 @@ eu:{
 },
 en:{
   'nav.services':'Services','nav.foryou':'For you','nav.portfolio':'Portfolio',
-  'nav.how':'How it works','nav.prices':'Prices','nav.contact':'Contact','nav.cta':'Let\'s talk →',
+  'nav.how':'How it works','nav.prices':'Prices','nav.contact':'Contact','nav.cta':'Let\'s talk →','nav.arcard':'📇 AR card',
   'hero.kicker':'Digitalization · Automation · Growth',
   'hero.h1':'Let\'s grow your business together!<br><span class="hero-highlight">More income.<br>Less work.</span>',
   'hero.lead1':'Websites that sell. Systems that save time. Online bookings. Custom applications. Process automation.',
@@ -2727,11 +2774,11 @@ en:{
   'quiz.s3.2':'5 to 20 people','quiz.s3.3':'More than 20',
   'quiz.s4.0':'As soon as possible','quiz.s4.1':'This month',
   'quiz.s4.2':'I\'m planning','quiz.s4.3':'I just want information',
-  'port.kicker':'Real portfolio',
-  'port.title':'Projects that already work — and generate results.',
-  'port.subtitle':'Websites and platforms in production with real customers. Professional websites for local businesses in Spain: restaurants, workshops, beauty salons, clinics, academies and online stores.',
-  'port.hint':'← Drag or swipe to explore · Click a project to see details →',
-  'port.viewlive':'View live website →','port.similar':'Create similar project →','port.close':'Close',
+  'port.kicker':'Try it yourself',
+  'port.title':'This is a real Web-Impulsa project.',
+  'port.subtitle':"This isn't a mockup — it's a complete, fully working website, just like the one we can build for your business. Go in, click around, try booking an appointment — everything really works.",
+  'port.hint':'Click the project to see details →',
+  'port.viewlive':'View live website →','port.similar':'Create similar project →','port.close':'Close','port.downloadapk':'📲 Download app (APK) →',
   'proc.kicker':'How we work','proc.title':'Simple, clear and no surprises.',
   'proc.subtitle':'You don\'t need to know about technology. You explain your business and its problems — we tell you what to do and build it.',
   'proc.0h':'Initial conversation','proc.0p':'You tell us what you have, what\'s wrong and what you want to achieve. No jargon. We listen and ask questions.',
@@ -2752,8 +2799,9 @@ en:{
   'calc.hours.no':'No package','calc.hours.5':'5h','calc.hours.10':'10h','calc.hours.20':'20h','calc.hours.40':'40h',
   'calc.hours.btn1':'ℹ 5h package','calc.hours.btn2':'ℹ 10h package','calc.hours.btn3':'ℹ 20h package','calc.hours.btn4':'ℹ 40h package',
   'calc.hours.label':'Hours package',
-  'calc.l5':'5 · Domain + Hosting (optional)',
-  'calc.hosting.name':'Domain + Hosting','calc.hosting.label':'Domain + Hosting',
+  'calc.l5':'5 · Domain and Hosting (optional)',
+  'calc.hosting.no':'No hosting','calc.hosting.only':'Hosting only','calc.hosting.name':'Domain + Hosting','calc.hosting.label':'Hosting',
+  'calc.hosting.btn1':'ℹ What Hosting only includes','calc.hosting.btn2':'ℹ What Domain + Hosting includes',
   'calc.sum':'Budget summary','calc.extras':'Selected extras',
   'calc.rush.label':'Urgent +25%','calc.discount':'Launch discount −15%',
   'calc.total':'Estimated total','calc.maint.label':'Monthly maintenance',
@@ -2805,7 +2853,7 @@ en:{
 },
 ru:{
   'nav.services':'Услуги','nav.foryou':'Для вас','nav.portfolio':'Портфолио',
-  'nav.how':'Как работаем','nav.prices':'Цены','nav.contact':'Контакт','nav.cta':'Поговорим →',
+  'nav.how':'Как работаем','nav.prices':'Цены','nav.contact':'Контакт','nav.cta':'Поговорим →','nav.arcard':'📇 ВИЗИТКА',
   'hero.kicker':'Цифровизация · Автоматизация · Рост',
   'hero.h1':'Развиваем ваш бизнес вместе!<br><span class="hero-highlight">Больше дохода.<br>Меньше работы.</span>',
   'hero.lead1':'Сайты, которые продают. Системы, экономящие время. Онлайн-бронирование. Приложения на заказ. Автоматизация процессов.',
@@ -2880,11 +2928,11 @@ ru:{
   'quiz.s3.2':'5–20 человек','quiz.s3.3':'Больше 20',
   'quiz.s4.0':'Как можно скорее','quiz.s4.1':'В этом месяце',
   'quiz.s4.2':'Планирую','quiz.s4.3':'Просто хочу информацию',
-  'port.kicker':'Реальное портфолио',
-  'port.title':'Проекты, которые уже работают — и дают результаты.',
-  'port.subtitle':'Сайты и платформы в production с реальными клиентами. Профессиональные сайты для локального бизнеса в Испании: рестораны, мастерские, салоны красоты, клиники, академии и интернет-магазины.',
-  'port.hint':'← Тяните или листайте для просмотра · Нажмите на проект для деталей →',
-  'port.viewlive':'Открыть сайт →','port.similar':'Создать похожий проект →','port.close':'Закрыть',
+  'port.kicker':'Попробуй сам',
+  'port.title':'Так выглядит настоящий проект Web-Impulsa.',
+  'port.subtitle':'Это не макет — полностью рабочий сайт, точно такой же, какой мы можем сделать для вашего бизнеса. Заходи, нажимай где хочешь, попробуй записаться на приём — всё работает по-настоящему.',
+  'port.hint':'Нажми на проект, чтобы увидеть детали →',
+  'port.viewlive':'Открыть сайт →','port.similar':'Создать похожий проект →','port.close':'Закрыть','port.downloadapk':'📲 Скачать приложение (APK) →',
   'proc.kicker':'Как мы работаем','proc.title':'Просто, понятно и без сюрпризов.',
   'proc.subtitle':'Вам не нужно разбираться в технологиях. Вы объясняете свой бизнес и его проблемы — мы говорим, что делать, и строим.',
   'proc.0h':'Первый разговор','proc.0p':'Вы рассказываете, что у вас есть, что не работает и чего хотите достичь. Без технических терминов. Мы слушаем и задаём вопросы.',
@@ -2905,8 +2953,9 @@ ru:{
   'calc.hours.no':'Без пакета','calc.hours.5':'5ч','calc.hours.10':'10ч','calc.hours.20':'20ч','calc.hours.40':'40ч',
   'calc.hours.btn1':'ℹ Пакет 5ч','calc.hours.btn2':'ℹ Пакет 10ч','calc.hours.btn3':'ℹ Пакет 20ч','calc.hours.btn4':'ℹ Пакет 40ч',
   'calc.hours.label':'Пакет часов',
-  'calc.l5':'5 · Домен + Хостинг (по желанию)',
-  'calc.hosting.name':'Домен + Хостинг','calc.hosting.label':'Домен + Хостинг',
+  'calc.l5':'5 · Домен и Хостинг (по желанию)',
+  'calc.hosting.no':'Без хостинга','calc.hosting.only':'Только хостинг','calc.hosting.name':'Домен + Хостинг','calc.hosting.label':'Хостинг',
+  'calc.hosting.btn1':'ℹ Что входит в Только хостинг','calc.hosting.btn2':'ℹ Что входит в Домен + Хостинг',
   'calc.sum':'Сводка бюджета','calc.extras':'Выбранные опции',
   'calc.rush.label':'Срочно +25%','calc.discount':'Скидка запуска −15%',
   'calc.total':'Итого (оценка)','calc.maint.label':'Ежемесячное обслуживание',
@@ -2968,6 +3017,8 @@ function applyTranslations(){
   nkeys.forEach(function(k,i){ if(nl[i]) nl[i].textContent=t(k); });
   var cta=document.querySelector('a.btn-primary[href="#contacto"]');
   if(cta) cta.textContent=t('nav.cta');
+  var arcard=document.querySelector('a[href="/tarjeta-ar/"]');
+  if(arcard) arcard.textContent=t('nav.arcard');
 
   // Hero
   var hk=document.querySelector('.hero .section-kicker');
@@ -3085,6 +3136,7 @@ function applyTranslations(){
     var psub=portSec.querySelector('.section-subtitle'); if(psub) psub.textContent=t('port.subtitle');
     var phint=portSec.querySelector('.ring-hint'); if(phint) phint.textContent=t('port.hint');
     var purl=document.getElementById('rdUrl'); if(purl) purl.textContent=t('port.viewlive');
+    var papk=document.getElementById('rdApk'); if(papk) papk.textContent=t('port.downloadapk');
     var psim=document.getElementById('rdCalcBtn'); if(psim) psim.textContent=t('port.similar');
     var pcl=document.getElementById('rdCloseBtn'); if(pcl) pcl.textContent=t('port.close');
   }
@@ -3131,6 +3183,9 @@ function applyTranslations(){
     if(mnames[5]) mnames[5].textContent=t('calc.hours.10');
     if(mnames[6]) mnames[6].textContent=t('calc.hours.20');
     if(mnames[7]) mnames[7].textContent=t('calc.hours.40');
+    if(mnames[8]) mnames[8].textContent=t('calc.hosting.no');
+    if(mnames[9]) mnames[9].textContent=t('calc.hosting.only');
+    if(mnames[10]) mnames[10].textContent=t('calc.hosting.name');
     var mbts=calcSec.querySelectorAll('.d-flex.gap-2.mt-2 button');
     if(mbts[0]) mbts[0].textContent=t('calc.maint.btn1');
     if(mbts[1]) mbts[1].textContent=t('calc.maint.btn2');
@@ -3138,7 +3193,8 @@ function applyTranslations(){
     if(mbts[3]) mbts[3].textContent=t('calc.hours.btn2');
     if(mbts[4]) mbts[4].textContent=t('calc.hours.btn3');
     if(mbts[5]) mbts[5].textContent=t('calc.hours.btn4');
-    var hostingName=calcSec.querySelector('#calcHostingToggle .calc-extra-name'); if(hostingName) hostingName.textContent=t('calc.hosting.name');
+    if(mbts[6]) mbts[6].textContent=t('calc.hosting.btn1');
+    if(mbts[7]) mbts[7].textContent=t('calc.hosting.btn2');
     var panTitle=calcSec.querySelector('.calc-price-panel-title'); if(panTitle) panTitle.textContent=t('calc.sum');
     var extRow=calcSec.querySelector('#calcExtrasRow .label'); if(extRow) extRow.textContent=t('calc.extras');
     var discLabel=calcSec.querySelector('.calc-discount-row .label');
@@ -3267,6 +3323,83 @@ setLang(LANG);
 
   var PORTFOLIO = [
     {
+      name: 'Aura Studio (demo interactiva)',
+      badge: 'Demo interactiva',
+      img: '/static/sergei/img/premium/projects/aura-1-preview.webp',
+      url: 'https://salon.webimpulsa.es',
+      apk: '/media/aura-studio-demo-release.apk',
+      desc: 'Web de reservas para un salón de belleza: agenda online 24/7, pago de señal, recordatorios automáticos y panel para el equipo. Esto no es una maqueta — entra, haz clic donde quieras y prueba a reservar una cita, todo funciona de verdad. También puedes descargar la app para el móvil.',
+      price: 'aprox. 890€',
+      calcType: 'Web con reservas',
+      extras: ['Citas y reservas online', 'Diseño premium', 'Avisos antes de cada cita']
+    },
+    {
+      name: 'Aurora Motor (demo interactiva)',
+      badge: 'Demo interactiva',
+      img: '/static/sergei/img/premium/projects/aurora-1-preview.webp',
+      url: 'https://taller.webimpulsa.es',
+      desc: 'Web completa para un taller mecánico: página de inicio, 6 páginas de servicio independientes (mejor para Google), galería de trabajos, reseñas, mapa y contacto directo. Esto no es una maqueta — entra, navega por los servicios y comprueba que todo funciona de verdad.',
+      price: 'aprox. 500€',
+      calcType: 'Landing page',
+      extras: ['Aparecer en Google', 'Ficha en Google Maps', 'Botón de WhatsApp']
+    },
+    {
+      name: 'Aurora Campus (demo interactiva)',
+      badge: 'Demo interactiva',
+      img: '/static/sergei/img/premium/projects/aurora-campus-1-preview.webp',
+      url: 'https://curso.webimpulsa.es',
+      desc: 'Plataforma educativa SaaS para centros de formación: gestión de alumnos y docentes, calendario por módulos, materiales descargables, chat y asistente de IA integrado. Esto no es una maqueta — entra sin registro y explora el campus, todo funciona de verdad.',
+      price: 'aprox. 1.450€',
+      calcType: 'Proyecto a medida',
+      extras: ['Diseño premium', 'Zona privada para clientes', 'Panel para tu equipo']
+    },
+    {
+      name: 'Clínica Vitalis (demo interactiva)',
+      badge: 'Demo interactiva',
+      img: '/static/sergei/img/premium/projects/clinica-1-preview.webp',
+      url: 'https://clinica.webimpulsa.es',
+      desc: 'Web para clínica de fisioterapia y rehabilitación: especialistas a elegir, aseguradoras aceptadas, reseñas y reserva de cita por WhatsApp. Esto no es una maqueta — pulsa los botones de contacto y comprueba que todo funciona igual que en una web real.',
+      price: 'aprox. 890€',
+      calcType: 'Web con reservas',
+      extras: ['Citas y reservas online', 'Diseño premium', 'Avisos antes de cada cita']
+    },
+    {
+      name: 'Tienda Aurora (demo interactiva)',
+      badge: 'Demo interactiva',
+      img: '/static/sergei/img/premium/projects/tienda-1-preview.webp',
+      url: 'https://tienda.webimpulsa.es',
+      desc: 'Web para tienda de moda y complementos: catálogo de productos, categorías, promociones y consulta de disponibilidad por WhatsApp. Esto no es una maqueta — pulsa los botones de contacto y comprueba que todo funciona igual que en una web real.',
+      price: 'aprox. 1.290€',
+      calcType: 'Tienda online',
+      extras: ['Diseño premium', 'Subir catálogo completo', 'Botón de WhatsApp']
+    },
+    {
+      name: 'Grupo Áncora (demo interactiva)',
+      badge: 'Demo interactiva',
+      img: '/static/sergei/img/premium/projects/inmobiliaria-1-preview.webp',
+      url: 'https://inmobiliaria.webimpulsa.es',
+      desc: 'Web para inmobiliaria y reformas: ejemplos de trabajos antes/después, zonas de cobertura y solicitud de presupuesto por WhatsApp. Esto no es una maqueta — pulsa los botones de contacto y comprueba que todo funciona igual que en una web real.',
+      price: 'aprox. 590€',
+      calcType: 'Web profesional',
+      extras: ['Diseño premium', 'Aparecer en Google', 'Formulario inteligente']
+    },
+    {
+      name: 'Restaurante La Brasa (demo interactiva)',
+      badge: 'Demo interactiva',
+      img: '/static/sergei/img/premium/projects/restaurante-1-preview.webp',
+      url: 'https://restaurante.webimpulsa.es',
+      desc: 'Web para restaurante: carta online, galería de platos y ambiente, reseñas y reserva de mesa por WhatsApp. Esto no es una maqueta — pulsa los botones de contacto y comprueba que todo funciona igual que en una web real.',
+      price: 'aprox. 890€',
+      calcType: 'Web con reservas',
+      extras: ['Citas y reservas online', 'Diseño premium', 'Botón de WhatsApp']
+    }
+  ];
+
+  // Real client projects — re-enable one by one as each client gives permission to publish.
+  // To restore: move an object back into the PORTFOLIO array above (and its matching
+  // translation entry back into the port.en/eu/ru arrays a bit further below).
+  var PORTFOLIO_REAL_PENDING = [
+    {
       name: 'Brimoon — Anna Salon',
       badge: 'Salón de belleza',
       img: '/static/sergei/img/premium/projects/brimoon-1-preview.webp',
@@ -3369,6 +3502,7 @@ setLang(LANG);
   var rdDesc   = document.getElementById('rdDesc');
   var rdPrice  = document.getElementById('rdPrice');
   var rdUrl    = document.getElementById('rdUrl');
+  var rdApk    = document.getElementById('rdApk');
   var rdCalcBtn = document.getElementById('rdCalcBtn');
   var rdClose  = document.getElementById('ringClose');
   var rdCloseBtn = document.getElementById('rdCloseBtn');
@@ -3380,6 +3514,13 @@ setLang(LANG);
     if (w < 480) return 188;
     if (w < 768) return 252;
     return 338;
+  }
+
+  // With very few projects, spreading them over the full 360° puts the 2nd/3rd
+  // card directly opposite the first (hidden, back-facing) — cap the angular
+  // step so nearby cards always peek into view instead of requiring a blind drag.
+  function ringStep() {
+    return Math.min(360 / N, 45);
   }
 
   var angle = 0;
@@ -3395,7 +3536,7 @@ setLang(LANG);
 
   // Build cards and dots
   PORTFOLIO.forEach(function(p, i) {
-    var baseAngle = (360 / N) * i;
+    var baseAngle = ringStep() * i;
     var R = getRadius();
     var card = document.createElement('div');
     card.className = 'ring-card';
@@ -3439,7 +3580,7 @@ setLang(LANG);
     var R = getRadius();
     var cards = inner.querySelectorAll('.ring-card');
     cards.forEach(function(card, i) {
-      card.style.transform = 'rotateY(' + ((360/N)*i) + 'deg) translateZ(' + R + 'px)';
+      card.style.transform = 'rotateY(' + (ringStep()*i) + 'deg) translateZ(' + R + 'px)';
     });
   }
   window.addEventListener('resize', rebuildPositions);
@@ -3447,7 +3588,7 @@ setLang(LANG);
   function setAngle(a) {
     angle = a;
     inner.style.transform = 'rotateX(-12deg) rotateY(' + a + 'deg)';
-    var step = 360 / N;
+    var step = ringStep();
     var normalized = ((-a % 360) + 360) % 360;
     var nearest = Math.round(normalized / step) % N;
     if (nearest !== activeIdx) {
@@ -3462,7 +3603,7 @@ setLang(LANG);
   }
 
   function rotateTo(idx) {
-    var step = 360 / N;
+    var step = ringStep();
     var currentRounds = Math.floor(-angle / 360);
     var targetDeg = -(idx * step + currentRounds * 360);
     var diff = targetDeg - angle;
@@ -3483,7 +3624,7 @@ setLang(LANG);
   }
 
   function snapToNearest() {
-    var step = 360 / N;
+    var step = ringStep();
     var snapped = Math.round(angle / step) * step;
     animateTo(snapped);
   }
@@ -3574,6 +3715,8 @@ setLang(LANG);
     rdPrice.textContent = tr.price || p.price;
     if (p.url) { rdUrl.href = p.url; rdUrl.style.display = ''; }
     else { rdUrl.style.display = 'none'; }
+    if (p.apk) { rdApk.href = p.apk; rdApk.style.display = ''; }
+    else { rdApk.style.display = 'none'; }
     rdCalcBtn.onclick = function() {
       closeDetail();
       if (window.applyToCalc) window.applyToCalc(p.calcType, p.extras);

@@ -331,14 +331,38 @@ class Proposal(models.Model):
     valid_days = models.IntegerField(default=15)
     issued_at  = models.DateField()
 
+    CLIENT_TYPE_PARTICULAR = 'particular'
+    CLIENT_TYPE_AUTONOMO   = 'autonomo'
+    CLIENT_TYPE_EMPRESA    = 'empresa'
+    CLIENT_TYPE_CHOICES = [
+        (CLIENT_TYPE_PARTICULAR, 'Particular (consumidor)'),
+        (CLIENT_TYPE_AUTONOMO,   'Autónomo'),
+        (CLIENT_TYPE_EMPRESA,    'Empresa'),
+    ]
+
     # Client data snapshot (editable)
     client_name     = models.CharField(max_length=200, blank=True)
     client_email    = models.CharField(max_length=200, blank=True)
     client_phone    = models.CharField(max_length=50, blank=True)
     client_biz_type = models.CharField(max_length=100, blank=True)
+    client_type     = models.CharField(max_length=20, choices=CLIENT_TYPE_CHOICES, blank=True)
     client_nif      = models.CharField(max_length=30, blank=True)
-    client_address  = models.CharField(max_length=300, blank=True)
-    client_city     = models.CharField(max_length=100, blank=True)
+    # Domicilio fiscal estructurado: client_address = calle/nº/piso, client_city = municipio
+    client_address     = models.CharField(max_length=300, blank=True)
+    client_city        = models.CharField(max_length=100, blank=True)
+    client_postal_code = models.CharField(max_length=10, blank=True)
+    client_province    = models.CharField(max_length=100, blank=True)
+    client_country     = models.CharField(max_length=100, blank=True, default='España')
+
+    # Representante — solo aplica si client_type == 'empresa'
+    representative_name     = models.CharField(max_length=200, blank=True)
+    representative_nif      = models.CharField(max_length=30, blank=True)
+    representative_position = models.CharField(max_length=100, blank=True)
+
+    # Trazabilidad de versiones: nueva propuesta creada tras cambios post-aceptación
+    supersedes = models.ForeignKey(
+        'self', null=True, blank=True, on_delete=models.SET_NULL, related_name='superseded_by',
+    )
 
     # Company data snapshot (editable per proposal)
     company_data = models.JSONField(default=dict)
@@ -387,6 +411,14 @@ class Proposal(models.Model):
     accepted_nif       = models.CharField(max_length=30, blank=True)
     accepted_signature = models.TextField(blank=True)
     accepted_at        = models.DateTimeField(null=True, blank=True)
+
+    # Acceptance audit trail (immutable once set — proposal becomes non-editable on accept)
+    accepted_ip         = models.CharField(max_length=45, blank=True)
+    accepted_user_agent = models.CharField(max_length=500, blank=True)
+    accepted_consents   = models.JSONField(default=dict)   # {"tax_data": true, "scope": true, ...}
+    withdrawal_waived   = models.BooleanField(default=False)  # solo relevante si client_type == particular
+    accepted_pdf        = models.FileField(upload_to='proposals/accepted/%Y/%m/', blank=True, null=True)
+    accepted_pdf_sha256 = models.CharField(max_length=64, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

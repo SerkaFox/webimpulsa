@@ -264,11 +264,25 @@ body {
       <p style="font-weight:800;font-size:10pt">{{ proposal.client_name }}</p>
       {% if proposal.client_email %}<p>{{ proposal.client_email }}</p>{% endif %}
       {% if proposal.client_phone %}<p>{{ proposal.client_phone }}</p>{% endif %}
-      {% if proposal.client_biz_type %}<p style="color:#5a6d8c">{{ proposal.client_biz_type }}</p>{% endif %}
-      <p class="label" style="margin-top:8pt">NIF / CIF (para factura)</p>
-      <span class="fill-line"></span>
-      <p class="label">Dirección fiscal</p>
-      <span class="fill-line"></span>
+      {% if is_accepted %}
+        <p style="color:#5a6d8c">{{ proposal.get_client_type_display }}</p>
+        <p class="label" style="margin-top:8pt">NIF / NIE / CIF</p>
+        <p>{{ proposal.client_nif }}</p>
+        <p class="label">Domicilio fiscal</p>
+        <p>{{ proposal.client_address }}</p>
+        <p>{{ proposal.client_postal_code }} {{ proposal.client_city }} ({{ proposal.client_province }}), {{ proposal.client_country }}</p>
+        {% if proposal.representative_name %}
+        <p class="label" style="margin-top:8pt">Representante</p>
+        <p>{{ proposal.representative_name }} — NIF/NIE {{ proposal.representative_nif }}</p>
+        <p>Cargo: {{ proposal.representative_position }}</p>
+        {% endif %}
+      {% else %}
+        {% if proposal.client_biz_type %}<p style="color:#5a6d8c">{{ proposal.client_biz_type }}</p>{% endif %}
+        <p class="label" style="margin-top:8pt">NIF / CIF (para factura)</p>
+        <span class="fill-line"></span>
+        <p class="label">Dirección fiscal</p>
+        <span class="fill-line"></span>
+      {% endif %}
     </div>
   </div>
 
@@ -416,20 +430,15 @@ body {
   <div class="col col-50">
     <div class="section-title">Forma de pago</div>
     <div class="payment-box">
-      <p style="font-weight:700;margin-bottom:8pt">Pago en dos etapas</p>
+      <p style="font-weight:700;margin-bottom:8pt">{{ schedule.first_label }}</p>
       <div class="payment-row">
-        <div class="payment-cell">
-          <div class="pct">50%</div>
-          <div class="desc">Al inicio del proyecto<br><strong>{{ half_payment }} €</strong> (sin IVA)</div>
-        </div>
-        <div class="payment-gap"></div>
-        <div class="payment-cell">
-          <div class="pct">50%</div>
-          <div class="desc">A la entrega final<br><strong>{{ half_payment }} €</strong> (sin IVA)</div>
+        <div class="payment-cell" style="width:100%">
+          <div class="pct" style="font-size:15pt">{{ schedule.first_amount }} €</div>
+          <div class="desc">IVA incluido</div>
         </div>
       </div>
       <p style="font-size:8pt;color:#5a6d8c;margin-top:7pt">
-        La entrega se realizará una vez abonado el importe final.
+        {{ schedule.schedule_text }}
       </p>
     </div>
   </div>
@@ -445,6 +454,20 @@ body {
 <div class="condition-item">{{ forloop.counter }}. {{ cond }}</div>
 {% endfor %}
 
+{% if is_accepted %}
+<!-- ══════════════════════════════════════════════════
+     CONSENTIMIENTOS ACEPTADOS
+══════════════════════════════════════════════════ -->
+<hr class="divider-light">
+<div class="section-title">Consentimientos aceptados</div>
+{% for c in accepted_consents %}
+<div class="condition-item">✓ {{ c.label }}</div>
+{% endfor %}
+{% if proposal.withdrawal_waived %}
+<div class="condition-item">✓ Renuncia expresa al derecho de desistimiento de 14 días para iniciar el servicio de inmediato.</div>
+{% endif %}
+{% endif %}
+
 <!-- ══════════════════════════════════════════════════
      BLOQUE DE FIRMA
 ══════════════════════════════════════════════════ -->
@@ -454,6 +477,34 @@ body {
   La firma de este documento implica la aceptación de la propuesta, alcance, precio y condiciones indicadas.
 </p>
 
+{% if is_accepted %}
+<div class="sig-block">
+  <div class="sig-cell" style="width:38%">
+    <div class="sig-label">Nombre completo del firmante</div>
+    <p style="font-weight:700">{{ proposal.accepted_by_name }}</p>
+    <div class="sig-sub">Nombre y apellidos</div>
+  </div>
+  <div class="sig-cell" style="width:22%">
+    <div class="sig-label">NIF / CIF</div>
+    <p style="font-weight:700">{{ proposal.accepted_nif }}</p>
+    <div class="sig-sub">Documento fiscal</div>
+  </div>
+  <div class="sig-cell" style="width:20%">
+    <div class="sig-label">Fecha</div>
+    <p style="font-weight:700">{{ proposal.accepted_at|date:"d/m/Y H:i" }}</p>
+    <div class="sig-sub">Firmado electrónicamente</div>
+  </div>
+  <div class="sig-cell" style="width:20%;padding-right:0">
+    <div class="sig-label">Firma</div>
+    <p style="font-style:italic;font-weight:700">{{ proposal.accepted_signature }}</p>
+    <div class="sig-sub">&nbsp;</div>
+  </div>
+</div>
+<p style="font-size:7pt;color:#94a3b8;margin-top:8pt">
+  Huella técnica de la aceptación — IP: {{ proposal.accepted_ip }} ·
+  Dispositivo: {{ proposal.accepted_user_agent|truncatechars:120 }}
+</p>
+{% else %}
 <div class="sig-block">
   <div class="sig-cell" style="width:38%">
     <div class="sig-label">Nombre completo del cliente</div>
@@ -476,6 +527,7 @@ body {
     <div class="sig-sub">&nbsp;</div>
   </div>
 </div>
+{% endif %}
 
 <!-- Footer -->
 <div style="margin-top:16pt;text-align:center">

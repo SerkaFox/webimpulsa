@@ -1,0 +1,2297 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cuestionario BE 360 | WebImpulsa</title>
+  <meta name="description" content="Cuestionario paso a paso BE 360 con ayuda, ejemplos y guardado automático.">
+  <style>
+    :root {
+      --ink: #213042;
+      --muted: #64748b;
+      --line: rgba(33, 48, 66, .12);
+      --paper: rgba(255, 255, 255, .82);
+      --paper-solid: #fffdfa;
+      --mint: #c9f7e7;
+      --sky: #cfeaff;
+      --peach: #ffd8bd;
+      --rose: #ffd6e7;
+      --blue: #2563eb;
+      --teal: #0f766e;
+      --coral: #f97316;
+      --shadow: 0 24px 70px rgba(33, 48, 66, .16);
+      --radius: 28px;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 12%, rgba(255, 216, 189, .9), transparent 26rem),
+        radial-gradient(circle at 92% 8%, rgba(207, 234, 255, .95), transparent 30rem),
+        radial-gradient(circle at 78% 86%, rgba(201, 247, 231, .9), transparent 28rem),
+        linear-gradient(135deg, #fff8ee 0%, #f7fbff 46%, #fff6fb 100%);
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      z-index: 0;
+      width: 22rem;
+      height: 22rem;
+      border-radius: 42% 58% 50% 50%;
+      filter: blur(.2px);
+      opacity: .36;
+      pointer-events: none;
+      animation: floatBlob 12s ease-in-out infinite;
+    }
+
+    body::before {
+      left: -7rem;
+      top: 16rem;
+      background: linear-gradient(135deg, var(--mint), var(--sky));
+    }
+
+    body::after {
+      right: -8rem;
+      bottom: 4rem;
+      background: linear-gradient(135deg, var(--rose), var(--peach));
+      animation-delay: -5s;
+    }
+
+    @keyframes floatBlob {
+      0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+      50% { transform: translate3d(1.4rem, -1.2rem, 0) rotate(7deg) scale(1.04); }
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      width: min(1240px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 34px 0 46px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: center;
+      margin-bottom: 24px;
+      padding: 28px;
+      border: 1px solid rgba(255, 255, 255, .72);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, .58);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      animation: riseIn .7s ease both;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(37, 99, 235, .1);
+      color: #1d4ed8;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .spark {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--coral);
+      box-shadow: 0 0 0 7px rgba(249, 115, 22, .14);
+    }
+
+    h1 {
+      margin: 16px 0 10px;
+      max-width: 780px;
+      font-size: clamp(36px, 6vw, 74px);
+      line-height: .92;
+      letter-spacing: -.06em;
+    }
+
+    .lead {
+      max-width: 720px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.65;
+    }
+
+    .language-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .language-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 13px 18px;
+      border-radius: 999px;
+      color: #123057;
+      background: rgba(255, 255, 255, .76);
+      border: 1px solid rgba(255, 255, 255, .84);
+      box-shadow: 0 12px 30px rgba(33, 48, 66, .09);
+      font-weight: 900;
+      text-decoration: none;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .language-btn:hover {
+      transform: translateY(-2px);
+      background: #fff;
+      box-shadow: 0 18px 38px rgba(33, 48, 66, .13);
+    }
+
+    .language-btn.primary-lang {
+      color: #fff;
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+    }
+
+    .language-btn.active {
+      color: #fff;
+      background: linear-gradient(135deg, var(--teal), var(--coral));
+    }
+
+    .hero-card {
+      width: min(300px, 100%);
+      padding: 22px;
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(255, 255, 255, .9), rgba(255, 255, 255, .48));
+      border: 1px solid rgba(255, 255, 255, .8);
+    }
+
+    .hero-card strong {
+      display: block;
+      font-size: 34px;
+      letter-spacing: -.04em;
+    }
+
+    .hero-card span {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr) 270px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid rgba(255, 255, 255, .78);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .side {
+      position: sticky;
+      top: 18px;
+      max-height: calc(100vh - 36px);
+      overflow: auto;
+      padding: 18px;
+    }
+
+    .side h2,
+    .help h2 {
+      margin: 0 0 12px;
+      font-size: 17px;
+      letter-spacing: -.02em;
+    }
+
+    .section-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .section-group {
+      display: grid;
+      gap: 6px;
+    }
+
+    .section-group.collapsed .question-list {
+      display: none;
+    }
+
+    .section-button {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 12px;
+      border: 1px solid transparent;
+      border-radius: 16px;
+      background: transparent;
+      color: var(--ink);
+      cursor: pointer;
+      text-align: left;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+    }
+
+    .section-button:hover {
+      transform: translateX(3px);
+      background: rgba(255, 255, 255, .72);
+    }
+
+    .section-button.active {
+      border-color: rgba(37, 99, 235, .24);
+      background: linear-gradient(135deg, rgba(207, 234, 255, .9), rgba(255, 255, 255, .72));
+    }
+
+    .section-number {
+      flex: 0 0 auto;
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      color: #0f172a;
+      background: rgba(255, 255, 255, .84);
+      font-weight: 900;
+      font-size: 12px;
+    }
+
+    .section-title {
+      min-width: 0;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .section-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .section-progress-pill {
+      padding: 3px 7px;
+      border-radius: 999px;
+      color: #0f766e;
+      background: rgba(201, 247, 231, .76);
+    }
+
+    .section-chevron {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 14px;
+      transition: transform .18s ease;
+    }
+
+    .section-group.collapsed .section-chevron {
+      transform: rotate(-90deg);
+    }
+
+    .question-list {
+      display: grid;
+      gap: 5px;
+      margin: 0 0 8px 40px;
+    }
+
+    .question-nav {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      padding: 8px 10px;
+      border: 1px solid transparent;
+      border-radius: 13px;
+      background: rgba(255, 255, 255, .36);
+      color: var(--muted);
+      cursor: pointer;
+      text-align: left;
+      font: inherit;
+      font-size: 12px;
+      line-height: 1.25;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease, color .18s ease;
+    }
+
+    .question-nav:hover {
+      transform: translateX(2px);
+      color: var(--ink);
+      background: rgba(255, 255, 255, .7);
+    }
+
+    .question-nav.active {
+      color: #123057;
+      border-color: rgba(37, 99, 235, .22);
+      background: linear-gradient(135deg, rgba(207, 234, 255, .95), rgba(255, 255, 255, .78));
+    }
+
+    .question-nav.answered {
+      color: #115e59;
+      border-color: rgba(15, 118, 110, .18);
+      background: linear-gradient(135deg, rgba(201, 247, 231, .82), rgba(255, 255, 255, .68));
+    }
+
+    .question-nav.answered.active {
+      color: #0f172a;
+      border-color: rgba(15, 118, 110, .35);
+      background: linear-gradient(135deg, rgba(201, 247, 231, .95), rgba(207, 234, 255, .8));
+    }
+
+    .question-dot {
+      width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: transparent;
+      background: rgba(33, 48, 66, .1);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .question-nav.answered .question-dot {
+      color: #fff;
+      background: #0f766e;
+    }
+
+    .section-button.completed {
+      border-color: rgba(15, 118, 110, .18);
+      background: rgba(201, 247, 231, .42);
+    }
+
+    .workspace {
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .progress-card {
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .progress-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .progress-track {
+      height: 13px;
+      border-radius: 999px;
+      background: rgba(33, 48, 66, .08);
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--teal), var(--blue), var(--coral));
+      transition: width .35s ease;
+    }
+
+    .complete-card {
+      display: none;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      margin: -4px 0 18px;
+      padding: 18px;
+      border-color: rgba(15, 118, 110, .2);
+      background:
+        radial-gradient(circle at 12% 10%, rgba(201, 247, 231, .95), transparent 14rem),
+        linear-gradient(135deg, rgba(255, 255, 255, .9), rgba(207, 234, 255, .62));
+      animation: riseIn .35s ease both;
+    }
+
+    .complete-card.show {
+      display: grid;
+    }
+
+    .complete-card strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 16px;
+      letter-spacing: -.02em;
+    }
+
+    .complete-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .question-card {
+      position: relative;
+      padding: clamp(22px, 4vw, 42px);
+      overflow: hidden;
+      animation: riseIn .42s ease both;
+    }
+
+    .question-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto auto;
+      width: 230px;
+      height: 230px;
+      border-radius: 50%;
+      transform: translate(76px, -94px);
+      background: radial-gradient(circle, rgba(255, 216, 189, .78), transparent 68%);
+      pointer-events: none;
+    }
+
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(16px) scale(.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .section-label {
+      position: relative;
+      display: inline-flex;
+      margin-bottom: 18px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, .1);
+      color: #0f766e;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .question {
+      position: relative;
+      margin: 0;
+      font-size: clamp(26px, 4vw, 46px);
+      line-height: 1.05;
+      letter-spacing: -.045em;
+    }
+
+    .input-wrap {
+      position: relative;
+      margin-top: 28px;
+    }
+
+    .answer {
+      width: 100%;
+      min-height: 280px;
+      resize: vertical;
+      padding: 20px;
+      border: 1px solid rgba(33, 48, 66, .13);
+      border-radius: 24px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, .76);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8);
+      font: inherit;
+      font-size: 17px;
+      line-height: 1.6;
+      outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .answer.compact {
+      min-height: 86px;
+      height: 86px;
+      resize: none;
+    }
+
+    .answer:focus {
+      border-color: rgba(37, 99, 235, .55);
+      background: #fff;
+      box-shadow: 0 0 0 5px rgba(37, 99, 235, .12);
+    }
+
+    .answer-options {
+      display: grid;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .choice-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .choice-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 78px;
+      padding: 16px;
+      border: 1px solid rgba(33, 48, 66, .12);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, .72);
+      color: var(--ink);
+      font: inherit;
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+    }
+
+    .choice-btn:hover {
+      transform: translateY(-2px);
+      background: #fff;
+      box-shadow: 0 14px 32px rgba(33, 48, 66, .11);
+    }
+
+    .choice-btn.selected {
+      color: #fff;
+      border-color: rgba(15, 118, 110, .22);
+      background: linear-gradient(135deg, var(--teal), var(--blue));
+    }
+
+    .answer-number {
+      max-width: 260px;
+      min-height: 78px;
+      resize: none;
+      font-size: 26px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 13px 18px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, .78);
+      box-shadow: 0 12px 30px rgba(33, 48, 66, .09);
+      font: inherit;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 38px rgba(33, 48, 66, .13);
+    }
+
+    .btn.primary {
+      color: white;
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+    }
+
+    .btn.warm {
+      color: #3b2108;
+      background: linear-gradient(135deg, #ffd8bd, #fff1c7);
+    }
+
+    .btn.danger {
+      color: #991b1b;
+      background: rgba(254, 226, 226, .9);
+    }
+
+    .btn:disabled {
+      opacity: .42;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .help {
+      position: sticky;
+      top: 18px;
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+    }
+
+    .tip,
+    .example,
+    .result-card {
+      padding: 16px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, .68);
+      border: 1px solid rgba(255, 255, 255, .78);
+    }
+
+    .tip strong,
+    .example strong,
+    .result-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .tip p,
+    .example p,
+    .result-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .example p {
+      max-height: 190px;
+      overflow: auto;
+    }
+
+    .mini-actions {
+      display: grid;
+      gap: 9px;
+    }
+
+    .mini-actions .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .summary {
+      display: none;
+      margin-top: 18px;
+      padding: 22px;
+    }
+
+    .summary.open {
+      display: block;
+      animation: riseIn .35s ease both;
+    }
+
+    .summary h2 {
+      margin: 0 0 16px;
+      font-size: 28px;
+      letter-spacing: -.04em;
+    }
+
+    .summary-section {
+      padding: 16px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .summary-section h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .summary-item {
+      margin: 10px 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .summary-item b {
+      color: var(--ink);
+    }
+
+    .toast {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 5;
+      max-width: 340px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      color: #fff;
+      background: rgba(15, 23, 42, .9);
+      box-shadow: var(--shadow);
+      transform: translateY(18px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 1080px) {
+      .layout {
+        grid-template-columns: 230px minmax(0, 1fr);
+      }
+
+      .help {
+        position: static;
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        width: min(100% - 20px, 1240px);
+        padding-top: 12px;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        padding: 22px;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .side {
+        position: static;
+        max-height: none;
+      }
+
+      .section-list {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 6px;
+      }
+
+      .section-group {
+        min-width: 245px;
+      }
+
+      .section-button {
+        min-width: 245px;
+      }
+
+      .question-list {
+        margin-left: 8px;
+        max-height: 180px;
+        overflow: auto;
+      }
+
+      .choice-row {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        align-items: stretch;
+      }
+
+      .group,
+      .btn {
+        width: 100%;
+      }
+
+      .complete-card {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      body::before,
+      body::after,
+      .hero,
+      .side,
+      .help,
+      .progress-card,
+      .complete-card,
+      .question-card,
+      .toast {
+        display: none !important;
+      }
+
+      .page,
+      .layout,
+      .workspace {
+        display: block;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+      }
+
+      .summary {
+        display: block !important;
+        box-shadow: none;
+        border: 0;
+        background: #fff;
+      }
+    }
+  </style>
+</head>
+<body>
+  {{ sections|json_script:"questionnaire-data" }}
+
+  <main class="page">
+    <header class="hero">
+      <div>
+        <span class="eyebrow"><span class="spark"></span> BE 360 · WebImpulsa</span>
+        <h1 id="heroTitle">Cuestionario paso a paso</h1>
+        <p class="lead" id="heroLead">Completa el diagnóstico por bloques, con ayuda contextual y ejemplos neutrales. Tus respuestas se guardan automáticamente en este navegador.</p>
+        <div class="language-actions" aria-label="Traducir cuestionario">
+          <a class="language-btn primary-lang" href="#" data-lang="es">Español</a>
+          <a class="language-btn" href="#" data-lang="eu">Euskera</a>
+          <a class="language-btn" href="#" data-lang="uk">Українська</a>
+          <a class="language-btn" href="#" data-lang="ru">Русский</a>
+          <button class="language-btn" type="button" id="newSurveyBtn">Nuevo cuestionario</button>
+        </div>
+      </div>
+      <aside class="hero-card" aria-label="Resumen del cuestionario">
+        <strong id="heroCount">0</strong>
+        <span id="heroSubtitle">preguntas organizadas por secciones para avanzar sin perder el hilo.</span>
+      </aside>
+    </header>
+
+    <section class="layout">
+      <nav class="panel side" aria-label="Secciones del cuestionario">
+        <h2 id="navTitle">Secciones</h2>
+        <div class="section-list" id="sectionList"></div>
+      </nav>
+
+      <div class="workspace">
+        <div class="panel progress-card">
+          <div class="progress-top">
+            <span id="progressText">0 de 0 respuestas</span>
+            <span id="stepText">Paso 1</span>
+          </div>
+          <div class="progress-track" aria-hidden="true">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+        </div>
+
+        <div class="panel complete-card" id="completeCard" aria-live="polite">
+          <div>
+            <strong id="completeTitle">Cuestionario completo</strong>
+            <p id="completeText">Ya puedes descargar el documento final con todas las preguntas y respuestas en PDF.</p>
+          </div>
+          <div class="group">
+            <button class="btn primary" type="button" id="downloadPdfBtn">Descargar PDF final</button>
+            <button class="btn warm" type="button" id="sendWhatsappBtn">Enviar PDF a Ekaterina</button>
+            <button class="btn warm" type="button" id="sendEmailBtn">Enviar PDF por email</button>
+          </div>
+        </div>
+
+        <article class="panel question-card" id="questionCard">
+          <span class="section-label" id="sectionLabel"></span>
+          <h2 class="question" id="questionTitle"></h2>
+
+          <div class="input-wrap" id="answerContainer"></div>
+
+          <div class="actions">
+            <div class="group">
+              <button class="btn" type="button" id="prevBtn">Anterior</button>
+              <button class="btn primary" type="button" id="nextBtn">Siguiente</button>
+            </div>
+            <div class="group">
+              <button class="btn warm" type="button" id="summaryBtn">Ver resumen</button>
+            </div>
+          </div>
+        </article>
+
+        <section class="panel summary" id="summaryPanel" aria-live="polite">
+          <h2 id="summaryTitle">Resumen de respuestas</h2>
+          <div id="summaryContent"></div>
+        </section>
+      </div>
+
+      <aside class="panel help" aria-label="Ayuda para responder">
+        <h2 id="helpTitle">Ayuda</h2>
+        <div class="tip">
+          <strong id="howTitle">Cómo responder</strong>
+          <p id="helpText">Responde con frases concretas. Mejor una respuesta clara que una respuesta perfecta.</p>
+        </div>
+        <div class="example">
+          <strong id="ideaTitle">Idea para responder</strong>
+          <p id="hintText">Selecciona una pregunta para ver una orientación neutral.</p>
+        </div>
+        <div class="mini-actions">
+          <button class="btn warm" type="button" id="useHintBtn">Insertar ejemplo</button>
+          <button class="btn" type="button" id="downloadBtn">Descargar TXT</button>
+          <button class="btn danger" type="button" id="clearBtn">Limpiar respuestas</button>
+        </div>
+        <div class="result-card">
+          <strong id="savedTitle">Guardado</strong>
+          <p id="saveState">Sin cambios todavía.</p>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const sections = JSON.parse(document.getElementById('questionnaire-data').textContent);
+    const storageKey = 'webimpulsa:be360-questionnaire:v1';
+    const langStorageKey = 'webimpulsa:be360-questionnaire:lang';
+    const ekaterinaWhatsapp = '34628354841';
+    const flatQuestions = sections.flatMap((section, sectionIndex) =>
+      section.questions.map((question, questionIndex) => ({ ...question, section, sectionIndex, questionIndex }))
+    );
+
+    const state = {
+      index: 0,
+      answers: {},
+      lang: localStorage.getItem(langStorageKey) || 'es',
+      collapsedSections: new Set(),
+    };
+
+    const I18N = {
+      es: {
+        heroTitle: 'Cuestionario paso a paso',
+        heroLead: 'Completa el diagnóstico por bloques, con ayuda contextual y ejemplos neutrales. Tus respuestas se guardan automáticamente en este navegador.',
+        heroSubtitle: 'preguntas organizadas por secciones para avanzar sin perder el hilo.',
+        navTitle: 'Secciones',
+        questions: 'preguntas',
+        progress: (answered, total) => `${answered} de ${total} respuestas`,
+        step: (current, total) => `Pregunta actual ${current} de ${total}`,
+        completeTitle: 'Cuestionario completo',
+        completeText: 'Ya puedes descargar el documento final con todas las preguntas y respuestas en PDF.',
+        downloadPdf: 'Descargar PDF final',
+        sendWhatsapp: 'Enviar PDF a Ekaterina',
+        newSurvey: 'Nuevo cuestionario',
+        placeholder: 'Escribe tu respuesta con calma. Puedes usar la ayuda de la derecha si necesitas inspiración.',
+        prev: 'Anterior',
+        next: 'Siguiente',
+        finish: 'Terminar',
+        summaryBtn: 'Ver resumen',
+        summaryTitle: 'Resumen de respuestas',
+        helpTitle: 'Ayuda',
+        howTitle: 'Cómo responder',
+        ideaTitle: 'Idea para responder',
+        insertExample: 'Insertar ejemplo',
+        downloadTxt: 'Descargar TXT',
+        clear: 'Limpiar respuestas',
+        savedTitle: 'Guardado',
+        noChanges: 'Sin cambios todavía.',
+        pending: 'Pendiente de completar',
+        savedAt: (time) => `Guardado a las ${time}.`,
+        inserted: 'Ejemplo neutral insertado. Puedes editarlo.',
+        cleared: 'Respuestas limpiadas.',
+        confirmClear: '¿Seguro que quieres limpiar todas las respuestas guardadas?',
+        whatsappText: 'Hola Ekaterina, he completado el cuestionario BE 360. Voy a enviarte el PDF con mis respuestas.',
+        sendEmail: 'Enviar PDF por email',
+        emailSending: 'Enviando...',
+        emailSent: 'PDF enviado por email correctamente.',
+        emailError: 'No se pudo enviar el PDF. Inténtalo de nuevo.',
+      },
+      ru: {
+        heroTitle: 'Пошаговая анкета',
+        heroLead: 'Заполняй диагностику по блокам: с подсказками, нейтральными примерами и автосохранением в этом браузере.',
+        heroSubtitle: 'вопросов, сгруппированных по разделам, чтобы двигаться без путаницы.',
+        navTitle: 'Разделы',
+        questions: 'вопросов',
+        progress: (answered, total) => `${answered} из ${total} ответов`,
+        step: (current, total) => `Текущий вопрос ${current} из ${total}`,
+        completeTitle: 'Анкета заполнена',
+        completeText: 'Теперь можно скачать итоговый документ с вопросами и ответами в PDF.',
+        downloadPdf: 'Скачать итоговый PDF',
+        sendWhatsapp: 'Отправить PDF Екатерине',
+        newSurvey: 'Новый опрос',
+        placeholder: 'Спокойно напиши ответ. Справа есть помощь и пример, если нужна идея.',
+        prev: 'Назад',
+        next: 'Дальше',
+        finish: 'Завершить',
+        summaryBtn: 'Показать резюме',
+        summaryTitle: 'Резюме ответов',
+        helpTitle: 'Помощь',
+        howTitle: 'Как отвечать',
+        ideaTitle: 'Идея для ответа',
+        insertExample: 'Вставить пример',
+        downloadTxt: 'Скачать TXT',
+        clear: 'Очистить ответы',
+        savedTitle: 'Сохранение',
+        noChanges: 'Пока без изменений.',
+        pending: 'Ожидает заполнения',
+        savedAt: (time) => `Сохранено в ${time}.`,
+        inserted: 'Нейтральный пример вставлен. Его можно отредактировать.',
+        cleared: 'Ответы очищены.',
+        confirmClear: 'Точно очистить все сохраненные ответы?',
+        whatsappText: 'Здравствуйте, Екатерина. Я заполнил(а) анкету BE 360 и отправляю PDF с ответами.',
+        sendEmail: 'Отправить PDF по email',
+        emailSending: 'Отправка...',
+        emailSent: 'PDF успешно отправлен по email.',
+        emailError: 'Не удалось отправить PDF. Попробуйте еще раз.',
+      },
+      uk: {
+        heroTitle: 'Покрокова анкета',
+        heroLead: 'Заповнюй діагностику блоками: з підказками, нейтральними прикладами та автозбереженням у цьому браузері.',
+        heroSubtitle: 'питань, згрупованих за розділами, щоб рухатися без плутанини.',
+        navTitle: 'Розділи',
+        questions: 'питань',
+        progress: (answered, total) => `${answered} з ${total} відповідей`,
+        step: (current, total) => `Поточне питання ${current} з ${total}`,
+        completeTitle: 'Анкету заповнено',
+        completeText: 'Тепер можна завантажити фінальний документ із питаннями та відповідями у PDF.',
+        downloadPdf: 'Завантажити фінальний PDF',
+        sendWhatsapp: 'Надіслати PDF Катерині',
+        newSurvey: 'Нова анкета',
+        placeholder: 'Спокійно напиши відповідь. Праворуч є допомога та приклад, якщо потрібна ідея.',
+        prev: 'Назад',
+        next: 'Далі',
+        finish: 'Завершити',
+        summaryBtn: 'Показати резюме',
+        summaryTitle: 'Резюме відповідей',
+        helpTitle: 'Допомога',
+        howTitle: 'Як відповідати',
+        ideaTitle: 'Ідея для відповіді',
+        insertExample: 'Вставити приклад',
+        downloadTxt: 'Завантажити TXT',
+        clear: 'Очистити відповіді',
+        savedTitle: 'Збереження',
+        noChanges: 'Поки без змін.',
+        pending: 'Очікує заповнення',
+        savedAt: (time) => `Збережено о ${time}.`,
+        inserted: 'Нейтральний приклад вставлено. Його можна відредагувати.',
+        cleared: 'Відповіді очищено.',
+        confirmClear: 'Точно очистити всі збережені відповіді?',
+        whatsappText: 'Добрий день, Катерино. Я заповнив(ла) анкету BE 360 і надсилаю PDF з відповідями.',
+        sendEmail: 'Надіслати PDF на email',
+        emailSending: 'Надсилання...',
+        emailSent: 'PDF успішно надіслано на email.',
+        emailError: 'Не вдалося надіслати PDF. Спробуйте ще раз.',
+      },
+      eu: {
+        heroTitle: 'Galdetegi pausoz pauso',
+        heroLead: 'Osatu diagnostikoa blokeka: laguntza-testuekin, adibide neutralekin eta nabigatzaile honetan automatikoki gordeta.',
+        heroSubtitle: 'galdera ataletan antolatuta, haria galdu gabe aurrera egiteko.',
+        navTitle: 'Atalak',
+        questions: 'galdera',
+        progress: (answered, total) => `${answered} / ${total} erantzun`,
+        step: (current, total) => `Uneko galdera ${current} / ${total}`,
+        completeTitle: 'Galdetegia osatuta',
+        completeText: 'Orain azken dokumentua deskarga dezakezu, galdera eta erantzun guztiekin, PDF formatuan.',
+        downloadPdf: 'Deskargatu azken PDFa',
+        sendWhatsapp: 'Bidali PDFa Ekaterinari',
+        newSurvey: 'Galdetegi berria',
+        placeholder: 'Idatzi erantzuna lasai. Eskuinean laguntza eta adibidea dituzu inspiraziorako.',
+        prev: 'Aurrekoa',
+        next: 'Hurrengoa',
+        finish: 'Amaitu',
+        summaryBtn: 'Ikusi laburpena',
+        summaryTitle: 'Erantzunen laburpena',
+        helpTitle: 'Laguntza',
+        howTitle: 'Nola erantzun',
+        ideaTitle: 'Erantzuteko ideia',
+        insertExample: 'Txertatu adibidea',
+        downloadTxt: 'Deskargatu TXT',
+        clear: 'Garbitu erantzunak',
+        savedTitle: 'Gordeta',
+        noChanges: 'Oraindik aldaketarik ez.',
+        pending: 'Betetzeke',
+        savedAt: (time) => `${time}(e)tan gordeta.`,
+        inserted: 'Adibide neutroa txertatu da. Edita dezakezu.',
+        cleared: 'Erantzunak garbitu dira.',
+        confirmClear: 'Ziur gordetako erantzun guztiak garbitu nahi dituzula?',
+        whatsappText: 'Kaixo Ekaterina, BE 360 galdetegia osatu dut eta nire erantzunen PDFa bidaliko dizut.',
+        sendEmail: 'Bidali PDFa emailez',
+        emailSending: 'Bidaltzen...',
+        emailSent: 'PDFa emailez ondo bidali da.',
+        emailError: 'Ezin izan da PDFa bidali. Saiatu berriro.',
+      },
+    };
+
+    const SECTION_I18N = {
+      ru: {
+        'DATOS PERSONALES': 'Личные данные',
+        '1. TU HISTORIA': '1. Твоя история',
+        '2. VISIÓN': '2. Видение',
+        '3. OBJETIVOS': '3. Цели',
+        '4. IDEA DE NEGOCIO': '4. Бизнес-идея',
+        '5. EXPERIENCIA': '5. Опыт',
+        '6. FINANZAS': '6. Финансы',
+        '7. ORGANIZACIÓN': '7. Организация',
+        '8. HÁBITOS': '8. Привычки',
+        '9. PRODUCTIVIDAD': '9. Продуктивность',
+        '10. MARCA PERSONAL': '10. Личный бренд',
+        '11. REDES SOCIALES': '11. Социальные сети',
+        '12. CONTENIDO': '12. Контент',
+        '13. CLIENTES': '13. Клиенты',
+        '14. VENTAS': '14. Продажи',
+        '15. FINANCIACIÓN': '15. Финансирование',
+        '16. NETWORKING': '16. Нетворкинг',
+        '17. IA': '17. ИИ',
+        '18. BIENESTAR EMOCIONAL': '18. Эмоциональное состояние',
+        '19. NECESIDADES': '19. Потребности',
+        '20. COMPROMISO': '20. Обязательство',
+      },
+      uk: {
+        'DATOS PERSONALES': 'Особисті дані',
+        '1. TU HISTORIA': '1. Твоя історія',
+        '2. VISIÓN': '2. Бачення',
+        '3. OBJETIVOS': '3. Цілі',
+        '4. IDEA DE NEGOCIO': '4. Бізнес-ідея',
+        '5. EXPERIENCIA': '5. Досвід',
+        '6. FINANZAS': '6. Фінанси',
+        '7. ORGANIZACIÓN': '7. Організація',
+        '8. HÁBITOS': '8. Звички',
+        '9. PRODUCTIVIDAD': '9. Продуктивність',
+        '10. MARCA PERSONAL': '10. Особистий бренд',
+        '11. REDES SOCIALES': '11. Соціальні мережі',
+        '12. CONTENIDO': '12. Контент',
+        '13. CLIENTES': '13. Клієнти',
+        '14. VENTAS': '14. Продажі',
+        '15. FINANCIACIÓN': '15. Фінансування',
+        '16. NETWORKING': '16. Нетворкінг',
+        '17. IA': '17. ШІ',
+        '18. BIENESTAR EMOCIONAL': '18. Емоційний стан',
+        '19. NECESIDADES': '19. Потреби',
+        '20. COMPROMISO': '20. Зобов’язання',
+      },
+      eu: {
+        'DATOS PERSONALES': 'Datu pertsonalak',
+        '1. TU HISTORIA': '1. Zure historia',
+        '2. VISIÓN': '2. Ikuspegia',
+        '3. OBJETIVOS': '3. Helburuak',
+        '4. IDEA DE NEGOCIO': '4. Negozio-ideia',
+        '5. EXPERIENCIA': '5. Esperientzia',
+        '6. FINANZAS': '6. Finantzak',
+        '7. ORGANIZACIÓN': '7. Antolaketa',
+        '8. HÁBITOS': '8. Ohiturak',
+        '9. PRODUCTIVIDAD': '9. Produktibitatea',
+        '10. MARCA PERSONAL': '10. Marka pertsonala',
+        '11. REDES SOCIALES': '11. Sare sozialak',
+        '12. CONTENIDO': '12. Edukia',
+        '13. CLIENTES': '13. Bezeroak',
+        '14. VENTAS': '14. Salmentak',
+        '15. FINANCIACIÓN': '15. Finantzaketa',
+        '16. NETWORKING': '16. Harreman-sarea',
+        '17. IA': '17. AA',
+        '18. BIENESTAR EMOCIONAL': '18. Ongizate emozionala',
+        '19. NECESIDADES': '19. Beharrak',
+        '20. COMPROMISO': '20. Konpromisoa',
+      },
+    };
+
+    const QUESTION_I18N = {
+      ru: {
+        'Nombre': 'Имя',
+        'Edad': 'Возраст',
+        'País de origen': 'Страна происхождения',
+        'Ciudad donde resides': 'Город проживания',
+        'Idiomas': 'Языки',
+        'Teléfono': 'Телефон',
+        'Email': 'Email',
+        'LinkedIn': 'LinkedIn',
+        'Instagram': 'Instagram',
+        'Página web': 'Веб-сайт',
+        'Empresa (si existe)': 'Компания, если есть',
+        'Profesión': 'Профессия',
+        'Cuéntanos quién eres.': 'Расскажи, кто ты.',
+        '¿Qué te ha traído hasta aquí?': 'Что привело тебя к этому этапу?',
+        '¿Qué te hace diferente?': 'Что отличает тебя от других?',
+        '¿Cuál ha sido el mayor reto de tu vida?': 'Какой был самый большой вызов в твоей жизни?',
+        '¿Qué has aprendido de él?': 'Чему ты из этого научился/научилась?',
+        '¿Qué te apasiona?': 'Что тебя вдохновляет?',
+        '¿Qué actividad harías incluso sin cobrar?': 'Чем бы ты занимался/занималась даже без оплаты?',
+        '¿Cuáles son tus tres mayores fortalezas?': 'Три твои главные сильные стороны?',
+        '¿Cuáles son tus tres mayores debilidades?': 'Три зоны, которые ты хочешь улучшить?',
+        '¿Dónde quieres estar dentro de cinco años?': 'Где ты хочешь быть через пять лет?',
+        '¿Cómo quieres que sea tu vida?': 'Какой ты хочешь видеть свою жизнь?',
+        '¿Qué significa para ti el éxito?': 'Что для тебя означает успех?',
+        '¿Qué legado quieres dejar?': 'Какой след ты хочешь оставить?',
+        '¿Por qué quieres emprender?': 'Почему ты хочешь заниматься своим проектом?',
+        '¿Cuál es tu objetivo principal este año?': 'Какая главная цель на этот год?',
+        '¿Cuáles son tus tres objetivos más importantes?': 'Три самые важные цели?',
+        '¿Qué quieres conseguir durante los próximos 90 días?': 'Что ты хочешь достичь за ближайшие 90 дней?',
+        '¿Qué sería un éxito para ti?': 'Что будет для тебя успехом?',
+        '¿Ya tienes una idea?': 'У тебя уже есть идея?',
+        'Descríbela': 'Опиши ее',
+        '¿Qué problema resuelve?': 'Какую проблему она решает?',
+        '¿Quién pagaría por ella?': 'Кто готов платить за это?',
+        '¿Quién es tu cliente ideal?': 'Кто твой идеальный клиент?',
+        '¿Qué te diferencia?': 'Чем ты отличаешься?',
+        '¿Cuánto facturas actualmente?': 'Сколько ты сейчас зарабатываешь/выставляешь счетов?',
+        '¿En qué fase estás?': 'На каком этапе ты сейчас?',
+        '¿Has emprendido antes?': 'Ты раньше запускал/запускала проект?',
+        '¿Has fracasado alguna vez?': 'Были ли неудачные попытки?',
+        '¿Qué aprendiste?': 'Что ты понял/поняла из этого опыта?',
+        '¿Qué formación tienes?': 'Какое у тебя образование или подготовка?',
+        '¿En qué eres realmente buena?': 'В чем ты действительно силен/сильна?',
+        '¿Cuánto dinero puedes invertir?': 'Сколько ты можешь инвестировать?',
+        '¿Cuáles son tus ingresos mensuales?': 'Какие у тебя ежемесячные доходы?',
+        '¿Tienes ahorros?': 'Есть ли сбережения?',
+        '¿Necesitas financiación?': 'Нужно ли финансирование?',
+        '¿Conoces las subvenciones disponibles?': 'Знаешь ли доступные субсидии?',
+        '¿Has solicitado alguna ayuda?': 'Ты уже подавал/подавала заявку на помощь?',
+        '¿Cómo organizas tu tiempo?': 'Как ты организуешь свое время?',
+        '¿Utilizas Agenda / Google Calendar / Notion / Trello / CRM?': 'Используешь календарь, Notion, Trello или CRM?',
+        '¿Cuántas horas trabajas?': 'Сколько часов ты работаешь?',
+        '¿Cuántas horas dedicas a aprender?': 'Сколько часов уделяешь обучению?',
+        '¿Fumas?': 'Куришь?',
+        '¿Consumes alcohol?': 'Употребляешь алкоголь?',
+        '¿Haces ejercicio?': 'Занимаешься спортом?',
+        'Horas de sueño': 'Сколько часов спишь?',
+        '¿Lees libros? ¿Cuántos al año?': 'Читаешь книги? Сколько в год?',
+        '¿Escuchas podcasts?': 'Слушаешь подкасты?',
+        '¿Haces formación continua?': 'Проходишь постоянное обучение?',
+        'Valora Energía / Salud / Felicidad (1-10)': 'Оцени энергию / здоровье / счастье от 1 до 10',
+        '¿Planificas la semana?': 'Планируешь неделю?',
+        '¿Haces lista de tareas?': 'Ведешь список задач?',
+        '¿Revisas objetivos?': 'Пересматриваешь цели?',
+        '¿Qué te distrae más?': 'Что отвлекает больше всего?',
+        '¿En qué pierdes tiempo?': 'На чем теряешь время?',
+        '¿Qué hábito quieres cambiar?': 'Какую привычку хочешь изменить?',
+        '¿Tienes marca personal?': 'Есть ли у тебя личный бренд?',
+        '¿La trabajas?': 'Ты над ним работаешь?',
+        '¿Cómo quieres que te conozcan?': 'Как ты хочешь, чтобы тебя знали?',
+        '¿Qué imagen quieres transmitir?': 'Какой образ хочешь передавать?',
+        '¿Cuál es tu propuesta de valor?': 'В чем твое ценностное предложение?',
+        'Instagram, LinkedIn, Facebook, TikTok, YouTube, X, Threads, Pinterest, Telegram, WhatsApp Business (usuario, seguidores, frecuencia, objetivo)': 'Соцсети: Instagram, LinkedIn, Facebook, TikTok, YouTube, X, Threads, Pinterest, Telegram, WhatsApp Business: аккаунт, подписчики, частота, цель',
+        'Frecuencia de publicación': 'Частота публикаций',
+        'Tipos de contenido': 'Типы контента',
+        '¿Te da miedo aparecer en cámara?': 'Страшно ли появляться в кадре?',
+        '¿Sabes editar vídeo?': 'Умеешь монтировать видео?',
+        '¿Qué IA utilizas?': 'Какие инструменты ИИ используешь?',
+        'Cliente ideal': 'Идеальный клиент',
+        '¿Dónde lo encuentras?': 'Где ты его находишь?',
+        '¿Cómo consigues clientes?': 'Как ты привлекаешь клиентов?',
+        '¿Cuántos clientes tienes?': 'Сколько у тебя клиентов?',
+        'Ticket medio': 'Средний чек',
+        'Principal problema comercial': 'Главная коммерческая проблема',
+        '¿Cómo vendes?': 'Как ты продаешь?',
+        '¿Tienes embudo?': 'Есть ли воронка продаж?',
+        '¿Tienes CRM?': 'Есть ли CRM?',
+        '¿Cuál es tu conversión?': 'Какая конверсия?',
+        '¿Buscas subvenciones, inversión, Business Angels, Crowdfunding, préstamos o fondos europeos?': 'Ищешь субсидии, инвестиции, бизнес-ангелов, краудфандинг, кредиты или европейские фонды?',
+        '¿Cuántos eventos asistes?': 'Сколько мероприятий посещаешь?',
+        '¿Cuántos contactos nuevos haces al mes?': 'Сколько новых контактов делаешь в месяц?',
+        '¿Pides ayuda?': 'Просишь ли помощь?',
+        '¿Colaboras?': 'Сотрудничаешь с другими?',
+        '¿Tienes mentor?': 'Есть ли наставник?',
+        '¿Usas IA? ¿Para qué?': 'Используешь ИИ? Для чего?',
+        'Valora estrés, motivación, confianza, miedo al fracaso, miedo a vender y gestión emocional (1-10)': 'Оцени стресс, мотивацию, уверенность, страх неудачи, страх продаж и управление эмоциями от 1 до 10',
+        '¿En qué necesitas ayuda?': 'В чем тебе нужна помощь?',
+        '¿Cuántas horas puedes dedicar cada semana?': 'Сколько часов в неделю можешь уделять?',
+        '¿Estás preparada para cambiar hábitos?': 'Готов/готова менять привычки?',
+        '¿Aceptarás seguimiento semanal?': 'Готов/готова к еженедельному сопровождению?',
+        '¿Qué esperas de BE?': 'Чего ты ждешь от BE?',
+      },
+      uk: {
+        'Nombre': 'Ім’я',
+        'Edad': 'Вік',
+        'País de origen': 'Країна походження',
+        'Ciudad donde resides': 'Місто проживання',
+        'Idiomas': 'Мови',
+        'Teléfono': 'Телефон',
+        'Email': 'Email',
+        'LinkedIn': 'LinkedIn',
+        'Instagram': 'Instagram',
+        'Página web': 'Веб-сайт',
+        'Empresa (si existe)': 'Компанія, якщо є',
+        'Profesión': 'Професія',
+        'Cuéntanos quién eres.': 'Розкажи, хто ти.',
+        '¿Qué te ha traído hasta aquí?': 'Що привело тебе до цього етапу?',
+        '¿Qué te hace diferente?': 'Що відрізняє тебе від інших?',
+        '¿Cuál ha sido el mayor reto de tu vida?': 'Який був найбільший виклик у твоєму житті?',
+        '¿Qué has aprendido de él?': 'Чого ти з цього навчився/навчилася?',
+        '¿Qué te apasiona?': 'Що тебе надихає?',
+        '¿Qué actividad harías incluso sin cobrar?': 'Чим би ти займався/займалася навіть без оплати?',
+        '¿Cuáles son tus tres mayores fortalezas?': 'Три твої головні сильні сторони?',
+        '¿Cuáles son tus tres mayores debilidades?': 'Три зони, які ти хочеш покращити?',
+        '¿Dónde quieres estar dentro de cinco años?': 'Де ти хочеш бути через п’ять років?',
+        '¿Cómo quieres que sea tu vida?': 'Яким ти хочеш бачити своє життя?',
+        '¿Qué significa para ti el éxito?': 'Що для тебе означає успіх?',
+        '¿Qué legado quieres dejar?': 'Який слід ти хочеш залишити?',
+        '¿Por qué quieres emprender?': 'Чому ти хочеш розвивати власний проєкт?',
+        '¿Cuál es tu objetivo principal este año?': 'Яка головна ціль на цей рік?',
+        '¿Cuáles son tus tres objetivos más importantes?': 'Три найважливіші цілі?',
+        '¿Qué quieres conseguir durante los próximos 90 días?': 'Що хочеш досягти за найближчі 90 днів?',
+        '¿Qué sería un éxito para ti?': 'Що буде для тебе успіхом?',
+        '¿Ya tienes una idea?': 'У тебе вже є ідея?',
+        'Descríbela': 'Опиши її',
+        '¿Qué problema resuelve?': 'Яку проблему вона вирішує?',
+        '¿Quién pagaría por ella?': 'Хто готовий платити за це?',
+        '¿Quién es tu cliente ideal?': 'Хто твій ідеальний клієнт?',
+        '¿Qué te diferencia?': 'Чим ти відрізняєшся?',
+        '¿Cuánto facturas actualmente?': 'Скільки ти зараз заробляєш або виставляєш рахунків?',
+        '¿En qué fase estás?': 'На якому етапі ти зараз?',
+        '¿Has emprendido antes?': 'Ти раніше запускав/запускала проєкт?',
+        '¿Has fracasado alguna vez?': 'Чи були невдалі спроби?',
+        '¿Qué aprendiste?': 'Що ти зрозумів/зрозуміла з цього досвіду?',
+        '¿Qué formación tienes?': 'Яка в тебе освіта або підготовка?',
+        '¿En qué eres realmente buena?': 'У чому ти справді сильний/сильна?',
+        '¿Cuánto dinero puedes invertir?': 'Скільки можеш інвестувати?',
+        '¿Cuáles son tus ingresos mensuales?': 'Які твої щомісячні доходи?',
+        '¿Tienes ahorros?': 'Чи є заощадження?',
+        '¿Necesitas financiación?': 'Чи потрібне фінансування?',
+        '¿Conoces las subvenciones disponibles?': 'Чи знаєш доступні субсидії?',
+        '¿Has solicitado alguna ayuda?': 'Ти вже подавав/подавала заявку на допомогу?',
+        '¿Cómo organizas tu tiempo?': 'Як ти організовуєш свій час?',
+        '¿Utilizas Agenda / Google Calendar / Notion / Trello / CRM?': 'Чи використовуєш календар, Notion, Trello або CRM?',
+        '¿Cuántas horas trabajas?': 'Скільки годин працюєш?',
+        '¿Cuántas horas dedicas a aprender?': 'Скільки годин приділяєш навчанню?',
+        '¿Fumas?': 'Куриш?',
+        '¿Consumes alcohol?': 'Вживаєш алкоголь?',
+        '¿Haces ejercicio?': 'Займаєшся спортом?',
+        'Horas de sueño': 'Скільки годин спиш?',
+        '¿Lees libros? ¿Cuántos al año?': 'Читаєш книги? Скільки на рік?',
+        '¿Escuchas podcasts?': 'Слухаєш подкасти?',
+        '¿Haces formación continua?': 'Проходиш постійне навчання?',
+        'Valora Energía / Salud / Felicidad (1-10)': 'Оціни енергію / здоров’я / щастя від 1 до 10',
+        '¿Planificas la semana?': 'Плануєш тиждень?',
+        '¿Haces lista de tareas?': 'Ведеш список завдань?',
+        '¿Revisas objetivos?': 'Переглядаєш цілі?',
+        '¿Qué te distrae más?': 'Що відволікає найбільше?',
+        '¿En qué pierdes tiempo?': 'На чому втрачаєш час?',
+        '¿Qué hábito quieres cambiar?': 'Яку звичку хочеш змінити?',
+        '¿Tienes marca personal?': 'Чи є в тебе особистий бренд?',
+        '¿La trabajas?': 'Ти над ним працюєш?',
+        '¿Cómo quieres que te conozcan?': 'Як ти хочеш, щоб тебе знали?',
+        '¿Qué imagen quieres transmitir?': 'Який образ хочеш передавати?',
+        '¿Cuál es tu propuesta de valor?': 'У чому твоя ціннісна пропозиція?',
+        'Instagram, LinkedIn, Facebook, TikTok, YouTube, X, Threads, Pinterest, Telegram, WhatsApp Business (usuario, seguidores, frecuencia, objetivo)': 'Соцмережі: Instagram, LinkedIn, Facebook, TikTok, YouTube, X, Threads, Pinterest, Telegram, WhatsApp Business: акаунт, підписники, частота, ціль',
+        'Frecuencia de publicación': 'Частота публікацій',
+        'Tipos de contenido': 'Типи контенту',
+        '¿Te da miedo aparecer en cámara?': 'Чи страшно з’являтися в кадрі?',
+        '¿Sabes editar vídeo?': 'Чи вмієш монтувати відео?',
+        '¿Qué IA utilizas?': 'Які інструменти ШІ використовуєш?',
+        'Cliente ideal': 'Ідеальний клієнт',
+        '¿Dónde lo encuentras?': 'Де ти його знаходиш?',
+        '¿Cómo consigues clientes?': 'Як ти залучаєш клієнтів?',
+        '¿Cuántos clientes tienes?': 'Скільки в тебе клієнтів?',
+        'Ticket medio': 'Середній чек',
+        'Principal problema comercial': 'Головна комерційна проблема',
+        '¿Cómo vendes?': 'Як ти продаєш?',
+        '¿Tienes embudo?': 'Чи є воронка продажів?',
+        '¿Tienes CRM?': 'Чи є CRM?',
+        '¿Cuál es tu conversión?': 'Яка конверсія?',
+        '¿Buscas subvenciones, inversión, Business Angels, Crowdfunding, préstamos o fondos europeos?': 'Шукаєш субсидії, інвестиції, бізнес-ангелів, краудфандинг, кредити або європейські фонди?',
+        '¿Cuántos eventos asistes?': 'Скільки заходів відвідуєш?',
+        '¿Cuántos contactos nuevos haces al mes?': 'Скільки нових контактів робиш на місяць?',
+        '¿Pides ayuda?': 'Чи просиш допомогу?',
+        '¿Colaboras?': 'Чи співпрацюєш з іншими?',
+        '¿Tienes mentor?': 'Чи є наставник?',
+        '¿Usas IA? ¿Para qué?': 'Використовуєш ШІ? Для чого?',
+        'Valora estrés, motivación, confianza, miedo al fracaso, miedo a vender y gestión emocional (1-10)': 'Оціни стрес, мотивацію, впевненість, страх невдачі, страх продажів і керування емоціями від 1 до 10',
+        '¿En qué necesitas ayuda?': 'У чому тобі потрібна допомога?',
+        '¿Cuántas horas puedes dedicar cada semana?': 'Скільки годин на тиждень можеш приділяти?',
+        '¿Estás preparada para cambiar hábitos?': 'Готовий/готова змінювати звички?',
+        '¿Aceptarás seguimiento semanal?': 'Готовий/готова до щотижневого супроводу?',
+        '¿Qué esperas de BE?': 'Чого ти очікуєш від BE?',
+      },
+      eu: {
+        'Nombre': 'Izena',
+        'Edad': 'Adina',
+        'País de origen': 'Jatorrizko herrialdea',
+        'Ciudad donde resides': 'Bizileku-hiria',
+        'Idiomas': 'Hizkuntzak',
+        'Teléfono': 'Telefonoa',
+        'Email': 'Emaila',
+        'LinkedIn': 'LinkedIn',
+        'Instagram': 'Instagram',
+        'Página web': 'Webgunea',
+        'Empresa (si existe)': 'Enpresa, badago',
+        'Profesión': 'Lanbidea',
+        'Cuéntanos quién eres.': 'Kontatu nor zaren.',
+        '¿Qué te ha traído hasta aquí?': 'Zerk ekarri zaitu honaino?',
+        '¿Qué te hace diferente?': 'Zerk egiten zaitu desberdin?',
+        '¿Cuál ha sido el mayor reto de tu vida?': 'Zein izan da zure bizitzako erronkarik handiena?',
+        '¿Qué has aprendido de él?': 'Zer ikasi duzu hortik?',
+        '¿Qué te apasiona?': 'Zerk pizten dizu grina?',
+        '¿Qué actividad harías incluso sin cobrar?': 'Zer egingo zenuke kobratu gabe ere?',
+        '¿Cuáles son tus tres mayores fortalezas?': 'Zure hiru indargune nagusiak?',
+        '¿Cuáles son tus tres mayores debilidades?': 'Hobetu nahi dituzun hiru arloak?',
+        '¿Dónde quieres estar dentro de cinco años?': 'Non egon nahi duzu bost urte barru?',
+        '¿Cómo quieres que sea tu vida?': 'Nolakoa izatea nahi duzu zure bizitza?',
+        '¿Qué significa para ti el éxito?': 'Zer da arrakasta zuretzat?',
+        '¿Qué legado quieres dejar?': 'Zer ondare utzi nahi duzu?',
+        '¿Por qué quieres emprender?': 'Zergatik nahi duzu ekin?',
+        '¿Cuál es tu objetivo principal este año?': 'Zein da aurtengo helburu nagusia?',
+        '¿Cuáles son tus tres objetivos más importantes?': 'Zure hiru helburu garrantzitsuenak?',
+        '¿Qué quieres conseguir durante los próximos 90 días?': 'Zer lortu nahi duzu hurrengo 90 egunetan?',
+        '¿Qué sería un éxito para ti?': 'Zer izango litzateke arrakasta zuretzat?',
+        '¿Ya tienes una idea?': 'Baduzu ideia bat?',
+        'Descríbela': 'Deskribatu',
+        '¿Qué problema resuelve?': 'Zein arazo konpontzen du?',
+        '¿Quién pagaría por ella?': 'Nork ordainduko luke horregatik?',
+        '¿Quién es tu cliente ideal?': 'Nor da zure bezero ideala?',
+        '¿Qué te diferencia?': 'Zerk bereizten zaitu?',
+        '¿Cuánto facturas actualmente?': 'Zenbat fakturatzen duzu gaur egun?',
+        '¿En qué fase estás?': 'Zein fasetan zaude?',
+        '¿Has emprendido antes?': 'Lehenago ekin duzu?',
+        '¿Has fracasado alguna vez?': 'Noizbait huts egin duzu?',
+        '¿Qué aprendiste?': 'Zer ikasi zenuen?',
+        '¿Qué formación tienes?': 'Zer prestakuntza duzu?',
+        '¿En qué eres realmente buena?': 'Zertan zara benetan ona?',
+        '¿Cuánto dinero puedes invertir?': 'Zenbat diru inbertitu dezakezu?',
+        '¿Cuáles son tus ingresos mensuales?': 'Zeintzuk dira zure hileko diru-sarrerak?',
+        '¿Tienes ahorros?': 'Aurrezkirik duzu?',
+        '¿Necesitas financiación?': 'Finantzaketa behar duzu?',
+        '¿Conoces las subvenciones disponibles?': 'Ezagutzen dituzu dauden dirulaguntzak?',
+        '¿Has solicitado alguna ayuda?': 'Laguntzarik eskatu duzu?',
+        '¿Cómo organizas tu tiempo?': 'Nola antolatzen duzu denbora?',
+        '¿Utilizas Agenda / Google Calendar / Notion / Trello / CRM?': 'Agenda, Google Calendar, Notion, Trello edo CRM erabiltzen duzu?',
+        '¿Cuántas horas trabajas?': 'Zenbat ordu lan egiten duzu?',
+        '¿Cuántas horas dedicas a aprender?': 'Zenbat ordu eskaintzen dizkiozu ikasteari?',
+        '¿Fumas?': 'Erretzen duzu?',
+        '¿Consumes alcohol?': 'Alkohola kontsumitzen duzu?',
+        '¿Haces ejercicio?': 'Ariketa fisikoa egiten duzu?',
+        'Horas de sueño': 'Lo-orduak',
+        '¿Lees libros? ¿Cuántos al año?': 'Liburuak irakurtzen dituzu? Zenbat urtean?',
+        '¿Escuchas podcasts?': 'Podcastak entzuten dituzu?',
+        '¿Haces formación continua?': 'Etengabeko prestakuntza egiten duzu?',
+        'Valora Energía / Salud / Felicidad (1-10)': 'Baloratu energia / osasuna / zoriontasuna 1etik 10era',
+        '¿Planificas la semana?': 'Astea planifikatzen duzu?',
+        '¿Haces lista de tareas?': 'Zereginen zerrenda egiten duzu?',
+        '¿Revisas objetivos?': 'Helburuak berrikusten dituzu?',
+        '¿Qué te distrae más?': 'Zerk distraitzen zaitu gehien?',
+        '¿En qué pierdes tiempo?': 'Zertan galtzen duzu denbora?',
+        '¿Qué hábito quieres cambiar?': 'Zein ohitura aldatu nahi duzu?',
+        '¿Tienes marca personal?': 'Marka pertsonalik duzu?',
+        '¿La trabajas?': 'Lantzen duzu?',
+        '¿Cómo quieres que te conozcan?': 'Nola ezagutzea nahi duzu?',
+        '¿Qué imagen quieres transmitir?': 'Zer irudi transmititu nahi duzu?',
+        '¿Cuál es tu propuesta de valor?': 'Zein da zure balio-proposamena?',
+        'Instagram, LinkedIn, Facebook, TikTok, YouTube, X, Threads, Pinterest, Telegram, WhatsApp Business (usuario, seguidores, frecuencia, objetivo)': 'Sare sozialak: Instagram, LinkedIn, Facebook, TikTok, YouTube, X, Threads, Pinterest, Telegram, WhatsApp Business: erabiltzailea, jarraitzaileak, maiztasuna, helburua',
+        'Frecuencia de publicación': 'Argitaratzeko maiztasuna',
+        'Tipos de contenido': 'Eduki motak',
+        '¿Te da miedo aparecer en cámara?': 'Kameran agertzeak beldurra ematen dizu?',
+        '¿Sabes editar vídeo?': 'Bideoa editatzen badakizu?',
+        '¿Qué IA utilizas?': 'Zer AA tresna erabiltzen dituzu?',
+        'Cliente ideal': 'Bezero ideala',
+        '¿Dónde lo encuentras?': 'Non aurkitzen duzu?',
+        '¿Cómo consigues clientes?': 'Nola lortzen dituzu bezeroak?',
+        '¿Cuántos clientes tienes?': 'Zenbat bezero dituzu?',
+        'Ticket medio': 'Batez besteko tiketa',
+        'Principal problema comercial': 'Arazo komertzial nagusia',
+        '¿Cómo vendes?': 'Nola saltzen duzu?',
+        '¿Tienes embudo?': 'Salmenta-inbuturik duzu?',
+        '¿Tienes CRM?': 'CRMrik duzu?',
+        '¿Cuál es tu conversión?': 'Zein da zure bihurketa?',
+        '¿Buscas subvenciones, inversión, Business Angels, Crowdfunding, préstamos o fondos europeos?': 'Dirulaguntzak, inbertsioa, business angels, crowdfunding, maileguak edo Europako funtsak bilatzen dituzu?',
+        '¿Cuántos eventos asistes?': 'Zenbat ekitalditara joaten zara?',
+        '¿Cuántos contactos nuevos haces al mes?': 'Zenbat kontaktu berri egiten dituzu hilean?',
+        '¿Pides ayuda?': 'Laguntza eskatzen duzu?',
+        '¿Colaboras?': 'Elkarlanean aritzen zara?',
+        '¿Tienes mentor?': 'Mentorerik duzu?',
+        '¿Usas IA? ¿Para qué?': 'AA erabiltzen duzu? Zertarako?',
+        'Valora estrés, motivación, confianza, miedo al fracaso, miedo a vender y gestión emocional (1-10)': 'Baloratu estresa, motibazioa, konfiantza, porrotaren beldurra, saltzeko beldurra eta emozioen kudeaketa 1etik 10era',
+        '¿En qué necesitas ayuda?': 'Zertan behar duzu laguntza?',
+        '¿Cuántas horas puedes dedicar cada semana?': 'Zenbat ordu eskaini ditzakezu astean?',
+        '¿Estás preparada para cambiar hábitos?': 'Prest zaude ohiturak aldatzeko?',
+        '¿Aceptarás seguimiento semanal?': 'Onartuko duzu asteko jarraipena?',
+        '¿Qué esperas de BE?': 'Zer espero duzu BEtik?',
+      },
+    };
+
+    const LOCAL_HELP = {
+      ru: {
+        default: 'Отвечай конкретно: текущая ситуация, сложность, ресурс и следующий шаг.',
+        finance: 'Можно писать диапазонами и без личных сумм: важно понять потребность и риски.',
+        sales: 'Укажи клиента, канал, главную проблему и действие, которое можно измерить.',
+        brand: 'Опиши образ, аудиторию, формат контента и реалистичную частоту.',
+        habits: 'Не оценивай себя жестко: цель найти маленькое улучшение, которое реально выполнить.',
+      },
+      uk: {
+        default: 'Відповідай конкретно: поточна ситуація, складність, ресурс і наступний крок.',
+        finance: 'Можна писати діапазонами й без особистих сум: важливо зрозуміти потребу та ризики.',
+        sales: 'Вкажи клієнта, канал, головну проблему і дію, яку можна виміряти.',
+        brand: 'Опиши образ, аудиторію, формат контенту та реалістичну частоту.',
+        habits: 'Не оцінюй себе суворо: мета знайти маленьке покращення, яке реально виконати.',
+      },
+      eu: {
+        default: 'Erantzun zehazki: egoera, zailtasuna, baliabidea eta hurrengo pausoa.',
+        finance: 'Tarteak erabil ditzakezu eta datu pertsonal zehatzak saihestu: beharra eta arriskuak argitzea da gakoa.',
+        sales: 'Adierazi bezeroa, kanala, arazo nagusia eta neurtu daitekeen ekintza.',
+        brand: 'Azaldu irudia, publikoa, eduki-formatua eta maiztasun errealista.',
+        habits: 'Ez epaitu zure burua gogor: helburua hobekuntza txiki eta errealista aurkitzea da.',
+      },
+    };
+
+    const LOCAL_SAMPLE = {
+      ru: {
+        default: 'Сейчас моя ситуация такая: я хочу лучше структурировать проект и понять следующий практический шаг. Главная сложность — расставить приоритеты. Ближайшее действие — описать цель, ресурс и срок.',
+        finance: 'Инвестиции должны быть контролируемыми. Сейчас важно понять минимальный бюджет, возможные риски и доступные варианты поддержки без лишних обязательств.',
+        sales: 'Мой клиент — человек или бизнес с конкретной потребностью. Я хочу проверить канал привлечения, сделать понятное предложение и измерить ответы, встречи и продажи.',
+        habits: 'Сейчас я хочу улучшить регулярность и меньше отвлекаться. Реалистичный шаг — выделить фиксированный блок времени и проверять результат раз в неделю.',
+      },
+      uk: {
+        default: 'Зараз моя ситуація така: я хочу краще структурувати проєкт і зрозуміти наступний практичний крок. Головна складність — розставити пріоритети. Найближча дія — описати ціль, ресурс і строк.',
+        finance: 'Інвестиції мають бути контрольованими. Зараз важливо зрозуміти мінімальний бюджет, можливі ризики та доступні варіанти підтримки без зайвих зобов’язань.',
+        sales: 'Мій клієнт — людина або бізнес із конкретною потребою. Я хочу перевірити канал залучення, зробити зрозумілу пропозицію і виміряти відповіді, зустрічі та продажі.',
+        habits: 'Зараз я хочу покращити регулярність і менше відволікатися. Реалістичний крок — виділити фіксований блок часу та перевіряти результат раз на тиждень.',
+      },
+      eu: {
+        default: 'Nire egoera hau da: proiektua hobeto antolatu nahi dut eta hurrengo pauso praktikoa argitu. Zailtasun nagusia lehentasunak ezartzea da. Hurrengo ekintza helburua, baliabidea eta epea idaztea da.',
+        finance: 'Inbertsioa kontrolatua izan behar da. Orain gutxieneko aurrekontua, arriskuak eta laguntza-aukerak argitu behar dira.',
+        sales: 'Nire bezeroak behar zehatz bat du. Kanala probatu, proposamen argia egin eta erantzunak, bilerak eta salmentak neurtu nahi ditut.',
+        habits: 'Orain erregulartasuna hobetu eta distrakzioak murriztu nahi ditut. Pauso errealista denbora-bloke finko bat jartzea eta emaitza astero berrikustea da.',
+      },
+    };
+
+    const els = {
+      heroTitle: document.getElementById('heroTitle'),
+      heroLead: document.getElementById('heroLead'),
+      heroCount: document.getElementById('heroCount'),
+      heroSubtitle: document.getElementById('heroSubtitle'),
+      navTitle: document.getElementById('navTitle'),
+      sectionList: document.getElementById('sectionList'),
+      progressText: document.getElementById('progressText'),
+      stepText: document.getElementById('stepText'),
+      progressBar: document.getElementById('progressBar'),
+      completeCard: document.getElementById('completeCard'),
+      completeTitle: document.getElementById('completeTitle'),
+      completeText: document.getElementById('completeText'),
+      questionCard: document.getElementById('questionCard'),
+      sectionLabel: document.getElementById('sectionLabel'),
+      questionTitle: document.getElementById('questionTitle'),
+      answerContainer: document.getElementById('answerContainer'),
+      answerInput: null,
+      hintText: document.getElementById('hintText'),
+      helpText: document.getElementById('helpText'),
+      saveState: document.getElementById('saveState'),
+      prevBtn: document.getElementById('prevBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      summaryBtn: document.getElementById('summaryBtn'),
+      summaryTitle: document.getElementById('summaryTitle'),
+      summaryPanel: document.getElementById('summaryPanel'),
+      summaryContent: document.getElementById('summaryContent'),
+      useHintBtn: document.getElementById('useHintBtn'),
+      downloadBtn: document.getElementById('downloadBtn'),
+      downloadPdfBtn: document.getElementById('downloadPdfBtn'),
+      sendWhatsappBtn: document.getElementById('sendWhatsappBtn'),
+      sendEmailBtn: document.getElementById('sendEmailBtn'),
+      newSurveyBtn: document.getElementById('newSurveyBtn'),
+      clearBtn: document.getElementById('clearBtn'),
+      helpTitle: document.getElementById('helpTitle'),
+      howTitle: document.getElementById('howTitle'),
+      ideaTitle: document.getElementById('ideaTitle'),
+      savedTitle: document.getElementById('savedTitle'),
+      toast: document.getElementById('toast'),
+    };
+
+    function t() {
+      return I18N[state.lang] || I18N.es;
+    }
+
+    function translatedSectionTitle(section) {
+      return SECTION_I18N[state.lang]?.[section.title] || section.title;
+    }
+
+    function translatedQuestion(question) {
+      return QUESTION_I18N[state.lang]?.[question.question] || question.question;
+    }
+
+    function specificSampleAnswer(question) {
+      const text = question.question.toLowerCase();
+      if (text === 'idiomas') {
+        if (state.lang === 'ru') return 'Русский — родной. Испанский — базовый/средний уровень, продолжаю учить. Английский или другой язык — при наличии.';
+        if (state.lang === 'uk') return 'Українська — рідна. Іспанська — базовий/середній рівень, продовжую вивчати. Англійська або інша мова — за наявності.';
+        if (state.lang === 'eu') return 'Euskara/gaztelania — maila adierazi. Jatorrizko hizkuntza — ama hizkuntza. Beste hizkuntzak — badituzu, mailarekin.';
+        return 'Español: nivel básico/intermedio. Ruso o ucraniano: nativo. Otros idiomas: indicar nivel si aplica.';
+      }
+      if (text === 'nombre') {
+        if (state.lang === 'ru') return 'Имя человека или название проекта';
+        if (state.lang === 'uk') return 'Ім’я людини або назва проєкту';
+        if (state.lang === 'eu') return 'Pertsonaren izena edo proiektuaren izena';
+        return 'Nombre de la persona o proyecto';
+      }
+      if (text.includes('país')) {
+        if (state.lang === 'ru') return 'Россия / Украина / другая страна';
+        if (state.lang === 'uk') return 'Україна / Росія / інша країна';
+        if (state.lang === 'eu') return 'Jatorrizko herrialdea';
+        return 'País de origen o país donde se desarrolla el proyecto';
+      }
+      if (text.includes('ciudad')) {
+        if (state.lang === 'ru') return 'Город и провинция, например Bilbao, Bizkaia';
+        if (state.lang === 'uk') return 'Місто і провінція, наприклад Bilbao, Bizkaia';
+        if (state.lang === 'eu') return 'Hiria eta probintzia, adibidez Bilbao, Bizkaia';
+        return 'Ciudad y provincia donde resides o trabajas';
+      }
+      if (text.includes('teléfono')) {
+        if (state.lang === 'ru') return 'Контактный телефон или WhatsApp';
+        if (state.lang === 'uk') return 'Контактний телефон або WhatsApp';
+        if (state.lang === 'eu') return 'Harremanetarako telefonoa edo WhatsApp';
+        return 'Teléfono de contacto profesional';
+      }
+      if (text.includes('email')) return 'correo@ejemplo.com';
+      if (text.includes('fortalezas')) {
+        if (state.lang === 'ru') return 'Коммуникация, ответственность и способность адаптироваться.';
+        if (state.lang === 'uk') return 'Комунікація, відповідальність і здатність адаптуватися.';
+        if (state.lang === 'eu') return 'Komunikazioa, erantzukizuna eta egokitzeko gaitasuna.';
+      }
+      if (text.includes('debilidades')) {
+        if (state.lang === 'ru') return 'Иногда сложно расставить приоритеты, хочется доводить до идеала, нужно лучше измерять прогресс.';
+        if (state.lang === 'uk') return 'Іноді складно розставити пріоритети, хочеться доводити до ідеалу, потрібно краще вимірювати прогрес.';
+        if (state.lang === 'eu') return 'Batzuetan lehentasunak ezartzea kostatzen zait, perfekzionatzeko joera dut eta aurrerapena hobeto neurtu behar dut.';
+      }
+      return '';
+    }
+
+    function questionCategory(question) {
+      const section = question.section.title.toLowerCase();
+      if (section.includes('finanzas') || section.includes('financiación')) return 'finance';
+      if (section.includes('clientes') || section.includes('ventas') || section.includes('negocio')) return 'sales';
+      if (section.includes('marca') || section.includes('contenido') || section.includes('redes')) return 'brand';
+      if (section.includes('hábitos') || section.includes('productividad') || section.includes('bienestar')) return 'habits';
+      return 'default';
+    }
+
+    function applyLanguage() {
+      const dict = t();
+      document.documentElement.lang = state.lang;
+      els.heroTitle.textContent = dict.heroTitle;
+      els.heroLead.textContent = dict.heroLead;
+      els.heroSubtitle.textContent = dict.heroSubtitle;
+      els.navTitle.textContent = dict.navTitle;
+      els.completeTitle.textContent = dict.completeTitle;
+      els.completeText.textContent = dict.completeText;
+      els.downloadPdfBtn.textContent = dict.downloadPdf;
+      els.sendWhatsappBtn.textContent = dict.sendWhatsapp;
+      if (!els.sendEmailBtn.disabled) {
+        els.sendEmailBtn.textContent = dict.sendEmail;
+      }
+      els.newSurveyBtn.textContent = dict.newSurvey;
+      if (els.answerInput) {
+        els.answerInput.placeholder = dict.placeholder;
+      }
+      els.prevBtn.textContent = dict.prev;
+      els.summaryBtn.textContent = dict.summaryBtn;
+      els.summaryTitle.textContent = dict.summaryTitle;
+      els.helpTitle.textContent = dict.helpTitle;
+      els.howTitle.textContent = dict.howTitle;
+      els.ideaTitle.textContent = dict.ideaTitle;
+      els.useHintBtn.textContent = dict.insertExample;
+      els.downloadBtn.textContent = dict.downloadTxt;
+      els.clearBtn.textContent = dict.clear;
+      els.savedTitle.textContent = dict.savedTitle;
+      if (!localStorage.getItem(storageKey)) {
+        els.saveState.textContent = dict.noChanges;
+      }
+      document.querySelectorAll('[data-lang]').forEach((button) => {
+        button.classList.toggle('active', button.dataset.lang === state.lang);
+        button.classList.toggle('primary-lang', button.dataset.lang === 'es' && state.lang !== 'es');
+      });
+    }
+
+    function loadDraft() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+        state.index = Number.isInteger(saved.index) ? Math.min(saved.index, flatQuestions.length - 1) : 0;
+        state.answers = saved.answers && typeof saved.answers === 'object' ? saved.answers : {};
+      } catch {
+        state.index = 0;
+        state.answers = {};
+      }
+    }
+
+    function saveDraft() {
+      localStorage.setItem(storageKey, JSON.stringify({
+        index: state.index,
+        answers: state.answers,
+        savedAt: new Date().toISOString(),
+      }));
+      els.saveState.textContent = t().savedAt(new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
+    }
+
+    function getAnsweredCount() {
+      return flatQuestions.filter((item) => (state.answers[item.id] || '').trim()).length;
+    }
+
+    function getCurrentAnswerValue() {
+      return els.answerInput ? els.answerInput.value.trim() : (state.answers[flatQuestions[state.index].id] || '').trim();
+    }
+
+    function saveCurrentAnswer() {
+      if (!flatQuestions[state.index]) return;
+      state.answers[flatQuestions[state.index].id] = getCurrentAnswerValue();
+    }
+
+    function renderProgress() {
+      const answered = getAnsweredCount();
+      const percent = flatQuestions.length ? Math.round((answered / flatQuestions.length) * 100) : 0;
+      els.progressText.textContent = t().progress(answered, flatQuestions.length);
+      els.stepText.textContent = t().step(state.index + 1, flatQuestions.length);
+      els.progressBar.style.width = `${percent}%`;
+      els.completeCard.classList.toggle('show', flatQuestions.length > 0 && answered === flatQuestions.length);
+    }
+
+    function shouldUseCompactInput(question) {
+      return /^(Nombre|Edad|Teléfono|Email|LinkedIn|Instagram|Página web|Empresa|País|Ciudad|Idiomas)$/i.test(question.question);
+    }
+
+    function questionInputType(question) {
+      const text = question.question.toLowerCase();
+      const yesNoQuestions = [
+        '¿ya tienes una idea?',
+        '¿has emprendido antes?',
+        '¿has fracasado alguna vez?',
+        '¿necesitas financiación?',
+        '¿conoces las subvenciones disponibles?',
+        '¿has solicitado alguna ayuda?',
+        '¿fumas?',
+        '¿consumes alcohol?',
+        '¿haces ejercicio?',
+        '¿escuchas podcasts?',
+        '¿haces formación continua?',
+        '¿planificas la semana?',
+        '¿haces lista de tareas?',
+        '¿revisas objetivos?',
+        '¿tienes marca personal?',
+        '¿la trabajas?',
+        '¿te da miedo aparecer en cámara?',
+        '¿sabes editar vídeo?',
+        '¿tienes embudo?',
+        '¿tienes crm?',
+        '¿pides ayuda?',
+        '¿colaboras?',
+        '¿tienes mentor?',
+        '¿estás preparada para cambiar hábitos?',
+        '¿aceptarás seguimiento semanal?',
+      ];
+
+      if (yesNoQuestions.includes(text)) return 'yesno';
+      if (
+        text === 'edad' ||
+        text.includes('cuántas horas') ||
+        text.includes('horas de sueño') ||
+        text.includes('cuántos clientes') ||
+        text.includes('cuántos eventos') ||
+        text.includes('cuántos contactos')
+      ) return 'number';
+
+      if (shouldUseCompactInput(question)) return 'short';
+      return 'long';
+    }
+
+    function yesNoLabels() {
+      if (state.lang === 'ru') return ['Да', 'Нет'];
+      if (state.lang === 'uk') return ['Так', 'Ні'];
+      if (state.lang === 'eu') return ['Bai', 'Ez'];
+      return ['Sí', 'No'];
+    }
+
+    function isSameYesNoChoice(value, label) {
+      const yes = ['Sí', 'Да', 'Так', 'Bai'];
+      const no = ['No', 'Нет', 'Ні', 'Ez'];
+      return value === label || (yes.includes(value) && yes.includes(label)) || (no.includes(value) && no.includes(label));
+    }
+
+    function answerInputMode(question) {
+      const text = question.question.toLowerCase();
+      if (text.includes('email')) return 'email';
+      if (text.includes('teléfono')) return 'tel';
+      if (text.includes('página web') || text.includes('linkedin') || text.includes('instagram')) return 'url';
+      return 'text';
+    }
+
+    function renderAnswerInput(question) {
+      const value = state.answers[question.id] || '';
+      const type = questionInputType(question);
+      els.answerContainer.innerHTML = '';
+
+      if (type === 'yesno') {
+        const labels = yesNoLabels();
+        els.answerContainer.innerHTML = `
+          <div class="answer-options">
+            <div class="choice-row">
+              ${labels.map((label) => `<button class="choice-btn ${isSameYesNoChoice(value, label) ? 'selected' : ''}" type="button" data-choice="${escapeHtml(label)}">${escapeHtml(label)}</button>`).join('')}
+            </div>
+          </div>
+          <input id="answerInput" type="hidden" value="${escapeHtml(value)}">
+        `;
+        els.answerInput = document.getElementById('answerInput');
+        els.answerContainer.querySelectorAll('.choice-btn').forEach((button) => {
+          button.addEventListener('click', () => {
+            els.answerInput.value = button.dataset.choice;
+            state.answers[question.id] = button.dataset.choice;
+            saveDraft();
+            renderProgress();
+            renderNavigationState();
+            els.answerContainer.querySelectorAll('.choice-btn').forEach((item) => item.classList.toggle('selected', item === button));
+          });
+        });
+        return;
+      }
+
+      const inputMode = answerInputMode(question);
+      const isNumber = type === 'number';
+      const tag = type === 'long' ? 'textarea' : 'input';
+      const attrs = isNumber
+        ? 'type="number" inputmode="numeric" min="0" step="1"'
+        : `type="${inputMode}"`;
+
+      if (tag === 'textarea') {
+        els.answerContainer.innerHTML = `<textarea class="answer" id="answerInput" placeholder="${escapeHtml(t().placeholder)}">${escapeHtml(value)}</textarea>`;
+      } else {
+        els.answerContainer.innerHTML = `<input class="answer compact ${isNumber ? 'answer-number' : ''}" id="answerInput" ${attrs} placeholder="${escapeHtml(t().placeholder)}" value="${escapeHtml(value)}">`;
+      }
+
+      els.answerInput = document.getElementById('answerInput');
+      els.answerInput.addEventListener('input', () => {
+        state.answers[question.id] = els.answerInput.value;
+        saveDraft();
+        renderProgress();
+        renderNavigationState();
+      });
+    }
+
+    function contextualHelp(question) {
+      if (state.lang !== 'es') {
+        const pack = LOCAL_HELP[state.lang] || LOCAL_HELP.ru;
+        return pack[questionCategory(question)] || pack.default;
+      }
+
+      const title = question.section.title.toLowerCase();
+      if (title.includes('finanzas') || title.includes('financiación')) {
+        return 'Si no quieres compartir cifras exactas, escribe rangos aproximados o explica la situación de forma prudente.';
+      }
+      if (title.includes('clientes') || title.includes('ventas')) {
+        return 'Piensa en datos medibles: tipo de cliente, canal, volumen, conversión, ticket medio y principal bloqueo.';
+      }
+      if (title.includes('marca') || title.includes('contenido') || title.includes('redes')) {
+        return 'Describe cómo quieres que te perciban y qué contenido podrías sostener de forma realista.';
+      }
+      if (title.includes('hábitos') || title.includes('bienestar')) {
+        return 'Sé honesta y práctica. El objetivo no es juzgar, sino detectar patrones que ayudan o frenan.';
+      }
+      if (title.includes('objetivos') || title.includes('visión')) {
+        return 'Convierte ideas generales en una imagen concreta: plazo, resultado esperado y señales de avance.';
+      }
+      return 'Responde con ejemplos reales. Si una pregunta no aplica, explica brevemente por qué.';
+    }
+
+    function neutralPrompt(question) {
+      if (state.lang !== 'es') {
+        const pack = LOCAL_HELP[state.lang] || LOCAL_HELP.ru;
+        return pack[questionCategory(question)] || pack.default;
+      }
+
+      const text = question.question.toLowerCase();
+      const section = question.section.title.toLowerCase();
+      const options = [];
+
+      if (section.includes('datos personales')) {
+        options.push('Completa solo la información que quieras compartir. Si falta algún dato, puedes escribir “pendiente”.');
+      }
+      if (section.includes('historia')) {
+        options.push('Cuenta tu contexto en 3 partes: de dónde vienes, qué cambio importante viviste y qué estás construyendo ahora.');
+      }
+      if (section.includes('visión') || section.includes('objetivos')) {
+        options.push('Escribe una respuesta con plazo, resultado concreto y una señal clara para saber que vas avanzando.');
+      }
+      if (section.includes('negocio')) {
+        options.push('Describe el problema, para quién lo resuelves, cómo lo resuelves y por qué alguien pagaría por ello.');
+      }
+      if (section.includes('finanzas') || section.includes('financiación')) {
+        options.push('Puedes responder con rangos aproximados, necesidades actuales y próximos pasos, sin revelar datos sensibles.');
+      }
+      if (section.includes('clientes') || section.includes('ventas')) {
+        options.push('Piensa en cliente ideal, canal de captación, objeciones frecuentes, seguimiento y métrica que quieres mejorar.');
+      }
+      if (section.includes('marca') || section.includes('contenido') || section.includes('redes')) {
+        options.push('Define qué quieres transmitir, a quién hablas, qué formato puedes sostener y con qué frecuencia realista.');
+      }
+      if (section.includes('hábitos') || section.includes('productividad') || section.includes('bienestar')) {
+        options.push('Sé práctico: qué funciona, qué te bloquea y qué pequeño hábito podrías cambiar durante los próximos 7 días.');
+      }
+      if (text.includes('tres')) {
+        options.push('Usa una lista breve de tres puntos. Ejemplo: 1) situación actual, 2) objetivo, 3) siguiente acción.');
+      }
+      if (text.includes('valora') || text.includes('1-10')) {
+        options.push('Pon una puntuación del 1 al 10 y añade una frase explicando por qué no es más alta ni más baja.');
+      }
+
+      options.push(
+        'Responde en primera persona, con frases sencillas y concretas. No busques perfección; busca claridad.',
+        'Si no sabes qué poner, empieza por: “Ahora mismo mi situación es..., quiero mejorar..., y el primer paso sería...”.',
+        'Una buena respuesta suele incluir: situación actual, dificultad principal, recurso disponible y siguiente acción.'
+      );
+
+      return options[Math.floor(Math.random() * options.length)];
+    }
+
+    function sampleAnswer(question) {
+      const specific = specificSampleAnswer(question);
+      if (specific) return specific;
+
+      if (state.lang !== 'es') {
+        const pack = LOCAL_SAMPLE[state.lang] || LOCAL_SAMPLE.ru;
+        return pack[questionCategory(question)] || pack.default;
+      }
+
+      const text = question.question.toLowerCase();
+      const section = question.section.title.toLowerCase();
+      if (text === 'nombre') return 'Nombre de la persona o proyecto';
+      if (text === 'edad') return 'Pendiente de completar';
+      if (text.includes('país')) return 'País de origen o país donde se desarrolla el proyecto';
+      if (text.includes('ciudad')) return 'Ciudad y provincia donde resides o trabajas';
+      if (text.includes('idiomas')) return 'Idioma principal y otros idiomas con nivel aproximado';
+      if (text.includes('teléfono')) return 'Teléfono de contacto profesional';
+      if (text.includes('email')) return 'correo@ejemplo.com';
+      if (text.includes('linkedin') || text.includes('instagram') || text.includes('página web')) return 'En desarrollo / enlace pendiente';
+      if (text.includes('empresa')) return 'Nombre comercial del proyecto, si existe';
+      if (text.includes('profesión')) return 'Profesional independiente / emprendedor/a en fase de desarrollo de proyecto.';
+
+      if (text.includes('quién eres')) {
+        return 'Soy una persona con experiencia profesional y ganas de construir un proyecto propio. Me interesa aportar soluciones útiles, aprender de forma constante y trabajar con clientes que valoren un trato claro y cercano.';
+      }
+      if (text.includes('qué te ha traído')) {
+        return 'He llegado hasta aquí por la necesidad de ordenar mi proyecto, validar mi idea de negocio y convertir mis capacidades en una actividad sostenible.';
+      }
+      if (text.includes('qué te hace diferente') || text.includes('qué te diferencia')) {
+        return 'Me diferencia la combinación de trato cercano, capacidad de escucha, adaptación al cliente y enfoque práctico para resolver problemas reales sin complicar el proceso.';
+      }
+      if (text.includes('mayor reto')) {
+        return 'Uno de mis mayores retos ha sido adaptarme a cambios importantes y seguir avanzando aunque no tuviera todas las respuestas desde el principio.';
+      }
+      if (text.includes('qué has aprendido')) {
+        return 'He aprendido a organizarme mejor, pedir ayuda cuando hace falta, priorizar lo importante y avanzar paso a paso.';
+      }
+      if (text.includes('qué te apasiona')) {
+        return 'Me apasiona crear, aprender, comunicar ideas y ayudar a otras personas o negocios a mejorar su situación.';
+      }
+      if (text.includes('sin cobrar')) {
+        return 'Ayudaría a organizar ideas, mejorar proyectos cercanos y participar en actividades creativas o formativas.';
+      }
+      if (text.includes('fortalezas')) {
+        return 'Comunicación, responsabilidad y capacidad de adaptación.';
+      }
+      if (text.includes('debilidades')) {
+        return 'A veces me cuesta priorizar cuando hay muchas tareas, puedo perfeccionar demasiado y necesito medir mejor mis avances.';
+      }
+
+      if (section.includes('objetivos') || section.includes('visión')) {
+        return 'Mi objetivo es consolidar una actividad profesional estable, conseguir clientes reales y crear un sistema de trabajo que pueda sostener en el tiempo. Lo mediré por contactos, reuniones, propuestas enviadas y ventas cerradas.';
+      }
+      if (section.includes('negocio') || section.includes('clientes') || section.includes('ventas')) {
+        return 'Actualmente estoy validando una solución para clientes que tienen un problema concreto y necesitan una respuesta práctica. Mi cliente ideal valora la claridad, busca resultados y está dispuesto a colaborar durante el proceso.';
+      }
+      if (section.includes('finanzas') || section.includes('financiación')) {
+        return 'La inversión debe ser controlada y enfocada en herramientas, promoción y validación comercial. Por ahora priorizo recursos propios, ayudas o programas de apoyo antes que deuda.';
+      }
+      if (section.includes('hábitos') || section.includes('productividad') || section.includes('bienestar')) {
+        return 'Lo que funciona bien es mantener una rutina básica y revisar prioridades. Quiero mejorar la constancia, reducir distracciones y reservar bloques de tiempo para acciones comerciales.';
+      }
+      if (section.includes('marca') || section.includes('contenido') || section.includes('redes')) {
+        return 'Quiero transmitir una imagen profesional, cercana y fiable. El contenido debería mostrar problemas reales, soluciones sencillas, casos prácticos y aprendizajes del proceso.';
+      }
+      if (section.includes('networking')) {
+        return 'Quiero aumentar contactos útiles mediante eventos, colaboraciones y seguimiento posterior. Lo importante será registrar cada contacto y definir una próxima acción.';
+      }
+      if (section.includes('ia')) {
+        return 'Uso herramientas de IA como apoyo para organizar ideas, redactar borradores, analizar información y ahorrar tiempo, siempre revisando el resultado antes de usarlo.';
+      }
+      if (section.includes('compromiso')) {
+        return 'Puedo dedicar tiempo semanal de forma realista y estoy dispuesto/a a cambiar hábitos si eso ayuda a avanzar con más claridad y constancia.';
+      }
+      return 'Ahora mismo mi situación es inicial, pero tengo una dirección clara. Quiero ordenar la información, definir prioridades y avanzar con una acción concreta durante los próximos días.';
+    }
+
+    function renderSections() {
+      els.sectionList.innerHTML = sections.map((section, index) => `
+        <div class="section-group ${state.collapsedSections.has(index) ? 'collapsed' : ''}" data-section-group="${index}">
+          <button class="section-button" type="button" data-section-index="${index}">
+            <span class="section-number">${index + 1}</span>
+            <span class="section-title">
+              ${escapeHtml(translatedSectionTitle(section))}
+              <br>
+              <span class="section-meta">
+                <span class="section-progress-pill" data-section-count="${index}">0/${section.questions.length}</span>
+                <span>${t().questions}</span>
+              </span>
+            </span>
+            <span class="section-chevron">▾</span>
+          </button>
+          <div class="question-list">
+            ${section.questions.map((question, questionIndex) => {
+              const globalIndex = flatQuestions.findIndex((item) => item.id === question.id);
+              return `
+                <button class="question-nav" type="button" data-question-index="${globalIndex}">
+                  <span class="question-dot">✓</span>
+                  <span>${questionIndex + 1}. ${escapeHtml(translatedQuestion(question))}</span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `).join('');
+
+      els.sectionList.querySelectorAll('.section-button').forEach((button) => {
+        button.addEventListener('click', () => {
+          const sectionIndex = Number(button.dataset.sectionIndex);
+          state.collapsedSections[state.collapsedSections.has(sectionIndex) ? 'delete' : 'add'](sectionIndex);
+          const group = els.sectionList.querySelector(`[data-section-group="${sectionIndex}"]`);
+          if (group) group.classList.toggle('collapsed', state.collapsedSections.has(sectionIndex));
+          const nextIndex = flatQuestions.findIndex((item) => item.sectionIndex === sectionIndex);
+          if (nextIndex >= 0) {
+            setQuestion(nextIndex);
+          }
+        });
+      });
+
+      els.sectionList.querySelectorAll('.question-nav').forEach((button) => {
+        button.addEventListener('click', () => {
+          setQuestion(Number(button.dataset.questionIndex));
+        });
+      });
+    }
+
+    function renderNavigationState() {
+      els.sectionList.querySelectorAll('.section-button').forEach((button) => {
+        const sectionIndex = Number(button.dataset.sectionIndex);
+        const sectionQuestions = flatQuestions.filter((item) => item.sectionIndex === sectionIndex);
+        const isActive = flatQuestions[state.index].sectionIndex === sectionIndex;
+        const isCompleted = sectionQuestions.length > 0 && sectionQuestions.every((item) => (state.answers[item.id] || '').trim());
+        const answeredInSection = sectionQuestions.filter((item) => (state.answers[item.id] || '').trim()).length;
+        const counter = button.querySelector('[data-section-count]');
+        if (counter) counter.textContent = `${answeredInSection}/${sectionQuestions.length}`;
+        button.classList.toggle('active', isActive);
+        button.classList.toggle('completed', isCompleted);
+      });
+
+      els.sectionList.querySelectorAll('.question-nav').forEach((button) => {
+        const questionIndex = Number(button.dataset.questionIndex);
+        const question = flatQuestions[questionIndex];
+        const isAnswered = Boolean((state.answers[question.id] || '').trim());
+        button.classList.toggle('active', questionIndex === state.index);
+        button.classList.toggle('answered', isAnswered);
+      });
+    }
+
+    function renderQuestion() {
+      const current = flatQuestions[state.index];
+
+      applyLanguage();
+      els.heroCount.textContent = flatQuestions.length;
+      renderProgress();
+      els.sectionLabel.textContent = translatedSectionTitle(current.section);
+      els.questionTitle.textContent = translatedQuestion(current);
+      renderAnswerInput(current);
+      els.hintText.textContent = neutralPrompt(current);
+      els.helpText.textContent = contextualHelp(current);
+      els.prevBtn.disabled = state.index === 0;
+      els.nextBtn.textContent = state.index === flatQuestions.length - 1 ? t().finish : t().next;
+      els.useHintBtn.disabled = false;
+
+      renderNavigationState();
+
+      els.questionCard.style.animation = 'none';
+      requestAnimationFrame(() => {
+        els.questionCard.style.animation = '';
+      });
+    }
+
+    function setQuestion(index, scrollTarget = 'question') {
+      saveCurrentAnswer();
+      state.index = Math.max(0, Math.min(index, flatQuestions.length - 1));
+      saveDraft();
+      renderQuestion();
+      const target = scrollTarget === 'top' ? document.querySelector('.page') : els.questionCard;
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function buildSummaryText() {
+      return sections.map((section) => {
+        const rows = section.questions.map((question) => {
+          const answer = (state.answers[question.id] || '').trim() || t().pending;
+          return `${translatedQuestion(question)}\n${answer}`;
+        }).join('\n\n');
+        const sectionTitle = translatedSectionTitle(section);
+        return `${sectionTitle}\n${'-'.repeat(sectionTitle.length)}\n${rows}`;
+      }).join('\n\n');
+    }
+
+    function renderSummary() {
+      els.summaryContent.innerHTML = sections.map((section) => {
+        const items = section.questions.map((question) => {
+          const answer = (state.answers[question.id] || '').trim();
+          return `<p class="summary-item"><b>${escapeHtml(translatedQuestion(question))}</b><br>${escapeHtml(answer || t().pending)}</p>`;
+        }).join('');
+        return `<div class="summary-section"><h3>${escapeHtml(translatedSectionTitle(section))}</h3>${items}</div>`;
+      }).join('');
+      els.summaryPanel.classList.add('open');
+      els.summaryPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function downloadPdf() {
+      saveCurrentAnswer();
+      saveDraft();
+      renderSummary();
+      setTimeout(() => window.print(), 120);
+    }
+
+    function sendPdfToEkaterina() {
+      saveCurrentAnswer();
+      saveDraft();
+      renderSummary();
+      const message = encodeURIComponent(t().whatsappText);
+      window.open(`https://wa.me/${ekaterinaWhatsapp}?text=${message}`, '_blank', 'noopener');
+    }
+
+    function getFillerName() {
+      const nameQuestion = flatQuestions.find((question) => question.question.trim().toLowerCase() === 'nombre');
+      if (!nameQuestion) return '';
+      return (state.answers[nameQuestion.id] || '').trim();
+    }
+
+    function sendPdfByEmail() {
+      saveCurrentAnswer();
+      saveDraft();
+      renderSummary();
+
+      const payload = {
+        name: getFillerName(),
+        lang: state.lang,
+        sections: sections.map((section) => ({
+          title: translatedSectionTitle(section),
+          questions: section.questions.map((question) => ({
+            question: translatedQuestion(question),
+            answer: (state.answers[question.id] || '').trim(),
+          })),
+        })),
+      };
+
+      els.sendEmailBtn.disabled = true;
+      els.sendEmailBtn.textContent = t().emailSending;
+
+      fetch('{% url "be360_send_pdf" %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.ok) {
+            showToast(t().emailSent);
+          } else {
+            showToast(t().emailError);
+          }
+        })
+        .catch(() => showToast(t().emailError))
+        .finally(() => {
+          els.sendEmailBtn.disabled = false;
+          els.sendEmailBtn.textContent = t().sendEmail;
+        });
+    }
+
+    function resetSurvey() {
+      state.answers = {};
+      state.index = 0;
+      localStorage.removeItem(storageKey);
+      els.summaryPanel.classList.remove('open');
+      els.summaryContent.innerHTML = '';
+      applyLanguage();
+      renderSections();
+      renderQuestion();
+      showToast(t().cleared);
+      document.querySelector('.page').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      }[char]));
+    }
+
+    function showToast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add('show');
+      setTimeout(() => els.toast.classList.remove('show'), 2200);
+    }
+
+    els.prevBtn.addEventListener('click', () => setQuestion(state.index - 1));
+    els.nextBtn.addEventListener('click', () => {
+      if (state.index === flatQuestions.length - 1) {
+        renderSummary();
+        return;
+      }
+      setQuestion(state.index + 1);
+    });
+
+    els.summaryBtn.addEventListener('click', () => {
+      saveCurrentAnswer();
+      saveDraft();
+      renderSummary();
+    });
+
+    els.useHintBtn.addEventListener('click', () => {
+      const current = flatQuestions[state.index];
+      const answer = sampleAnswer(current);
+      state.answers[current.id] = answer;
+      saveDraft();
+      renderQuestion();
+      showToast(t().inserted);
+    });
+
+    els.downloadBtn.addEventListener('click', () => {
+      saveCurrentAnswer();
+      saveDraft();
+      const blob = new Blob([buildSummaryText()], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `cuestionario-be360-${new Date().toISOString().slice(0, 10)}.txt`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    });
+
+    els.downloadPdfBtn.addEventListener('click', downloadPdf);
+    els.sendWhatsappBtn.addEventListener('click', sendPdfToEkaterina);
+    els.sendEmailBtn.addEventListener('click', sendPdfByEmail);
+    els.newSurveyBtn.addEventListener('click', () => {
+      if (!confirm(t().confirmClear)) return;
+      resetSurvey();
+    });
+
+    document.querySelectorAll('[data-lang]').forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        state.lang = button.dataset.lang;
+        localStorage.setItem(langStorageKey, state.lang);
+        renderSections();
+        renderQuestion();
+        if (els.summaryPanel.classList.contains('open')) {
+          renderSummary();
+        }
+      });
+    });
+
+    els.clearBtn.addEventListener('click', () => {
+      if (!confirm(t().confirmClear)) return;
+      resetSurvey();
+    });
+
+    loadDraft();
+    applyLanguage();
+    renderSections();
+    renderQuestion();
+  </script>
+</body>
+</html>

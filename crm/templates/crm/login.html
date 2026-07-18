@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Web-Impulsa CRM</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: #f0f4f8; font-family: 'Segoe UI', Arial, sans-serif;
+  }
+  .box {
+    background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(0,0,0,.08);
+    padding: 36px 32px; width: 100%; max-width: 340px;
+  }
+  .box h1 { font-size: 1.1rem; font-weight: 900; color: #0c1c42; margin: 0 0 4px; text-align: center; }
+  .box p.sub { font-size: .82rem; color: #5a6d8c; margin: 0 0 22px; text-align: center; }
+  input[type=password] {
+    width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 11px 14px;
+    font-size: .95rem; outline: none; margin-bottom: 12px; font-family: inherit;
+  }
+  input[type=password]:focus { border-color: #1760d6; }
+  button {
+    width: 100%; background: #1760d6; color: #fff; border: none; border-radius: 8px;
+    padding: 11px; font-size: .92rem; font-weight: 700; cursor: pointer;
+  }
+  button:hover { background: #1246a8; }
+  .error { color: #dc2626; font-size: .82rem; text-align: center; margin: 0 0 12px; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <h1>Web-Impulsa CRM</h1>
+    <p class="sub">Introduce la contraseña de acceso</p>
+    {% if error %}<p class="error">Contraseña incorrecta</p>{% endif %}
+    <form method="post">
+      <input type="password" name="crm_password" placeholder="Contraseña" autofocus required>
+      <button type="submit">Entrar</button>
+    </form>
+  </div>
+</body>
+</html>

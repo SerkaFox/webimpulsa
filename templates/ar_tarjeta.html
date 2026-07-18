@@ -1,0 +1,2036 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Tarjeta AR — WebImpulsa</title>
+<meta name="robots" content="noindex">
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.5.0/dist/aframe-extras.min.js"></script>
+<script src="/static/wi/ar/mindar-image-aframe.prod.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: transparent; overflow: hidden; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  a-scene { position: fixed; inset: 0; z-index: 1; }
+
+  .overlay {
+    position: fixed; inset: 0; z-index: 10;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 24px;
+    background: linear-gradient(160deg, #0c1c42 0%, #123066 100%);
+    color: #fff;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  .overlay.hidden { display: none; }
+
+  .overlay img.logo {
+    width: min(220px, 60vw); margin-bottom: 22px; padding: 16px 20px;
+    background: #fff; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  }
+
+  .overlay h1 { font-size: 1.25rem; margin: 0 0 10px; font-weight: 700; }
+  .overlay p { font-size: .95rem; line-height: 1.55; color: #cfe0ff; max-width: 340px; margin: 0 0 26px; }
+
+  .btn-ar {
+    background: linear-gradient(90deg, #1760d6, #17b0d6);
+    color: #fff; border: none; border-radius: 999px;
+    font-size: 1rem; font-weight: 700; padding: 14px 34px;
+    box-shadow: 0 10px 30px rgba(23, 96, 214, .35);
+  }
+
+  .btn-link { margin-top: 18px; background: none; border: none; color: #9db4dd; font-size: .85rem; text-decoration: underline; }
+
+  .hint-bar {
+    position: fixed; left: 0; right: 0; bottom: 34px; z-index: 5;
+    display: flex; justify-content: center; pointer-events: none;
+  }
+  .hint-bar span {
+    background: rgba(12, 28, 66, .78); color: #fff; font-size: .88rem;
+    padding: 10px 18px; border-radius: 999px; font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+  .hint-bar.hidden { display: none; }
+
+  /* Subtítulos del diálogo: fijos a la PANTALLA (no al mundo AR), para que no
+     "vuelen" con la tarjeta ni desaparezcan si se pierde el tracking un instante. */
+  .subtitle-bar {
+    position: fixed; left: 12px; right: 12px; bottom: 92px; z-index: 5;
+    display: flex; justify-content: center; pointer-events: none;
+  }
+  .subtitle-bar span {
+    background: rgba(12, 28, 66, .82); color: #fff; font-size: .92rem; font-weight: 600;
+    padding: 9px 16px; border-radius: 14px; font-family: 'Helvetica Neue', Arial, sans-serif;
+    max-width: 90vw; text-align: center; line-height: 1.4;
+  }
+  .subtitle-bar.hidden { display: none; }
+
+  .top-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 6;
+    display: flex; justify-content: flex-end; padding: 14px 16px;
+  }
+  .top-bar.hidden { display: none; }
+  .top-bar button {
+    background: rgba(12, 28, 66, .6); color: #fff; border: none;
+    border-radius: 999px; width: 40px; height: 40px; font-size: 1.1rem;
+  }
+
+  .spinner {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 3px solid rgba(255,255,255,.25); border-top-color: #fff;
+    animation: spin 0.8s linear infinite; margin-bottom: 18px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Se coloca DETRÁS del canvas de a-scene (z-index:1) pero DELANTE del <video>
+     de la cámara de MindAR (z-index:-2, fijo por la propia librería) — así, al
+     subir su opacidad, se oscurece el fondo de cámara real sin tapar a los
+     robots (que siguen dibujándose por encima, en el canvas transparente). */
+  .fade-overlay {
+    position: fixed; inset: 0; z-index: -1;
+    /* Sin degradado de color encima — la foto de la "oficina" se ve tal cual
+       la dio el usuario, sin teñirla de azul (pidió expresamente el
+       original, sin tono). */
+    background: url('/static/wi/ar/robots/props/office_bg.jpg') center/cover no-repeat;
+    opacity: 0; transition: opacity 1.8s ease; pointer-events: none;
+  }
+
+  /* Agrupado junto al micrófono (esquina inferior izquierda) a propósito:
+     centrado en pantalla como estaba antes, se confundía visualmente con los
+     subtítulos (que también van centrados, más arriba) — la persona no sabía
+     si "Escuchando..." era una frase de un robot o el estado del micro. */
+  .chat-controls {
+    position: fixed; left: 12px; right: auto; bottom: 98px; z-index: 6;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+    max-width: 200px;
+  }
+  .chat-controls.hidden { display: none; }
+  .chat-mic-btn {
+    /* Fijo en la esquina inferior izquierda y fuera del flujo de
+       .chat-controls a propósito: centrado como estaba, se ponía encima de
+       los subtítulos y tapaba parte del texto cuando la frase era larga. */
+    position: fixed; left: 18px; bottom: 26px; z-index: 7;
+    width: 64px; height: 64px; border-radius: 50%; border: none; cursor: pointer;
+    background: linear-gradient(90deg, #1760d6, #17b0d6); color: #fff; font-size: 1.5rem;
+    box-shadow: 0 10px 30px rgba(23, 96, 214, .45);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .chat-mic-btn:active { transform: scale(0.94); }
+  .chat-mic-btn.listening { background: linear-gradient(90deg, #d61717, #d65c17); animation: chatPulse 1.1s ease-in-out infinite; }
+  .chat-mic-btn.thinking { background: linear-gradient(90deg, #7a17d6, #b017d6); }
+  .chat-mic-btn.speaking { background: linear-gradient(90deg, #17d67a, #17b0d6); }
+  @keyframes chatPulse {
+    0%, 100% { box-shadow: 0 10px 30px rgba(214, 23, 23, .45); }
+    50% { box-shadow: 0 10px 46px rgba(214, 23, 23, .75); }
+  }
+  .skip-btn {
+    position: fixed; top: 14px; left: 14px; z-index: 6;
+    background: rgba(12, 28, 66, .6); color: #fff; border: none;
+    border-radius: 999px; padding: 8px 14px; font-size: .8rem; font-weight: 600;
+  }
+  .skip-btn.hidden { display: none; }
+
+  .chat-text-fallback { display: none; gap: 8px; width: min(420px, 92vw); }
+  .chat-text-fallback.show { display: flex; }
+  .chat-text-fallback input { flex: 1; border: none; border-radius: 999px; padding: 12px 16px; font-size: .95rem; }
+  .chat-text-fallback button { border: none; border-radius: 999px; padding: 0 20px; background: #17b0d6; color: #fff; font-weight: 700; }
+  .chat-hint {
+    color: #fff; font-size: .78rem; text-align: left; max-width: 200px;
+    background: rgba(12, 28, 66, .78); padding: 6px 10px; border-radius: 10px;
+  }
+
+  .chat-settings { display: flex; align-items: center; gap: 10px; }
+  .chat-lang-toggle { display: flex; border-radius: 999px; overflow: hidden; border: 1px solid rgba(255,255,255,.25); }
+  .chat-lang-btn {
+    border: none; background: transparent; color: #9db4dd; font-size: .72rem; font-weight: 700;
+    padding: 5px 10px; cursor: pointer;
+  }
+  .chat-lang-btn.active { background: #17b0d6; color: #fff; }
+</style>
+</head>
+<body>
+
+  <!-- INTRO -->
+  <div class="overlay" id="introOverlay">
+    <img class="logo" src="/static/wi/img/logo.webp" alt="WebImpulsa">
+    <h1>Dale vida a tu tarjeta</h1>
+    <p>Activa la cámara y apunta al logotipo impreso en tu tarjeta de WebImpulsa para ver la animación.</p>
+    <button class="btn-ar" id="startBtn">Activar cámara</button>
+    <button class="btn-link" id="backBtnIntro">← Volver al sitio</button>
+  </div>
+
+  <!-- LOADING -->
+  <div class="overlay hidden" id="loadingOverlay">
+    <div class="spinner"></div>
+    <p>Iniciando cámara…</p>
+  </div>
+
+  <!-- ERROR -->
+  <div class="overlay hidden" id="errorOverlay">
+    <h1>No se pudo acceder a la cámara</h1>
+    <p id="errorMsg">Revisa los permisos de cámara de tu navegador e inténtalo de nuevo.</p>
+    <button class="btn-ar" id="retryBtn">Reintentar</button>
+    <button class="btn-link" id="backBtnError">← Volver al sitio</button>
+  </div>
+
+  <!-- AR UI -->
+  <div class="top-bar hidden" id="topBar">
+    <button id="closeBtn" aria-label="Cerrar">✕</button>
+  </div>
+  <!-- Solo para probar rápido: salta el guion de ~70s e ir directo a "llamar
+       a los robots", sin esperar toda la animación cada vez. -->
+  <button class="skip-btn hidden" id="skipBtn" type="button">⏭ Saltar al final</button>
+  <div class="hint-bar hidden" id="hintBar">
+    <span id="hintText">Apunta la cámara al logotipo de la tarjeta</span>
+  </div>
+
+  <!-- Subtítulos: fijos a la pantalla, no al mundo AR — se llenan desde say() y,
+       más tarde, también desde la charla en vivo con los robots. -->
+  <div class="subtitle-bar hidden" id="subtitleBar">
+    <span id="subtitleText"></span>
+  </div>
+
+  <div class="fade-overlay" id="fadeOverlay"></div>
+
+  <!-- Charla en vivo: aparece tras el saludo final del vídeo (crew-show emite
+       'ar-crew-finished'). El mismo botón sirve primero para "llamarles" y
+       luego, ya en primer plano, para la conversación normal. -->
+  <div class="chat-controls hidden" id="chatControls">
+    <button type="button" class="chat-mic-btn" id="chatMicBtn">🎤</button>
+    <div class="chat-text-fallback" id="chatTextFallback">
+      <input type="text" id="chatTextInput" placeholder="Escribe algo...">
+      <button type="button" id="chatTextSendBtn">Enviar</button>
+    </div>
+    <p class="chat-hint" id="chatHintText">Pulsa el micrófono y llámales para charlar</p>
+    <label class="chat-hint" id="chatAutoListenLabel" style="display:none; cursor:pointer; align-items:center; gap:6px;">
+      <input type="checkbox" id="chatAutoListenToggle" checked> Manos libres (escuchar automáticamente tras cada respuesta)
+    </label>
+    <div class="chat-settings" id="chatSettings" style="display:none;">
+      <div class="chat-lang-toggle">
+        <button type="button" class="chat-lang-btn active" id="langEsBtn" data-lang="es">ES</button>
+        <button type="button" class="chat-lang-btn" id="langRuBtn" data-lang="ru">RU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Diálogo (TTS pregenerado, Edge TTS) — José (A), Antonio (B), María (C) -->
+  <div id="dialogueAudio" style="display:none">
+    <audio id="jose_01"    preload="auto" src="/static/wi/ar/audio/jose_01.mp3?v=3"    data-text="Antonio, vamos a montar esta web."></audio>
+    <audio id="antonio_01" preload="auto" src="/static/wi/ar/audio/antonio_01.mp3?v=3" data-text="Marchando, tú la cabecera."></audio>
+    <audio id="maria_01"   preload="auto" src="/static/wi/ar/audio/maria_01.mp3?v=3"   data-text="¿Empezáis sin mí?"></audio>
+    <audio id="jose_02"    preload="auto" src="/static/wi/ar/audio/jose_02.mp3?v=3"    data-text="Saquemos las herramientas."></audio>
+    <audio id="jose_03"    preload="auto" src="/static/wi/ar/audio/jose_03.mp3?v=3"    data-text="Yo hago la cabecera."></audio>
+    <audio id="antonio_02" preload="auto" src="/static/wi/ar/audio/antonio_02.mp3?v=3" data-text="Y yo el menú, para que se encuentre todo."></audio>
+    <audio id="maria_02"   preload="auto" src="/static/wi/ar/audio/maria_02.mp3?v=3"   data-text="¡Perdón José, no vi la caja!"></audio>
+    <audio id="jose_04"    preload="auto" src="/static/wi/ar/audio/jose_04.mp3?v=3"    data-text="¡Otra vez tropezando, María!"></audio>
+    <audio id="maria_03"   preload="auto" src="/static/wi/ar/audio/maria_03.mp3?v=3"   data-text="Ya vale, sigo currando."></audio>
+    <audio id="jose_05"    preload="auto" src="/static/wi/ar/audio/jose_05.mp3?v=3"    data-text="Las tarjetas de servicios, bien clarito."></audio>
+    <audio id="maria_04"   preload="auto" src="/static/wi/ar/audio/maria_04.mp3?v=3"   data-text="Cinco minutitos nada más…"></audio>
+    <audio id="antonio_03" preload="auto" src="/static/wi/ar/audio/antonio_03.mp3?v=3" data-text="¡Segunda tarjeta lista!"></audio>
+    <audio id="jose_06"    preload="auto" src="/static/wi/ar/audio/jose_06.mp3?v=3"    data-text="El botón de contacto, bien grande."></audio>
+    <audio id="maria_05"   preload="auto" src="/static/wi/ar/audio/maria_05.mp3?v=3"   data-text="¿Qué me he perdido?"></audio>
+    <audio id="maria_06"   preload="auto" src="/static/wi/ar/audio/maria_06.mp3?v=3"   data-text="¡Antonio, cuidado!"></audio>
+    <audio id="antonio_05" preload="auto" src="/static/wi/ar/audio/antonio_05.mp3?v=3" data-text="Y el pie de página, con todos los datos."></audio>
+    <audio id="antonio_04" preload="auto" src="/static/wi/ar/audio/antonio_04.mp3?v=3" data-text="¡Casi tiras el menú!"></audio>
+    <audio id="maria_08"   preload="auto" src="/static/wi/ar/audio/maria_08.mp3?v=3"   data-text="Fuera bichos, que aquí se curra."></audio>
+    <audio id="maria_07"   preload="auto" src="/static/wi/ar/audio/maria_07.mp3?v=3"   data-text="Uno, dos... ¡y ya casi terminamos!"></audio>
+    <audio id="jose_07"    preload="auto" src="/static/wi/ar/audio/jose_07.mp3?v=3"    data-text="¡Lo hemos conseguido, la web está lista!"></audio>
+    <audio id="antonio_06" preload="auto" src="/static/wi/ar/audio/antonio_06.mp3?v=3" data-text="¡Toma ya, con estilo!"></audio>
+    <audio id="maria_09"   preload="auto" src="/static/wi/ar/audio/maria_09.mp3?v=3"   data-text="¡Muy bien hecho! Ahora toca el sitio y entra."></audio>
+  </div>
+
+<script>
+/* ── crew-show: минутный сценарий бригады из 3 роботов ──
+   A (голубой) + B (фиолетовый) строят «сайт»-схему из блоков;
+   C (зелёный) ходит рядом, считает, жмёт кнопки, осматривает.       */
+AFRAME.registerComponent('crew-show', {
+  /* Todo el guion se ejecuta con un reloj VIRTUAL propio (this.virtualTime), que
+     solo avanza mientras MindAR ve la tarjeta (targetFound). Si se pierde el
+     tracking un instante (normal sujetando el móvil), el reloj y todas las
+     animaciones en curso se congelan y siguen exactamente por donde iban al
+     recuperar el tracking — nada "salta" ni aparece ya terminado/flotando. */
+  init: function () {
+    this.started = false;
+    this.tracking = false;
+    this.virtualTime = 0;
+    this.timeline = [];
+    this.activeAudio = new Set();
+    this.stage = this.el;
+    this.R = { A: this.el.querySelector('#robotA'),
+               B: this.el.querySelector('#robotB'),
+               C: this.el.querySelector('#robotC') };
+
+    // Блоки: какой робот несёт, куда ставит (позиция+масштаб в стене-сайте), когда.
+    this.BUILD = [
+      { el: '#b_header', by: 'A', to: '0 3.5 -0.30',     scale: '2.4 0.8 1', t: 5000 },
+      { el: '#b_hero',   by: 'B', to: '0 2.24 -0.30',    scale: '2.4 1.6 1', t: 8000 },
+      { el: '#b_card1',  by: 'A', to: '-0.62 1.1 -0.30', scale: '1.05 1.1 1',t: 17000 },
+      { el: '#b_card2',  by: 'B', to: '0.62 1.1 -0.30',  scale: '1.05 1.1 1',t: 20000 },
+      { el: '#b_cta',    by: 'A', to: '0 0.20 -0.30',    scale: '0.9 0.5 1', t: 29000 },
+      { el: '#b_footer', by: 'B', to: '0 -0.40 -0.30',   scale: '2.4 0.5 1', t: 32000 }
+    ];
+
+    this.el.sceneEl.addEventListener('targetFound', () => {
+      this.tracking = true;
+      this.resumeAll();
+      this.play();
+    });
+    this.el.sceneEl.addEventListener('targetLost', () => {
+      this.tracking = false;
+      this.pauseAll();
+    });
+
+    // Congelar el desplazamiento del hueso raíz (Hips) en TODOS los clips de cada
+    // robot en cuanto carga el modelo. Las animaciones mocap (Mixamo) suelen traer
+    // un pequeño desplazamiento "de fábrica" en ese hueso; en clips que se repiten
+    // en bucle mucho rato (p.ej. saludar al final) ese desajuste minúsculo se suma
+    // en cada vuelta y acaba arrastrando al robot lejos, describiendo un círculo.
+    // Esto lo neutraliza de raíz para CUALQUIER clip, sin tener que ir clip a clip.
+    ['A', 'B', 'C'].forEach((k) => this._stripRootMotionOnLoad(this.R[k], k));
+
+    // ── Poses extra (Mixamo, convertidas de .fbx a .glb sin mesh — solo el clip):
+    // se cargan en segundo plano, fuera de <a-assets>, para no retrasar el arranque
+    // de la experiencia AR por ellas. Cada una añade su AnimationClip a los tres
+    // robots en cuanto ambas partes (robot + pose) están listas, en cualquier orden. ──
+    this._poseClips = {};
+    this.POSE_SLUGS.forEach((slug) => {
+      const el = document.createElement('a-entity');
+      el.setAttribute('gltf-model', `/static/wi/ar/robots/poses/${slug}.glb`);
+      el.setAttribute('visible', 'false');
+      el.addEventListener('model-loaded', () => {
+        const mesh = el.getObject3D('mesh');
+        const clip = mesh && mesh.animations && mesh.animations[0];
+        if (!clip) return;
+        clip.name = slug;
+        this._poseClips[slug] = clip;
+        ['A', 'B', 'C'].forEach((k) => this._injectPoseClip(k, clip));
+      });
+      this.el.sceneEl.appendChild(el);
+    });
+
+    // ── Sentarse (Mixamo, convertidas con el MISMO pipeline de Blender que
+    // las 29 de arriba, con los huesos ya renombrados sin ":" para que
+    // encajen con el esqueleto de los robots). A diferencia de las demás, en
+    // ESTAS SÍ hace falta el desplazamiento vertical real del hueso raíz —
+    // es lo que hace que el personaje baje al sentarse y suba al levantarse
+    // — por eso llevan su propia función de inyección.
+    //
+    // DESACTIVADO: causa raíz encontrada y confirmada (no es un problema de
+    // animación/conversión, es del PROPIO MALLADO del robot). Aislando cada
+    // hueso a mano (sin animation-mixer de por medio, fijando el quaternion
+    // directamente): el hueso del muslo (mixamorigLeftUpLeg) aguanta bien
+    // hasta ~40° de flexión, pero a partir de ~60° el pellejo se rasga/separa
+    // visiblemente en la cadera — y sentarse de verdad necesita ~90-95° de
+    // flexión de cadera, muy por encima de lo que el peso de vértices del
+    // robot tolera. No es arreglable tocando el clip: haría falta repintar
+    // los pesos de la malla alrededor de la cadera en el propio robot_a/b/c.glb
+    // (edición de personaje en Blender, no de animación). No se cargan estos
+    // .glb mientras tanto para no gastar ancho de banda en algo que no se usa. ──
+    this._sitPoseClips = {};
+    const SIT_POSES_ENABLED = false;
+    (SIT_POSES_ENABLED ? this.SIT_POSE_SLUGS : []).forEach((slug) => {
+      const el = document.createElement('a-entity');
+      el.setAttribute('gltf-model', `/static/wi/ar/robots/poses/${slug}.glb`);
+      el.setAttribute('visible', 'false');
+      el.addEventListener('model-loaded', () => {
+        const mesh = el.getObject3D('mesh');
+        const clip = mesh && mesh.animations && mesh.animations[0];
+        if (!clip) return;
+        clip.name = slug;
+        this._sitPoseClips[slug] = clip;
+        ['A', 'B', 'C'].forEach((k) => this._injectSitPoseClip(k, clip, slug));
+      });
+      this.el.sceneEl.appendChild(el);
+    });
+  },
+
+  SIT_POSE_SLUGS: [
+    'stand_to_sit', 'sit_to_stand', 'sitting_idle', 'sitting_idle_2', 'sitting_idle_3',
+    'sitting_pose', 'sitting_talking', 'sitting_typing', 'sitting_disapproval',
+    'sitting_thumbs_up', 'sitting_asking_question',
+  ],
+
+  // El FBX de origen guarda la posición de la cadera en unidades "tipo cm"
+  // (cadera de pie ≈ 99, sentado ≈ 55-61), pero Blender no las convirtió a
+  // metros al exportar el glTF (confirmado: José desapareció de la escena al
+  // sentarse — se iba ~55 unidades más allá, fuera de cámara). Con las
+  // rotaciones nunca se notó porque Hips.position siempre se congelaba a
+  // cero para esos clips.
+  SIT_POS_SCALE: 0.01,
+
+  _injectSitPoseClip: function (key, clip, slug) {
+    const mesh = this.R[key] && this.R[key].getObject3D('mesh');
+    if (!mesh || !mesh.animations) return;
+    if (mesh.animations.some((c) => c.name === clip.name)) return;
+    const isTransition = slug === 'stand_to_sit' || slug === 'sit_to_stand';
+    const scale = this.SIT_POS_SCALE;
+    clip.tracks.forEach((track) => {
+      if (!/Hips\.position$/i.test(track.name)) return;
+      if (isTransition) {
+        // Al sentarse la cadera se mueve de verdad en varios ejes a la vez
+        // (baja Y ATRÁS, no solo hacia abajo) — conservar el vector 3D
+        // completo, solo reescalado, en vez de anular ejes "a ojo" (el
+        // primer intento anulaba un eje que en realidad llevaba movimiento
+        // real, y el resultado salía mal).
+        for (let i = 0; i < track.values.length; i++) track.values[i] *= scale;
+      } else {
+        // Poses de reposo sentado: casi no llevan deriva propia (la persona
+        // apenas se mueve de la cadera mientras está sentada charlando o
+        // escribiendo) — se congelan en su PRIMER fotograma (reescalado)
+        // para que no arrastren nada de un lado a otro mientras hacen bucle.
+        const fx = track.values[0] * scale, fy = track.values[1] * scale, fz = track.values[2] * scale;
+        for (let i = 0; i < track.values.length; i += 3) {
+          track.values[i] = fx; track.values[i + 1] = fy; track.values[i + 2] = fz;
+        }
+      }
+    });
+    mesh.animations.push(clip);
+  },
+
+  // 29 poses extra convertidas con Blender (import FBX -> exportar glTF),
+  // que sí reconstruye bien la pose de reposo del esqueleto — la primera
+  // conversión (Node/three.js puro, sin Blender) perdía esos offsets y
+  // dejaba a los personajes "derretidos". Verificado bone a bone contra
+  // robot_c.glb antes de desplegar (mismos offsets exactos).
+  POSE_SLUGS: [
+    'acknowledging', 'agreeing', 'arm_stretching', 'blow_a_kiss', 'burpee', 'cards',
+    'clapping', 'cocky_head_turn', 'defeat', 'disappointed', 'dismissing_gesture',
+    'dizzy_idle', 'happy_idle', 'idle', 'lengthy_head_nod', 'look_over_shoulder',
+    'pointing_forward', 'praying', 'pulling_lever', 'salsa_dancing', 'samba_dancing',
+    'silly_dancing', 'standing_thumbs_up', 'stop_walking', 'surprised',
+    'telling_a_secret', 'texting_and_walking', 'thoughtful_head_nod',
+    'thoughtful_head_shake',
+  ],
+
+  _injectPoseClip: function (key, clip) {
+    const mesh = this.R[key] && this.R[key].getObject3D('mesh');
+    if (!mesh || !mesh.animations) return;
+    if (mesh.animations.some((c) => c.name === clip.name)) return;
+    // Mismo motivo que en _stripRootMotionOnLoad: sin esto, cada pose nueva
+    // traería su propio desplazamiento "de fábrica" del hueso Hips y el
+    // personaje saltaría de sitio al reproducirla.
+    clip.tracks.forEach((track) => {
+      if (/Hips\.position$/i.test(track.name)) track.values.fill(0);
+    });
+    mesh.animations.push(clip);
+  },
+
+  _stripRootMotionOnLoad: function (el, key) {
+    // OJO: cada clip de mocap se grabó con el actor en un punto distinto del set,
+    // así que el primer fotograma de 'Hips.position' NO coincide entre clips
+    // (p.ej. male_standing_pose_m ~ z:1.8 pero waving_hand_m ~ x:-8, z:88 en
+    // female_laying_pose). Congelar cada clip en SU PROPIO primer fotograma
+    // quitaba el arrastre dentro de un mismo clip, pero al cambiar de clip
+    // (p.ej. al volver a male_standing_pose_m tras dejar un bloque) el personaje
+    // "chasqueaba" de golpe de un punto congelado a otro. Por eso ahora se
+    // congelan TODOS los clips en el mismo valor fijo (0,0,0): ninguno se mueve
+    // nunca y, al no haber dos valores distintos, tampoco hay salto al cambiar.
+    el.addEventListener('model-loaded', () => {
+      const mesh = el.getObject3D('mesh');
+      if (!mesh || !mesh.animations) return;
+      mesh.animations.forEach((clip) => {
+        clip.tracks.forEach((track) => {
+          if (!/Hips\.position$/i.test(track.name)) return;
+          track.values.fill(0);
+        });
+      });
+      // Si alguna pose extra ya había terminado de cargar antes que este robot
+      // (lo normal, son mucho más ligeras que robot_a/b/c.glb), añadírsela ahora.
+      Object.values(this._poseClips).forEach((clip) => this._injectPoseClip(key, clip));
+    });
+  },
+
+  // ── reloj virtual: solo avanza con tracking activo ──
+  schedule: function (t, fn) {
+    this.timeline.push({ t: t, fn: fn });
+    this.timeline.sort(function (a, b) { return a.t - b.t; });
+  },
+  tick: function (time, delta) {
+    if (!this.started || !this.tracking || !delta) return;
+    this.virtualTime += delta;
+    while (this.timeline.length && this.timeline[0].t <= this.virtualTime) {
+      var item = this.timeline.shift();
+      item.fn();
+    }
+  },
+
+  // ── pausar/reanudar TODAS las animaciones en curso (posición/escala/clips) ──
+  pauseAll: function () {
+    this.el.querySelectorAll('*').forEach((el) => {
+      if (!el.components) return;
+      Object.keys(el.components).forEach((key) => {
+        if (key.indexOf('animation') === 0 && key !== 'animation-mixer' && el.components[key].pause) el.components[key].pause();
+      });
+      var mixer = el.components['animation-mixer'];
+      if (mixer && mixer.mixer) mixer.mixer.timeScale = 0;
+    });
+    this.activeAudio.forEach((a) => a.pause());
+  },
+  resumeAll: function () {
+    this.el.querySelectorAll('*').forEach((el) => {
+      if (!el.components) return;
+      Object.keys(el.components).forEach((key) => {
+        if (key.indexOf('animation') === 0 && key !== 'animation-mixer' && el.components[key].play) el.components[key].play();
+      });
+      var mixer = el.components['animation-mixer'];
+      if (mixer && mixer.mixer) mixer.mixer.timeScale = 1;
+    });
+    this.activeAudio.forEach((a) => a.play().catch(() => {}));
+  },
+
+  // ── diálogo (TTS pregenerado): reproduce la línea y la registra para que
+  // pauseAll/resumeAll la traten igual que a las animaciones (se congela si
+  // se pierde el tracking y sigue por donde iba al recuperarlo). También
+  // muestra el subtítulo (fijo a la pantalla, no al mundo AR) para poder leer
+  // el chiste sin sonido o si el móvil está en silencio. ──
+  SPEAKER_NAME: { jose: 'José', antonio: 'Antonio', maria: 'María' },
+  say: function (id) {
+    const a = document.getElementById(id);
+    if (!a) return;
+    a.currentTime = 0;
+    a.play().catch(() => {});
+    this.activeAudio.add(a);
+    const bar = document.getElementById('subtitleBar');
+    const text = document.getElementById('subtitleText');
+    const label = this.SPEAKER_NAME[id.split('_')[0]];
+    const full = (label ? label + ': ' : '') + (a.dataset.text || '');
+    if (bar && text) {
+      text.textContent = full;
+      bar.classList.remove('hidden');
+    }
+    a.onended = () => {
+      this.activeAudio.delete(a);
+      if (bar && text && text.textContent === full) bar.classList.add('hidden');
+    };
+  },
+
+  clip: function (r, name, loop) {
+    this.R[r].setAttribute('animation-mixer',
+      `clip: ${name}; loop: ${loop || 'once'}; clampWhenFinished: true; crossFadeDuration: 0.3`);
+  },
+
+  place: function (item) {
+    // Movimiento directo del bloque (caja → mano aprox. del robot → su sitio en la pared).
+    // No depende de encontrar un hueso concreto dentro del esqueleto del robot: esa
+    // dependencia era frágil (si el nombre del hueso no coincidía, el bloque se quedaba
+    // quieto e invisible, y enganchar el objeto al hueso podía además distorsionar la
+    // propia transformación del robot).
+    const block = this.el.querySelector(item.el);
+    const robotPos = this.R[item.by].getAttribute('position');
+    const liftPos = `${robotPos.x} ${(robotPos.y + 0.55).toFixed(2)} ${(robotPos.z - 0.15).toFixed(2)}`;
+
+    this.clip(item.by, 'lifting_object_m', 'once');
+    block.setAttribute('visible', true);
+    block.setAttribute('rotation', '0 0 0');
+    block.setAttribute('scale', '0.5 0.5 0.5');
+    block.setAttribute('animation__lift', `property: position; to: ${liftPos}; dur: 700; easing: easeOutQuad`);
+
+    // через ~0.9с (виртуального, видимого времени) — понести и поставить на место
+    this.schedule(this.virtualTime + 900, () => {
+      this.clip(item.by, 'placement', 'once');
+      block.setAttribute('animation__place', `property: position; to: ${item.to}; dur: 1100; easing: easeInOutQuad`);
+      block.setAttribute('animation__scale', `property: scale; to: ${item.scale}; dur: 1100; easing: easeOutQuad`);
+      this.schedule(this.virtualTime + 1400, () => this.clip(item.by, 'male_standing_pose_m', 'repeat'));
+    });
+  },
+
+  // C — лентяй: camina de un lado a otro y cambia de gesto. Ya con el root motion
+  // fijado en un único valor común para todos los clips, el movimiento no provoca
+  // saltos: se puede usar tranquilamente 'walking'/'happy_walk' de verdad.
+  cAnim: function (name, loop) { this.clip('C', name, loop); },
+  cMove: function (pos, dur) {
+    // Girar de cara a hacia dónde camina — si no, el clip de andar mueve las
+    // piernas "hacia adelante" en su propio eje mientras el cuerpo se desliza
+    // en otra dirección distinta, y parece que camina de lado/patina.
+    const target = pos.split(' ').map(Number);
+    const cur = this.R.C.getAttribute('position');
+    const dx = target[0] - cur.x, dz = target[2] - cur.z;
+    if (Math.abs(dx) > 0.001 || Math.abs(dz) > 0.001) {
+      const yaw = Math.atan2(dx, dz) * (180 / Math.PI);
+      this.R.C.setAttribute('rotation', `0 ${yaw.toFixed(1)} 0`);
+    }
+    // 'linear' en vez de easeInOutSine: con aceleración/desaceleración el paso de
+    // las piernas (a ritmo constante) deja de coincidir con la velocidad real del
+    // desplazamiento al principio/final del tramo.
+    this.R.C.setAttribute('animation__walk',
+      `property: position; to: ${pos}; dur: ${dur}; easing: linear`);
+  },
+  // C мешает строителю: тот отшатывается (shove_reaction), потом снова за работу
+  bump: function (r) {
+    this.clip(r, 'shove_reaction', 'once');
+    this.schedule(this.virtualTime + 1300, () => this.clip(r, 'male_standing_pose_m', 'repeat'));
+  },
+
+  play: function () {
+    if (this.started) return;
+    this.started = true;
+
+    const crateL = this.el.querySelector('#crateL');
+    const crateR = this.el.querySelector('#crateR');
+
+    // 0) Al principio no hay NADA en pantalla — solo la tarjeta. A y B llegan de
+    // lejos trayendo sus cajas; C (el vago) llega más tarde y desde más lejos aún.
+    // Los robots quedan a z:-0.5 (la caja se queda en z:0.2) para que se vean DETRÁS
+    // de su caja, con margen de sobra para que los brazos no atraviesen la caja.
+    this.R.A.setAttribute('position', '-2.5 0 -0.5');
+    this.R.A.setAttribute('visible', true);
+    this.clip('A', 'male_standing_pose_m', 'repeat');
+    this.R.A.setAttribute('animation__arrive', 'property: position; to: -1.0 0 -0.5; dur: 2200; easing: easeOutQuad');
+
+    crateL.setAttribute('position', '-2.5 0.2 0.2');
+    crateL.setAttribute('visible', true);
+    crateL.setAttribute('animation__arrive', 'property: position; to: -1.0 0.2 0.2; dur: 2200; easing: easeOutQuad');
+
+    this.R.B.setAttribute('position', '2.5 0 -0.5');
+    this.R.B.setAttribute('visible', true);
+    this.clip('B', 'male_standing_pose_m', 'repeat');
+    this.R.B.setAttribute('animation__arrive', 'property: position; to: 1.0 0 -0.5; dur: 2200; easing: easeOutQuad');
+
+    crateR.setAttribute('position', '2.5 0.2 0.2');
+    crateR.setAttribute('visible', true);
+    crateR.setAttribute('animation__arrive', 'property: position; to: 1.0 0.2 0.2; dur: 2200; easing: easeOutQuad');
+
+    // C llega tarde (típico de un vago) y desde otra dirección
+    this.schedule(2200, () => {
+      this.R.C.setAttribute('position', '0 0 2.7');
+      this.R.C.setAttribute('visible', true);
+      this.cAnim('male_standing_pose_m', 'repeat');
+      this.R.C.setAttribute('animation__arrive', 'property: position; to: 0 0 1.2; dur: 1800; easing: easeOutQuad');
+    });
+
+    // Una vez ha llegado todo el mundo, empieza la construcción (ya sin maleta
+    // ni tapa en el centro — eran un "mesón"/puertas grandes que estorbaban
+    // visualmente y no aportaban nada al chiste).
+    const START = 4200;
+    this.schedule(START, () => {
+      this.schedule(START + 800,  () => this.clip('A', 'up_m', 'once'));
+      this.schedule(START + 1100, () => this.clip('B', 'up_m', 'once'));
+    });
+
+    // стройка по расписанию (A+B), con el mismo margen que antes tras abrir la maleta
+    this.BUILD.forEach((item) => this.schedule(START + item.t, () => this.place(item)));
+
+    // C дурачится весь ролик: гуляет, отмахивается, спит, спотыкается, мешает.
+    // Ahora que el root motion está congelado en el origen (_stripRootMotionOnLoad),
+    // ya podemos usar los clips de locomoción de verdad ('walking'/'happy_walk') sin
+    // que se acumule desplazamiento — antes se sustituían por una pose estática como
+    // parche temporal mientras no sabíamos la causa real.
+    const GAGS = [
+      [ 600, () => { this.cMove('-0.2 0 1.35', 2500); this.cAnim('happy_walk', 'repeat'); }],
+      [4000, () => { this.cAnim('swatting_bugs', 'repeat'); }],                 // отмахивается от жучков
+      [8000, () => { this.cMove('-0.72 0 0.95', 2200); this.cAnim('walking', 'repeat'); }], // прётся к A
+      [10800,() => { this.bump('A'); this.cAnim('tripping', 'once'); }],        // мешает A и падает
+      [13800,() => { this.cAnim('up_m', 'once'); }],                            // встаёт
+      [15200,() => { this.cMove('0.35 0 1.5', 2500); this.cAnim('walking', 'repeat'); }],
+      [18200,() => { this.cAnim('female_laying_pose', 'repeat'); }],            // лёг спать посреди стройки
+      [30000,() => { this.cAnim('up_m', 'once'); }],                           // проснулся
+      [31600,() => { this.cMove('0.72 0 0.95', 2400); this.cAnim('happy_walk', 'repeat'); }], // теперь к B
+      [34600,() => { this.bump('B'); this.cAnim('jump_m', 'once'); }],          // мешает B — второе падение подряд уже не смешно, теперь просто вздрагивает/подпрыгивает от испуга
+      [37600,() => { this.cAnim('male_standing_pose_m', 'repeat'); }],
+      [39000,() => { this.cMove('0 0 1.55', 2500); this.cAnim('swatting_bugs', 'repeat'); }],
+      [44000,() => { this.cMove('-0.3 0 1.4', 2500); this.cAnim('counting_m', 'repeat'); }], // «считает», без толку
+      [48000,() => { this.cAnim('happy_walk', 'repeat'); this.cMove('0.2 0 1.45', 3000); }]
+    ];
+    GAGS.forEach(([t, fn]) => this.schedule(START + t, fn));
+
+    // Diálogo: UNA sola cola global — cada línea espera a que la ANTERIOR
+    // (sea de quien sea) haya terminado del todo + un margen, así los tres
+    // personajes nunca se pisan la voz. Las frases se acortaron (ver script de
+    // generación) para que la cola quepa cerca del tiempo real de cada acción;
+    // el desfase máximo ronda 5-8s a mitad de escena y vuelve a quedar exacto
+    // justo en el saludo final (t=57200), que es el momento que más importa.
+    const DIALOGUE = [
+      [    0, 'jose_01'],    // "Antonio, vamos a montar esta web."
+      [ 3318, 'antonio_01'], // "Marchando, tú la cabecera."
+      [ 6276, 'maria_01'],   // "¿Empezáis sin mí?"
+      [ 8442, 'jose_02'],    // "Saquemos las herramientas."
+      [11160, 'jose_03'],    // "Yo hago la cabecera."
+      [13614, 'antonio_02'], // "Y yo el menú, para que se encuentre todo."
+      [17172, 'maria_02'],   // "¡Perdón José, no vi la caja!"
+      [19914, 'jose_04'],    // "¡Otra vez tropezando, María!"
+      [22920, 'maria_03'],   // "Ya vale, sigo currando."
+      [25566, 'jose_05'],    // "Las tarjetas de servicios, bien clarito."
+      [29340, 'maria_04'],   // "Cinco minutitos nada más…"
+      [32202, 'antonio_03'], // "¡Segunda tarjeta lista!"
+      [34728, 'jose_06'],    // "El botón de contacto, bien grande."
+      [37998, 'maria_05'],   // "¿Qué me he perdido?"
+      [40140, 'maria_06'],   // "¡Antonio, cuidado!"
+      [42474, 'antonio_05'], // "Y el pie de página, con todos los datos."
+      [46224, 'antonio_04'], // "¡Casi tiras el menú!"
+      [48534, 'maria_08'],   // "Fuera bichos, que aquí se curra."
+      [51516, 'maria_07'],   // "Uno, dos... ¡y ya casi terminamos!"
+      [57200, 'jose_07'],    // "¡Lo hemos conseguido, la web está lista!"
+      [60662, 'antonio_06'], // "¡Toma ya, con estilo!"
+      [63236, 'maria_09'],   // "¡Muy bien hecho! Ahora toca el sitio y entra."
+    ];
+    DIALOGUE.forEach(([t, id]) => this.schedule(t, () => this.say(id)));
+
+    // финал ~53с видимого времени (tras empezar a construir): строители машут, C… снова заваливается спать
+    this.schedule(START + 53000, () => {
+      this.clip('A', 'waving_hand_m', 'repeat');
+      this.clip('B', 'waving_hand_m', 'repeat');
+      this.cMove('0 0 1.2', 800);
+      this.cAnim('female_laying_pose', 'repeat');     // опять уснул
+      var hintTextEl = document.getElementById('hintText');
+      if (hintTextEl) hintTextEl.textContent = '¡Listo! Toca el sitio y haz tu chequeo digital gratis →';
+
+      // Brillo pulsante sobre la propia zona clicable (mismo elemento, no uno
+      // superpuesto), para que se note dónde hay que tocar sin robarle el
+      // clic al raycaster.
+      this.el.querySelector('#siteLink').setAttribute('animation__pulse',
+        'property: material.opacity; from: 0.06; to: 0.22; dir: alternate; loop: true; dur: 850; easing: easeInOutSine');
+    });
+
+    // 2s después de que empiecen a saludar, se ofrece la opción de llamarles
+    // para charlar (evento global: lo escucha el script de la charla en vivo).
+    // OJO: el diálogo pregrabado tiene líneas programadas hasta t≈63236 (más
+    // tarde que este punto) — sin vaciar this.timeline aquí, esas últimas
+    // frases seguirían sonando/mostrándose por encima de la charla en vivo.
+    this.schedule(START + 55000, () => {
+      this.timeline = [];
+      document.dispatchEvent(new CustomEvent('ar-crew-finished'));
+    });
+  }
+});
+</script>
+
+  <a-scene
+    id="arScene"
+    mindar-image="imageTargetSrc: /static/wi/ar/targets.mind; autoStart: false; uiScanning: no; uiLoading: no; uiError: no; filterMinCF: 0.0001; filterBeta: 20; warmupTolerance: 5; missTolerance: 5;"
+    color-space="sRGB"
+    renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+    embedded
+  >
+    <a-assets>
+      <a-asset-item id="mA" src="/static/wi/ar/robots/robot_a.glb"></a-asset-item>
+      <a-asset-item id="mB" src="/static/wi/ar/robots/robot_b.glb"></a-asset-item>
+      <a-asset-item id="mC" src="/static/wi/ar/robots/robot_c.glb"></a-asset-item>
+      <a-asset-item id="mCrate" src="/static/wi/ar/robots/props/crate.glb"></a-asset-item>
+      <a-asset-item id="mHeader" src="/static/wi/ar/robots/props/block_header.glb"></a-asset-item>
+      <a-asset-item id="mHero" src="/static/wi/ar/robots/props/block_hero.glb"></a-asset-item>
+      <a-asset-item id="mCta" src="/static/wi/ar/robots/props/block_cta.glb"></a-asset-item>
+    </a-assets>
+
+    <!-- MindAR necesita el raycaster EXPLÍCITO con objects: .clickable en la
+         cámara (documentado en la guía oficial "Events Handling" de mind-ar-js)
+         — sin fijar ese filtro, el cursor por defecto no detecta el tap sobre
+         entidades ancladas dentro de mindar-image-target (su matriz se
+         actualiza a mano cada frame, fuera del ciclo normal de A-Frame). -->
+    <a-camera id="arCamera" position="0 0 0" look-controls="enabled: false"
+               cursor="fuse: false; rayOrigin: mouse" raycaster="objects: .clickable; far: 10000"
+               wasd-controls="enabled: false"></a-camera>
+    <a-entity light="type: ambient; intensity: 0.95"></a-entity>
+    <a-entity light="type: directional; intensity: 0.8" position="1 2 1"></a-entity>
+
+    <a-entity id="cardTarget" mindar-image-target="targetIndex: 0">
+      <!-- STAGE: bригада из 3 роботов строит "сайт" из блоков.
+           Con la tarjeta plana en la mesa, el eje "arriba" real de MindAR es Z, no Y
+           (toda la escena se diseñó pensando en Y=altura, como si la tarjeta fuera un
+           póster en la pared). Rotamos el stage 90° en X para que esa "altura" caiga
+           sobre Z: verificado con las transformaciones reales en el navegador — con
+           90° los robots quedan a Z=0 (apoyados en la mesa) y las cajas a Z=+0.2 (justo
+           encima, no por debajo). Con -90° las cajas quedaban en Z=-0.2, es decir
+           hundidas bajo la mesa — por eso tiene que ser +90 y no -90. -->
+      <a-entity id="stage" crew-show scale="0.3 0.3 0.3" rotation="90 0 0" position="0 0 0">
+
+        <!-- кейс визитки -->
+
+        <!-- два ящика с блоками (слева/справа) -->
+        <a-entity id="crateL" gltf-model="#mCrate" position="-1.0 0.2 0.2" visible="false"></a-entity>
+        <a-entity id="crateR" gltf-model="#mCrate" position="1.0 0.2 0.2" visible="false"></a-entity>
+
+        <!-- роботы: A голубой (строитель слева), B фиолетовый (строитель справа), C жёлтый (лентяй спереди) -->
+        <!-- rotation propia a 0: los "0 20 0"/"0 -20 0" de antes giraban sobre el eje Y
+             local para que se miraran de reojo, pero eso se pensó para la orientación
+             vieja (stage sin rotar). Con el stage ahora rotado 90° en X, ese giro en Y
+             local ya no es un simple "girar la vista", pasa a inclinar/torcer el cuerpo
+             — por eso salían con las poses retorcidas. Se quita hasta retocarlo bien. -->
+        <a-entity id="robotA" gltf-model="#mA" position="-1.0 0 -0.5" rotation="0 0 0" visible="false" head-look-nod></a-entity>
+        <a-entity id="robotB" gltf-model="#mB" position="1.0 0 -0.5"  rotation="0 0 0" visible="false" head-look-nod></a-entity>
+        <a-entity id="robotC" gltf-model="#mC" position="0 0 1.2" rotation="0 0 0" visible="false" head-look-nod></a-entity>
+
+        <!-- блоки стартуют в ящиках, скрыты; сценарий переносит их в стену-сайт -->
+        <a-entity id="b_header" gltf-model="#mHeader" position="-1.0 0.4 0.2" visible="false"></a-entity>
+        <a-entity id="b_card1"  gltf-model="#mHeader" position="-1.0 0.4 0.2" visible="false"></a-entity>
+        <a-entity id="b_cta"    gltf-model="#mCta"    position="-1.0 0.4 0.2" visible="false"></a-entity>
+        <a-entity id="b_hero"   gltf-model="#mHero"   position="1.0 0.4 0.2"  visible="false"></a-entity>
+        <a-entity id="b_card2"  gltf-model="#mHeader" position="1.0 0.4 0.2"  visible="false"></a-entity>
+        <a-entity id="b_footer" gltf-model="#mHeader" position="1.0 0.4 0.2"  visible="false"></a-entity>
+
+        <!-- zona clicable del sitio terminado: tap = ir a webimpulsa.es.
+             Cubre TODA la pared (footer y≈-0.65 hasta header y≈3.9, tras
+             duplicar la altura de los paneles) — antes medía solo 2.4 de
+             alto centrada en 0.75 y se quedaba corta arriba: no se podía
+             tocar la cabecera ni la mitad superior del hero.
+             OJO: el brillo pulsante se anima sobre ESTE MISMO plano (su propio
+             material.opacity), no sobre un plano aparte puesto delante — un
+             plano de brillo separado y más cerca de la cámara le "robaba" el
+             clic al raycaster (el rayo tocaba primero el brillo, que no tiene
+             listener, y nunca llegaba a este elemento). -->
+        <a-plane id="siteLink" position="0 1.6 -0.30" width="2.8" height="4.6"
+                 material="shader: flat; color: #17b0d6; opacity: 0; transparent: true; side: double"
+                 class="clickable"></a-plane>
+      </a-entity>
+    </a-entity>
+
+    <!-- Fuera de #cardTarget a propósito: cuando se convoca a los robots para
+         charlar, se reparentan aquí (coordenadas normales, sin la rotación/escala
+         del AR) — así ya no dependen del tracking de la tarjeta ni de la cámara. -->
+    <a-entity id="foregroundStage" position="0 0.97 0"></a-entity>
+  </a-scene>
+
+<script>
+(function () {
+  var sceneEl = document.getElementById('arScene');
+  var targetEl = document.getElementById('cardTarget');
+
+  var introOverlay = document.getElementById('introOverlay');
+  var loadingOverlay = document.getElementById('loadingOverlay');
+  var errorOverlay = document.getElementById('errorOverlay');
+  var errorMsg = document.getElementById('errorMsg');
+  var topBar = document.getElementById('topBar');
+  var hintBar = document.getElementById('hintBar');
+
+  function show(el) { el.classList.remove('hidden'); }
+  function hide(el) { el.classList.add('hidden'); }
+
+  function goHome() {
+    try {
+      var system = sceneEl.systems['mindar-image-system'];
+      if (system && system.stop) system.stop();
+    } catch (e) {}
+    stopFrontCamera();
+    window.location.href = '/';
+  }
+
+  function goToQuestionnaire() {
+    // Tap sobre el sitio ya terminado: el objetivo real es que el cliente
+    // haga el chequeo digital, no que vuelva a la portada.
+    try {
+      var system = sceneEl.systems['mindar-image-system'];
+      if (system && system.stop) system.stop();
+    } catch (e) {}
+    stopFrontCamera();
+    window.location.href = '/chequeo-digital/';
+  }
+
+  function unlockDialogueAudio() {
+    // iOS Safari solo permite reproducir <audio> por JS más tarde si cada
+    // elemento se ha "desbloqueado" con un play()/pause() dentro del propio
+    // gesto de usuario (este click). Sin esto, las líneas de diálogo
+    // programadas para más adelante (targetFound async) sonarían mudas en iPhone.
+    document.querySelectorAll('#dialogueAudio audio').forEach((a) => {
+      a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+    });
+  }
+
+  // Vigía de arranque de la cámara: la librería MindAR, al inicializar,
+  // llama a una función interna async (_startAR) SIN capturar sus propios
+  // errores — si algo falla ahí dentro (no la propia cámara, sino el paso
+  // siguiente de arrancar el tracking), ni "arReady" ni "arError" llegan a
+  // dispararse nunca, y la pantalla de carga se queda colgada para siempre
+  // sin avisar de nada — de ahí que a veces haga falta recargar la página
+  // varias veces para que "cuaje". Este timeout convierte ese cuelgue
+  // silencioso en un error visible con botón de reintentar, sin recargar.
+  var arStartWatchdog = null;
+  function clearArStartWatchdog() {
+    if (arStartWatchdog) { clearTimeout(arStartWatchdog); arStartWatchdog = null; }
+  }
+
+  function startAR() {
+    unlockDialogueAudio();
+    hide(introOverlay);
+    hide(errorOverlay);
+    show(loadingOverlay);
+
+    var system = sceneEl.systems['mindar-image-system'];
+    if (!system) {
+      // a-scene not fully initialized yet, retry shortly
+      setTimeout(startAR, 200);
+      return;
+    }
+
+    // Si el intento anterior se quedó colgado (ver nota del vigía más abajo),
+    // pudo dejar la cámara del intento previo abierta sin liberar — se corta
+    // aquí antes de reintentar, si no, a veces el segundo intento tampoco
+    // consigue arrancar por tener la cámara "ocupada" consigo misma.
+    try {
+      if (system.video && system.video.srcObject) {
+        system.video.srcObject.getTracks().forEach(function (t) { t.stop(); });
+      }
+    } catch (e) {}
+
+    system.start();
+
+    clearArStartWatchdog();
+    arStartWatchdog = setTimeout(function () {
+      hide(loadingOverlay);
+      hide(topBar);
+      hide(hintBar);
+      errorMsg.textContent = 'La cámara se ha quedado bloqueada al iniciar. Pulsa para reintentar (a veces hace falta más de un intento).';
+      show(errorOverlay);
+    }, 14000);
+  }
+
+  document.getElementById('startBtn').addEventListener('click', startAR);
+  document.getElementById('retryBtn').addEventListener('click', startAR);
+  document.getElementById('backBtnIntro').addEventListener('click', function () { window.location.href = '/'; });
+  document.getElementById('backBtnError').addEventListener('click', function () { window.location.href = '/'; });
+  document.getElementById('closeBtn').addEventListener('click', goHome);
+
+  sceneEl.addEventListener('arReady', function () {
+    clearArStartWatchdog();
+    hide(loadingOverlay);
+    show(topBar);
+    show(hintBar);
+    show(document.getElementById('skipBtn'));
+  });
+
+  function stopRunningAnims(el) {
+    // Quita cualquier animation__* en curso (animation__arrive, __walk, __turn,
+    // __lift, __place, __scale...) para que no siga escribiendo encima de la
+    // posición/rotación que se fije justo después.
+    Array.prototype.slice.call(el.attributes).forEach(function (attr) {
+      if (attr.name.indexOf('animation__') === 0) el.removeAttribute(attr.name);
+    });
+  }
+
+  document.getElementById('skipBtn').addEventListener('click', function () {
+    var stageEl = document.getElementById('stage');
+    var comp = stageEl.components['crew-show'];
+    if (!comp) return;
+    // Vaciar TODO lo pendiente del guion (diálogo/gags/construcción) — si no,
+    // esas llamadas programadas seguían disparándose en segundo plano tras
+    // "saltar", volviendo a mover/hablar a los robots por su cuenta.
+    comp.timeline = [];
+    comp.tracking = true;
+    comp.started = true;
+
+    document.querySelectorAll('#dialogueAudio audio').forEach(function (a) { a.pause(); a.currentTime = 0; });
+    hide(document.getElementById('subtitleBar'));
+
+    ['A', 'B', 'C'].forEach(function (k) {
+      stopRunningAnims(comp.R[k]);
+      comp.R[k].setAttribute('visible', true);
+    });
+    stopRunningAnims(document.getElementById('crateL'));
+    stopRunningAnims(document.getElementById('crateR'));
+    comp.R.A.setAttribute('position', '-1.0 0 -0.5');
+    comp.R.B.setAttribute('position', '1.0 0 -0.5');
+    comp.R.C.setAttribute('position', '0 0 1.2');
+    comp.clip('A', 'waving_hand_m', 'repeat');
+    comp.clip('B', 'waving_hand_m', 'repeat');
+    comp.cAnim('female_laying_pose', 'repeat');
+
+    document.getElementById('hintText').textContent = '¡Listo! Toca el sitio y haz tu chequeo digital gratis →';
+    show(hintBar);
+    document.dispatchEvent(new CustomEvent('ar-crew-finished'));
+    hide(this);
+  });
+
+  sceneEl.addEventListener('arError', function (ev) {
+    clearArStartWatchdog();
+    hide(loadingOverlay);
+    hide(topBar);
+    hide(hintBar);
+    if (ev.detail && ev.detail.error === 'VIDEO_FAIL') {
+      errorMsg.textContent = 'No se pudo acceder a la cámara. Revisa los permisos e inténtalo de nuevo.';
+    }
+    show(errorOverlay);
+  });
+
+  targetEl.addEventListener('targetFound', function () {
+    hide(hintBar);
+  });
+
+  targetEl.addEventListener('targetLost', function () {
+    show(hintBar);
+  });
+
+  var siteLink = document.getElementById('siteLink');
+  if (siteLink) siteLink.addEventListener('click', goToQuestionnaire);
+})();
+</script>
+
+<script>
+(function () {
+  // ── Cabeza mirando a cámara + asentir mientras habla. Se registra en los tres
+  // robots pero SOLO actúa una vez empieza la charla en primer plano
+  // (window.__arChatActive) — durante el vídeo AR no debe tocar la cabeza, que
+  // ya la controla el clip de mocap correspondiente (saludar, tropezar, etc.). ──
+  window.__arChatActive = false;
+  AFRAME.registerComponent('head-look-nod', {
+    init: function () {
+      this.headBone = null;
+      this.headBaseQuat = null;
+      this.speaking = false;
+      this.el.addEventListener('model-loaded', () => {
+        const mesh = this.el.getObject3D('mesh');
+        if (!mesh) return;
+        mesh.traverse((node) => {
+          if (node.isBone && node.name === 'mixamorigHead') this.headBone = node;
+        });
+        if (this.headBone) this.headBaseQuat = this.headBone.quaternion.clone();
+      });
+    },
+    setSpeaking: function (v) { this.speaking = v; },
+    tock: function (time) {
+      if (!window.__arChatActive || !this.headBone || !this.headBaseQuat) return;
+      const THREE = AFRAME.THREE;
+      if (this.speaking) {
+        const t = time / 1000;
+        const nod = Math.sin(t * 5.2) * 0.085;
+        const sway = Math.sin(t * 1.7) * 0.05;
+        const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(nod, 0.16 + sway, 0));
+        this.headBone.quaternion.copy(this.headBaseQuat).multiply(q);
+      } else {
+        const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0.1, 0));
+        this.headBone.quaternion.copy(this.headBaseQuat).multiply(q);
+      }
+    },
+  });
+})();
+</script>
+
+<script>
+(function () {
+  var sceneEl = document.getElementById('arScene');
+  var chatControls = document.getElementById('chatControls');
+  var chatMicBtn = document.getElementById('chatMicBtn');
+  var chatTextFallback = document.getElementById('chatTextFallback');
+  var chatTextInput = document.getElementById('chatTextInput');
+  var chatTextSendBtn = document.getElementById('chatTextSendBtn');
+  var chatHintText = document.getElementById('chatHintText');
+  var chatAutoListenLabel = document.getElementById('chatAutoListenLabel');
+  var chatAutoListenToggle = document.getElementById('chatAutoListenToggle');
+  var chatSettings = document.getElementById('chatSettings');
+  var langEsBtn = document.getElementById('langEsBtn');
+  var langRuBtn = document.getElementById('langRuBtn');
+  var subtitleBar = document.getElementById('subtitleBar');
+  var subtitleText = document.getElementById('subtitleText');
+  var fadeOverlay = document.getElementById('fadeOverlay');
+  var foregroundStage = document.getElementById('foregroundStage');
+  var arCamera = document.getElementById('arCamera');
+
+  var CHAR_META = {
+    jose: { key: 'A', name: 'José' },
+    antonio: { key: 'B', name: 'Antonio' },
+    maria: { key: 'C', name: 'María' },
+  };
+  var Z_START = -6.5;
+  var Z_FINAL = 0;
+  var WALK_DUR = 3200;
+  var WALK_CLIPS = ['walking', 'happy_walk'];
+  var SUMMON_PHRASES = ['¡Vale, ya vamos!', '¡Sí, esperad, que ya llegamos!', '¡Marchando, un segundo!', '¡Vale, allá vamos!'];
+  var REST_SLOTS = { 1: [0], 2: [-0.45, 0.45], 3: [-0.7, 0, 0.7] };
+  // Idle ambiental: mezcla de clips ya horneados + las poses nuevas
+  // (convertidas con Blender, verificadas bone a bone contra el esqueleto real).
+  // OJO: '__sit_down__' se deja FUERA del pool a propósito — las poses
+  // "Sit" convertidas (stand_to_sit, sitting_pose, etc.) deforman la malla
+  // del robot (confirmado con varias pruebas aisladas: no es un problema de
+  // posición/escala del hueso raíz, ni de mezcla entre clips — con SOLO
+  // sitting_pose activo al 100% de peso ya sale deformado; y un clip YA
+  // existente con flexión igual de extrema, "burpee", se ve perfecto, así
+  // que no es una limitación general del esqueleto). Falta un cotejo más a
+  // fondo del esqueleto de estos ficheros convertidos antes de activarlo.
+  // 'cards' se quitó del pool: esa pose anima las manos como si repartieran
+  // cartas sobre una mesa a una altura/profundidad que no coincide con la
+  // del escritorio nuevo (delante de ellos) — las manos quedaban "por
+  // detrás" del escritorio en vez de apoyadas encima, se veía como si
+  // desaparecieran bajo la mesa.
+  var IDLE_POSES = ['male_standing_pose_m', 'happy_idle', 'idle', 'dizzy_idle'];
+
+  // Gestos según el contenido de la respuesta — sin \b de cierre a propósito
+  // (mismo motivo que en /robot-chat/: el español conjuga mucho).
+  var GESTURE_RULES = [
+    [/\b(hola|bienvenid|encantad|adios|hasta luego|chao)/i, 'blow_a_kiss'],
+    [/\b(gracias|de acuerdo|vale|claro|acuerdo|entendid|exacto)/i, 'agreeing'],
+    [/\b(no se|no creo|quiza|tal vez|dud)/i, 'thoughtful_head_shake'],
+    [/\b(no importa|da igual|olvidal|nada grave|tranquil)/i, 'dismissing_gesture'],
+    [/\b(vaya|anda|jo|madre mia|increible|en serio|sorprend)/i, 'surprised'],
+    [/\b(genial|perfecto|bien hecho|enhorabuena|bravo|conseguimos|lo logramos)/i, 'clapping'],
+    [/\b(secreto|entre nosotros|no se lo digas|confidencial)/i, 'telling_a_secret'],
+    [/\b(mira|senal|apunt)/i, 'pointing_forward'],
+    // counting_m/button_pushing_m se quitaron de aquí: animan las manos hacia
+    // abajo y al frente, a la altura/profundidad del escritorio nuevo — se
+    // veían "por detrás" de la mesa en vez de apoyadas encima de ella.
+    [/\b(revis|inspeccion|analiz|comprob)/i, 'kneeling_inspecting_m'],
+    [/\b(levant|carg|pesad|esfuerz)/i, 'lifting_object_m'],
+    [/\b(fall|error|romp|estropea)/i, 'defeat'],
+    [/\b(caja|tropec|torpe)/i, 'tripping'],
+    [/\b(dormi|siesta|cansad)/i, 'disappointed'],
+    [/\b(fiesta|celebra|bailar|exito total)/i, 'silly_dancing'],
+  ];
+
+  var summoned = false;
+  var present = [];
+  var lastSpeaker = null;
+  var history = [];
+  var state = 'idle';
+  var recognition = null;
+  var lastReply = '';
+  // Antes había que marcar la casilla a mano cada vez — ahora se activa solo
+  // en cuanto arranca la charla en primer plano (ver summon()), como pidió el
+  // usuario ("manos libres automático desde el principio").
+  var autoListen = true;
+  var idleTimers = {};
+  var currentLang = 'es';
+
+  var crewShowComp = null;
+  function crew() {
+    if (!crewShowComp) crewShowComp = document.getElementById('stage').components['crew-show'];
+    return crewShowComp;
+  }
+
+  function normalizeText(s) {
+    return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function detectNamed(text) {
+    // Ordenados por dónde aparecen realmente en la frase (no por un orden fijo
+    // jose/antonio/maria) — si no, "María, ¿qué dijo José?" elegía a José como
+    // destinatario solo porque su nombre se comprueba antes en la lista.
+    var n = ' ' + normalizeText(text) + ' ';
+    var hits = [];
+    [['jose', /\bjose\b/], ['antonio', /\bantonio\b/], ['maria', /\bmaria\b/]].forEach(function (pair) {
+      var m = pair[1].exec(n);
+      if (m) hits.push({ name: pair[0], index: m.index });
+    });
+    hits.sort(function (a, b) { return a.index - b.index; });
+    return hits.map(function (h) { return h.name; });
+  }
+
+  function looksLikeEcho(transcript) {
+    var a = normalizeText(transcript);
+    var b = normalizeText(lastReply);
+    if (!a || !b) return false;
+    if (a.length > 6 && (b.indexOf(a) !== -1 || a.indexOf(b) !== -1)) return true;
+    var aWords = a.split(' ').filter(function (w) { return w.length > 2; });
+    if (!aWords.length) return false;
+    var bWords = {};
+    b.split(' ').forEach(function (w) { if (w.length > 2) bWords[w] = true; });
+    var overlap = aWords.filter(function (w) { return bWords[w]; }).length;
+    return overlap / aWords.length > 0.6;
+  }
+
+  function setState(s, label) {
+    state = s;
+    chatMicBtn.className = 'chat-mic-btn' + (s === 'idle' ? '' : ' ' + s);
+    if (label) chatHintText.textContent = label;
+  }
+
+  function showCaption(text, speakerLabel) {
+    subtitleText.textContent = (speakerLabel ? speakerLabel + ': ' : '') + text;
+    subtitleBar.classList.remove('hidden');
+  }
+
+  function setClip(el, name, loop) {
+    el.setAttribute('animation-mixer', 'clip: ' + name + '; loop: ' + (loop || 'repeat') + '; clampWhenFinished: true; crossFadeDuration: 0.25');
+  }
+
+  function pickGesture(text) {
+    for (var i = 0; i < GESTURE_RULES.length; i++) {
+      if (GESTURE_RULES[i][0].test(text)) return GESTURE_RULES[i][1];
+    }
+    return null;
+  }
+
+  // Para que no se queden como estatuas: un ligero balanceo de giro (rotation,
+  // no pisa la posición de otras animaciones en curso) mientras están de pie
+  // esperando su turno, y la pose ambiental cambia más a menudo que antes.
+  function startIdleSway(key) {
+    var el = crew().R[key];
+    var amp = 4 + Math.random() * 3;
+    el.setAttribute('animation__sway', 'property: rotation; to: 0 ' + (Math.random() < 0.5 ? -amp : amp) + ' 0; dir: alternate; loop: true; dur: ' + Math.round(2200 + Math.random() * 900) + '; easing: easeInOutSine');
+  }
+  function stopIdleSway(key) {
+    crew().R[key].removeAttribute('animation__sway');
+  }
+
+  // María "hablando por el móvil" quedaba rara con el clip de andar puesto en
+  // bucle sin moverse del sitio — ahora, cuando le toca esa pose, se aleja de
+  // verdad hacia un lateral (fuera del encuadre), se gira 180° para volver,
+  // suelta una frase, y regresa a su sitio exacto. Se corta limpiamente
+  // (clearMariaWalk) si le llega el turno de hablar mientras tanto.
+  // Audio ligero para frases "ambientales" (no de la conversación en sí, como
+  // la de María al alejarse) — independiente del pipeline speak()/state de la
+  // charla, para no bloquear el micro ni el hilo de conversación mientras
+  // suena (antes solo se veía el subtítulo, sin voz — "se la ve hablar pero
+  // no se oye nada", reportado por el usuario).
+  // OJO eco: si el micro está escuchando cuando esta frase suena por el
+  // altavoz del propio móvil, el reconocimiento de voz la capta a SÍ MISMA y
+  // la manda como si la hubiera dicho el usuario (reportado por el usuario:
+  // "dicto algo y se graba también el 'ahora vuelvo' de María"). Se para el
+  // reconocimiento antes de reproducir y se retoma (si tocaba) al terminar.
+  var ambientAudioEl = new Audio();
+  var ambientAudioPlaying = false;
+  function speakAmbientLine(text, speakerKey) {
+    if (state === 'listening') { try { recognition.stop(); } catch (e) {} }
+    ambientAudioPlaying = true;
+    var resume = function () { ambientAudioPlaying = false; maybeAutoListen(); };
+    fetch('{% url "ar_chat_tts" %}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ speaker: speakerKey, text: text, lang: currentLang }),
+    })
+      .then(function (r) { if (!r.ok) throw new Error('tts-failed'); return r.blob(); })
+      .then(function (blob) {
+        ambientAudioEl.pause();
+        ambientAudioEl.src = URL.createObjectURL(blob);
+        ambientAudioEl.onended = resume;
+        ambientAudioEl.onerror = resume;
+        ambientAudioEl.play().catch(resume);
+      })
+      .catch(resume);
+  }
+
+  // Varias frases distintas (no siempre "ahora vuelvo") para que no suene a
+  // disco rayado — motivos random de por qué se aleja un momento.
+  var MARIA_WALK_PHRASES = [
+    { es: '¡Ahora vuelvo!', ru: 'Я сейчас вернусь!' },
+    { es: 'Perdón, me llama un cliente.', ru: 'Извините, клиент звонит.' },
+    { es: '¡Uy, un pedido nuevo!', ru: 'Ой, новый заказ!' },
+    { es: 'Un cliente escribe por la web, ahora vengo.', ru: 'Клиент пишет на сайте, я сейчас.' },
+  ];
+
+  var mariaWalk = { active: false, timers: [], basePos: null };
+  function clearMariaWalk() {
+    mariaWalk.timers.forEach(clearTimeout);
+    mariaWalk.timers = [];
+    if (mariaWalk.active) {
+      var el = crew().R.C;
+      el.removeAttribute('animation__mariawalk1');
+      el.removeAttribute('animation__mariawalk2');
+      if (mariaWalk.basePos) el.setAttribute('position', mariaWalk.basePos);
+      el.setAttribute('rotation', '0 0 0');
+      mariaWalk.active = false;
+    }
+  }
+  function startMariaPhoneWalk(onDone) {
+    var el = crew().R.C;
+    stopIdleSway('C'); // si no, animation__sway pisa el giro (misma propiedad rotation)
+    var basePos = el.getAttribute('position');
+    var baseStr = basePos.x + ' ' + basePos.y + ' ' + basePos.z;
+    mariaWalk.active = true;
+    mariaWalk.basePos = baseStr;
+
+    var dir = basePos.x <= 0 ? -1 : 1; // se aleja hacia el lateral más próximo
+    var offX = basePos.x + dir * 2.6; // bastante fuera de encuadre, no solo en la esquina
+    var facingOut = dir < 0 ? -90 : 90;
+    var facingBack = dir < 0 ? 90 : -90;
+
+    setClip(el, 'texting_and_walking', 'repeat');
+    el.setAttribute('rotation', '0 ' + facingOut + ' 0');
+    el.setAttribute('animation__mariawalk1', 'property: position; to: ' + offX + ' ' + basePos.y + ' ' + basePos.z + '; dur: 1800; easing: linear');
+
+    mariaWalk.timers.push(setTimeout(function () {
+      if (!mariaWalk.active) return;
+      el.setAttribute('rotation', '0 ' + facingBack + ' 0');
+      var phrasePair = MARIA_WALK_PHRASES[Math.floor(Math.random() * MARIA_WALK_PHRASES.length)];
+      var phrase = phrasePair[currentLang] || phrasePair.es;
+      showCaption(phrase, CHAR_META.maria.name);
+      speakAmbientLine(phrase, 'maria');
+      mariaWalk.timers.push(setTimeout(function () {
+        if (!mariaWalk.active) return;
+        el.setAttribute('animation__mariawalk2', 'property: position; to: ' + baseStr + '; dur: 1800; easing: linear');
+        mariaWalk.timers.push(setTimeout(function () {
+          if (!mariaWalk.active) return;
+          el.setAttribute('rotation', '0 0 0');
+          // Quitar los tweens ya acabados — si no, la próxima vez que le
+          // toque esta pose, volver a fijar el MISMO nombre de atributo con
+          // un valor que A-Frame considera "sin cambios" a veces no
+          // reinicia la animación, y se queda caminando quieta en el sitio.
+          el.removeAttribute('animation__mariawalk1');
+          el.removeAttribute('animation__mariawalk2');
+          mariaWalk.active = false;
+          startIdleSway('C');
+          if (onDone) onDone();
+        }, 1800));
+      }, 900));
+    }, 1800));
+  }
+
+  // Evita repetir la MISMA pose dos veces seguidas (p.ej. que a María le toque
+  // "texting_and_walking" otra vez justo al terminar su paseo — se leía como
+  // una tercera acción de más, reportado por el usuario).
+  var lastIdlePose = {};
+  // El paseo con el móvil de María pedía que fuera "más raro": un mínimo de
+  // tiempo entre paseos (cooldown) Y, aun pasado ese tiempo, solo 1 de cada 3
+  // veces que le "tocaría" en el sorteo — así no se repite cada pocos ciclos.
+  var MARIA_WALK_COOLDOWN_MS = 90000;
+  var mariaWalkCooldownUntil = 0;
+
+  // ── Sentarse en la silla: cualquiera de los tres, de vez en cuando, se
+  // sienta un rato (mueble aportado por el usuario) y se vuelve a levantar
+  // sola más tarde — la silla solo es visible mientras ese personaje está
+  // sentado en ella (aparece/desaparece con la propia acción). ──
+  var CHAIR_SRC = '/static/wi/ar/robots/props/chair.png';
+  var DESK_SRC = '/static/wi/ar/robots/props/desk.png';
+  var SIT_IDLE_POOL = ['sitting_pose', 'sitting_idle', 'sitting_idle_2', 'sitting_idle_3', 'sitting_typing'];
+  var sitting = {};
+  var chairEls = {};
+  var deskEl = null;
+  var SIT_COOLDOWN_MS = 70000;
+  var sitCooldownUntil = {};
+  var SIT_STAND_UP_CHANCE = 0.3;
+
+  function showOfficeDesk() {
+    if (deskEl) return;
+    deskEl = document.createElement('a-image');
+    deskEl.setAttribute('src', DESK_SRC);
+    deskEl.setAttribute('transparent', 'true');
+    deskEl.setAttribute('side', 'double');
+    // PNG nuevo del usuario, ya recortado de verdad (Photoroom, con alfa
+    // real — el anterior tenía el fondo de cuadros mal quitado a mano y
+    // dejaba un halo blanco). Recorte real 1357x538 (aspect 2.52).
+    // ~15% más pequeño y algo más abajo para que quede a la altura de la
+    // cintura y puedan apoyar las manos con naturalidad.
+    deskEl.setAttribute('width', '1.445');
+    deskEl.setAttribute('height', '0.573');
+    deskEl.setAttribute('position', '0 0.13 1.3');
+    foregroundStage.appendChild(deskEl);
+  }
+
+  function ensureChair(key) {
+    if (chairEls[key]) return chairEls[key];
+    var el = document.createElement('a-image');
+    el.setAttribute('src', CHAIR_SRC);
+    el.setAttribute('transparent', 'true');
+    el.setAttribute('side', 'double');
+    // PNG nuevo del usuario, ya recortado de verdad. Recorte real 672x1131
+    // (aspect 0.59).
+    el.setAttribute('width', '0.74');
+    el.setAttribute('height', '1.25');
+    el.setAttribute('visible', 'false');
+    foregroundStage.appendChild(el);
+    chairEls[key] = el;
+    return el;
+  }
+  function showChairFor(key) {
+    var pos = crew().R[key].getAttribute('position');
+    var chair = ensureChair(key);
+    chair.setAttribute('position', pos.x + ' 0.62 ' + (pos.z - 0.28));
+    chair.setAttribute('visible', 'true');
+  }
+  function hideChairFor(key) {
+    if (chairEls[key]) chairEls[key].setAttribute('visible', 'false');
+  }
+
+  function startAmbientIdle(key, preferred) {
+    stopAmbientIdle(key);
+    startIdleSway(key);
+    var basePool = preferred ? [preferred].concat(IDLE_POSES) : IDLE_POSES;
+    var pick = function () {
+      if (sitting[key]) {
+        if (Math.random() < SIT_STAND_UP_CHANCE) {
+          sitting[key] = false;
+          hideChairFor(key);
+          setClip(crew().R[key], 'sit_to_stand', 'once');
+          idleTimers[key] = setTimeout(pick, 2400);
+          return;
+        }
+        var seatedPool = SIT_IDLE_POOL.filter(function (n) { return n !== lastIdlePose[key]; });
+        if (!seatedPool.length) seatedPool = SIT_IDLE_POOL;
+        var seatedName = seatedPool[Math.floor(Math.random() * seatedPool.length)];
+        lastIdlePose[key] = seatedName;
+        setClip(crew().R[key], seatedName, 'repeat');
+        idleTimers[key] = setTimeout(pick, 6000 + Math.random() * 4000);
+        return;
+      }
+      var pool = basePool.filter(function (n) {
+        if (n === lastIdlePose[key]) return false;
+        if (n === 'texting_and_walking') {
+          if (Date.now() < mariaWalkCooldownUntil) return false;
+          if (Math.random() > 0.35) return false;
+        }
+        if (n === '__sit_down__') {
+          if (Date.now() < (sitCooldownUntil[key] || 0)) return false;
+          if (Math.random() > 0.3) return false;
+        }
+        return true;
+      });
+      if (!pool.length) pool = IDLE_POSES.filter(function (n) { return n !== lastIdlePose[key] && n !== '__sit_down__' && n !== 'texting_and_walking'; });
+      if (!pool.length) pool = ['happy_idle'];
+      var name = pool[Math.floor(Math.random() * pool.length)];
+      lastIdlePose[key] = name;
+      if (key === 'C' && name === 'texting_and_walking') {
+        mariaWalkCooldownUntil = Date.now() + MARIA_WALK_COOLDOWN_MS;
+        startMariaPhoneWalk(function () {
+          idleTimers[key] = setTimeout(pick, 5000 + Math.random() * 3000);
+        });
+      } else if (name === '__sit_down__') {
+        sitCooldownUntil[key] = Date.now() + SIT_COOLDOWN_MS;
+        sitting[key] = true;
+        showChairFor(key);
+        setClip(crew().R[key], 'stand_to_sit', 'once');
+        idleTimers[key] = setTimeout(pick, 2400);
+      } else {
+        setClip(crew().R[key], name, 'repeat');
+        idleTimers[key] = setTimeout(pick, 5000 + Math.random() * 3000);
+      }
+    };
+    pick();
+  }
+  function stopAmbientIdle(key) {
+    if (idleTimers[key]) { clearTimeout(idleTimers[key]); idleTimers[key] = null; }
+    stopIdleSway(key);
+    if (key === 'C') clearMariaWalk();
+    // Si le toca hablar/escuchar activamente mientras está sentado, se
+    // levanta al instante (mismo criterio que ya usa clearMariaWalk: un corte
+    // limpio en vez de esperar a una transición con la que puede que no dé
+    // tiempo, ya que el resto del código sigue justo después con su propio
+    // clip para ese turno).
+    if (sitting[key]) { sitting[key] = false; hideChairFor(key); }
+  }
+
+  // Pequeño balanceo de posición (no de giro) mientras piensa la respuesta —
+  // así el que habla también "se mueve" y no solo el que escucha.
+  function startThinkPace(key) {
+    var el = crew().R[key];
+    stopIdleSway(key);
+    var base = el.getAttribute('position');
+    var dx = Math.random() < 0.5 ? -0.14 : 0.14;
+    setClip(el, 'male_standing_pose_m', 'repeat');
+    el.setAttribute('animation__thinkpace', 'property: position; to: ' + (base.x + dx) + ' ' + base.y + ' ' + base.z + '; dir: alternate; loop: true; dur: 1300; easing: easeInOutSine');
+  }
+  function stopThinkPace(key) {
+    crew().R[key].removeAttribute('animation__thinkpace');
+  }
+
+  // ── Visión por cámara frontal: mientras se charla, se activa la cámara
+  // delantera (independiente de la trasera de MindAR, ya apagada tras el
+  // paso a primer plano) y de vez en cuando se le pide a un modelo con visión
+  // que describa lo que ve; si hay algo comentable (peinado, ropa, entorno),
+  // un robot libre levanta la mano y espera su turno — solo lo suelta si el
+  // usuario le da la palabra dirigiéndose a él por su nombre. ──
+  var visionStream = null;
+  var visionVideoEl = null;
+  var visionCanvasEl = null;
+  var pendingVisionNote = {};
+  var handRaised = {};
+  var handRaiseTimers = {};
+  var visionLoopTimer = null;
+  // Antes disparaba cada 12-22s: con eso, casi CADA turno de la charla acababa
+  // llevando una vision_note pegada, y las respuestas degeneraban en describir
+  // siempre lo que veían en vez de contestar de verdad (visto en logs reales).
+  // Ahora se espacia mucho más para que sea un detalle ocasional, no la norma.
+  var VISION_CHECK_MIN = 45000;
+  var VISION_CHECK_MAX = 90000;
+  var HAND_RAISE_TIMEOUT = 25000;
+
+  function startFrontCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+      .then(function (stream) {
+        visionStream = stream;
+        visionVideoEl = document.createElement('video');
+        visionVideoEl.setAttribute('playsinline', '');
+        visionVideoEl.muted = true;
+        visionVideoEl.style.display = 'none';
+        visionVideoEl.srcObject = stream;
+        document.body.appendChild(visionVideoEl);
+        visionVideoEl.play().catch(function () {});
+        visionCanvasEl = document.createElement('canvas');
+        // Primer vistazo pronto (para saludar/comentar también al acompañante
+        // si lo hay), luego comprobaciones a intervalo aleatorio mientras hay hueco.
+        scheduleVisionLoop(8000);
+      })
+      .catch(function () {
+        // Sin cámara frontal disponible (permiso denegado, dispositivo sin
+        // segunda cámara, etc.): la charla sigue funcionando igual, solo sin
+        // el detalle de "ver" al cliente.
+      });
+  }
+
+  function stopFrontCamera() {
+    if (visionLoopTimer) { clearTimeout(visionLoopTimer); visionLoopTimer = null; }
+    if (visionStream) { visionStream.getTracks().forEach(function (t) { t.stop(); }); visionStream = null; }
+    if (visionVideoEl) { visionVideoEl.remove(); visionVideoEl = null; }
+    visionCanvasEl = null;
+  }
+
+  function captureFrame() {
+    if (!visionVideoEl || !visionVideoEl.videoWidth) return null;
+    visionCanvasEl.width = visionVideoEl.videoWidth;
+    visionCanvasEl.height = visionVideoEl.videoHeight;
+    visionCanvasEl.getContext('2d').drawImage(visionVideoEl, 0, 0, visionCanvasEl.width, visionCanvasEl.height);
+    return visionCanvasEl.toDataURL('image/jpeg', 0.7);
+  }
+
+  function anyHandRaised() {
+    return present.some(function (c) { return handRaised[c]; });
+  }
+
+  function scheduleVisionLoop(delay) {
+    if (visionLoopTimer) clearTimeout(visionLoopTimer);
+    visionLoopTimer = setTimeout(runVisionCheck, delay != null ? delay : (VISION_CHECK_MIN + Math.random() * (VISION_CHECK_MAX - VISION_CHECK_MIN)));
+  }
+
+  function runVisionCheck() {
+    // No molestar si ya hay una mano levantada esperando turno, o si alguien
+    // está hablando/pensando — solo se "fija" en algo durante un hueco tranquilo.
+    if (!summoned || anyHandRaised() || state === 'thinking' || state === 'speaking') {
+      scheduleVisionLoop();
+      return;
+    }
+    var frame = captureFrame();
+    if (!frame) { scheduleVisionLoop(); return; }
+    fetch('{% url "ar_chat_vision" %}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: frame, lang: currentLang }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res.ok && res.description && !anyHandRaised() && present.length) {
+          var candidates = present.filter(function (c) { return c !== lastSpeaker || present.length === 1; });
+          if (!candidates.length) candidates = present;
+          var speakerKey = candidates[Math.floor(Math.random() * candidates.length)];
+          raiseHandWithNote(speakerKey, res.description);
+        }
+        scheduleVisionLoop();
+      })
+      .catch(function () { scheduleVisionLoop(); });
+  }
+
+  function raiseHandWithNote(speakerKey, note) {
+    if (state === 'thinking' || state === 'speaking') return;
+    var meta = CHAR_META[speakerKey];
+    handRaised[speakerKey] = true;
+    pendingVisionNote[speakerKey] = note;
+    stopAmbientIdle(meta.key);
+    setClip(crew().R[meta.key], 'waving_hand_m', 'repeat');
+    handRaiseTimers[speakerKey] = setTimeout(function () {
+      // Si nadie le da la palabra a tiempo, baja la mano sola y sigue con su idle.
+      lowerHand(speakerKey);
+      if (state !== 'thinking' && state !== 'speaking') {
+        startAmbientIdle(meta.key, speakerKey === 'maria' ? 'texting_and_walking' : null);
+      }
+    }, HAND_RAISE_TIMEOUT);
+  }
+
+  function lowerHand(speakerKey) {
+    if (handRaiseTimers[speakerKey]) { clearTimeout(handRaiseTimers[speakerKey]); handRaiseTimers[speakerKey] = null; }
+    handRaised[speakerKey] = false;
+    pendingVisionNote[speakerKey] = null;
+  }
+
+  // ── Convocar: primera frase tras el saludo final. Los nombrados (o los tres,
+  // si no se nombra a nadie) pasan de la escena AR (escala de tarjeta física,
+  // minúscula) al #foregroundStage (escala humana normal) mediante un corte
+  // limpio — no se intenta preservar su posición/escala AR, que no tiene
+  // sentido fuera de la tarjeta — y entran caminando desde el fondo. ──
+  function summon(text) {
+    var named = detectNamed(text);
+    present = named.length ? named : ['jose', 'antonio', 'maria'];
+    var hasMaria = present.indexOf('maria') !== -1;
+
+    setState('thinking', 'Vienen a charlar...');
+    if (hasMaria) setClip(crew().R.C, 'up_m', 'once'); // se despierta y se levanta
+
+    setTimeout(function () {
+      // IMPORTANTE: mientras el componente mindar-image-target siga vivo,
+      // en CADA frame reescribe él mismo `object3D.visible` (y la matriz)
+      // según lo que siga rastreando — poner #cardTarget a invisible por
+      // atributo no basta, se lo pisa por detrás en el siguiente frame.
+      // Confirmado leyendo el propio bundle de mindar-image-aframe (no era
+      // un problema de caché). La única forma de que se quede quieto de
+      // verdad es matar el propio componente, no solo pararle el sistema.
+      try {
+        var system = sceneEl.systems['mindar-image-system'];
+        if (system && system.stop) system.stop();
+      } catch (e) {}
+      var cardTargetEl = document.getElementById('cardTarget');
+      cardTargetEl.removeAttribute('mindar-image-target');
+      cardTargetEl.setAttribute('visible', false);
+
+      // Cinturón y tirantes: si un último frame de tracking ya en vuelo lo
+      // reescribe justo después de parar el sistema, esto lo vuelve a
+      // esconder en el siguiente frame durante 1s, hasta que todo se asiente.
+      var watchdogUntil = Date.now() + 1000;
+      (function forceHidden() {
+        cardTargetEl.object3D.visible = false;
+        if (Date.now() < watchdogUntil) requestAnimationFrame(forceHidden);
+      })();
+
+      // La cámara AR tampoco vale para reutilizarla: mindar controla su matriz
+      // a mano (para el efecto de realidad aumentada) y no responde a
+      // position/rotation por atributo. Se crea una cámara normal nueva y se
+      // desactiva la de AR, en vez de intentar reaprovecharla.
+      var chatCam = document.createElement('a-entity');
+      chatCam.setAttribute('id', 'chatCamera');
+      chatCam.setAttribute('camera', 'fov: 50; active: true');
+      chatCam.setAttribute('position', '0 1.45 2.5');
+      chatCam.setAttribute('rotation', '-4 0 0');
+      chatCam.setAttribute('look-controls', 'enabled: false');
+      chatCam.setAttribute('wasd-controls', 'enabled: false');
+      sceneEl.appendChild(chatCam);
+      arCamera.setAttribute('camera', 'active', false);
+
+      var slots = REST_SLOTS[present.length];
+      present.forEach(function (charName, i) {
+        var meta = CHAR_META[charName];
+        var robotEl = crew().R[meta.key];
+        var x = slots[i];
+        robotEl.setAttribute('visible', true);
+        // OJO — la razón real de que el personaje "desapareciera": mover la
+        // ENTIDAD por el DOM (foregroundStage.appendChild(robotEl)) hace que,
+        // por la propia especificación de Custom Elements, el navegador
+        // dispare disconnectedCallback+connectedCallback al reengancharla en
+        // el nuevo padre — y A-Frame, al reinicializar así el componente
+        // gltf-model desde cero, no siempre reconstruye bien el mesh (se
+        // confirmó viendo `getObject3D('mesh')` volverse null unos segundos
+        // después, aunque la posición/transform seguían siendo correctas).
+        // Moviendo solo el object3D de three.js (sin tocar el DOM) el mesh
+        // nunca se pierde, porque ningún componente se destruye ni recrea.
+        robotEl.object3D.parent.remove(robotEl.object3D);
+        foregroundStage.object3D.add(robotEl.object3D);
+        robotEl.setAttribute('scale', '1 1 1');
+        robotEl.setAttribute('rotation', '0 0 0');
+        robotEl.setAttribute('position', x + ' 0 ' + Z_START);
+        // Vienen de lejos de verdad (antes aparecían ya grandes y muy cerca,
+        // se sentía brusco) y cada uno con una marcha distinta al azar.
+        var walkClip = WALK_CLIPS[Math.floor(Math.random() * WALK_CLIPS.length)];
+        setClip(robotEl, walkClip, 'repeat');
+        robotEl.setAttribute('animation__walkin', 'property: position; to: ' + x + ' 0 ' + Z_FINAL + '; dur: ' + WALK_DUR + '; easing: easeOutQuad');
+        setTimeout(function () {
+          setClip(robotEl, 'stop_walking', 'once');
+          setTimeout(function () { startAmbientIdle(meta.key, charName === 'maria' ? 'texting_and_walking' : null); }, 1200);
+        }, WALK_DUR + 100);
+      });
+
+      // Una frase de camino, como respondiendo a la llamada — se veía el
+      // subtítulo pero no se oía nada (reportado por el usuario): usa el
+      // mismo audio ambiental ligero que la frase de María al alejarse, que
+      // no toca el estado de la conversación (aún no ha empezado).
+      var summonSpeaker = CHAR_META[present[0]];
+      var summonPhrase = SUMMON_PHRASES[Math.floor(Math.random() * SUMMON_PHRASES.length)];
+      showCaption(summonPhrase, summonSpeaker.name);
+      speakAmbientLine(summonPhrase, present[0]);
+
+      fadeOverlay.style.opacity = '1';
+      showOfficeDesk();
+
+      setTimeout(function () {
+        document.getElementById('hintBar').classList.add('hidden');
+        document.getElementById('topBar').classList.add('hidden');
+
+        window.__arChatActive = true;
+        summoned = true;
+        chatAutoListenLabel.style.display = 'flex';
+        chatSettings.style.display = 'flex';
+        startFrontCamera();
+        var presentNames = present.map(function (c) { return CHAR_META[c].name; });
+        var names = presentNames.length > 1
+          ? presentNames.slice(0, -1).join(', ') + ' y ' + presentNames[presentNames.length - 1]
+          : presentNames[0];
+        setState('idle', 'Pulsa el micrófono para hablar con ' + names);
+        maybeAutoListen();
+      }, WALK_DUR + 100 + 1200);
+    }, hasMaria ? 900 : 0);
+  }
+
+  function pickSpeaker(text) {
+    var named = detectNamed(text).filter(function (c) { return present.indexOf(c) !== -1; });
+    if (named.length) return named[0];
+    var candidates = present.filter(function (c) { return present.length === 1 || c !== lastSpeaker; });
+    if (!candidates.length) candidates = present;
+    return candidates[Math.floor(Math.random() * candidates.length)];
+  }
+
+  function startGesture(speakerKey, text, skipSway) {
+    var meta = CHAR_META[speakerKey];
+    stopAmbientIdle(meta.key);
+    // El balanceo (animation__sway) y el giro "cara a cara" (animation__facepartner)
+    // tocan la misma propiedad (rotation) — si están los dos a la vez, se pisan
+    // y el giro hacia el compañero se deshace solo. Por eso, durante un diálogo
+    // entre dos, se omite el balanceo (skipSway) y el giro se queda quieto.
+    if (!skipSway) startIdleSway(meta.key); // ligero balanceo mientras habla, para que no quede clavado
+    var robotEl = crew().R[meta.key];
+    var clipName = pickGesture(text);
+    if (robotEl._onGestureDone) robotEl.removeEventListener('animation-finished', robotEl._onGestureDone);
+    if (!clipName) { setClip(robotEl, 'happy_idle', 'repeat'); return; }
+    robotEl._onGestureDone = function () { setClip(robotEl, 'happy_idle', 'repeat'); };
+    robotEl.addEventListener('animation-finished', robotEl._onGestureDone, { once: true });
+    setClip(robotEl, clipName, 'once');
+  }
+
+  // Voces distintas por personaje. Probamos primero asignar una voz REAL
+  // distinta por género (buscando pistas en el nombre de la voz — no todos
+  // los navegadores lo indican) y, si no se puede determinar con confianza,
+  // NO tocamos utter.voice: es mejor que los tres suenen con la voz por
+  // defecto del dispositivo (diferenciados solo por pitch/rate) a arriesgarse
+  // a asignar una voz de género equivocado al azar, que es peor que nada.
+  var CHAR_VOICE_PARAMS = {
+    jose: { pitch: 1.0, rate: 1.0, gender: 'male' },
+    antonio: { pitch: 0.8, rate: 0.95, gender: 'male' },
+    maria: { pitch: 1.35, rate: 1.08, gender: 'female' },
+  };
+  var cachedVoices = [];
+  function refreshVoices() {
+    if ('speechSynthesis' in window) cachedVoices = window.speechSynthesis.getVoices() || [];
+  }
+  if ('speechSynthesis' in window) {
+    refreshVoices();
+    window.speechSynthesis.addEventListener('voiceschanged', refreshVoices);
+  }
+  var FEMALE_NAME_HINTS = /female|mujer|monica|mónica|paulina|helena|laura|elvira|conchita|lucia|lucía|sabina/i;
+  var MALE_NAME_HINTS = /male|hombre|jorge|diego|enrique|pablo|carlos/i;
+  function pickVoiceFor(speakerKey) {
+    var gender = (CHAR_VOICE_PARAMS[speakerKey] || {}).gender;
+    var esVoices = cachedVoices.filter(function (v) { return /^es/i.test(v.lang); });
+    if (!gender || !esVoices.length) return null;
+    var hints = gender === 'female' ? FEMALE_NAME_HINTS : MALE_NAME_HINTS;
+    return esVoices.find(function (v) { return hints.test(v.name); }) || null;
+  }
+
+  // Voz "de verdad": el mismo Edge TTS (y las mismas voces por personaje) que
+  // ya se oyeron pregrabadas en el vídeo — así no cambia de voz al pasar del
+  // vídeo a la charla en vivo. Si por lo que sea falla (red, servicio caído),
+  // se cae al speechSynthesis del propio navegador como red de seguridad.
+  var ttsAudioEl = new Audio();
+  // onFinished opcional: para un diálogo de varias frases entre dos
+  // personajes se encadena una llamada a speak() tras otra, y solo al
+  // terminar la ÚLTIMA se restaura el idle normal y se reactiva el micro —
+  // si no se pasa, se comporta como antes (turno de un único hablante).
+  function speak(text, speakerKey, onFinished) {
+    var meta = CHAR_META[speakerKey];
+    var comp = crew().R[meta.key].components['head-look-nod'];
+    var finish = onFinished || function () {
+      startAmbientIdle(meta.key, speakerKey === 'maria' ? 'texting_and_walking' : null);
+      setState('idle', 'Pulsa el micrófono para hablar');
+      maybeAutoListen();
+    };
+    var onStart = function () {
+      if (comp) comp.setSpeaking(true);
+      setState('speaking', meta.name + ' está hablando...');
+    };
+    var onDone = function () {
+      if (comp) comp.setSpeaking(false);
+      finish();
+    };
+
+    fetch('{% url "ar_chat_tts" %}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ speaker: speakerKey, text: text, lang: currentLang }),
+    })
+      .then(function (r) { if (!r.ok) throw new Error('tts-failed'); return r.blob(); })
+      .then(function (blob) {
+        ttsAudioEl.pause();
+        ttsAudioEl.src = URL.createObjectURL(blob);
+        ttsAudioEl.onplay = onStart;
+        ttsAudioEl.onended = onDone;
+        ttsAudioEl.onerror = function () { speakBrowserFallback(text, speakerKey, onStart, onDone); };
+        ttsAudioEl.play().catch(function () { speakBrowserFallback(text, speakerKey, onStart, onDone); });
+      })
+      .catch(function () { speakBrowserFallback(text, speakerKey, onStart, onDone); });
+  }
+
+  function speakBrowserFallback(text, speakerKey, onStart, onDone) {
+    if (!('speechSynthesis' in window)) { onDone(); return; }
+    var utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'es-ES';
+    var voiceParams = CHAR_VOICE_PARAMS[speakerKey] || { pitch: 1, rate: 1 };
+    utter.pitch = voiceParams.pitch;
+    utter.rate = voiceParams.rate;
+    var voice = pickVoiceFor(speakerKey);
+    if (voice) utter.voice = voice;
+    utter.onstart = onStart;
+    utter.onend = onDone;
+    utter.onerror = onDone;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utter);
+  }
+
+  // Cuando dos robots charlan entre ellos (nadie en concreto ha sido
+  // nombrado), se giran un poco el uno hacia el otro en vez de quedarse
+  // mirando de frente a cámara todo el rato — un giro moderado (no perfil
+  // completo) para que se lea como "están hablando entre ellos" sin dejar de
+  // verse bien desde la cámara.
+  function faceEachOther(pairKeys) {
+    if (pairKeys.length < 2) return;
+    var aKey = pairKeys[0], bKey = pairKeys[1];
+    var aEl = crew().R[CHAR_META[aKey].key];
+    var bEl = crew().R[CHAR_META[bKey].key];
+    var aX = aEl.getAttribute('position').x;
+    var bX = bEl.getAttribute('position').x;
+    var angle = 30;
+    var aYaw = aX < bX ? angle : -angle;
+    var bYaw = bX < aX ? angle : -angle;
+    aEl.setAttribute('animation__facepartner', 'property: rotation; to: 0 ' + aYaw + ' 0; dur: 500; easing: easeOutQuad');
+    bEl.setAttribute('animation__facepartner', 'property: rotation; to: 0 ' + bYaw + ' 0; dur: 500; easing: easeOutQuad');
+  }
+  function faceCamera(key) {
+    crew().R[CHAR_META[key].key].setAttribute('animation__facepartner', 'property: rotation; to: 0 0 0; dur: 500; easing: easeOutQuad');
+  }
+
+  // Reproduce las frases de un diálogo entre dos personajes una detrás de
+  // otra (nunca a la vez, para que no se pisen las voces); mientras uno
+  // habla, el otro se queda quieto y atento en vez de en su idle ambiental.
+  function playDialogueFragments(fragments, idx, pairKeys) {
+    if (idx >= fragments.length) {
+      pairKeys.forEach(faceCamera);
+      present.forEach(function (c) { startAmbientIdle(CHAR_META[c].key, c === 'maria' ? 'texting_and_walking' : null); });
+      setState('idle', 'Pulsa el micrófono para hablar');
+      maybeAutoListen();
+      return;
+    }
+    var frag = fragments[idx];
+    var speakerKey = frag.speaker;
+    var listenerKey = pairKeys.filter(function (k) { return k !== speakerKey; })[0];
+
+    showCaption(frag.reply, CHAR_META[speakerKey].name);
+    startGesture(speakerKey, frag.reply, true);
+    if (listenerKey) {
+      stopAmbientIdle(CHAR_META[listenerKey].key);
+      setClip(crew().R[CHAR_META[listenerKey].key], 'thoughtful_head_nod', 'repeat');
+    }
+
+    speak(frag.reply, speakerKey, function () {
+      playDialogueFragments(fragments, idx + 1, pairKeys);
+    });
+  }
+
+  function sendTurn(text) {
+    if (!text || !text.trim()) return;
+    if (state === 'thinking' || state === 'speaking') return;
+    if (!summoned) { summon(text); return; }
+    if (state === 'listening' && looksLikeEcho(text)) {
+      setState('idle', 'Pulsa el micrófono para hablar');
+      maybeAutoListen();
+      return;
+    }
+
+    showCaption(text, 'Tú');
+    var priorHistory = history.slice();
+
+    // Si no se dirige a nadie en concreto y hay al menos dos presentes, que
+    // se repartan la respuesta entre dos (charlan entre ellos) en vez de que
+    // uno suelte un monólogo largo — así las frases por robot son más cortas
+    // y parece una conversación de verdad.
+    var named = detectNamed(text).filter(function (c) { return present.indexOf(c) !== -1; });
+    if (!named.length && present.length >= 2) {
+      sendDialogueTurn(text, priorHistory);
+      return;
+    }
+
+    var speakerKey = pickSpeaker(text);
+    var visionNote = null;
+    if (handRaised[speakerKey]) {
+      visionNote = pendingVisionNote[speakerKey];
+      lowerHand(speakerKey);
+    }
+    setState('thinking', CHAR_META[speakerKey].name + ' está pensando...');
+    stopAmbientIdle(CHAR_META[speakerKey].key);
+    startThinkPace(CHAR_META[speakerKey].key);
+    present.forEach(function (c) {
+      if (c !== speakerKey) {
+        stopAmbientIdle(CHAR_META[c].key);
+        setClip(crew().R[CHAR_META[c].key], 'thoughtful_head_nod', 'repeat');
+        startIdleSway(CHAR_META[c].key);
+      }
+    });
+
+    fetch('{% url "ar_chat_message" %}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ speaker: speakerKey, text: text, history: priorHistory, lang: currentLang, vision_note: visionNote }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        stopThinkPace(CHAR_META[speakerKey].key);
+        present.forEach(function (c) { if (c !== speakerKey) startAmbientIdle(CHAR_META[c].key, c === 'maria' ? 'texting_and_walking' : null); });
+        if (!res.ok) {
+          showCaption(res.error || 'No ha podido responder.', CHAR_META[speakerKey].name);
+          setState('idle', 'Pulsa el micrófono para hablar');
+          maybeAutoListen();
+          return;
+        }
+        history.push({ role: 'user', content: text });
+        history.push({ role: 'assistant', content: res.reply, speaker: speakerKey });
+        lastReply = res.reply;
+        lastSpeaker = speakerKey;
+        showCaption(res.reply, CHAR_META[speakerKey].name);
+        startGesture(speakerKey, res.reply);
+        speak(res.reply, speakerKey);
+      })
+      .catch(function () {
+        stopThinkPace(CHAR_META[speakerKey].key);
+        present.forEach(function (c) { if (c !== speakerKey) startAmbientIdle(CHAR_META[c].key, c === 'maria' ? 'texting_and_walking' : null); });
+        showCaption('Error de red al hablar.', CHAR_META[speakerKey].name);
+        setState('idle', 'Pulsa el micrófono para hablar');
+        maybeAutoListen();
+      });
+  }
+
+  function sendDialogueTurn(text, priorHistory) {
+    var primary = pickSpeaker(text);
+    var others = present.filter(function (c) { return c !== primary; });
+    var partner = others[Math.floor(Math.random() * others.length)];
+    var pairKeys = [primary, partner];
+
+    setState('thinking', 'Están pensando...');
+    // Sin balanceo (startIdleSway) aquí: se van a girar cara a cara con
+    // faceEachOther() y esa animación también usa "rotation" — si se
+    // encienden las dos a la vez se pisan entre sí.
+    pairKeys.forEach(function (c) { stopAmbientIdle(CHAR_META[c].key); });
+    present.forEach(function (c) {
+      if (pairKeys.indexOf(c) === -1) {
+        stopAmbientIdle(CHAR_META[c].key);
+        setClip(crew().R[CHAR_META[c].key], 'thoughtful_head_nod', 'repeat');
+        startIdleSway(CHAR_META[c].key);
+      }
+    });
+    faceEachOther(pairKeys);
+
+    fetch('{% url "ar_chat_message" %}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ speakers: pairKeys, text: text, history: priorHistory, lang: currentLang }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (!res.ok || !res.fragments || !res.fragments.length) {
+          pairKeys.forEach(faceCamera);
+          present.forEach(function (c) { startAmbientIdle(CHAR_META[c].key, c === 'maria' ? 'texting_and_walking' : null); });
+          showCaption(res.error || 'No han podido responder.', '');
+          setState('idle', 'Pulsa el micrófono para hablar');
+          maybeAutoListen();
+          return;
+        }
+        history.push({ role: 'user', content: text });
+        res.fragments.forEach(function (f) { history.push({ role: 'assistant', content: f.reply, speaker: f.speaker }); });
+        var last = res.fragments[res.fragments.length - 1];
+        lastReply = last.reply;
+        lastSpeaker = last.speaker;
+        playDialogueFragments(res.fragments, 0, pairKeys);
+      })
+      .catch(function () {
+        pairKeys.forEach(faceCamera);
+        present.forEach(function (c) { startAmbientIdle(CHAR_META[c].key, c === 'maria' ? 'texting_and_walking' : null); });
+        showCaption('Error de red al hablar.', '');
+        setState('idle', 'Pulsa el micrófono para hablar');
+        maybeAutoListen();
+      });
+  }
+
+  function maybeAutoListen() {
+    if (autoListen && recognition) {
+      setTimeout(function () {
+        if (state === 'idle' && !window.speechSynthesis.speaking && !ambientAudioPlaying) startListening();
+      }, 900);
+    }
+  }
+  function startListening() {
+    if (!recognition || state !== 'idle' || window.speechSynthesis.speaking || ambientAudioPlaying) return;
+    try { recognition.start(); } catch (e) {}
+  }
+
+  // Margen tras la última frase reconocida: si la persona solo se ha parado
+  // a pensar cómo seguir (muy normal hablando con un micro), continuous:true
+  // evita que la sesión se corte sola de golpe, y este pequeño retraso antes
+  // de mandar el turno le da tiempo a retomarlo sin que le "roben" la frase.
+  var pendingTranscript = '';
+  var pendingDebounce = null;
+  var DEBOUNCE_MS = 1200;
+  function flushPendingTranscript() {
+    if (pendingDebounce) { clearTimeout(pendingDebounce); pendingDebounce = null; }
+    var t = pendingTranscript.trim();
+    pendingTranscript = '';
+    try { recognition.stop(); } catch (e) {}
+    if (t) sendTurn(t);
+  }
+
+  // Vigía de "micro colgado": en algún móvil, con continuous:true, la sesión
+  // a veces se queda escuchando indefinidamente sin reconocer nada y sin
+  // disparar onend/onerror por su cuenta (reportado por el usuario). Se
+  // reinicia el cronómetro con CUALQUIER actividad (incluso resultados
+  // interinos) y, si pasa demasiado tiempo sin nada, se fuerza el stop.
+  var listenWatchdog = null;
+  var LISTEN_STALL_MS = 18000;
+  function armListenWatchdog() {
+    clearListenWatchdog();
+    listenWatchdog = setTimeout(function () { try { recognition.stop(); } catch (e) {} }, LISTEN_STALL_MS);
+  }
+  function clearListenWatchdog() {
+    if (listenWatchdog) { clearTimeout(listenWatchdog); listenWatchdog = null; }
+  }
+
+  var SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SpeechRecognitionCtor) {
+    recognition = new SpeechRecognitionCtor();
+    recognition.lang = 'es-ES';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.onstart = function () { pendingTranscript = ''; setState('listening', 'Escuchando...'); armListenWatchdog(); };
+    recognition.onresult = function (ev) {
+      armListenWatchdog();
+      // Igual que en /robot-chat/: en algunos navegadores onresult se dispara
+      // varias veces con la transcripción creciendo poco a poco aunque
+      // interimResults sea false — solo se actúa en el resultado final.
+      var lastResult = ev.results[ev.results.length - 1];
+      if (!lastResult.isFinal) return;
+      var transcript = '';
+      for (var i = 0; i < ev.results.length; i++) transcript += ev.results[i][0].transcript;
+      pendingTranscript = transcript;
+      if (pendingDebounce) clearTimeout(pendingDebounce);
+      pendingDebounce = setTimeout(flushPendingTranscript, DEBOUNCE_MS);
+    };
+    recognition.onerror = function () { clearListenWatchdog(); setState('idle', 'Pulsa el micrófono para hablar'); maybeAutoListen(); };
+    recognition.onend = function () {
+      clearListenWatchdog();
+      if (pendingDebounce) { clearTimeout(pendingDebounce); pendingDebounce = null; }
+      if (pendingTranscript.trim()) {
+        var t = pendingTranscript.trim();
+        pendingTranscript = '';
+        sendTurn(t);
+      } else if (state === 'listening') {
+        // Antes se quedaba en "idle" a secas y, en modo manos libres, había
+        // que volver a tocar el micro a mano — ahora reintenta sola.
+        setState('idle', 'Pulsa el micrófono para hablar');
+        maybeAutoListen();
+      }
+    };
+  } else {
+    chatTextFallback.classList.add('show');
+  }
+
+  chatMicBtn.addEventListener('click', function () {
+    if (state === 'listening') { flushPendingTranscript(); return; }
+    if (state !== 'idle') return;
+    if (!recognition) { chatTextInput.focus(); return; }
+    startListening();
+  });
+  chatTextSendBtn.addEventListener('click', function () {
+    var v = chatTextInput.value;
+    chatTextInput.value = '';
+    sendTurn(v);
+  });
+  chatTextInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') chatTextSendBtn.click(); });
+  chatAutoListenToggle.addEventListener('change', function (e) {
+    autoListen = e.target.checked;
+    if (autoListen && state === 'idle') maybeAutoListen();
+  });
+
+  var STT_LANG = { es: 'es-ES', ru: 'ru-RU' };
+  function setLang(lang) {
+    currentLang = lang;
+    langEsBtn.classList.toggle('active', lang === 'es');
+    langRuBtn.classList.toggle('active', lang === 'ru');
+    if (recognition) recognition.lang = STT_LANG[lang] || 'es-ES';
+  }
+  langEsBtn.addEventListener('click', function () { setLang('es'); });
+  langRuBtn.addEventListener('click', function () { setLang('ru'); });
+
+  document.addEventListener('ar-crew-finished', function () {
+    chatControls.classList.remove('hidden');
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,104 @@
+{% extends "legal/_base.html" %}
+{% block title %}Términos y condiciones{% endblock %}
+{% block heading %}Términos y condiciones{% endblock %}
+{% block content %}
+<h2>1. Objeto y aceptación</h2>
+<p>
+  Estas condiciones regulan la relación entre {{ company.trade_name }} ({{ company.legal_name }}, NIF {{ company.nif }})
+  y el cliente que contrata sus servicios de diseño y desarrollo web, mantenimiento, automatización y servicios
+  relacionados. La aceptación de un presupuesto por escrito, email, WhatsApp o firma implica la aceptación de estas
+  condiciones.
+</p>
+
+<h2>2. Servicios</h2>
+<p>Trabajamos principalmente con los siguientes tipos de servicio:</p>
+<ul>
+  <li><strong>Proyectos web</strong> (landing page, web profesional, web con reservas, tienda online o proyecto a medida), con alcance, extras y plazo detallados en cada presupuesto.</li>
+  <li><strong>Mantenimiento mensual</strong> (planes Básico/Plus) y <strong>bolsas de horas</strong> mensuales para correcciones, mejoras y desarrollo continuo.</li>
+  <li><strong>Dominio + Hosting</strong> como servicio adicional opcional, facturado mensualmente.</li>
+</ul>
+
+<h2>3. Presupuestos y precios</h2>
+<p>
+  Todo proyecto se inicia con un presupuesto que detalla alcance, precio, plazo y condiciones de pago. El
+  presupuesto tiene una validez de 15 días naturales salvo que se indique otra cosa. Los importes pueden estar
+  sujetos a IVA u otros impuestos aplicables. Los servicios mensuales (mantenimiento, bolsa de horas, hosting)
+  se facturan por adelantado y se renuevan automáticamente cada mes salvo cancelación.
+</p>
+
+<h2>4. Forma de pago</h2>
+<p>Para proyectos, se ofrecen las siguientes modalidades, indicadas en cada presupuesto:</p>
+<ul>
+  <li><strong>Pago único</strong> antes de la entrega.</li>
+  <li><strong>50% al inicio + 50% a la entrega</strong> (la más habitual).</li>
+  <li><strong>3 pagos</strong> del 33% cada uno, distribuidos a lo largo del proyecto.</li>
+</ul>
+<p>La entrega final (publicación, traspaso de accesos o archivos) se realiza una vez abonado el importe pendiente.</p>
+
+<h2>5. Plazos de entrega</h2>
+<p>
+  El plazo estimado se indica en cada presupuesto y depende del tipo de proyecto. Los retrasos en la entrega de
+  textos, imágenes, accesos o materiales por parte del cliente pueden modificar el plazo previsto sin que ello
+  suponga responsabilidad de {{ company.trade_name }}.
+</p>
+
+<h2>6. Revisiones y cambios</h2>
+<p>
+  Cada proyecto incluye ajustes razonables durante la fase de revisión. Cambios sustanciales, nuevas
+  funcionalidades o contenido no descrito en el alcance original se presupuestarán aparte.
+</p>
+
+<h2>7. Cancelación</h2>
+<ul>
+  <li>El cliente puede cancelar el proyecto en cualquier momento comunicándolo por escrito.</li>
+  <li>Si la cancelación se produce <strong>antes de iniciar el trabajo</strong>, se devuelve el importe abonado descontando los gastos ya generados (por ejemplo, dominio o licencias ya adquiridas).</li>
+  <li>Si la cancelación se produce <strong>una vez iniciado el trabajo</strong>, el primer pago no es reembolsable, ya que cubre el tiempo y recursos ya invertidos; se entregará el trabajo realizado hasta la fecha.</li>
+  <li>Los servicios mensuales (mantenimiento, bolsa de horas, hosting) pueden cancelarse en cualquier momento con efecto al final del periodo ya pagado, sin penalización ni permanencia mínima.</li>
+</ul>
+
+<h2>8. Propiedad intelectual</h2>
+<p>
+  Una vez abonado el importe completo, el cliente adquiere los derechos de uso sobre el diseño y contenido final
+  entregado para su proyecto. Las herramientas, librerías o componentes de desarrollo propios reutilizados en
+  distintos proyectos permanecen en propiedad de {{ company.trade_name }}. El cliente es responsable de contar con
+  derechos de uso sobre las imágenes, textos, marcas o materiales que facilite.
+</p>
+
+<h2>9. Qué no está incluido</h2>
+<p>
+  Salvo indicación expresa en el presupuesto, no incluimos: compra de dominio, hosting, licencias externas,
+  pasarelas de pago, fotografías profesionales, traducciones, redacción legal definitiva ni campañas publicitarias.
+  El dominio y el hosting pueden contratarse como servicio adicional (ver sección 2).
+</p>
+
+<h2>10. Soporte posterior a la entrega</h2>
+<p>
+  Tras la entrega, el proyecto incluye un breve periodo de soporte inicial para corregir incidencias técnicas
+  derivadas del desarrollo. Para cambios de contenido, nuevas funcionalidades o mantenimiento continuado,
+  ofrecemos planes de mantenimiento mensual y bolsas de horas, detallados en la web.
+</p>
+
+<h2>11. Uso de inteligencia artificial</h2>
+<p>
+  Como se indica en nuestra <a href="/privacidad/">política de privacidad</a>, podemos apoyarnos en herramientas
+  de inteligencia artificial durante el desarrollo. Todo resultado es revisado y validado por una persona antes
+  de entregarse.
+</p>
+
+<h2>12. Responsabilidad</h2>
+<p>
+  {{ company.trade_name }} no se responsabiliza de interrupciones, cambios de condiciones o caídas de servicios
+  externos contratados por el cliente (hosting de terceros, pasarelas de pago, redes sociales, etc.), ni de daños
+  derivados de un uso indebido del sitio web entregado.
+</p>
+
+<h2>13. Legislación aplicable</h2>
+<p>
+  Estas condiciones se rigen por la legislación española. Cualquier controversia se someterá a los juzgados y
+  tribunales que correspondan conforme a derecho.
+</p>
+
+<p style="margin-top:2rem">
+  ¿Dudas sobre estas condiciones? Escríbenos a <a href="mailto:{{ company.email }}">{{ company.email }}</a>.
+</p>
+{% endblock %}

@@ -58,6 +58,8 @@
     .btn-sm.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
     .btn-sm.primary:hover { background: #1d4ed8; }
     .btn-sm.green { background: #25d366; color: #fff; border-color: #25d366; }
+    .btn-sm.danger { background: #fff; color: #dc2626; border-color: #fca5a5; }
+    .btn-sm.danger:hover { background: #fef2f2; }
 
     /* next step */
     .next-step { background: #eff6ff; border-left: 3px solid #2563eb; padding: 8px 12px; border-radius: 0 6px 6px 0; font-size: .82rem; color: #1e40af; }
@@ -118,6 +120,7 @@
   <span class="badge" data-i18n="status.{{ lead.status }}" {% for v, l in statuses %}{% if v == lead.status %}style="background:{{ status_css|get:v }}"{% endif %}{% endfor %}>
     {{ lead.get_status_display }}
   </span>
+  <button class="btn-sm danger" onclick="deleteLead({{ lead.pk }}, '{{ lead.name|escapejs }}')" data-i18n="crm.delete_lead">🗑️ Eliminar</button>
   <div class="lang-switcher">
     <button class="lang-btn" data-lang="es">ES</button>
     <button class="lang-btn" data-lang="ru">RU</button>
@@ -762,7 +765,7 @@
   var _matIcons = {photo: '🖼️', video: '🎬', logo: '🎨', document: '📄', text: '📝'};
 
   function loadMaterials() {
-    fetch('/wi/crm/' + LEAD_PK + '/materials/', { headers: { 'Authorization': _getAuth() } })
+    fetch('/wi/crm/' + LEAD_PK + '/materials/')
       .then(function(r) { return r.json(); })
       .then(function(d) {
         if (!d.ok) return;
@@ -819,7 +822,6 @@
     fetch('/wi/crm/' + pk + '/access/', {
       method: 'POST',
       body: fd,
-      headers: { 'Authorization': _getAuth() },
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
@@ -853,7 +855,6 @@
     fetch('/wi/crm/' + pk + '/access/', {
       method: 'POST',
       body: fd,
-      headers: { 'Authorization': _getAuth() },
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
@@ -912,7 +913,6 @@
     fetch('/wi/crm/' + pk + '/comm/', {
       method: 'POST',
       body: fd,
-      headers: { 'Authorization': _getAuth() },
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
@@ -943,7 +943,7 @@
     fd.append('status', status);
 
     fetch('/wi/crm/' + pk + '/milestone/', {
-      method: 'POST', body: fd, headers: { 'Authorization': _getAuth() }
+      method: 'POST', body: fd
     })
     .then(function(r) { return r.json(); })
     .then(function(d) {
@@ -960,7 +960,7 @@
     var fd = new FormData();
     fd.append('status', status);
     fetch('/wi/crm/' + pk + '/milestone/' + mid + '/', {
-      method: 'POST', body: fd, headers: { 'Authorization': _getAuth() }
+      method: 'POST', body: fd
     })
     .then(function(r) { return r.json(); })
     .then(function(d) { if (d.ok) location.reload(); else alert(_t('crm.error_updating_milestone')); })
@@ -984,7 +984,7 @@
     if (url) fd.append('deliverable_url', url);
 
     fetch('/wi/crm/' + pk + '/worklog/', {
-      method: 'POST', body: fd, headers: { 'Authorization': _getAuth() }
+      method: 'POST', body: fd
     })
     .then(function(r) { return r.json(); })
     .then(function(d) {
@@ -1001,7 +1001,7 @@
     var _t = window.wiT || function(k){return k;};
     var fd = new FormData(formEl);
     fetch('/wi/crm/' + pk + '/payment/', {
-      method: 'POST', body: fd, headers: { 'Authorization': _getAuth() }
+      method: 'POST', body: fd
     })
     .then(function(r) { return r.json(); })
     .then(function(d) {
@@ -1017,7 +1017,7 @@
     var _t = window.wiT || function(k){return k;};
     if (!confirm(_t('crm.confirm_payment_received'))) return;
     fetch('/wi/crm/payment/' + pk + '/confirm/', {
-      method: 'POST', headers: { 'Authorization': _getAuth() }
+      method: 'POST'
     })
     .then(function(r) { return r.json(); })
     .then(function(d) {
@@ -1036,7 +1036,7 @@
     var _t = window.wiT || function(k){return k;};
     var fd = new FormData(formEl);
     fetch('/wi/crm/' + pk + '/evidence/', {
-      method: 'POST', body: fd, headers: { 'Authorization': _getAuth() }
+      method: 'POST', body: fd
     })
     .then(function(r) { return r.json(); })
     .then(function(d) {
@@ -1064,17 +1064,20 @@
     document.execCommand('copy');
     el.remove();
   }
-  function _getAuth() {
-    // The browser already sent Basic Auth to load this page,
-    // so we extract it from localStorage (set on first load) or prompt.
-    var stored = sessionStorage.getItem('crm_auth');
-    if (stored) return 'Basic ' + stored;
-    var pw = prompt('Contraseña CRM:');
-    if (!pw) return '';
-    var enc = btoa(':' + pw);
-    sessionStorage.setItem('crm_auth', enc);
-    return 'Basic ' + enc;
-  }
+
+  // ── Delete lead ───────────────────────────────────────────────────────────
+  window.deleteLead = function(pk, name) {
+    var _t = window.wiT || function(k){return k;};
+    var msg = _t('crm.confirm_delete_lead').replace('{name}', name);
+    if (!confirm(msg)) return;
+    fetch('/wi/crm/' + pk + '/delete/', { method: 'POST' })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.ok) location.href = d.redirect || '/wi/crm/';
+        else alert('Error: ' + (d.error || _t('crm.unknown')));
+      })
+      .catch(function(e) { alert('Error: ' + e); });
+  };
 })();
 </script>
 
@@ -1085,6 +1088,8 @@
 var T = {
 es: {
   'crm.back': '← Volver',
+  'crm.delete_lead': '🗑️ Eliminar',
+  'crm.confirm_delete_lead': '¿Seguro que quieres eliminar el lead "{name}"?\n\nSe borrará todo lo relacionado: propuestas, archivos, pagos, chat y accesos al portal. Esta acción no se puede deshacer.',
   'crm.client': 'Cliente',
   'crm.name': 'Nombre',
   'crm.biz_type': 'Tipo de negocio',
@@ -1250,6 +1255,8 @@ es: {
 },
 ru: {
   'crm.back': '← Назад',
+  'crm.delete_lead': '🗑️ Удалить',
+  'crm.confirm_delete_lead': 'Точно удалить лид "{name}"?\n\nУдалится всё связанное: предложения, файлы, платежи, чат и доступы к порталу. Действие необратимо.',
   'crm.client': 'Клиент',
   'crm.name': 'Имя',
   'crm.biz_type': 'Тип бизнеса',

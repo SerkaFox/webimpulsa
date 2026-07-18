@@ -62,17 +62,7 @@
   var EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '🎉', '😍', '👏',
                 '😊', '😅', '🤔', '🙌', '💪', '👀', '✅', '💯', '🥳', '😁'];
 
-  function _getAuth() {
-    var stored = sessionStorage.getItem('crm_auth');
-    if (stored) return 'Basic ' + stored;
-    var pw = prompt('Contraseña CRM:');
-    if (!pw) return '';
-    var enc = btoa(':' + pw);
-    sessionStorage.setItem('crm_auth', enc);
-    return 'Basic ' + enc;
-  }
-
-  function escapeHtml(s) {
+function escapeHtml(s) {
     return String(s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -145,12 +135,9 @@
         : '<span style="color:#94a3b8" title="Enviado">✓</span>';
     }
 
-    var reactHtml = '';
+    var reactInlineHtml = '';
     if (m.reactions && m.reactions.length) {
-      reactHtml = '<div style="margin-top:3px">' + m.reactions.map(function(r) {
-        return '<span style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;' +
-               'padding:0 6px;font-size:.78rem;margin-right:3px">' + r.emoji + '</span>';
-      }).join('') + '</div>';
+      reactInlineHtml = '<span style="margin-right:2px">' + m.reactions.map(function(r) { return r.emoji; }).join(' ') + '</span>';
     }
 
     var actionsHtml =
@@ -173,11 +160,11 @@
           replyHtml +
           '<div class="chat-content-el">' + (m.deleted ? 'Mensaje eliminado' : renderContent(m.content)) + '</div>' +
           '<div style="font-size:.68rem;opacity:.75;margin-top:3px;text-align:right;display:flex;gap:5px;justify-content:flex-end;align-items:center">' +
+            reactInlineHtml +
             '<span>' + fmtTime(m.created_at) + '</span>' + ticksHtml +
           '</div>' +
         '</div>' +
         (m.deleted ? '' : '<div style="font-size:.72rem;color:#94a3b8;margin-top:2px;' + (mine ? 'text-align:right' : '') + '">' + actionsHtml + '</div>') +
-        reactHtml +
       '</div>' +
       '</div>';
     return wrap;
@@ -228,7 +215,7 @@
   }
 
   function poll() {
-    fetch('/wi/crm/' + LEAD_PK + '/chat/messages/', {headers: {'Authorization': _getAuth()}})
+    fetch('/wi/crm/' + LEAD_PK + '/chat/messages/')
       .then(function(r) { return r.json(); })
       .then(function(d) {
         if (d.ok) {
@@ -247,7 +234,7 @@
     btn.disabled = true;
     var body = new URLSearchParams({message: text});
     if (replyToId) body.append('reply_to', replyToId);
-    fetch('/wi/crm/' + LEAD_PK + '/chat/send/', {method: 'POST', body: body, headers: {'Authorization': _getAuth()}})
+    fetch('/wi/crm/' + LEAD_PK + '/chat/send/', {method: 'POST', body: body})
       .then(function(r) { return r.json(); })
       .then(function(d) {
         btn.disabled = false;
@@ -276,7 +263,7 @@
     var emoji = e.target.dataset.emoji;
     if (!emoji || !pickerTargetId) return;
     var body = new URLSearchParams({emoji: emoji});
-    fetch('/wi/crm/' + LEAD_PK + '/chat/' + pickerTargetId + '/react/', {method: 'POST', body: body, headers: {'Authorization': _getAuth()}})
+    fetch('/wi/crm/' + LEAD_PK + '/chat/' + pickerTargetId + '/react/', {method: 'POST', body: body})
       .then(function() { picker.style.display = 'none'; poll(); });
   });
   document.addEventListener('click', function(e) {
@@ -298,7 +285,7 @@
       document.getElementById('adminChatInput').focus();
     } else if (act === 'delete') {
       if (!confirm('¿Eliminar este mensaje?')) return;
-      fetch('/wi/crm/' + LEAD_PK + '/chat/' + id + '/delete/', {method: 'POST', headers: {'Authorization': _getAuth()}}).then(poll);
+      fetch('/wi/crm/' + LEAD_PK + '/chat/' + id + '/delete/', {method: 'POST'}).then(poll);
     } else if (act === 'react') {
       pickerTargetId = id;
       var rect = e.target.getBoundingClientRect();

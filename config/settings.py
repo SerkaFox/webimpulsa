@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'core',
     'crm',
+    'planner',
 ]
 
 MIDDLEWARE = [
@@ -69,6 +70,10 @@ DATA_UPLOAD_MAX_MEMORY_SIZE  = 16 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE  = 16 * 1024 * 1024
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Calendario BE Success — acceso simple por PIN (no es Django auth completo)
+PLANNER_ADMIN_PASSWORD = os.getenv('PLANNER_ADMIN_PASSWORD', '1111')
+PLANNER_ADMIN_TOKEN = os.getenv('PLANNER_ADMIN_TOKEN', 'be-admin-9f3ac2d1e7')
 
 USE_TZ = True
 

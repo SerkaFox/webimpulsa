@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Habla con José — WebImpulsa</title>
+<meta name="robots" content="noindex">
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.5.0/dist/aframe-extras.min.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: linear-gradient(160deg, #0c1c42 0%, #123066 100%); }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Helvetica Neue', Arial, sans-serif; }
+
+  a-scene { position: fixed; inset: 0; z-index: 1; }
+
+  .top-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 6;
+    display: flex; align-items: center; justify-content: space-between; padding: 14px 16px;
+    color: #fff;
+  }
+  .top-bar h1 { font-size: 1.05rem; margin: 0; font-weight: 700; }
+  .top-bar a { color: #9db4dd; font-size: .82rem; text-decoration: none; }
+
+  .caption-wrap {
+    position: fixed; left: 12px; right: 12px; bottom: 158px; z-index: 5;
+    display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none;
+  }
+  .caption {
+    max-width: 92vw; background: rgba(12, 28, 66, .82); color: #fff; font-size: .95rem; font-weight: 600;
+    padding: 10px 16px; border-radius: 14px; text-align: center; line-height: 1.4; opacity: 0;
+    transform: translateY(6px); transition: opacity .25s ease, transform .25s ease;
+  }
+  .caption.user { background: rgba(23, 176, 214, .82); }
+  .caption.show { opacity: 1; transform: translateY(0); }
+
+  .status-line {
+    position: fixed; left: 0; right: 0; bottom: 118px; z-index: 5;
+    display: flex; justify-content: center; pointer-events: none;
+  }
+  .status-line span {
+    background: rgba(255,255,255,.12); color: #cfe0ff; font-size: .8rem; font-weight: 600;
+    padding: 5px 14px; border-radius: 999px; letter-spacing: .02em;
+  }
+
+  .controls {
+    position: fixed; left: 0; right: 0; bottom: 26px; z-index: 6;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .mic-btn {
+    width: 74px; height: 74px; border-radius: 50%; border: none; cursor: pointer;
+    background: linear-gradient(90deg, #1760d6, #17b0d6); color: #fff; font-size: 1.8rem;
+    box-shadow: 0 10px 30px rgba(23, 96, 214, .45);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .mic-btn:active { transform: scale(0.94); }
+  .mic-btn.listening {
+    background: linear-gradient(90deg, #d61717, #d65c17);
+    animation: pulse 1.1s ease-in-out infinite;
+  }
+  .mic-btn.thinking { background: linear-gradient(90deg, #7a17d6, #b017d6); }
+  .mic-btn.speaking { background: linear-gradient(90deg, #17d67a, #17b0d6); }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 10px 30px rgba(214, 23, 23, .45); }
+    50% { box-shadow: 0 10px 46px rgba(214, 23, 23, .75); }
+  }
+
+  .text-fallback {
+    display: none; gap: 8px; width: min(420px, 92vw);
+  }
+  .text-fallback.show { display: flex; }
+  .text-fallback input {
+    flex: 1; border: none; border-radius: 999px; padding: 12px 16px; font-size: .95rem;
+  }
+  .text-fallback button {
+    border: none; border-radius: 999px; padding: 0 20px; background: #17b0d6; color: #fff; font-weight: 700;
+  }
+
+  .hint {
+    color: #9db4dd; font-size: .78rem; text-align: center; max-width: 260px;
+  }
+
+  .intro-overlay {
+    position: fixed; inset: 0; z-index: 10;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 24px; color: #fff;
+    background: linear-gradient(160deg, #0c1c42 0%, #123066 100%);
+  }
+  .intro-overlay.hidden { display: none; }
+  .intro-overlay img.logo {
+    width: min(200px, 55vw); margin-bottom: 22px; padding: 16px 20px;
+    background: #fff; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  }
+  .intro-overlay h2 { font-size: 1.2rem; margin: 0 0 10px; }
+  .intro-overlay p { font-size: .92rem; line-height: 1.55; color: #cfe0ff; max-width: 340px; margin: 0 0 26px; }
+  .btn-start {
+    background: linear-gradient(90deg, #1760d6, #17b0d6); color: #fff; border: none; border-radius: 999px;
+    font-size: 1rem; font-weight: 700; padding: 14px 34px; box-shadow: 0 10px 30px rgba(23, 96, 214, .35);
+  }
+</style>
+</head>
+<body>
+
+  <div class="intro-overlay" id="introOverlay">
+    <img class="logo" src="/static/wi/img/logo.webp" alt="WebImpulsa">
+    <h2>Habla con José 🤖</h2>
+    <p>José es un robot de WebImpulsa. Pulsa el botón, di algo y él te responderá en voz alta. Necesita permiso de micrófono.</p>
+    <button class="btn-start" id="startBtn">Empezar</button>
+  </div>
+
+  <div class="top-bar hidden" id="topBar">
+    <h1>🤖 José</h1>
+    <a href="/">Volver al sitio</a>
+  </div>
+
+  <div class="caption-wrap" id="captionWrap"></div>
+  <div class="status-line hidden" id="statusLine"><span id="statusText">Pulsa el micrófono para hablar</span></div>
+
+  <div class="controls hidden" id="controls">
+    <button type="button" class="mic-btn" id="micBtn">🎤</button>
+    <div class="text-fallback" id="textFallback">
+      <input type="text" id="textInput" placeholder="Escribe algo para José...">
+      <button type="button" id="textSendBtn">Enviar</button>
+    </div>
+    <p class="hint" id="hintText"></p>
+    <label class="hint" style="cursor:pointer; display:flex; align-items:center; gap:6px;">
+      <input type="checkbox" id="autoListenToggle"> Manos libres (escuchar automáticamente tras cada respuesta)
+    </label>
+  </div>
+
+  <a-scene
+    id="robotScene"
+    color-space="sRGB"
+    renderer="colorManagement: true; physicallyCorrectLights: true"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+    embedded
+  >
+    <a-assets>
+      <a-asset-item id="mJose" src="/static/wi/ar/robots/robot_a.glb"></a-asset-item>
+    </a-assets>
+
+    <a-entity light="type: ambient; intensity: 1.0"></a-entity>
+    <a-entity light="type: directional; intensity: 0.75" position="1 2 2"></a-entity>
+
+    <a-entity id="cam" camera="fov: 50" look-controls="enabled: false" wasd-controls="enabled: false" position="0 1.45 2.5" rotation="-4 0 0"></a-entity>
+
+    <a-entity id="joseRig" rotation="0 0 0" position="0 0.97 0">
+      <a-entity id="jose" gltf-model="#mJose" rotation="0 0 0" head-look-nod></a-entity>
+    </a-entity>
+  </a-scene>
+
+<script>
+(function () {
+  AFRAME.registerComponent('head-look-nod', {
+    init: function () {
+      this.headBone = null;
+      this.headBaseQuat = null;
+      this.speaking = false;
+      this.el.addEventListener('model-loaded', () => {
+        const mesh = this.el.getObject3D('mesh');
+        if (!mesh) return;
+        mesh.traverse((node) => {
+          if (node.isBone && node.name === 'mixamorigHead') this.headBone = node;
+        });
+        if (this.headBone) this.headBaseQuat = this.headBone.quaternion.clone();
+
+        // Neutraliza el desplazamiento del hueso raíz (Hips) en TODOS los clips,
+        // igual que en la tarjeta AR: el mocap trae un offset "de fábrica" en ese
+        // hueso y sin esto el personaje aparece hundido/desplazado del origen.
+        if (mesh.animations) {
+          mesh.animations.forEach((clip) => {
+            clip.tracks.forEach((track) => {
+              if (!/Hips\.position$/i.test(track.name)) return;
+              track.values.fill(0);
+            });
+          });
+        }
+
+        this.el.setAttribute('animation-mixer', 'clip: male_standing_pose_m; loop: repeat; crossFadeDuration: 0.3');
+        window.__joseReady = true;
+      });
+    },
+    setSpeaking: function (v) { this.speaking = v; },
+    tock: function (time) {
+      if (!this.headBone || !this.headBaseQuat) return;
+      const THREE = AFRAME.THREE;
+      if (this.speaking) {
+        const t = time / 1000;
+        const nod = Math.sin(t * 5.2) * 0.085;
+        const sway = Math.sin(t * 1.7) * 0.05;
+        const turn = 0.16;
+        const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(nod, turn + sway, 0));
+        this.headBone.quaternion.copy(this.headBaseQuat).multiply(q);
+      } else {
+        const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0.1, 0));
+        this.headBone.quaternion.copy(this.headBaseQuat).multiply(q);
+      }
+    },
+  });
+
+  const introOverlay = document.getElementById('introOverlay');
+  const topBar = document.getElementById('topBar');
+  const statusLine = document.getElementById('statusLine');
+  const statusText = document.getElementById('statusText');
+  const controls = document.getElementById('controls');
+  const micBtn = document.getElementById('micBtn');
+  const captionWrap = document.getElementById('captionWrap');
+  const textFallback = document.getElementById('textFallback');
+  const textInput = document.getElementById('textInput');
+  const textSendBtn = document.getElementById('textSendBtn');
+  const hintText = document.getElementById('hintText');
+
+  let history = [];
+  let state = 'idle'; // idle | listening | thinking | speaking
+  let recognition = null;
+  let autoListen = false;
+  let lastJoseReply = '';
+
+  function joseComponent() {
+    const el = document.getElementById('jose');
+    return el && el.components['head-look-nod'];
+  }
+
+  function setClip(name, loop) {
+    document.getElementById('jose').setAttribute(
+      'animation-mixer', `clip: ${name}; loop: ${loop || 'repeat'}; clampWhenFinished: true; crossFadeDuration: 0.25`
+    );
+  }
+
+  // ── Caminar de un lado a otro mientras "piensa" (esperando la respuesta del LLM) ──
+  let thinkWalkTimer = null;
+  const REST_POS = '0 0.97 0';
+  function thinkingWalkStep(toX) {
+    const rig = document.getElementById('joseRig');
+    const facing = toX < 0 ? -90 : 90; // -90 mira hacia -X (izquierda en pantalla), +90 hacia +X (derecha)
+    setClip('walking', 'repeat');
+    rig.setAttribute('animation__turn', `property: rotation; to: 0 ${facing} 0; dur: 300; easing: easeOutQuad`);
+    rig.setAttribute('animation__walk', `property: position; to: ${toX} 0.97 0; dur: 1300; easing: linear`);
+    thinkWalkTimer = setTimeout(() => {
+      if (state !== 'thinking') return;
+      thinkingWalkStep(toX < 0 ? 0.35 : -0.35);
+    }, 1350);
+  }
+  function startThinkingWalk() {
+    stopThinkingWalk();
+    thinkingWalkStep(-0.35);
+  }
+  function stopThinkingWalk() {
+    if (thinkWalkTimer) { clearTimeout(thinkWalkTimer); thinkWalkTimer = null; }
+    const rig = document.getElementById('joseRig');
+    rig.setAttribute('animation__turn', 'property: rotation; to: 0 0 0; dur: 400; easing: easeOutQuad');
+    rig.setAttribute('animation__walk', `property: position; to: ${REST_POS}; dur: 500; easing: easeOutQuad`);
+    setClip('male_standing_pose_m', 'repeat');
+  }
+
+  // ── Gesto de manos según el contenido de la respuesta ──
+  // Ojo: sin \b de cierre a propósito — el español conjuga mucho ("trabaj-o/-ando/-ador"),
+  // así que estas raíces deben poder matchear como PREFIJO de palabras más largas.
+  const GESTURE_RULES = [
+    [/\b(hola|bienvenid|encantad|adiós|hasta luego)/i, 'waving_hand_m'],
+    [/\b(cont[ae]|número|cuenta|conteo|precio|euros?)/i, 'counting_m'],
+    [/\b(construy|construir|trabaj|código|página|p[aá]gina|web|proyect|diseñ)/i, 'button_pushing_m'],
+    [/\b(revis|inspeccion|analiz|mirar|comprob)/i, 'kneeling_inspecting_m'],
+    [/\b(levant|carg|pesad|esfuerz)/i, 'lifting_object_m'],
+  ];
+  function pickGesture(text) {
+    for (const [re, clip] of GESTURE_RULES) if (re.test(text)) return clip;
+    return null;
+  }
+  function onGestureFinished() {
+    setClip('male_standing_pose_m', 'repeat');
+  }
+  function startGesture(replyText) {
+    const jose = document.getElementById('jose');
+    const clip = pickGesture(replyText);
+    if (!clip) { setClip('male_standing_pose_m', 'repeat'); return; }
+    jose.removeEventListener('animation-finished', onGestureFinished);
+    jose.addEventListener('animation-finished', onGestureFinished, { once: true });
+    setClip(clip, 'once');
+  }
+  function stopGesture() {
+    const jose = document.getElementById('jose');
+    jose.removeEventListener('animation-finished', onGestureFinished);
+    setClip('male_standing_pose_m', 'repeat');
+  }
+
+  function setState(s, label) {
+    state = s;
+    micBtn.className = 'mic-btn' + (s === 'idle' ? '' : ' ' + s);
+    statusText.textContent = label;
+    const comp = joseComponent();
+    if (comp) comp.setSpeaking(s === 'speaking');
+  }
+
+  function addCaption(text, who) {
+    const el = document.createElement('div');
+    el.className = 'caption' + (who === 'user' ? ' user' : '');
+    el.textContent = text;
+    captionWrap.innerHTML = '';
+    captionWrap.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('show'));
+  }
+
+  function normalizeText(s) {
+    return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  // Red de seguridad extra contra el eco: si lo que "escuchamos" se parece demasiado
+  // a lo último que José dijo, lo tratamos como que el micro se ha oído a sí mismo
+  // (sin auriculares esto pasa fácil) y lo ignoramos en vez de mandárselo al LLM.
+  function looksLikeEcho(transcript) {
+    const a = normalizeText(transcript);
+    const b = normalizeText(lastJoseReply);
+    if (!a || !b) return false;
+    if (a.length > 6 && (b.includes(a) || a.includes(b))) return true;
+    const aWords = a.split(' ').filter((w) => w.length > 2);
+    if (!aWords.length) return false;
+    const bWords = new Set(b.split(' ').filter((w) => w.length > 2));
+    const overlap = aWords.filter((w) => bWords.has(w)).length;
+    return overlap / aWords.length > 0.6;
+  }
+
+  function speak(text) {
+    if (!('speechSynthesis' in window)) { setState('idle', 'Pulsa el micrófono para hablar'); maybeAutoListen(); return; }
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'es-ES';
+    utter.rate = 1.0;
+    utter.onstart = () => setState('speaking', 'José está hablando...');
+    utter.onend = () => { stopGesture(); setState('idle', 'Pulsa el micrófono para hablar'); maybeAutoListen(); };
+    utter.onerror = () => { stopGesture(); setState('idle', 'Pulsa el micrófono para hablar'); maybeAutoListen(); };
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utter);
+  }
+
+  function sendMessage(text) {
+    if (!text.trim()) return;
+    // Defensa extra: si por lo que sea llega un resultado de reconocimiento repetido
+    // mientras ya estamos pensando/hablando, lo ignoramos en vez de solaparlo.
+    if (state === 'thinking' || state === 'speaking') return;
+    if (state === 'listening' && looksLikeEcho(text)) { setState('idle', 'Pulsa el micrófono para hablar'); maybeAutoListen(); return; }
+    addCaption(text, 'user');
+    setState('thinking', 'José está pensando...');
+    startThinkingWalk();
+    const priorHistory = history.slice();
+    fetch('{% url "robot_chat_message" %}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text, history: priorHistory }),
+    })
+      .then((r) => r.json())
+      .then((res) => {
+        stopThinkingWalk();
+        if (!res.ok) {
+          addCaption(res.error || 'José no ha podido responder.', 'jose');
+          setState('idle', 'Pulsa el micrófono para hablar');
+          maybeAutoListen();
+          return;
+        }
+        history.push({ role: 'user', content: text });
+        history.push({ role: 'assistant', content: res.reply });
+        lastJoseReply = res.reply;
+        addCaption(res.reply, 'jose');
+        startGesture(res.reply);
+        speak(res.reply);
+      })
+      .catch(() => {
+        stopThinkingWalk();
+        addCaption('Error de red al hablar con José.', 'jose');
+        setState('idle', 'Pulsa el micrófono para hablar');
+        maybeAutoListen();
+      });
+  }
+
+  function maybeAutoListen() {
+    if (autoListen && recognition) {
+      setTimeout(() => {
+        if (state === 'idle' && !window.speechSynthesis.speaking) startListening();
+      }, 900);
+    }
+  }
+
+  function startListening() {
+    if (!recognition || state !== 'idle' || window.speechSynthesis.speaking) return;
+    try { recognition.start(); } catch (e) { /* ya estaba iniciado */ }
+  }
+
+  function stopEverything() {
+    autoListen = false;
+    document.getElementById('autoListenToggle').checked = false;
+    if (recognition) { try { recognition.stop(); } catch (e) {} }
+    window.speechSynthesis.cancel();
+    stopThinkingWalk();
+    stopGesture();
+    setState('idle', 'Pulsa el micrófono para hablar');
+  }
+
+  document.getElementById('autoListenToggle').addEventListener('change', (e) => {
+    autoListen = e.target.checked;
+    if (autoListen && state === 'idle') maybeAutoListen();
+  });
+
+  const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SpeechRecognitionCtor) {
+    recognition = new SpeechRecognitionCtor();
+    recognition.lang = 'es-ES';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.onstart = () => setState('listening', 'Escuchando...');
+    recognition.onresult = (ev) => {
+      // En algunos navegadores (sobre todo Android Chrome) onresult se dispara varias
+      // veces para la MISMA frase, con la transcripción creciendo palabra a palabra,
+      // aunque interimResults esté a false. Si no comprobamos isFinal, cada uno de esos
+      // resultados parciales se manda al LLM como si fuera un mensaje distinto.
+      const lastResult = ev.results[ev.results.length - 1];
+      if (!lastResult.isFinal) return;
+      let transcript = '';
+      for (let i = 0; i < ev.results.length; i++) transcript += ev.results[i][0].transcript;
+      sendMessage(transcript);
+    };
+    recognition.onerror = () => { setState('idle', 'Pulsa el micrófono para hablar'); };
+    recognition.onend = () => { if (state === 'listening') setState('idle', 'Pulsa el micrófono para hablar'); };
+    hintText.textContent = 'Toca el micrófono y habla en español.';
+  } else {
+    textFallback.classList.add('show');
+    hintText.textContent = 'Tu navegador no soporta reconocimiento de voz: escribe en su lugar.';
+  }
+
+  micBtn.addEventListener('click', () => {
+    if (state === 'listening') { try { recognition.stop(); } catch (e) {} return; }
+    if (state !== 'idle') return;
+    if (!recognition) { textInput.focus(); return; }
+    startListening();
+  });
+
+  textSendBtn.addEventListener('click', () => {
+    const v = textInput.value;
+    textInput.value = '';
+    sendMessage(v);
+  });
+  textInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') textSendBtn.click(); });
+
+  document.getElementById('startBtn').addEventListener('click', () => {
+    introOverlay.classList.add('hidden');
+    topBar.classList.remove('hidden');
+    statusLine.classList.remove('hidden');
+    controls.classList.remove('hidden');
+
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then((stream) => { stream.getTracks().forEach((t) => t.stop()); })
+        .catch(() => { hintText.textContent = 'Sin permiso de micrófono: puedes escribir en su lugar.'; textFallback.classList.add('show'); });
+    }
+
+    setTimeout(() => {
+      addCaption('¡Hola! Soy José. ¿En qué puedo ayudarte?', 'jose');
+      speak('¡Hola! Soy José. ¿En qué puedo ayudarte?');
+    }, 500);
+  });
+})();
+</script>
+</body>
+</html>

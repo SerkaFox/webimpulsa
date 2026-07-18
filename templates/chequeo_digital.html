@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chequeo digital gratuito para tu negocio | WebImpulsa</title>
+<meta name="description" content="Descubre en 2 minutos si un cliente puede encontrarte, entender tus servicios y contactarte en menos de 1 minuto. Chequeo digital gratuito para negocios locales.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://webimpulsa.es/chequeo-digital/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://webimpulsa.es/chequeo-digital/">
+<meta property="og:title" content="Chequeo digital gratuito para tu negocio | WebImpulsa">
+<meta property="og:description" content="¿Puede un cliente encontrarte, entender tus servicios y contactarte en menos de 1 minuto? Hazlo el chequeo, son solo 2 minutos.">
+<meta property="og:image" content="https://webimpulsa.es/static/wi/img/logo.webp">
+<meta property="og:locale" content="es_ES">
+<link rel="icon" type="image/png" href="/static/wi/img/favicon.png">
+<style>
+:root{
+  --q-bg:#edf4ff;
+  --q-card:#ffffff;
+  --q-border:rgba(10,50,150,.12);
+  --q-primary:#1760d6;
+  --q-primary2:#0095c8;
+  --q-accent:#00a8cc;
+  --q-green:#009e73;
+  --q-amber:#c98a11;
+  --q-text:#0c1c42;
+  --q-muted:#5a6d8c;
+  --q-shadow:0 2px 20px rgba(10,50,150,.09);
+  --q-shadow-hover:0 10px 34px rgba(10,50,150,.16);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  min-height:100vh;
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  color:var(--q-text);
+  background:var(--q-bg);
+  overflow-x:hidden;
+}
+a{text-decoration:none}
+
+/* slow crossfading photo background, sits behind the floating shapes */
+.qz-photo-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--q-bg)}
+.qz-photo-bg .photo{position:absolute;inset:0;background-size:cover;background-position:center;
+  opacity:0;animation:qzPhotoFade 18s ease-in-out infinite;animation-fill-mode:both}
+.qz-photo-bg .photo:nth-child(1){background-image:url('/static/wi/img/chequeo-bg-1.webp');animation-delay:0s}
+.qz-photo-bg .photo:nth-child(2){background-image:url('/static/wi/img/chequeo-bg-2.webp');animation-delay:6s}
+.qz-photo-bg .photo:nth-child(3){background-image:url('/static/wi/img/chequeo-bg-3.webp');animation-delay:12s}
+@keyframes qzPhotoFade{0%{opacity:0}11%{opacity:1}33%{opacity:1}44%{opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){
+  .qz-photo-bg .photo{animation:none;opacity:0}
+  .qz-photo-bg .photo:first-child{opacity:1}
+}
+
+/* floating background shapes — gentle, transform-only, no layout thrash */
+.qz-bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.qz-bg .shape{position:absolute;border-radius:50%;opacity:.35;filter:blur(2px);will-change:transform}
+.qz-bg .s1{width:420px;height:420px;left:-140px;top:-120px;background:radial-gradient(circle at 30% 30%,rgba(23,96,214,.35),rgba(23,96,214,0) 70%);animation:qzFloat1 22s ease-in-out infinite}
+.qz-bg .s2{width:340px;height:340px;right:-100px;top:20%;background:radial-gradient(circle at 60% 40%,rgba(0,168,204,.30),rgba(0,168,204,0) 70%);animation:qzFloat2 26s ease-in-out infinite}
+.qz-bg .s3{width:300px;height:300px;left:10%;bottom:-140px;background:radial-gradient(circle at 50% 50%,rgba(0,158,115,.22),rgba(0,158,115,0) 70%);animation:qzFloat3 30s ease-in-out infinite}
+@keyframes qzFloat1{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,40px)}}
+@keyframes qzFloat2{0%,100%{transform:translate(0,0)}50%{transform:translate(-40px,20px)}}
+@keyframes qzFloat3{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-30px)}}
+@media (prefers-reduced-motion:reduce){.qz-bg .shape{animation:none}}
+
+/* progress bar — bottom, flowing "plasma" fill */
+.qz-progress{position:fixed;left:14px;right:14px;bottom:14px;height:12px;border-radius:999px;
+  background:rgba(23,96,214,.10);z-index:20;overflow:hidden;box-shadow:inset 0 1px 3px rgba(10,50,150,.12)}
+.qz-progress-bar{
+  height:100%;width:0%;border-radius:999px;position:relative;
+  background:linear-gradient(90deg,#1760d6,#00c2d6,#00e0b8,#00c2d6,#1760d6);
+  background-size:300% 100%;
+  animation:qzPlasma 3.2s linear infinite;
+  transition:width .5s cubic-bezier(.3,.15,.15,1);
+  box-shadow:0 0 14px rgba(0,168,204,.55);
+}
+@keyframes qzPlasma{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+@media (prefers-reduced-motion:reduce){.qz-progress-bar{animation:none}}
+
+/* discreet footer link — not part of the quiz flow, doesn't compete for attention */
+.qz-footer{position:relative;z-index:1;text-align:center;padding:10px 0 28px;font-size:.7rem}
+.qz-footer a{color:rgba(90,109,140,.4);font-weight:600;letter-spacing:.02em}
+.qz-footer a:hover{color:var(--q-primary)}
+
+/* mini quiz timer — purely decorative, counts up, never limits anything */
+.qz-timer{position:fixed;top:16px;right:18px;z-index:20;font-weight:800;font-size:.85rem;color:var(--q-primary);
+  background:rgba(255,255,255,.9);padding:7px 13px 7px 10px;border-radius:999px;box-shadow:var(--q-shadow);
+  display:none;align-items:center;gap:.4rem;font-variant-numeric:tabular-nums}
+.qz-timer.show{display:inline-flex}
+.qz-timer .dot{width:8px;height:8px;border-radius:50%;background:var(--q-accent);animation:qzPulse 1.2s ease-in-out infinite}
+@keyframes qzPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+@media (prefers-reduced-motion:reduce){.qz-timer .dot{animation:none}}
+
+/* botón de música — esquina opuesta al timer, para quien no quiera oír la melodía de fondo */
+.qz-music-btn{position:fixed;top:16px;left:18px;z-index:20;width:38px;height:38px;border:none;border-radius:50%;
+  background:rgba(255,255,255,.9);color:var(--q-primary);box-shadow:var(--q-shadow);font-size:1.05rem;
+  display:flex;align-items:center;justify-content:center;cursor:pointer}
+
+.qz-shell{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:80px 18px 56px;perspective:1500px}
+
+.qz-card{
+  width:100%;max-width:640px;background:var(--q-card);border:1px solid var(--q-border);border-radius:22px;
+  box-shadow:var(--q-shadow-hover);padding:2.4rem 2.2rem;
+}
+@media (max-width:560px){.qz-card{padding:1.7rem 1.3rem;border-radius:18px}}
+
+/* tablet landscape: wider canvas, side-by-side layouts instead of one long column */
+@media (min-width:820px) and (min-height:480px) and (orientation:landscape){
+  .qz-card{max-width:900px}
+  .cat-grid{grid-template-columns:repeat(3,1fr)}
+  .q-body{display:grid;grid-template-columns:1.1fr 1fr;gap:2.2rem;align-items:center}
+  .q-body .q-options{margin-top:0}
+  .result-cols{display:grid;grid-template-columns:1fr 1fr;gap:1.8rem;align-items:start}
+  .result-cols .result-block{margin-bottom:0}
+}
+
+/* screen transition: sheet fold/flip */
+.q-screen{
+  display:none;opacity:0;transform-origin:top center;transform-style:preserve-3d;backface-visibility:hidden;
+  transform:rotateX(0deg) translateY(0) scale(1);
+  transition:opacity .28s ease,transform .32s cubic-bezier(.34,1.28,.64,1);
+}
+.q-screen.active{display:block;opacity:1;transform:rotateX(0deg) translateY(0) scale(1)}
+.q-screen.leaving{display:block;opacity:0;transform:rotateX(-92deg) translateY(-4%) scale(.96)}
+.q-screen.entering-start{display:block;opacity:0;transform:rotateX(92deg) translateY(4%) scale(.96)}
+
+/* intro */
+.qz-eyebrow{color:var(--q-primary);font-weight:800;text-transform:uppercase;font-size:.78rem;letter-spacing:.12em;margin-bottom:.9rem}
+.qz-shell h1{font-size:clamp(1.5rem,4vw,2.15rem);line-height:1.18;font-weight:850;margin:0 0 1rem}
+.qz-shell h2{font-size:clamp(1.25rem,3.4vw,1.65rem);line-height:1.22;font-weight:850;margin:0 0 1.4rem}
+.qz-sub{color:var(--q-muted);font-size:1.05rem;line-height:1.55;margin-bottom:1.8rem}
+
+.btn-qz{
+  display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border:none;cursor:pointer;
+  border-radius:12px;font-weight:750;font-size:1rem;padding:.95rem 1.7rem;transition:transform .18s,box-shadow .18s;
+  font-family:inherit;
+}
+.btn-qz:hover{transform:translateY(-2px)}
+.btn-qz-primary{background:linear-gradient(135deg,var(--q-primary),var(--q-primary2));color:#fff;
+  box-shadow:0 6px 22px rgba(23,96,214,.32)}
+.btn-qz-primary:hover{box-shadow:0 10px 30px rgba(23,96,214,.42)}
+.btn-qz-green{background:linear-gradient(135deg,var(--q-green),#00c89a);color:#fff;box-shadow:0 6px 22px rgba(0,160,120,.30)}
+.btn-qz-green:hover{box-shadow:0 10px 30px rgba(0,160,120,.40)}
+.btn-qz-outline{background:transparent;color:var(--q-primary);border:1.6px solid rgba(23,96,214,.4)}
+.btn-qz-outline:hover{background:rgba(23,96,214,.06)}
+.btn-qz-ghost{background:transparent;color:var(--q-muted);border:1.5px solid rgba(12,28,66,.18);font-size:.88rem;padding:.65rem 1.2rem}
+.btn-qz-ghost:hover{color:var(--q-text);border-color:rgba(12,28,66,.32)}
+.btn-qz-block{width:100%}
+
+.qz-resume{margin-top:1.4rem;font-size:.86rem;color:var(--q-muted);background:var(--q-bg);border:1px dashed var(--q-border);
+  border-radius:12px;padding:.7rem 1rem}
+.qz-resume a{color:var(--q-primary);font-weight:700}
+
+/* category grid */
+.qz-step{color:var(--q-muted);font-weight:700;font-size:.82rem;letter-spacing:.03em;margin-bottom:.5rem}
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
+@media (max-width:560px){.cat-grid{grid-template-columns:1fr}}
+.cat-opt{
+  display:flex;align-items:center;gap:.7rem;text-align:left;background:var(--q-bg);border:1.6px solid var(--q-border);
+  border-radius:14px;padding:1rem 1.05rem;cursor:pointer;font-family:inherit;font-size:.92rem;font-weight:650;color:var(--q-text);
+  transition:transform .18s,box-shadow .18s,border-color .18s;
+}
+.cat-opt:hover{transform:translateY(-3px);box-shadow:var(--q-shadow);border-color:rgba(23,96,214,.4)}
+.cat-opt .ic{font-size:1.5rem;flex-shrink:0}
+
+/* question */
+.q-counter{color:var(--q-muted);font-weight:700;font-size:.82rem;letter-spacing:.03em;margin-bottom:.6rem}
+.q-icon-badge{width:58px;height:58px;border-radius:16px;background:linear-gradient(135deg,rgba(23,96,214,.12),rgba(0,168,204,.14));
+  display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin-bottom:1rem}
+.q-hint{color:var(--q-muted);font-size:.9rem;line-height:1.5;margin:.3rem 0 0}
+.q-options{display:grid;gap:.7rem;margin-top:1.6rem}
+.q-opt{
+  display:flex;align-items:center;justify-content:space-between;background:var(--q-bg);border:1.6px solid var(--q-border);
+  border-radius:14px;padding:1rem 1.2rem;cursor:pointer;font-family:inherit;font-size:.98rem;font-weight:700;color:var(--q-text);
+  transition:transform .16s,box-shadow .16s,border-color .16s,background .16s;
+}
+.q-opt:hover{transform:translateY(-2px);box-shadow:var(--q-shadow);border-color:rgba(23,96,214,.4)}
+.q-opt[data-val="si"]:hover{background:rgba(0,158,115,.08);border-color:rgba(0,158,115,.45)}
+.q-opt[data-val="no"]:hover{background:rgba(214,60,60,.06);border-color:rgba(214,60,60,.35)}
+.q-opt[data-val="nose"]:hover{background:rgba(201,138,17,.08);border-color:rgba(201,138,17,.4)}
+.q-opt.picked{transform:scale(.96)}
+.q-opt[data-val="si"].picked{background:rgba(0,158,115,.16);border-color:var(--q-green);box-shadow:var(--q-shadow)}
+.q-opt[data-val="no"].picked{background:rgba(214,60,60,.12);border-color:#d63c3c;box-shadow:var(--q-shadow)}
+.q-opt[data-val="nose"].picked{background:rgba(201,138,17,.16);border-color:var(--q-amber);box-shadow:var(--q-shadow)}
+.q-back{margin-top:1.4rem;background:none;border:none;color:var(--q-muted);font-weight:700;font-size:.85rem;cursor:pointer;
+  font-family:inherit;padding:.3rem 0}
+.q-back:hover{color:var(--q-primary)}
+
+/* per-question swap: content slides/fades in the direction of travel */
+.q-content{opacity:1;transform:translateX(0) scale(1);transition:opacity .22s ease,transform .24s cubic-bezier(.3,.1,.2,1)}
+.q-content.q-exit-fwd{opacity:0;transform:translateX(-30px) scale(.97)}
+.q-content.q-exit-back{opacity:0;transform:translateX(30px) scale(.97)}
+.q-content.q-enter-fwd{opacity:0;transform:translateX(30px) scale(.97)}
+.q-content.q-enter-back{opacity:0;transform:translateX(-30px) scale(.97)}
+@media (prefers-reduced-motion:reduce){.q-content{transition:opacity .18s ease}
+  .q-content.q-exit-fwd,.q-content.q-exit-back,.q-content.q-enter-fwd,.q-content.q-enter-back{transform:none}}
+
+/* result */
+.score-wrap{display:flex;flex-wrap:wrap;align-items:center;gap:1.6rem;margin-bottom:1.6rem}
+.score-gauge{position:relative;width:150px;height:150px;flex-shrink:0}
+.score-gauge svg{width:100%;height:100%;transform:rotate(-90deg)}
+.gauge-track{fill:none;stroke:rgba(23,96,214,.12);stroke-width:12}
+.gauge-fill{fill:none;stroke:url(#qzGaugeGrad);stroke-width:12;stroke-linecap:round;
+  stroke-dasharray:439.8;stroke-dashoffset:439.8;transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1)}
+.gauge-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gauge-label #scoreNum{font-size:2.2rem;font-weight:900;color:var(--q-text);line-height:1}
+.gauge-label small{color:var(--q-muted);font-weight:700;font-size:.82rem}
+.score-meta{flex:1;min-width:200px}
+.score-level{display:inline-block;font-weight:800;font-size:.9rem;padding:.4rem .9rem;border-radius:999px;margin-bottom:.6rem}
+.score-ref{color:var(--q-muted);font-size:.88rem}
+.score-time{color:var(--q-muted);font-size:.82rem;margin-top:.5rem}
+
+.result-block{margin-bottom:1.5rem}
+.result-block h3{font-size:1.02rem;font-weight:800;margin:0 0 .7rem;display:flex;align-items:center;gap:.5rem}
+.result-list{list-style:none;margin:0;padding:0;display:grid;gap:.5rem}
+.result-list li{display:flex;align-items:flex-start;gap:.55rem;font-size:.9rem;line-height:1.4;color:var(--q-text)}
+.result-list li .tick{flex-shrink:0;font-weight:900}
+.result-list.good li .tick{color:var(--q-green)}
+.result-list.fix li .tick{color:var(--q-primary)}
+
+.qz-cta-grid{display:grid;gap:.65rem;margin-top:1.7rem}
+.qz-foot-actions{display:flex;gap:.9rem;justify-content:center;margin-top:1.3rem;flex-wrap:wrap}
+.qz-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;
+  background:var(--q-text);color:#fff;padding:.7rem 1.2rem;border-radius:999px;font-size:.85rem;font-weight:650;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);transition:opacity .25s,transform .25s;z-index:50;pointer-events:none}
+.qz-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="qz-photo-bg"><span class="photo"></span><span class="photo"></span><span class="photo"></span></div>
+<div class="qz-bg"><span class="shape s1"></span><span class="shape s2"></span><span class="shape s3"></span></div>
+<div class="qz-progress" id="progressWrap" hidden><div class="qz-progress-bar" id="progressBar"></div></div>
+<div class="qz-timer" id="qzTimer"><span class="dot"></span><span id="qzTimerText">0:00</span></div>
+
+<button class="qz-music-btn" id="qzMusicBtn" aria-label="Silenciar música" title="Silenciar música">🎵</button>
+<audio id="qzBgm1" preload="auto" src="/static/wi/audio/chequeo-bgm-1.mp3?v=1"></audio>
+<audio id="qzBgm2" preload="auto" src="/static/wi/audio/chequeo-bgm-2.mp3?v=1"></audio>
+
+<main class="qz-shell">
+
+  <!-- INTRO -->
+  <section class="q-screen active" data-screen="intro" id="screen-intro">
+    <div class="qz-card">
+      <div class="qz-eyebrow">Chequeo digital gratuito</div>
+      <h1>¿Puede un cliente encontrarte, entender tus servicios y contactarte en menos de 1 minuto?</h1>
+      <p class="qz-sub">Haz un chequeo rápido y gratuito de la presencia digital de tu negocio. Son solo 2 minutos.</p>
+      <button class="btn-qz btn-qz-primary btn-qz-block" id="btnStart">Empezar chequeo →</button>
+      <div class="qz-resume" id="resumeHint" hidden></div>
+    </div>
+  </section>
+
+  <!-- CATEGORY -->
+  <section class="q-screen" data-screen="category" id="screen-category">
+    <div class="qz-card">
+      <div class="qz-step">PASO 1 DE 2</div>
+      <h2>¿Qué tipo de negocio tienes?</h2>
+      <div class="cat-grid" id="catGrid"></div>
+    </div>
+  </section>
+
+  <!-- QUESTION -->
+  <section class="q-screen" data-screen="question" id="screen-question">
+    <div class="qz-card">
+      <div class="q-content" id="qContent">
+        <div class="q-counter" id="qCounter"></div>
+        <div class="q-body">
+          <div>
+            <div class="q-icon-badge" id="qIcon">🔎</div>
+            <h2 id="qText"></h2>
+            <p class="q-hint" id="qHint"></p>
+          </div>
+          <div class="q-options">
+            <button class="q-opt" data-val="si"><span>Sí</span><span>✓</span></button>
+            <button class="q-opt" data-val="nose"><span>No estoy seguro/a</span><span>?</span></button>
+            <button class="q-opt" data-val="no"><span>No</span><span>✕</span></button>
+          </div>
+        </div>
+        <button class="q-back" id="btnBack" hidden>‹ Pregunta anterior</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="q-screen" data-screen="result" id="screen-result">
+    <div class="qz-card">
+      <div class="qz-eyebrow">Resultado del chequeo digital</div>
+
+      <div class="score-wrap">
+        <div class="score-gauge">
+          <svg viewBox="0 0 160 160">
+            <defs>
+              <linearGradient id="qzGaugeGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#1760d6"/>
+                <stop offset="100%" stop-color="#00a8cc"/>
+              </linearGradient>
+            </defs>
+            <circle class="gauge-track" cx="80" cy="80" r="70"/>
+            <circle class="gauge-fill" id="gaugeFill" cx="80" cy="80" r="70"/>
+          </svg>
+          <div class="gauge-label"><span id="scoreNum">0</span><small>/100</small></div>
+        </div>
+        <div class="score-meta">
+          <div>Tu negocio: <strong id="scoreHeadline">0/100</strong></div>
+          <div class="score-level" id="scoreLevelTag"></div>
+          <div class="score-ref">Nivel recomendado para tu sector: <strong>75/100</strong></div>
+          <div class="score-time" id="scoreTime" hidden></div>
+        </div>
+      </div>
+
+      <div class="result-cols">
+        <div class="result-block" id="blockGood">
+          <h3>✅ Lo que ya tienes bien</h3>
+          <ul class="result-list good" id="listGood"></ul>
+        </div>
+
+        <div class="result-block" id="blockFix">
+          <h3>💡 Mejoras rápidas recomendadas</h3>
+          <ul class="result-list fix" id="listFix"></ul>
+        </div>
+      </div>
+
+      <div class="qz-cta-grid">
+        <a class="btn-qz btn-qz-primary btn-qz-block" id="ctaExample" target="_blank" rel="noopener">Ver ejemplo para mi negocio</a>
+        <a class="btn-qz btn-qz-green btn-qz-block" id="ctaWhatsapp" target="_blank" rel="noopener">Recibir informe por WhatsApp</a>
+        <a class="btn-qz btn-qz-outline btn-qz-block" id="ctaQuick" target="_blank" rel="noopener">Quiero una mejora rápida</a>
+      </div>
+
+      <div class="qz-foot-actions">
+        <button class="btn-qz btn-qz-ghost" id="btnRestart">↻ Repetir chequeo</button>
+        <button class="btn-qz btn-qz-ghost" id="btnCopy">📋 Copiar resultado</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="qz-footer"><a href="/">webimpulsa.es</a></footer>
+
+<div class="qz-toast" id="qzToast"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------------------------------------------------------------------
+ * DATOS — categorías y preguntas. Añadir/editar aquí es suficiente para
+ * extender el quiz sin tocar la lógica de abajo.
+ * ------------------------------------------------------------------- */
+var CATEGORIES = [
+  {id:'salon',        icon:'💇', label:'Salón de belleza / peluquería / estética'},
+  {id:'bar',          icon:'☕', label:'Bar / cafetería / restaurante'},
+  {id:'taller',       icon:'🔧', label:'Taller / automoción / servicio técnico'},
+  {id:'academia',     icon:'🎓', label:'Academia / cursos / formación'},
+  {id:'clinica',      icon:'🩺', label:'Clínica / fisioterapia / salud privada'},
+  {id:'tienda',       icon:'🛍️', label:'Tienda local'},
+  {id:'inmobiliaria', icon:'🏠', label:'Inmobiliaria / reformas / servicios profesionales'},
+  {id:'otro',         icon:'📍', label:'Otro negocio local'}
+];
+
+var COMMON_QUESTIONS = [
+  {id:'web',        icon:'🌐', text:'¿Tienes una página web o una página clara con tus servicios?',
+    hint:'Es lo primero que mira un cliente antes de decidir confiar en ti.',
+    good:'Tienes una página con tus servicios visibles: la base ya está.',
+    fix:'Crear una página clara de servicios y precios orientativos.'},
+  {id:'ficha',      icon:'📍', text:'¿Tu ficha de Google tiene fotos, horarios, teléfono y dirección actualizados?',
+    hint:'Muchos clientes te descubren primero en el mapa de Google.',
+    good:'Tu ficha de Google está completa y actualizada.',
+    fix:'Mejorar tu ficha de Google: fotos, horarios, teléfono y dirección.'},
+  {id:'wa_click',   icon:'💬', text:'¿Un cliente puede escribirte por WhatsApp con un solo clic?',
+    hint:'Cuantos menos clics, más fácil es que te escriban.',
+    good:'Un cliente puede escribirte por WhatsApp en un solo clic.',
+    fix:'Añadir un botón de WhatsApp con un solo clic.'},
+  {id:'precios',    icon:'💶', text:'¿Se ven claramente tus servicios y precios orientativos?',
+    hint:'Sin sorpresas: el cliente sabe qué esperar antes de contactarte.',
+    good:'Tus servicios y precios orientativos se ven con claridad.',
+    fix:'Mostrar con más claridad tus servicios y precios orientativos.'},
+  {id:'cita_sin_llamar', icon:'📅', text:'¿Un cliente puede pedir cita o enviar una solicitud sin llamar?',
+    hint:'Muchos prefieren escribir antes que llamar por teléfono.',
+    good:'Un cliente puede pedir cita o enviar una solicitud sin llamarte.',
+    fix:'Añadir una forma de pedir cita o enviar solicitud sin llamar.'},
+  {id:'auto_resp',  icon:'🤖', text:'¿Tienes respuestas automáticas cuando estás ocupado/a?',
+    hint:'Así no se pierde ningún mensaje aunque estés ocupado/a.',
+    good:'Ya respondes automáticamente cuando estás ocupado/a.',
+    fix:'Activar respuestas automáticas para cuando estás ocupado/a.'},
+  {id:'recordatorios', icon:'⏰', text:'¿Envías recordatorios para reducir ausencias o citas olvidadas?',
+    hint:'Un simple aviso reduce muchísimo las ausencias.',
+    good:'Envías recordatorios que ayudan a reducir ausencias y olvidos.',
+    fix:'Enviar recordatorios automáticos para reducir ausencias.'},
+  {id:'resenas',    icon:'⭐', text:'¿Tienes reseñas visibles y recientes?',
+    hint:'La opinión de otros clientes genera confianza al instante.',
+    good:'Tus reseñas son visibles y recientes: generan confianza.',
+    fix:'Reunir y mostrar reseñas recientes de tus clientes.'},
+  {id:'contactos',  icon:'📇', text:'¿Tienes una forma sencilla de guardar contactos de clientes interesados?',
+    hint:'Así no se pierden los clientes interesados que aún no compraron.',
+    good:'Ya guardas de forma sencilla los contactos de clientes interesados.',
+    fix:'Conectar una base simple para guardar contactos de clientes interesados.'},
+  {id:'origen',     icon:'📊', text:'¿Puedes saber de dónde llegan tus nuevos clientes?',
+    hint:'Saber de dónde vienen tus clientes ayuda a invertir mejor.',
+    good:'Sabes de dónde llegan tus nuevos clientes.',
+    fix:'Añadir una forma sencilla de saber de dónde llegan tus nuevos clientes.'}
+];
+
+var CATEGORY_QUESTIONS = {
+  salon: [
+    {id:'salon_fotos', icon:'📸', text:'¿Se pueden ver fotos de trabajos reales o diseños?',
+      hint:'Ver resultados reales ayuda a decidirse antes de reservar.',
+      good:'Se ven fotos reales de tus trabajos y diseños.',
+      fix:'Crear una galería con fotos reales de tus trabajos.'},
+    {id:'salon_elegir', icon:'🗓️', text:'¿El cliente puede elegir servicio, día y hora?',
+      hint:'Cuanto más fácil reservar, menos clientes se quedan a medias.',
+      good:'El cliente puede elegir servicio, día y hora fácilmente.',
+      fix:'Añadir una reserva donde el cliente elija servicio, día y hora.'},
+    {id:'salon_prof', icon:'🙋', text:'¿El cliente puede elegir con qué profesional quiere su cita?',
+      hint:'Muchos clientes prefieren repetir siempre con la misma persona.',
+      good:'El cliente puede elegir con qué profesional quiere su cita.',
+      fix:'Añadir la opción de elegir profesional al reservar.'}
+  ],
+  bar: [
+    {id:'bar_menu', icon:'📋', text:'¿Tu menú está visible online y actualizado?',
+      hint:'El cliente decide antes de entrar si ve la carta online.',
+      good:'Tu menú está visible online y actualizado.',
+      fix:'Publicar tu menú/carta online y mantenerlo actualizado.'},
+    {id:'bar_reserva', icon:'🍽️', text:'¿El cliente puede reservar mesa o preguntar disponibilidad fácilmente?',
+      hint:'Evita la incertidumbre de si habrá mesa libre.',
+      good:'El cliente puede reservar mesa o preguntar disponibilidad fácilmente.',
+      fix:'Añadir una forma fácil de reservar mesa o preguntar disponibilidad.'},
+    {id:'bar_fotos', icon:'📷', text:'¿Se ven fotos reales del local, platos o ambiente?',
+      hint:'Las fotos reales despiertan más ganas de venir.',
+      good:'Se ven fotos reales de tu local, platos y ambiente.',
+      fix:'Crear una galería con fotos reales del local, platos y ambiente.'}
+  ],
+  taller: [
+    {id:'taller_estado', icon:'🔎', text:'¿El cliente puede consultar el estado o presupuesto de su reparación online?',
+      hint:'Evita llamadas repetidas solo para preguntar "¿ya está mi coche?".',
+      good:'El cliente puede consultar el estado o presupuesto de su reparación online.',
+      fix:'Añadir una forma de consultar el estado o presupuesto de la reparación online.'},
+    {id:'taller_fotos', icon:'📷', text:'¿Puede enviar fotos o detalles del problema por WhatsApp/formulario?',
+      hint:'Ayuda a dar un diagnóstico más rápido y preciso.',
+      good:'El cliente puede enviarte fotos o detalles del problema por WhatsApp o formulario.',
+      fix:'Permitir enviar fotos o detalles del problema por WhatsApp o formulario.'},
+    {id:'taller_info', icon:'🗺️', text:'¿Se ven servicios, horarios y ubicación claramente?',
+      hint:'El cliente sabe qué esperar antes de acercarse.',
+      good:'Tus servicios, horarios y ubicación se ven con claridad.',
+      fix:'Mostrar con claridad servicios, horarios y ubicación.'}
+  ],
+  academia: [
+    {id:'academia_info', icon:'📚', text:'¿Se ven cursos, horarios, precios y fechas de inicio?',
+      hint:'El alumno decide antes de preguntar si ve toda la info clara.',
+      good:'Se ven cursos, horarios, precios y fechas de inicio con claridad.',
+      fix:'Mostrar cursos, horarios, precios y fechas de inicio con claridad.'},
+    {id:'academia_inscribir', icon:'✍️', text:'¿El alumno puede pedir información o inscribirse online?',
+      hint:'Cuantas menos barreras, más inscripciones sin esfuerzo.',
+      good:'El alumno puede pedir información o inscribirse online.',
+      fix:'Añadir una forma de pedir información o inscribirse online.'},
+    {id:'academia_auto', icon:'🤖', text:'¿Tienes automatización para responder dudas frecuentes?',
+      hint:'Resuelve dudas comunes aunque no estés disponible.',
+      good:'Ya respondes automáticamente a las dudas frecuentes.',
+      fix:'Activar respuestas automáticas para dudas frecuentes.'}
+  ],
+  clinica: [
+    {id:'clinica_prof', icon:'🙋', text:'¿El paciente puede elegir profesional o especialista al pedir cita?',
+      hint:'Ayuda a generar confianza y continuidad en el tratamiento.',
+      good:'El paciente puede elegir profesional o especialista al pedir cita.',
+      fix:'Añadir la opción de elegir profesional o especialista al pedir cita.'},
+    {id:'clinica_info', icon:'📋', text:'¿Se explican claramente servicios, especialidades y horarios?',
+      hint:'La claridad genera confianza antes incluso de la consulta.',
+      good:'Tus servicios, especialidades y horarios se explican con claridad.',
+      fix:'Explicar con claridad tus servicios, especialidades y horarios.'},
+    {id:'clinica_seguros', icon:'💳', text:'¿Queda claro si trabajas con aseguradoras médicas o solo consulta particular?',
+      hint:'Evita llamadas solo para preguntar esto antes de reservar.',
+      good:'Queda claro si trabajas con aseguradoras médicas o solo particular.',
+      fix:'Aclarar si trabajas con aseguradoras médicas o solo consulta particular.'}
+  ],
+  tienda: [
+    {id:'tienda_productos', icon:'🛍️', text:'¿Se pueden ver productos, categorías o novedades online?',
+      hint:'El cliente explora antes de decidir visitarte.',
+      good:'Se ven tus productos, categorías y novedades online.',
+      fix:'Mostrar productos, categorías y novedades online.'},
+    {id:'tienda_disp', icon:'📦', text:'¿El cliente puede preguntar disponibilidad o reservar producto?',
+      hint:'Evita viajes en balde por falta de stock.',
+      good:'El cliente puede preguntar disponibilidad o reservar producto.',
+      fix:'Añadir una forma de preguntar disponibilidad o reservar producto.'},
+    {id:'tienda_promo', icon:'🏷️', text:'¿Tienes promociones o campañas visibles?',
+      hint:'Las promociones visibles animan a comprar antes.',
+      good:'Tus promociones o campañas son visibles.',
+      fix:'Mostrar promociones o campañas de forma visible.'}
+  ],
+  inmobiliaria: [
+    {id:'inmo_ejemplos', icon:'🏘️', text:'¿Se ven ejemplos de trabajos, propiedades o servicios realizados?',
+      hint:'Ver trabajos reales genera confianza inmediata.',
+      good:'Se ven ejemplos de trabajos, propiedades o servicios realizados.',
+      fix:'Mostrar ejemplos de trabajos, propiedades o servicios realizados.'},
+    {id:'inmo_zonas', icon:'📍', text:'¿Queda claro en qué zonas o barrios trabajas?',
+      hint:'Muchos clientes descartan un servicio solo por no saber si cubre su zona.',
+      good:'Queda claro en qué zonas o barrios trabajas.',
+      fix:'Aclarar en qué zonas o barrios trabajas.'},
+    {id:'inmo_filtro', icon:'🔍', text:'¿Tienes formularios o WhatsApp para filtrar interesados?',
+      hint:'Ayuda a centrarte solo en los interesados reales.',
+      good:'Ya tienes formularios o WhatsApp para filtrar interesados.',
+      fix:'Añadir formularios o WhatsApp para filtrar interesados.'}
+  ],
+  otro: []
+};
+
+var EXAMPLE_LINKS = {
+  salon:        'https://salon.webimpulsa.es/',
+  taller:       'https://taller.webimpulsa.es/',
+  academia:     'https://curso.webimpulsa.es/',
+  bar:          'https://restaurante.webimpulsa.es/',
+  clinica:      'https://clinica.webimpulsa.es/',
+  tienda:       'https://tienda.webimpulsa.es/',
+  inmobiliaria: 'https://inmobiliaria.webimpulsa.es/',
+  otro:         'https://webimpulsa.es/'
+};
+
+var SCORE_VALUES  = {si:10, nose:5, no:0};
+var REFERENCE_SCORE = 75;
+var WA_NUMBER = '34613708322';
+var WA_MSG_REPORT = 'Hola, he hecho el chequeo digital y me gustaría recibir el informe para mi negocio.';
+var WA_MSG_QUICK  = 'Hola, he hecho el chequeo digital y me interesa una mejora rápida para mi negocio.';
+var STORAGE_KEY = 'wi_chequeo_digital_v1';
+
+function levelInfo(score){
+  if(score<=35)  return {tag:'Presencia digital básica',            color:'#c98a11', bg:'rgba(201,138,17,.12)'};
+  if(score<=60)  return {tag:'Hay oportunidades rápidas de mejora',  color:'#1760d6', bg:'rgba(23,96,214,.10)'};
+  if(score<=80)  return {tag:'Buen nivel, pero se puede automatizar más', color:'#0095c8', bg:'rgba(0,149,200,.10)'};
+  return               {tag:'Muy buen nivel digital',                color:'#009e73', bg:'rgba(0,158,115,.12)'};
+}
+
+/* ---------------------------------------------------------------------
+ * ESTADO
+ * ------------------------------------------------------------------- */
+var state = {category:null, questions:[], answers:{}, index:0};
+
+var elIntro   = document.getElementById('screen-intro');
+var elCat     = document.getElementById('screen-category');
+var elQ       = document.getElementById('screen-question');
+var elResult  = document.getElementById('screen-result');
+var progressWrap = document.getElementById('progressWrap');
+var progressBar  = document.getElementById('progressBar');
+var qzTimerEl    = document.getElementById('qzTimer');
+var qzTimerText  = document.getElementById('qzTimerText');
+var qContent     = document.getElementById('qContent');
+var uiBusy       = false;
+
+/* Slide/fade the question content in the direction of travel — a lighter,
+ * snappier sibling to the screen-level fold, since question-to-question
+ * changes happen far more often and shouldn't feel heavy. */
+function transitionQuestion(dir, updateFn){
+  var exitClass  = dir === 'back' ? 'q-exit-back'  : 'q-exit-fwd';
+  var enterClass = dir === 'back' ? 'q-enter-back' : 'q-enter-fwd';
+  qContent.classList.add(exitClass);
+  setTimeout(function(){
+    updateFn();
+    qContent.classList.remove(exitClass);
+    qContent.classList.add(enterClass);
+    void qContent.offsetWidth;
+    requestAnimationFrame(function(){
+      qContent.classList.remove(enterClass);
+    });
+  }, 200);
+}
+
+/* ---------------------------------------------------------------------
+ * MINI CRONÓMETRO — puramente decorativo: solo cuenta hacia arriba,
+ * nunca limita ni penaliza nada. Da ambiente de "concurso" sin presión.
+ * ------------------------------------------------------------------- */
+var timerHandle = null, timerStartTs = null, timerFinalText = null;
+
+function formatElapsed(ms){
+  var s = Math.floor(ms/1000);
+  var m = Math.floor(s/60);
+  s = s % 60;
+  return m + ':' + (s<10 ? '0' : '') + s;
+}
+function tickTimer(){
+  if(timerStartTs) qzTimerText.textContent = formatElapsed(Date.now() - timerStartTs);
+}
+function startTimer(){
+  timerStartTs = Date.now();
+  timerFinalText = null;
+  tickTimer();
+  qzTimerEl.classList.add('show');
+  if(timerHandle) clearInterval(timerHandle);
+  timerHandle = setInterval(tickTimer, 1000);
+}
+function stopTimer(){
+  if(timerHandle){ clearInterval(timerHandle); timerHandle = null; }
+  if(timerStartTs) timerFinalText = formatElapsed(Date.now() - timerStartTs);
+  qzTimerEl.classList.remove('show');
+}
+function resetTimer(){
+  if(timerHandle){ clearInterval(timerHandle); timerHandle = null; }
+  timerStartTs = null;
+  timerFinalText = null;
+  qzTimerEl.classList.remove('show');
+  qzTimerText.textContent = '0:00';
+}
+
+function showScreen(target){
+  var current = document.querySelector('.q-screen.active');
+  if(current === target) return;
+  function enter(){
+    target.classList.add('entering-start');
+    void target.offsetWidth;
+    requestAnimationFrame(function(){
+      target.classList.remove('entering-start');
+      target.classList.add('active');
+    });
+    progressWrap.hidden = (target !== elQ);
+  }
+  if(current){
+    current.classList.remove('active');
+    current.classList.add('leaving');
+    setTimeout(function(){
+      current.classList.remove('leaving');
+      enter();
+    }, 320);
+  } else {
+    enter();
+  }
+}
+
+function renderCategoryGrid(){
+  var grid = document.getElementById('catGrid');
+  grid.innerHTML = CATEGORIES.map(function(c){
+    return '<button class="cat-opt" data-cat="'+c.id+'"><span class="ic">'+c.icon+'</span><span>'+c.label+'</span></button>';
+  }).join('');
+  grid.querySelectorAll('.cat-opt').forEach(function(btn){
+    btn.addEventListener('click', function(){ startCategory(btn.getAttribute('data-cat')); });
+  });
+}
+
+function startCategory(catId){
+  state.category = catId;
+  state.questions = COMMON_QUESTIONS.concat(CATEGORY_QUESTIONS[catId] || []);
+  state.answers = {};
+  state.index = 0;
+  showScreen(elQ);
+  renderQuestion();
+  startTimer();
+}
+
+function updateProgress(){
+  var pct = Math.round((state.index / state.questions.length) * 100);
+  progressBar.style.width = pct + '%';
+}
+
+function renderQuestion(){
+  var total = state.questions.length;
+  var q = state.questions[state.index];
+  document.getElementById('qCounter').textContent = 'Pregunta ' + (state.index+1) + ' de ' + total;
+  document.getElementById('qIcon').textContent = q.icon || '🔎';
+  document.getElementById('qText').textContent = q.text;
+  document.getElementById('qHint').textContent = q.hint || '';
+  document.getElementById('btnBack').hidden = (state.index === 0);
+  document.querySelectorAll('#screen-question .q-opt').forEach(function(b){ b.classList.remove('picked'); });
+  updateProgress();
+  uiBusy = false;
+}
+
+function selectAnswer(val){
+  var q = state.questions[state.index];
+  state.answers[q.id] = val;
+  if(state.index < state.questions.length - 1){
+    transitionQuestion('fwd', function(){
+      state.index++;
+      renderQuestion();
+    });
+  } else {
+    progressBar.style.width = '100%';
+    stopTimer();
+    finishQuiz();
+  }
+}
+
+function goBack(){
+  if(state.index === 0) return;
+  transitionQuestion('back', function(){
+    state.index--;
+    renderQuestion();
+  });
+}
+
+function computeResult(){
+  var total = state.questions.length;
+  var sum = 0;
+  state.questions.forEach(function(q){ sum += SCORE_VALUES[state.answers[q.id]] || 0; });
+  var score = Math.round((sum / (total*10)) * 100);
+  var good = [], fix = [];
+  state.questions.forEach(function(q){
+    var a = state.answers[q.id];
+    if(a === 'si') good.push(q.good);
+    else fix.push(q.fix);
+  });
+  return {score:score, good:good, fix:fix, total:total};
+}
+
+function animateGauge(score){
+  var circumference = 439.8;
+  var fill = document.getElementById('gaugeFill');
+  var offset = circumference * (1 - Math.max(0, Math.min(100, score))/100);
+  requestAnimationFrame(function(){ fill.style.strokeDashoffset = offset; });
+
+  var numEl = document.getElementById('scoreNum');
+  var start = 0, duration = 1100, startTime = null;
+  function step(ts){
+    if(!startTime) startTime = ts;
+    var p = Math.min(1, (ts-startTime)/duration);
+    var eased = 1 - Math.pow(1-p, 3);
+    numEl.textContent = Math.round(start + (score-start)*eased);
+    if(p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function renderResult(){
+  var r = computeResult();
+  var lvl = levelInfo(r.score);
+
+  document.getElementById('scoreHeadline').textContent = r.score + '/100';
+  var tag = document.getElementById('scoreLevelTag');
+  tag.textContent = lvl.tag;
+  tag.style.color = lvl.color;
+  tag.style.background = lvl.bg;
+  animateGauge(r.score);
+
+  var listGood = document.getElementById('listGood');
+  var listFix  = document.getElementById('listFix');
+
+  if(r.good.length){
+    listGood.innerHTML = r.good.map(function(t){ return '<li><span class="tick">✓</span><span>'+t+'</span></li>'; }).join('');
+    document.getElementById('blockGood').hidden = false;
+  } else {
+    listGood.innerHTML = '<li><span class="tick">✓</span><span>Todavía no hay puntos marcados, pero tienes mucho margen para mejorar rápido.</span></li>';
+  }
+
+  if(r.fix.length){
+    listFix.innerHTML = r.fix.map(function(t){ return '<li><span class="tick">→</span><span>'+t+'</span></li>'; }).join('');
+    document.getElementById('blockFix').hidden = false;
+  } else {
+    listFix.innerHTML = '<li><span class="tick">🎉</span><span>¡Genial! Ahora mismo no detectamos mejoras urgentes: sigue así.</span></li>';
+  }
+
+  var timeEl = document.getElementById('scoreTime');
+  if(timerFinalText){
+    timeEl.textContent = '⏱ Lo completaste en ' + timerFinalText;
+    timeEl.hidden = false;
+  } else {
+    timeEl.hidden = true;
+  }
+
+  var exampleUrl = EXAMPLE_LINKS[state.category] || EXAMPLE_LINKS.otro;
+  document.getElementById('ctaExample').setAttribute('href', exampleUrl);
+  document.getElementById('ctaWhatsapp').setAttribute('href', 'https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(WA_MSG_REPORT));
+  document.getElementById('ctaQuick').setAttribute('href', 'https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(WA_MSG_QUICK));
+
+  saveResult(r);
+}
+
+function finishQuiz(){
+  showScreen(elResult);
+  renderResult();
+}
+
+/* ---------------------------------------------------------------------
+ * PERSISTENCIA (localStorage) — sin backend
+ * ------------------------------------------------------------------- */
+function saveResult(r){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      category: state.category,
+      answers: state.answers,
+      score: r.score,
+      good: r.good,
+      fix: r.fix,
+      ts: Date.now()
+    }));
+  }catch(e){}
+}
+
+function loadLastResult(){
+  try{
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){ return null; }
+}
+
+function catLabel(id){
+  var c = CATEGORIES.filter(function(c){ return c.id===id; })[0];
+  return c ? c.label : id;
+}
+
+function showResumeHint(){
+  var last = loadLastResult();
+  if(!last) return;
+  var hint = document.getElementById('resumeHint');
+  var date = new Date(last.ts).toLocaleDateString('es-ES');
+  hint.innerHTML = 'Ya hiciste este chequeo el '+date+' ('+catLabel(last.category)+'): resultado <strong>'+last.score+'/100</strong>. '+
+    '<a href="#" id="resumeLink">Ver ese resultado de nuevo</a>';
+  hint.hidden = false;
+  document.getElementById('resumeLink').addEventListener('click', function(ev){
+    ev.preventDefault();
+    state.category = last.category;
+    state.questions = COMMON_QUESTIONS.concat(CATEGORY_QUESTIONS[last.category] || []);
+    state.answers = last.answers;
+    showScreen(elResult);
+    renderResult();
+  });
+}
+
+/* ---------------------------------------------------------------------
+ * COPIAR RESULTADO
+ * ------------------------------------------------------------------- */
+function buildResultText(r){
+  var lvl = levelInfo(r.score);
+  var lines = [];
+  lines.push('Chequeo digital gratuito — '+catLabel(state.category));
+  lines.push('Resultado: '+r.score+'/100 ('+lvl.tag+')');
+  lines.push('Nivel recomendado para el sector: 75/100');
+  lines.push('');
+  lines.push('Lo que ya tienes bien:');
+  (r.good.length ? r.good : ['—']).forEach(function(t){ lines.push('- '+t); });
+  lines.push('');
+  lines.push('Mejoras rápidas recomendadas:');
+  (r.fix.length ? r.fix : ['—']).forEach(function(t){ lines.push('- '+t); });
+  return lines.join('\n');
+}
+
+function showToast(msg){
+  var t = document.getElementById('qzToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2200);
+}
+
+function copyResult(){
+  var r = computeResult();
+  var text = buildResultText(r);
+  function fallback(){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try{ document.execCommand('copy'); showToast('¡Resultado copiado!'); }
+    catch(e){ showToast('No se pudo copiar automáticamente'); }
+    document.body.removeChild(ta);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ showToast('¡Resultado copiado!'); }).catch(fallback);
+  } else {
+    fallback();
+  }
+}
+
+function resetQuiz(){
+  state = {category:null, questions:[], answers:{}, index:0};
+  resetTimer();
+  showScreen(elIntro);
+}
+
+/* ---------------------------------------------------------------------
+ * INIT
+ * ------------------------------------------------------------------- */
+function tryFullscreen(){
+  var el = document.documentElement;
+  try{
+    var req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if(req){
+      var p = req.call(el);
+      if(p && p.catch) p.catch(function(){});
+    }
+  }catch(e){}
+}
+document.getElementById('btnStart').addEventListener('click', function(){
+  tryFullscreen();
+  showScreen(elCat);
+});
+document.querySelectorAll('#screen-question .q-opt').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    if(uiBusy) return;
+    uiBusy = true;
+    btn.classList.add('picked');
+    var val = btn.getAttribute('data-val');
+    setTimeout(function(){ selectAnswer(val); }, 140);
+  });
+});
+document.getElementById('btnBack').addEventListener('click', function(){
+  if(uiBusy) return;
+  uiBusy = true;
+  goBack();
+});
+document.getElementById('btnRestart').addEventListener('click', resetQuiz);
+document.getElementById('btnCopy').addEventListener('click', copyResult);
+
+renderCategoryGrid();
+showResumeHint();
+})();
+</script>
+
+<script>
+(function(){
+  // Música de fondo: dos melodías una detrás de otra, en bucle, con botón de
+  // silencio en la esquina para quien no quiera oírla. Los navegadores
+  // bloquean el autoplay con sonido sin gesto del usuario, así que se intenta
+  // arrancar sola y, si falla, se engancha al primer click/touch de la página.
+  var bgm1 = document.getElementById('qzBgm1');
+  var bgm2 = document.getElementById('qzBgm2');
+  var btn = document.getElementById('qzMusicBtn');
+  var current = bgm1;
+  var muted = false;
+  var started = false;
+
+  bgm1.addEventListener('ended', function(){ if(!muted){ current = bgm2; bgm2.currentTime = 0; bgm2.play().catch(function(){}); } });
+  bgm2.addEventListener('ended', function(){ if(!muted){ current = bgm1; bgm1.currentTime = 0; bgm1.play().catch(function(){}); } });
+
+  function tryStart(){
+    if(started || muted) return;
+    current.play().then(function(){ started = true; }).catch(function(){});
+  }
+  tryStart();
+  ['click','touchstart'].forEach(function(evt){
+    document.addEventListener(evt, function once(){
+      tryStart();
+      if(started) document.removeEventListener(evt, once);
+    });
+  });
+
+  btn.addEventListener('click', function(){
+    muted = !muted;
+    if(muted){
+      bgm1.pause();
+      bgm2.pause();
+      btn.textContent = '🔇';
+      btn.setAttribute('aria-label', 'Activar música');
+      btn.setAttribute('title', 'Activar música');
+    } else {
+      btn.textContent = '🎵';
+      btn.setAttribute('aria-label', 'Silenciar música');
+      btn.setAttribute('title', 'Silenciar música');
+      started = false;
+      tryStart();
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -281,13 +281,32 @@ def create_proposal_from_lead(lead: Lead):
     """Create a draft Proposal pre-populated from Lead calculator data."""
     from .models import Proposal
     from .proposal_content import (
-        WI_COMPANY, EXTRAS_PRICES, PROJECT_SCOPES, DEFAULT_SCOPE,
+        WI_COMPANY, EXTRAS_PRICES, EXTRAS_DESCRIPTIONS, PROJECT_SCOPES, DEFAULT_SCOPE,
         OUT_OF_SCOPE, PHASES, CONDITIONS, DEADLINES,
     )
 
+    purchased_extras = list(lead.extras or [])
     extras_with_prices = [
         {'name': name, 'price': EXTRAS_PRICES.get(name, 0)}
-        for name in (lead.extras or [])
+        for name in purchased_extras
+    ]
+
+    # Alcance = base package scope + a line per extra actually purchased, so the
+    # document never claims to include something the client didn't pay for.
+    scope_list = PROJECT_SCOPES.get(lead.package, DEFAULT_SCOPE)[:] + [
+        EXTRAS_DESCRIPTIONS.get(name, name) for name in purchased_extras
+    ]
+
+    # No incluido = generic exclusions (minus hosting/domain if those were bought)
+    # + every extra from the catalogue that was NOT purchased, named explicitly so
+    # there's no ambiguity about what is/isn't part of this proposal.
+    not_purchased_extras = [name for name in EXTRAS_PRICES if name not in purchased_extras]
+    out_of_scope_list = [
+        item for item in OUT_OF_SCOPE
+        if not (lead.hosting_price and item in ('Compra de dominio', 'Hosting'))
+    ] + [
+        f'«{name}» (disponible como extra opcional, no incluido en este presupuesto)'
+        for name in not_purchased_extras
     ]
 
     subtotal     = lead.package_base_price + lead.extras_price
@@ -299,9 +318,16 @@ def create_proposal_from_lead(lead: Lead):
     iva_amount   = _js_round(taxable_base * 0.21)
     total        = taxable_base + iva_amount
 
+    # If the lead already has an accepted proposal, this new draft supersedes it —
+    # any price/scope/timeline change must go through a fresh acceptance.
+    previous_accepted = (
+        lead.proposals.filter(status=Proposal.ST_ACCEPTED).order_by('-created_at').first()
+    )
+
     proposal = Proposal.objects.create(
         number             = Proposal.generate_number(),
         lead               = lead,
+        supersedes         = previous_accepted,
         issued_at          = timezone.localdate(),
         client_name        = lead.name,
         client_email       = lead.email,
@@ -309,11 +335,8 @@ def create_proposal_from_lead(lead: Lead):
         client_biz_type    = lead.biz_type,
         company_data       = WI_COMPANY.copy(),
         project_name       = lead.package or 'Proyecto web',
-        scope              = PROJECT_SCOPES.get(lead.package, DEFAULT_SCOPE)[:],
-        out_of_scope       = [
-            item for item in OUT_OF_SCOPE
-            if not (lead.hosting_price and item in ('Compra de dominio', 'Hosting'))
-        ],
+        scope              = scope_list,
+        out_of_scope       = out_of_scope_list,
         phases             = PHASES[:],
         conditions         = CONDITIONS[:],
         timeline           = DEADLINES.get(lead.package, 'Según alcance'),

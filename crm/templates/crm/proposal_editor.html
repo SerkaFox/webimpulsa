@@ -538,7 +538,7 @@ window.saveDraft = function() {
   _setMsg('Guardando…', '#64748b');
   return fetch('/wi/crm/proposal/' + PID + '/save/', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': _auth() },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
   .then(function(r){ return r.json(); })
@@ -556,7 +556,6 @@ window.sendProposal = function() {
   saveDraft().then(function() {
     fetch('/wi/crm/proposal/' + PID + '/send/', {
       method: 'POST',
-      headers: { 'Authorization': _auth() },
     })
     .then(function(r){ return r.json(); })
     .then(function(d) {
@@ -612,13 +611,6 @@ function _fbCopy(text) {
   var el = document.createElement('textarea'); el.value = text;
   document.body.appendChild(el); el.select(); document.execCommand('copy'); el.remove();
 }
-function _auth() {
-  var s = sessionStorage.getItem('crm_auth');
-  if (s) return 'Basic ' + s;
-  var pw = prompt('Contraseña CRM:'); if (!pw) return '';
-  var enc = btoa(':' + pw); sessionStorage.setItem('crm_auth', enc); return 'Basic ' + enc;
-}
-
 var _debTimers = {};
 window._debounce = function(fn, ms) {
   return function() { clearTimeout(_debTimers[fn]); _debTimers[fn] = setTimeout(fn, ms); };

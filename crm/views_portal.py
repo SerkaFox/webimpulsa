@@ -7,12 +7,14 @@ URL scheme (all public — authenticated by magic-link token):
   POST      /p/<token>/proposal/accept/  client accepts the proposal
   POST      /p/<token>/message/          client sends a message to the team
 """
+import hashlib
 import json
 import mimetypes
 import logging
 import os
 import urllib.request
 
+from django.core.files.base import ContentFile
 from django.core.mail import get_connection, EmailMultiAlternatives
 from django.http import (
     FileResponse, Http404, HttpResponse, JsonResponse
@@ -23,6 +25,9 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import ClientAccess, CommunicationLog, Lead, ProjectMaterial, Proposal
+from .proposal_content import (
+    CONDITIONS_BUSINESS, CONDITIONS_CONSUMER, CONSENT_LABELS, WITHDRAWAL_CONSENT_TEXT,
+)
 from .services import (
     CLIENT_NEXT_STEP, CLIENT_STAGE_PROGRESS, CLIENT_STATUS_LABEL, PAYMENT_PLAN_CHOICES,
     accept_proposal, log_communication, payment_schedule, proposal_to_template_input,
@@ -42,6 +47,14 @@ _ADMIN_ONLINE_WINDOW = 20  # seconds
 def _admin_is_online(lead) -> bool:
     seen = lead.admin_chat_seen_at
     return bool(seen and (timezone.now() - seen).total_seconds() < _ADMIN_ONLINE_WINDOW)
+
+
+def _client_ip(request) -> str:
+    """Real client IP behind nginx (X-Forwarded-For), falling back to REMOTE_ADDR."""
+    forwarded = request.META.get('HTTP_X_FORWARDED_FOR', '')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR', '')
 
 
 def _notify_tg(text: str) -> None:
@@ -91,12 +104,13 @@ def _brevo():
     )
 
 
-def _send_acceptance_emails(proposal, access) -> None:
+def _send_acceptance_emails(proposal, access, pdf_bytes=None) -> None:
     """Send signed PDF to Tatiana (internal) and to client (with cabinet link)."""
-    from .pdf import generate_proposal_pdf
+    if pdf_bytes is None:
+        from .pdf import generate_proposal_pdf
+        pdf_bytes = generate_proposal_pdf(proposal)
 
     lead       = proposal.lead
-    pdf_bytes  = generate_proposal_pdf(proposal)
     safe_name  = ''.join(c if c.isalnum() or c in '-_' else '_' for c in (lead.name or 'cliente'))
     pdf_name   = f'Propuesta_FIRMADA_{safe_name}_{proposal.number}.pdf'
     cabinet_url = f'{_BASE_URL}/p/{access.token}/'
@@ -107,10 +121,9 @@ def _send_acceptance_emails(proposal, access) -> None:
     body_int = (
         f'✅ PROPUESTA ACEPTADA\n'
         f'{"─"*38}\n'
-        f'Cliente:   {proposal.accepted_by_name or lead.name}\n'
+        f'Cliente:   {proposal.accepted_by_name or lead.name} ({proposal.get_client_type_display() or "—"})\n'
         f'NIF/CIF:   {proposal.accepted_nif or "—"}\n'
-        f'Dirección: {proposal.client_address or "—"}\n'
-        f'Ciudad:    {proposal.client_city or "—"}\n'
+        f'Dirección: {proposal.client_address or "—"}, {proposal.client_postal_code} {proposal.client_city} ({proposal.client_province})\n'
         f'Propuesta: {proposal.number}\n'
         f'Total IVA: {proposal.total_with_iva}€\n'
         f'Firmado:   {signed_at}\n'
@@ -393,6 +406,8 @@ def portal(request, token):
             'outOfScope': proposal.out_of_scope,
             'phases':     proposal.phases,
             'conditions': proposal.conditions,
+            'conditionsConsumer': CONDITIONS_CONSUMER,
+            'conditionsBusiness': CONDITIONS_BUSINESS,
         }, ensure_ascii=False, default=str)
 
     materials     = lead.materials.all()
@@ -443,6 +458,8 @@ def portal(request, token):
         'invoice_total':     invoice_total,
         'paid_total':        paid_total,
         'owed_total':        owed_total,
+        'consent_labels':    CONSENT_LABELS,
+        'withdrawal_consent_text': WITHDRAWAL_CONSENT_TEXT,
     })
 
 
@@ -547,51 +564,117 @@ def portal_accept_proposal(request, token):
     if proposal is None:
         return HttpResponse('No hay propuesta activa para aceptar.', status=404)
 
-    agree        = request.POST.get('agree', '').strip()
-    name         = request.POST.get('accept_name', '').strip()
-    nif          = request.POST.get('accept_nif', '').strip()
-    address      = request.POST.get('accept_address', '').strip()
-    city         = request.POST.get('accept_city', '').strip()
-    signature    = request.POST.get('accept_signature', '').strip()
-    payment_plan = request.POST.get('accept_payment_plan', '').strip()
+    P = request.POST
 
-    if not agree:
-        return HttpResponse('Debes marcar la casilla de aceptación.', status=400)
+    client_type  = P.get('client_type', '').strip()
+    name         = P.get('accept_name', '').strip()
+    nif          = P.get('accept_nif', '').strip()
+    address      = P.get('accept_address', '').strip()
+    municipality = P.get('accept_municipality', '').strip()
+    postal_code  = P.get('accept_postal_code', '').strip()
+    province     = P.get('accept_province', '').strip()
+    country      = P.get('accept_country', '').strip() or 'España'
+    signature    = P.get('accept_signature', '').strip()
+    payment_plan = P.get('accept_payment_plan', '').strip()
+
+    rep_name     = P.get('accept_rep_name', '').strip()
+    rep_nif      = P.get('accept_rep_nif', '').strip()
+    rep_position = P.get('accept_rep_position', '').strip()
+
+    # One combined checkbox covers all the CONSENT_LABELS topics (shown to the
+    # client via an info modal) — same audit content, less UI friction than a
+    # checkbox per topic. The withdrawal waiver stays separate: it's a distinct
+    # statutory right that requires its own explicit action (art. 103.a TRLGDCU).
+    consent_keys = list(CONSENT_LABELS.keys())
+    consent_all = bool(P.get('consent_all', '').strip())
+    consents = {k: consent_all for k in consent_keys}
+    withdrawal_waived = bool(P.get('consent_withdrawal', '').strip())
+
+    # ── Validation ──────────────────────────────────────────────────────────
+    if client_type not in (Proposal.CLIENT_TYPE_PARTICULAR, Proposal.CLIENT_TYPE_AUTONOMO,
+                            Proposal.CLIENT_TYPE_EMPRESA):
+        return HttpResponse('Debes indicar el tipo de cliente.', status=400)
     if not name:
-        return HttpResponse('El nombre es obligatorio.', status=400)
+        return HttpResponse('El nombre / razón social es obligatorio.', status=400)
+    if not nif:
+        return HttpResponse('El NIF/NIE/CIF es obligatorio.', status=400)
+    if not address or not postal_code or not municipality or not province:
+        return HttpResponse('El domicilio fiscal completo (dirección, código postal, municipio y provincia) es obligatorio.', status=400)
+    if not signature:
+        return HttpResponse('La firma es obligatoria.', status=400)
+    if client_type == Proposal.CLIENT_TYPE_EMPRESA and not (rep_name and rep_nif and rep_position):
+        return HttpResponse('Para empresas, el nombre, NIF/NIE y cargo del representante son obligatorios.', status=400)
+    if client_type == Proposal.CLIENT_TYPE_PARTICULAR and not withdrawal_waived:
+        return HttpResponse('Debes confirmar la renuncia al derecho de desistimiento para empezar antes de 14 días.', status=400)
+    if not consent_all:
+        return HttpResponse('Debes marcar la casilla de confirmación.', status=400)
 
-    # Save fiscal data BEFORE accept_proposal (so it's in the PDF)
-    fields_to_update = ['updated_at']
-    if address: proposal.client_address = address[:300]; fields_to_update.append('client_address')
-    if city:    proposal.client_city    = city[:100];    fields_to_update.append('client_city')
-    if nif:     proposal.client_nif     = nif[:30];      fields_to_update.append('client_nif')
+    # Freeze the correct legal-conditions variant for this client type.
+    conditions = (CONDITIONS_BUSINESS
+                  if client_type in (Proposal.CLIENT_TYPE_AUTONOMO, Proposal.CLIENT_TYPE_EMPRESA)
+                  else CONDITIONS_CONSUMER)
+
+    # Save fiscal data + audit trail BEFORE accept_proposal (so it's in the PDF)
+    proposal.client_type          = client_type
+    proposal.client_address       = address[:300]
+    proposal.client_city          = municipality[:100]
+    proposal.client_postal_code   = postal_code[:10]
+    proposal.client_province      = province[:100]
+    proposal.client_country       = country[:100]
+    proposal.client_nif           = nif[:30]
+    proposal.representative_name     = rep_name[:200]
+    proposal.representative_nif      = rep_nif[:30]
+    proposal.representative_position = rep_position[:100]
+    proposal.conditions           = conditions[:]
+    proposal.accepted_consents    = consents
+    proposal.withdrawal_waived    = withdrawal_waived
+    proposal.accepted_ip          = _client_ip(request)[:45]
+    proposal.accepted_user_agent  = request.META.get('HTTP_USER_AGENT', '')[:500]
     if payment_plan in dict(PAYMENT_PLAN_CHOICES):
         proposal.payment_method = payment_plan
-        fields_to_update.append('payment_method')
-    if len(fields_to_update) > 1:
-        proposal.save(update_fields=fields_to_update)
+    proposal.save(update_fields=[
+        'client_type', 'client_address', 'client_city', 'client_postal_code', 'client_province',
+        'client_country', 'client_nif', 'representative_name', 'representative_nif',
+        'representative_position', 'conditions', 'accepted_consents', 'withdrawal_waived',
+        'accepted_ip', 'accepted_user_agent', 'payment_method', 'updated_at',
+    ])
 
     accept_proposal(proposal, name, nif, signature)
 
-    logger.info('Proposal %s accepted via portal: lead #%d by %s',
-                proposal.number, lead.pk, name)
+    # Generate the signed PDF once: persist an immutable copy + hash for tamper-evidence,
+    # then reuse the same bytes for the acceptance emails below (avoids rendering twice).
+    pdf_bytes = None
+    try:
+        from .pdf import generate_proposal_pdf
+        pdf_bytes = generate_proposal_pdf(proposal)
+        if pdf_bytes:
+            proposal.accepted_pdf_sha256 = hashlib.sha256(pdf_bytes).hexdigest()
+            proposal.accepted_pdf.save(
+                f'{proposal.number}.pdf', ContentFile(pdf_bytes), save=False,
+            )
+            proposal.save(update_fields=['accepted_pdf', 'accepted_pdf_sha256'])
+    except Exception as exc:
+        logger.error('Could not persist signed PDF snapshot for %s: %s', proposal.number, exc)
+
+    logger.info('Proposal %s accepted via portal: lead #%d by %s (%s)',
+                proposal.number, lead.pk, name, client_type)
 
     tg_text = (
         f'✅ <b>Propuesta aceptada</b>\n'
-        f'Cliente: {name} ({nif or "sin NIF"})\n'
+        f'Cliente: {name} ({nif or "sin NIF"}) — {client_type}\n'
         f'Propuesta: {proposal.number} — {proposal.total_with_iva}€\n'
         f'→ https://webimpulsa.es/wi/crm/{lead.pk}/'
     )
     _notify_tg(tg_text)
     _notify_wa(
         f'✅ PROPUESTA ACEPTADA\n'
-        f'Cliente: {name}\nNIF: {nif or "—"}\n'
+        f'Cliente: {name} ({client_type})\nNIF: {nif or "—"}\n'
         f'Propuesta: {proposal.number} — {proposal.total_with_iva}€\n'
         f'CRM: https://webimpulsa.es/wi/crm/{lead.pk}/'
     )
 
     try:
-        _send_acceptance_emails(proposal, access)
+        _send_acceptance_emails(proposal, access, pdf_bytes=pdf_bytes)
     except Exception as exc:
         logger.error('Acceptance emails failed for proposal %s: %s', proposal.number, exc)
 

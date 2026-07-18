@@ -17,6 +17,7 @@ urlpatterns = [
     path('wi/crm/<int:pk>/access/',    views.lead_generate_access, name='crm_generate_access'),
     path('wi/crm/<int:pk>/comm/',      views.lead_log_comm,        name='crm_log_comm'),
     path('wi/crm/<int:pk>/materials/', views.lead_materials,       name='crm_materials'),
+    path('wi/crm/<int:pk>/delete/',    views.lead_delete,          name='crm_lead_delete'),
 
     # ── Activity endpoints ─────────────────────────────────────────────────
     path('wi/crm/<int:pk>/milestone/',           views.lead_add_milestone,    name='crm_add_milestone'),

@@ -3,7 +3,10 @@ import logging
 
 from django.template.loader import render_to_string
 
-from .proposal_content import PROJECT_SCOPES, DEFAULT_SCOPE, DEADLINES, PHASES, CONDITIONS, OUT_OF_SCOPE
+from .models import Proposal
+from .proposal_content import (
+    CONSENT_LABELS, PROJECT_SCOPES, DEFAULT_SCOPE, DEADLINES, PHASES, CONDITIONS, OUT_OF_SCOPE,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -17,10 +20,14 @@ def generate_proposal_pdf(proposal) -> bytes | None:
         return None
 
     try:
+        from .services import payment_schedule
+
         c = proposal.company_data or {}
         subtotal_before_discount = (
             proposal.package_base_price + proposal.extras_price + proposal.rush_amount
         )
+        is_accepted = proposal.status == Proposal.ST_ACCEPTED
+
         ctx = {
             'proposal':    proposal,
             'company': {
@@ -39,8 +46,17 @@ def generate_proposal_pdf(proposal) -> bytes | None:
             'conditions':  proposal.conditions or CONDITIONS,
             'deadline':    proposal.timeline or DEADLINES.get(proposal.package, 'Según alcance'),
             'subtotal_before_discount': subtotal_before_discount,
-            'half_payment': round(proposal.taxable_base / 2),
+            'schedule':    payment_schedule(proposal),
+            'is_accepted': is_accepted,
         }
+
+        if is_accepted:
+            ctx['accepted_consents'] = [
+                {'label': CONSENT_LABELS[key]}
+                for key in CONSENT_LABELS
+                if (proposal.accepted_consents or {}).get(key)
+            ]
+
         html_str = render_to_string('crm/proposal_pdf.html', ctx)
         pdf_bytes = HTML(string=html_str, base_url='https://webimpulsa.es').write_pdf()
         logger.info('PDF generated: proposal %s (%d bytes)', proposal.number, len(pdf_bytes))

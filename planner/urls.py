@@ -1,0 +1,31 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('calendario/', views.calendar_view, name='planner_calendar'),
+    path('calendario/api/login/', views.api_login, name='planner_api_login'),
+    path('calendario/api/girls/', views.api_girls, name='planner_api_girls'),
+    path('calendario/api/girls/create/', views.api_girl_create, name='planner_api_girl_create'),
+    path('calendario/api/girls/<int:pk>/reset-password/', views.api_girl_reset_password, name='planner_api_girl_reset_password'),
+    path('calendario/api/girls/<int:pk>/avatar/', views.api_girl_avatar, name='planner_api_girl_avatar'),
+    path('calendario/api/admin/change-password/', views.api_admin_change_password, name='planner_api_admin_change_password'),
+    path('calendario/api/profile/', views.api_girl_profile, name='planner_api_girl_profile'),
+    path('calendario/api/profile/messages/read/', views.api_girl_messages_read, name='planner_api_girl_messages_read'),
+    path('calendario/api/girls/<int:pk>/profile/', views.api_girl_profile_update, name='planner_api_girl_profile_update'),
+    path('calendario/api/girls/<int:pk>/messages/', views.api_girl_message_add, name='planner_api_girl_message_add'),
+    path('calendario/api/chat/', views.api_chat_messages, name='planner_api_chat_messages'),
+    path('calendario/api/chat/send/', views.api_chat_send, name='planner_api_chat_send'),
+    path('calendario/api/chat/<int:pk>/react/', views.api_chat_react, name='planner_api_chat_react'),
+    path('calendario/api/chat/read/', views.api_chat_read, name='planner_api_chat_read'),
+    path('calendario/api/general-chat/', views.api_general_chat_messages, name='planner_api_general_chat_messages'),
+    path('calendario/api/general-chat/send/', views.api_general_chat_send, name='planner_api_general_chat_send'),
+    path('calendario/api/general-chat/<int:pk>/react/', views.api_general_chat_react, name='planner_api_general_chat_react'),
+    path('calendario/api/general-chat/read/', views.api_general_chat_read, name='planner_api_general_chat_read'),
+    path('calendario/api/entries/', views.api_entries, name='planner_api_entries'),
+    path('calendario/api/entries/add/', views.api_entry_add, name='planner_api_entry_add'),
+    path('calendario/api/entries/<int:pk>/toggle/', views.api_entry_toggle, name='planner_api_entry_toggle'),
+    path('calendario/api/entries/<int:pk>/delete/', views.api_entry_delete, name='planner_api_entry_delete'),
+    path('calendario/api/entries/<int:pk>/report/', views.api_entry_report, name='planner_api_entry_report'),
+    path('calendario/manifest.json', views.manifest_view, name='planner_manifest'),
+    path('calendario/sw.js', views.service_worker_view, name='planner_sw'),
+]

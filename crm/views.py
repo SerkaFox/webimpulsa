@@ -1,4 +1,3 @@
-import base64
 import functools
 import json
 import logging
@@ -7,7 +6,7 @@ from datetime import date
 
 from django.core.mail import send_mail, get_connection, EmailMultiAlternatives
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
@@ -38,24 +37,29 @@ STATUS_CSS = {
 }
 
 
+_CRM_SESSION_KEY = 'wi_crm_authed'
+_CRM_SESSION_AGE = 60 * 60 * 24 * 365  # 1 year — log in once, stay logged in
+
+
 def _crm_auth(view):
+    """Password-only CRM gate (no username). Once the correct password is
+    entered, the session is remembered for a year so it isn't asked again
+    on every visit — a plain HTML password form, not a browser Basic Auth
+    popup (which some mobile browsers forget across app restarts)."""
     @functools.wraps(view)
     def wrapper(request, *args, **kwargs):
         if not _CRM_PASSWORD:
             return HttpResponse('WI_CRM_PASSWORD not configured', status=500,
                                 content_type='text/plain')
-        auth = request.META.get('HTTP_AUTHORIZATION', '')
-        if auth.startswith('Basic '):
-            try:
-                creds = base64.b64decode(auth[6:]).decode('utf-8')
-                _, _, pw = creds.partition(':')
-                if pw == _CRM_PASSWORD:
-                    return view(request, *args, **kwargs)
-            except Exception:
-                pass
-        resp = HttpResponse('Unauthorized', status=401, content_type='text/plain')
-        resp['WWW-Authenticate'] = 'Basic realm="Web-Impulsa CRM"'
-        return resp
+        if request.session.get(_CRM_SESSION_KEY):
+            return view(request, *args, **kwargs)
+        if request.method == 'POST' and request.POST.get('crm_password') == _CRM_PASSWORD:
+            request.session[_CRM_SESSION_KEY] = True
+            request.session.set_expiry(_CRM_SESSION_AGE)
+            return redirect(request.path)
+        return render(request, 'crm/login.html', {
+            'error': request.method == 'POST',
+        })
     return wrapper
 
 
@@ -464,6 +468,20 @@ def lead_materials(request, pk):
             for m in materials
         ],
     })
+
+
+@_crm_auth
+@csrf_exempt
+@require_POST
+def lead_delete(request, pk):
+    """POST /wi/crm/<pk>/delete/ — permanently delete a lead and everything
+    tied to it (proposals, files, payments, chat, portal access). Cascades
+    via on_delete=CASCADE on every FK pointing at Lead."""
+    lead = get_object_or_404(Lead, pk=pk)
+    name = lead.name
+    lead.delete()
+    logger.info('Lead #%d (%s) deleted from CRM by admin', pk, name)
+    return JsonResponse({'ok': True, 'redirect': '/wi/crm/'})
 
 
 # ── Activity / dossier AJAX endpoints ─────────────────────────────────────────

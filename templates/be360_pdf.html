@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Cuestionario BE 360 — {{ name }}</title>
+<style>
+@page {
+  size: A4;
+  margin: 18mm 16mm 20mm 16mm;
+  @bottom-right {
+    content: "Pág. " counter(page) " / " counter(pages);
+    font-size: 8pt;
+    color: #94a3b8;
+  }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  font-size: 10pt;
+  color: #0c1c42;
+  line-height: 1.5;
+}
+
+.header {
+  margin-bottom: 18pt;
+  padding-bottom: 12pt;
+  border-bottom: 2pt solid #1760d6;
+}
+
+.eyebrow {
+  font-size: 8pt;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #1760d6;
+  font-weight: 700;
+}
+
+h1 {
+  font-size: 20pt;
+  margin: 4pt 0 6pt;
+}
+
+.meta {
+  font-size: 9pt;
+  color: #5a6d8c;
+}
+
+.section {
+  margin-top: 16pt;
+  page-break-inside: avoid;
+}
+
+.section h2 {
+  font-size: 13pt;
+  color: #1760d6;
+  border-bottom: 1pt solid #dbe6f6;
+  padding-bottom: 4pt;
+  margin-bottom: 8pt;
+}
+
+.item {
+  margin: 8pt 0;
+  page-break-inside: avoid;
+}
+
+.item .q {
+  font-weight: 700;
+  color: #0c1c42;
+}
+
+.item .a {
+  margin-top: 2pt;
+  color: #334155;
+  white-space: pre-wrap;
+}
+</style>
+</head>
+<body>
+  <div class="header">
+    <span class="eyebrow">BE 360 · WebImpulsa</span>
+    <h1>Cuestionario completado</h1>
+    <div class="meta">Nombre: {{ name }} &nbsp;·&nbsp; Fecha: {{ date }}</div>
+  </div>
+
+  {% for section in sections %}
+  <div class="section">
+    <h2>{{ section.title }}</h2>
+    {% for question in section.questions %}
+    <div class="item">
+      <div class="q">{{ question.question }}</div>
+      <div class="a">{{ question.answer|default:"Pendiente de completar" }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</body>
+</html>

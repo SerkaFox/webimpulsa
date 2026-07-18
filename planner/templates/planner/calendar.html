@@ -1,0 +1,1906 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendario BE Success — {{ month_name }} {{ year }} | WebImpulsa</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BE Success">
+<link rel="apple-touch-icon" href="{% static 'wi/img/be-icon-192.png' %}">
+<link rel="manifest" href="{% url 'planner_manifest' %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #3a2f2a; --muted: #8a7d74; --line: rgba(58,47,42,.12);
+    --blue: #2563eb; --teal: #0f766e; --coral: #f97316;
+    --mint: #c9f7e7; --sky: #cfeaff; --peach: #ffd8bd;
+    --gold: #c9a15a; --blush: #f4d3d9; --lavender: #ddd0f0; --sage: #bfe6c4;
+    font-family: 'Poppins', "Trebuchet MS", "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  h1, h2, .today-plan-title, table.cal th, .field label, .hero-today h2 { font-family: 'Quicksand', 'Poppins', sans-serif; }
+
+  body {
+    margin: 0; color: var(--ink); min-height: 100vh;
+    background:
+      linear-gradient(155deg, rgba(255,249,244,.90), rgba(253,244,248,.86)),
+      url('{% static "wi/img/calendar-bg.webp" %}') center 20% / cover fixed;
+  }
+
+  @keyframes riseIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes popIn { from { opacity: 0; transform: scale(.94) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  @keyframes todayPulse {
+    0%, 100% { box-shadow: inset 0 0 0 2px rgba(15,118,110,.45); }
+    50% { box-shadow: inset 0 0 0 2px rgba(15,118,110,.85); }
+  }
+
+  .page { max-width: 1180px; margin: 0 auto; padding: 24px 16px 60px; }
+  .back-link { display: inline-block; margin-bottom: 14px; color: var(--muted); text-decoration: none; font-weight: 700; }
+  .back-link:hover { color: var(--ink); }
+
+  .top-actions { position: fixed; top: 16px; right: 16px; z-index: 15; display: flex; gap: 8px; }
+  .install-btn, .logout-btn {
+    display: none; align-items: center; gap: 6px;
+    padding: 9px 16px; border: none; border-radius: 999px; cursor: pointer; font-weight: 700; font-size: 13px;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .install-btn { background: linear-gradient(135deg, var(--gold), #e3c07f); color: #3a2f0a; box-shadow: 0 10px 26px rgba(201,161,90,.4); }
+  .install-btn.show, .logout-btn.show { display: inline-flex; }
+  .install-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(201,161,90,.5); }
+  .logout-btn { background: rgba(255,255,255,.85); color: var(--ink); box-shadow: 0 10px 26px rgba(58,47,42,.18); }
+  .logout-btn:hover { transform: translateY(-2px); }
+  .unread-dot {
+    position: absolute; top: -4px; right: -4px; width: 14px; height: 14px; border-radius: 999px;
+    background: var(--coral); border: 2px solid #fff; animation: todayPulse 1.6s ease-in-out infinite;
+  }
+  .unread-dot.hidden { display: none; }
+
+  @keyframes cardPop { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes chipPop { 0% { transform: scale(.5); opacity: 0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes ringGlow {
+    0%, 100% { filter: drop-shadow(0 0 0 rgba(249,115,22,0)); }
+    50% { filter: drop-shadow(0 0 10px rgba(249,115,22,.45)); }
+  }
+  @keyframes barFill { from { width: 0; } }
+  @keyframes messageSlide { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: translateX(0); } }
+
+  .card-section { margin-bottom: 18px; opacity: 0; animation: cardPop .5s ease both; }
+  .card-section h3 {
+    margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--gold); font-weight: 700;
+  }
+  .card-gauge { display: flex; align-items: center; gap: 18px; }
+  .card-gauge-ring {
+    width: 92px; height: 92px; border-radius: 50%; flex: 0 0 auto; position: relative;
+    background: conic-gradient(
+      from -90deg,
+      #f97316 0%,
+      #eab308 calc(var(--pct, 0%) * 0.2),
+      #22c55e calc(var(--pct, 0%) * 0.45),
+      #0ea5e9 calc(var(--pct, 0%) * 0.7),
+      #a855f7 var(--pct, 0%),
+      rgba(58,47,42,.09) var(--pct, 0%)
+    );
+    display: flex; align-items: center; justify-content: center;
+    transition: filter .3s ease;
+    animation: ringGlow 2.4s ease-in-out infinite;
+  }
+  .card-gauge-ring::before {
+    content: ''; width: 70px; height: 70px; border-radius: 50%; background: #fffaf5;
+    box-shadow: inset 0 2px 6px rgba(58,47,42,.12);
+  }
+  .card-gauge-ring .ring-pct {
+    position: absolute; font-size: 15px; font-weight: 800; color: var(--ink);
+  }
+  .card-gauge-text { font-size: 15px; color: var(--ink); font-weight: 800; }
+  .card-gauge-text .num { color: var(--teal); }
+  .card-gauge-sub { font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+
+  .card-levels { display: flex; flex-wrap: wrap; gap: 6px; }
+  .card-level-chip {
+    padding: 5px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700;
+    background: rgba(58,47,42,.07); color: var(--muted);
+    opacity: 0; animation: chipPop .4s ease both;
+    transition: transform .15s ease;
+  }
+  .card-level-chip:hover { transform: translateY(-2px); }
+  .card-level-chip.reached { color: #fff; box-shadow: 0 4px 14px rgba(0,0,0,.15); }
+  .card-level-chip.reached.lvl-0 { background: linear-gradient(135deg, #34d399, #0ea5e9); }
+  .card-level-chip.reached.lvl-1 { background: linear-gradient(135deg, #0ea5e9, #6366f1); }
+  .card-level-chip.reached.lvl-2 { background: linear-gradient(135deg, #6366f1, #a855f7); }
+  .card-level-chip.reached.lvl-3 { background: linear-gradient(135deg, #a855f7, #ec4899); }
+  .card-level-chip.reached.lvl-4 { background: linear-gradient(135deg, #f97316, #eab308); }
+
+  .card-bonus-list, .card-week-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .card-bonus-list li, .card-week-row {
+    display: flex; justify-content: space-between; gap: 8px; font-size: 13px;
+    padding: 7px 10px; border-radius: 10px; background: rgba(255,255,255,.6);
+    border-left: 3px solid var(--coral);
+    opacity: 0; animation: cardPop .4s ease both;
+  }
+  .card-week-row { flex-direction: column; gap: 4px; border-left-color: var(--teal); }
+  .card-week-row .week-top { display: flex; justify-content: space-between; width: 100%; }
+  .card-week-bar { height: 6px; border-radius: 999px; background: rgba(58,47,42,.1); overflow: hidden; }
+  .card-week-bar-fill {
+    height: 100%; border-radius: 999px; width: 0;
+    background: linear-gradient(90deg, var(--coral), var(--gold), var(--teal));
+    animation: barFill 1s ease both;
+  }
+
+  .card-messages { display: grid; gap: 8px; max-height: 200px; overflow: auto; }
+  .card-message {
+    padding: 10px 12px; border-radius: 12px; background: rgba(221,208,240,.35); font-size: 13.5px;
+    border-left: 3px solid var(--lavender);
+    opacity: 0; animation: messageSlide .4s ease both;
+  }
+  .card-message .meta { display: block; font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .card-message.unread { background: rgba(191,230,196,.55); border-left-color: var(--teal); }
+  .card-empty { font-size: 13px; color: var(--muted); }
+
+  /* ── Minichat flotante ── */
+  @keyframes chatBubbleIn { from { opacity: 0; transform: translateY(16px) scale(.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes chatPulseRing { 0% { box-shadow: 0 0 0 0 rgba(37,99,235,.45); } 100% { box-shadow: 0 0 0 14px rgba(37,99,235,0); } }
+  .chat-fab {
+    position: fixed; bottom: 20px; right: 20px; z-index: 25; width: 58px; height: 58px; border-radius: 50%;
+    border: none; cursor: pointer; font-size: 24px; display: none; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--blue), var(--teal)); color: #fff;
+    box-shadow: 0 12px 30px rgba(37,99,235,.4);
+    animation: chatPulseRing 2.4s ease-out infinite;
+  }
+  .chat-fab.show { display: flex; }
+  .chat-fab .unread-dot { top: 0; right: 0; }
+
+  .chat-panel {
+    position: fixed; bottom: 90px; right: 20px; z-index: 25; width: min(340px, calc(100vw - 32px));
+    height: min(480px, calc(100vh - 130px)); background: #fffaf5; border-radius: 20px;
+    box-shadow: 0 30px 70px rgba(0,0,0,.28); display: none; flex-direction: column; overflow: hidden;
+    animation: chatBubbleIn .25s ease both;
+  }
+  .chat-panel.open { display: flex; }
+  .chat-head {
+    padding: 14px 16px; background: linear-gradient(135deg, var(--blue), var(--teal)); color: #fff;
+    display: flex; justify-content: space-between; align-items: center; flex: 0 0 auto;
+  }
+  .chat-head strong { font-size: 14px; }
+  .chat-tabs { display: flex; flex: 0 0 auto; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.6); }
+  .chat-tab {
+    flex: 1; padding: 9px 6px; border: none; background: none; cursor: pointer; font-size: 12px; font-weight: 700;
+    color: var(--muted); position: relative; border-bottom: 2px solid transparent; transition: color .15s ease, border-color .15s ease;
+  }
+  .chat-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+  .chat-tab .unread-dot { top: 2px; right: 8px; }
+  .chat-sender-name { font-size: 10.5px; font-weight: 700; color: var(--teal); margin-bottom: 2px; }
+  .chat-head button { background: rgba(255,255,255,.2); border: none; color: #fff; border-radius: 999px; width: 26px; height: 26px; cursor: pointer; }
+  .chat-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .chat-bubble-row { display: flex; flex-direction: column; max-width: 82%; position: relative; }
+  .chat-bubble-row.mine { align-self: flex-end; align-items: flex-end; }
+  .chat-bubble-row.theirs { align-self: flex-start; align-items: flex-start; }
+  .chat-bubble {
+    padding: 9px 12px; border-radius: 16px; font-size: 13.5px; line-height: 1.4; position: relative;
+    opacity: 0; animation: cardPop .3s ease both; word-break: break-word;
+  }
+  .chat-bubble-row.mine .chat-bubble { background: linear-gradient(135deg, var(--blue), var(--teal)); color: #fff; border-bottom-right-radius: 4px; }
+  .chat-bubble-row.theirs .chat-bubble { background: rgba(221,208,240,.45); color: var(--ink); border-bottom-left-radius: 4px; }
+  .chat-reply-quote {
+    font-size: 11px; opacity: .8; border-left: 2px solid currentColor; padding-left: 6px; margin-bottom: 4px;
+  }
+  .chat-meta { display: flex; gap: 6px; align-items: center; margin-top: 3px; font-size: 10.5px; color: var(--muted); }
+  .chat-meta button { background: none; border: none; cursor: pointer; font-size: 11px; color: var(--muted); padding: 0 2px; }
+  .chat-meta button:hover { color: var(--ink); }
+  .chat-reaction-badge {
+    position: absolute; bottom: -9px; font-size: 12px; background: #fff; border-radius: 999px;
+    padding: 1px 6px; box-shadow: 0 2px 6px rgba(0,0,0,.2); z-index: 2; line-height: 1.4;
+  }
+  .chat-bubble-row.mine .chat-reaction-badge { right: 6px; }
+  .chat-bubble-row.theirs .chat-reaction-badge { left: 6px; }
+  .chat-emoji-overlay {
+    display: none; flex: 0 0 auto; grid-template-columns: repeat(9, 1fr); gap: 2px;
+    background: rgba(255,255,255,.95); backdrop-filter: blur(6px); padding: 8px 10px;
+    border-top: 1px solid var(--line); max-height: 130px; overflow-y: auto;
+  }
+  .chat-emoji-overlay.show { display: grid; animation: cardPop .18s ease both; }
+  .chat-emoji-overlay button {
+    background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px 0;
+    border-radius: 8px; transition: transform .1s ease, background .1s ease;
+  }
+  .chat-emoji-overlay button:hover { transform: scale(1.2); background: rgba(58,47,42,.08); }
+  .chat-reply-preview {
+    display: none; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 6px 12px; background: rgba(58,47,42,.06); font-size: 11.5px; flex: 0 0 auto;
+  }
+  .chat-reply-preview.show { display: flex; }
+  .chat-reply-preview button { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--muted); }
+  .chat-input-row { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--line); flex: 0 0 auto; }
+  .chat-input-row input {
+    flex: 1; padding: 9px 12px; border-radius: 999px; border: 1px solid var(--line); font: inherit; font-size: 13px;
+  }
+  .chat-input-row button {
+    border: none; border-radius: 999px; width: 38px; height: 38px; background: linear-gradient(135deg, var(--blue), var(--teal));
+    color: #fff; cursor: pointer; font-size: 15px;
+  }
+  .chat-empty { text-align: center; color: var(--muted); font-size: 13px; margin: auto; }
+
+  .girl-switcher { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .girl-switcher select {
+    padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); font-weight: 700;
+    background: #fff; color: var(--ink); font: inherit; font-size: 13px;
+  }
+  body.role-girl .admin-only { display: none !important; }
+  body.role-girl .day-add-btn { display: none !important; }
+
+  .login-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+  .login-tab {
+    flex: 1; padding: 10px; border: none; border-radius: 12px; background: rgba(58,47,42,.07);
+    font-weight: 700; cursor: pointer; color: var(--muted); font: inherit; font-size: 13.5px;
+    transition: background .15s ease, color .15s ease;
+  }
+  .login-tab.active { background: linear-gradient(135deg, var(--blue), var(--teal)); color: #fff; }
+  .login-error { color: #b91c1c; font-size: 13px; margin: -4px 0 4px; }
+
+  .hero {
+    display: grid; grid-template-columns: 260px 1fr; gap: 24px; align-items: start;
+    padding: 20px 24px; border-radius: 22px; background: rgba(255,255,255,.72);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 18px 48px rgba(58,47,42,.12); margin-bottom: 20px;
+    border: 1px solid rgba(255,255,255,.6);
+    animation: riseIn .5s ease both;
+  }
+  .hero-main { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+  .hero-title-row { display: flex; align-items: center; gap: 14px; }
+  .hero-avatar {
+    width: 58px; height: 58px; border-radius: 999px; object-fit: cover;
+    border: 3px solid #fff; box-shadow: 0 6px 18px rgba(58,47,42,.18); flex: 0 0 auto;
+  }
+  .hero-avatar.hidden { display: none; }
+  .girl-avatar-thumb {
+    width: 34px; height: 34px; border-radius: 999px; object-fit: cover; flex: 0 0 auto;
+    border: 2px solid #fff; box-shadow: 0 3px 10px rgba(58,47,42,.15);
+  }
+  .girl-avatar-placeholder {
+    width: 34px; height: 34px; border-radius: 999px; flex: 0 0 auto;
+    background: linear-gradient(135deg, var(--lavender), var(--sky)); display: flex;
+    align-items: center; justify-content: center; font-size: 15px;
+  }
+  .hero h1 { margin: 0; font-size: 25px; letter-spacing: -.02em; font-weight: 700; }
+  .hero .sub { margin: 4px 0 0; color: var(--muted); font-size: 13.5px; }
+
+  .nav-months { display: flex; align-items: center; gap: 10px; }
+  .nav-months a {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px; border-radius: 999px; background: #fff;
+    color: var(--ink); text-decoration: none; font-weight: 900; box-shadow: 0 6px 18px rgba(58,47,42,.14);
+    transition: transform .15s ease, background .15s ease;
+  }
+  .nav-months a:hover { background: var(--lavender); transform: translateY(-2px); }
+
+  .progress-pill {
+    padding: 8px 16px; border-radius: 999px; font-weight: 700; font-size: 14px;
+    background: linear-gradient(135deg, var(--sage), var(--sky)); color: #16342a;
+    box-shadow: 0 3px 0 rgba(201,161,90,.35);
+  }
+
+  .hero-today {
+    border-left: 1px solid var(--line); padding-left: 24px; max-height: 260px; overflow: auto;
+  }
+  .hero-today h2 {
+    margin: 0 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--gold); font-weight: 700;
+  }
+  .today-date { font-size: 16px; font-weight: 700; letter-spacing: -.01em; margin-bottom: 10px; }
+  .today-points {
+    display: inline-block; padding: 6px 12px; border-radius: 999px; font-weight: 700; font-size: 12px;
+    background: linear-gradient(135deg, var(--mint), var(--sky)); color: #0f172a; margin-bottom: 12px;
+  }
+  .today-plan-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; margin: 0 0 6px; }
+  .today-plan-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+  .today-empty { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
+
+  table.cal {
+    width: 100%; border-collapse: collapse; background: rgba(255,255,255,.62);
+    border-radius: 20px; overflow: hidden; box-shadow: 0 18px 48px rgba(58,47,42,.1);
+    border: 1px solid rgba(255,255,255,.55);
+    animation: riseIn .6s ease .05s both;
+  }
+  table.cal th {
+    padding: 11px; font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--gold); border-bottom: 1px solid var(--line); font-weight: 700; background: rgba(255,255,255,.4);
+  }
+  table.cal td {
+    vertical-align: top; border: 1px solid var(--line); padding: 8px; width: 14.28%; height: 132px;
+    transition: box-shadow .15s ease, background .15s ease;
+  }
+  table.cal td:hover { box-shadow: inset 0 0 0 1px rgba(37,99,235,.25); }
+  table.cal td.other-month { background: rgba(58,47,42,.03); }
+  table.cal td:nth-child(6), table.cal td:nth-child(7) { background: rgba(244,211,217,.35); }
+  table.cal td:nth-child(6).other-month, table.cal td:nth-child(7).other-month { background: rgba(244,211,217,.16); }
+  table.cal td.today-cell { background: rgba(191,230,196,.5) !important; animation: todayPulse 2.6s ease-in-out infinite; }
+  .day-num { display: flex; align-items: center; justify-content: space-between; font-weight: 700; margin-bottom: 6px; }
+  .day-add-btn {
+    border: none; background: rgba(37,99,235,.12); color: var(--blue); border-radius: 999px;
+    width: 22px; height: 22px; font-weight: 900; cursor: pointer; line-height: 1;
+    transition: transform .15s ease, background .15s ease;
+  }
+  .day-add-btn:hover { background: var(--blue); color: #fff; transform: scale(1.12) rotate(90deg); }
+  .day-pts { font-size: 11px; color: var(--muted); font-weight: 700; }
+  .day-badges { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
+  .badge-holiday, .badge-birthday {
+    display: flex; align-items: center; gap: 3px; font-size: 9.5px; font-weight: 700; line-height: 1.25;
+    border-radius: 6px; padding: 1px 4px; width: fit-content; max-width: 100%;
+  }
+  .badge-holiday { background: rgba(217,119,6,.14); color: #92400e; }
+  .badge-birthday { background: rgba(219,39,119,.14); color: #9d174d; }
+  .badge-holiday span.label, .badge-birthday span.label {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 88px;
+  }
+  .badge-info {
+    border: none; background: rgba(146,64,14,.18); color: #92400e; border-radius: 999px;
+    width: 13px; height: 13px; font-size: 9px; font-weight: 900; cursor: pointer; line-height: 1;
+    flex: 0 0 auto; padding: 0;
+  }
+  .badge-info:hover { background: var(--gold); color: #fff; }
+  #holidayModal .modal { max-width: 420px; }
+  #holidayModal h2 { margin-bottom: 8px; }
+
+  .entry-row {
+    display: flex; align-items: flex-start; gap: 4px; font-size: 11.5px; margin-bottom: 4px;
+    padding: 3px 5px; border-radius: 10px; background: rgba(255,255,255,.75);
+    transition: background .2s ease, transform .15s ease;
+  }
+  .entry-row:hover { transform: translateX(2px); background: #fff; }
+  .entry-row.completed { background: rgba(191,230,196,.65); text-decoration: line-through; color: var(--muted); }
+  .entry-row input[type="checkbox"] { margin-top: 2px; flex: 0 0 auto; }
+  .entry-row .t { flex: 1; min-width: 0; overflow-wrap: anywhere; padding-top: 1px; }
+  .entry-row .entry-actions { display: flex; flex-direction: column; gap: 1px; flex: 0 0 auto; }
+  .entry-row button { border: none; background: none; cursor: pointer; color: var(--muted); font-size: 10px; line-height: 1; padding: 1px 2px; transition: transform .15s ease, color .15s ease; }
+  .entry-row button:hover { color: var(--ink); transform: scale(1.15); }
+
+  .entry-row.mobile, .entry-row.today-row { align-items: center; }
+  .entry-row.mobile .entry-actions, .entry-row.today-row .entry-actions { flex-direction: row; gap: 4px; }
+  .girl-birthday-hidden-input {
+    position: absolute; width: 1px; height: 1px; opacity: 0; border: none; padding: 0; margin: 0;
+    pointer-events: none;
+  }
+  .entry-row.mobile { font-size: 14.5px; padding: 10px 12px; border-radius: 14px; gap: 8px; margin-bottom: 8px; }
+  .entry-row.mobile button { font-size: 16px; }
+  .entry-row.today-row { font-size: 13px; padding: 7px 8px; border-radius: 12px; margin-bottom: 0; }
+  .entry-row.today-row button { font-size: 13px; }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(58,47,42,.45); display: none;
+    align-items: center; justify-content: center; z-index: 20; padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fffaf5; border-radius: 20px; padding: 24px; width: min(420px, 100%);
+    box-shadow: 0 30px 80px rgba(0,0,0,.25); max-height: 90vh; overflow: auto;
+    animation: popIn .22s ease both;
+  }
+  .modal h2 { margin: 0 0 14px; font-size: 19px; }
+  .modal .help-category {
+    display: inline-block; margin: -8px 0 12px; padding: 4px 11px; border-radius: 999px;
+    background: var(--lavender); color: #3a2f5a; font-size: 12px; font-weight: 700;
+  }
+  .modal .help-tips { margin: 0; padding-left: 20px; display: grid; gap: 8px; font-size: 13.5px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
+  .field select, .field input, .field textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px;
+    font: inherit; font-size: 14px; color: var(--ink); background: #fff;
+  }
+  .field textarea { min-height: 80px; resize: vertical; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+  .btn {
+    border: none; border-radius: 999px; padding: 10px 18px; font-weight: 700; cursor: pointer;
+    font-size: 14px; background: rgba(58,47,42,.08); color: var(--ink);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn.primary { background: linear-gradient(135deg, var(--blue), var(--teal)); color: #fff; }
+  .btn.ghost { background: none; color: var(--muted); }
+  .or-sep { text-align: center; color: var(--muted); font-size: 12px; margin: 10px 0; font-weight: 700; }
+
+  .toast {
+    position: fixed; right: 20px; bottom: 20px; z-index: 30; padding: 12px 18px; border-radius: 14px;
+    background: rgba(58,47,42,.92); color: #fff; opacity: 0; transform: translateY(10px);
+    transition: opacity .2s ease, transform .2s ease; pointer-events: none; font-size: 14px; max-width: 320px;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  .mobile-day { display: none; }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-today { border-left: none; border-top: 1px solid var(--line); padding-left: 0; padding-top: 16px; max-height: none; }
+  }
+
+  @media (max-width: 760px) {
+    table.cal { display: none; }
+    .nav-months { display: none; }
+    .mobile-day { display: block; animation: riseIn .5s ease .05s both; }
+
+    .mobile-week-strip { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+    .week-nav {
+      border: none; background: #fff; width: 36px; height: 36px; border-radius: 999px; font-weight: 900; flex: 0 0 auto;
+      box-shadow: 0 6px 18px rgba(58,47,42,.14); cursor: pointer;
+    }
+    .week-chips { flex: 1; display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; }
+    .day-chip {
+      border: none; border-radius: 14px; padding: 8px 2px; background: rgba(255,255,255,.7); cursor: pointer;
+      font-weight: 700; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+      transition: transform .15s ease, background .15s ease;
+    }
+    .day-chip .num { font-size: 15px; }
+    .day-chip.selected { background: linear-gradient(135deg, var(--blue), var(--teal)); color: #fff; transform: translateY(-2px); }
+    .day-chip.today:not(.selected) { box-shadow: inset 0 0 0 2px rgba(15,118,110,.5); }
+    .day-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--coral); margin-top: 1px; visibility: hidden; }
+    .day-chip.has-entries .dot { visibility: visible; }
+
+    .mobile-day-card {
+      background: rgba(255,255,255,.78); border-radius: 20px; padding: 18px;
+      box-shadow: 0 18px 48px rgba(58,47,42,.1); border: 1px solid rgba(255,255,255,.6);
+    }
+    .mobile-day-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
+    .mobile-day-date { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .day-add-btn.big { width: 40px; height: 40px; font-size: 19px; }
+  }
+</style>
+</head>
+<body>
+  {{ catalog_json|json_script:"catalog-data" }}
+  {{ category_labels_json|json_script:"category-labels-data" }}
+  {{ report_fields_json|json_script:"report-fields-data" }}
+  {{ category_guidance_json|json_script:"category-guidance-data" }}
+  {{ task_guidance_json|json_script:"task-guidance-data" }}
+  {{ holidays_json|json_script:"holidays-data" }}
+  {{ birthdays_json|json_script:"birthdays-data" }}
+
+  <div class="top-actions">
+    <button type="button" class="logout-btn" id="myCardBtn" style="position:relative;">💳 Mi tarjeta<span class="unread-dot hidden" id="myCardDot"></span></button>
+    <button type="button" class="logout-btn" id="logoutBtn">🚪 Salir</button>
+    <button type="button" class="install-btn" id="installBtn">📲 Instalar app</button>
+  </div>
+
+  <main class="page">
+    <a class="back-link" href="/">← Volver al sitio</a>
+
+    <div class="hero">
+      <div class="hero-main">
+        <div class="hero-title-row">
+          <img id="heroAvatar" class="hero-avatar hidden" alt="Foto">
+          <div>
+            <h1>📅 Calendario BE Success</h1>
+            <p class="sub">Planifica tu mes, marca tareas y registra la actividad.</p>
+          </div>
+        </div>
+        <div class="girl-switcher admin-only" id="girlSwitcherWrap">
+          <select id="girlSwitcher"></select>
+          <button type="button" class="btn ghost" id="manageGirlsBtn">👑 Gestionar alumnas</button>
+        </div>
+        <div class="progress-pill" id="monthProgress">0 / 0 pts</div>
+        <div class="nav-months">
+          <a href="?year={{ prev_year }}&month={{ prev_month }}" aria-label="Mes anterior">←</a>
+          <strong>{{ month_name }} {{ year }}</strong>
+          <a href="?year={{ next_year }}&month={{ next_month }}" aria-label="Mes siguiente">→</a>
+        </div>
+      </div>
+
+      <aside class="hero-today">
+        <h2>Hoy</h2>
+        <div class="today-date" id="todayDate">—</div>
+        <div class="today-points" id="todayPoints">0 / 0 pts</div>
+        <p class="today-plan-title">Plan de hoy</p>
+        <div class="today-plan-list" id="todayPlanList"><span class="today-empty">Cargando…</span></div>
+      </aside>
+    </div>
+
+    <table class="cal">
+      <thead>
+        <tr>
+          {% for wd in weekday_names %}<th>{{ wd }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for week in weeks %}
+        <tr>
+          {% for day in week %}
+          <td class="{% if not day.in_month %}other-month{% endif %}{% if day.date|date:'Y-m-d' == today_str %} today-cell{% endif %}" data-date="{{ day.date|date:'Y-m-d' }}">
+            <div class="day-num">
+              <span>{{ day.date|date:'d' }}</span>
+              {% if day.in_month %}<button type="button" class="day-add-btn" data-date="{{ day.date|date:'Y-m-d' }}">+</button>{% endif %}
+            </div>
+            <div class="day-badges" data-badges="{{ day.date|date:'Y-m-d' }}"></div>
+            <div class="day-pts" data-pts="{{ day.date|date:'Y-m-d' }}"></div>
+            <div class="entries" data-entries="{{ day.date|date:'Y-m-d' }}"></div>
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="mobile-day" id="mobileDay">
+      <div class="mobile-week-strip">
+        <button type="button" class="week-nav" id="mobilePrevWeek" aria-label="Semana anterior">‹</button>
+        <div class="week-chips" id="weekChips"></div>
+        <button type="button" class="week-nav" id="mobileNextWeek" aria-label="Semana siguiente">›</button>
+      </div>
+
+      <div class="mobile-day-card">
+        <div class="mobile-day-head">
+          <div>
+            <div class="mobile-day-date" id="mobileDayDate">—</div>
+            <div class="day-badges" id="mobileDayBadges"></div>
+            <div class="today-points" id="mobileDayPoints">0 / 0 pts</div>
+          </div>
+          <button type="button" class="day-add-btn big" id="mobileAddBtn">+</button>
+        </div>
+        <div id="mobileDayEntries"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal: añadir tarea -->
+  <div class="modal-overlay" id="addModal">
+    <div class="modal">
+      <h2>Añadir tarea — <span id="addModalDate"></span></h2>
+      <div class="field">
+        <label>Elegir de la lista</label>
+        <select id="addCatalogSelect"><option value="">— Selecciona una tarea —</option></select>
+      </div>
+      <div class="or-sep">o bien</div>
+      <div class="field">
+        <label>Escribe una tarea nueva</label>
+        <input type="text" id="addCustomTitle" placeholder="Nueva tarea...">
+      </div>
+      <div class="field">
+        <label>Categoría (solo si es nueva)</label>
+        <select id="addCustomCategory"></select>
+      </div>
+      <div class="field">
+        <label>Puntos</label>
+        <input type="number" id="addPoints" value="0" min="0">
+      </div>
+      <div class="modal-actions">
+        <button class="btn ghost" type="button" id="addCancelBtn">Cancelar</button>
+        <button class="btn primary" type="button" id="addSubmitBtn">Añadir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: reportar -->
+  <div class="modal-overlay" id="reportModal">
+    <div class="modal">
+      <h2>Reportar — <span id="reportModalTitle"></span></h2>
+      <div id="reportFields"></div>
+      <div class="modal-actions">
+        <button class="btn ghost" type="button" id="reportCancelBtn">Cancelar</button>
+        <button class="btn primary" type="button" id="reportSubmitBtn">Guardar reporte</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: ayuda -->
+  <div class="modal-overlay" id="helpModal">
+    <div class="modal">
+      <h2 id="helpModalTitle">Tarea</h2>
+      <span class="help-category" id="helpModalCategory"></span>
+      <p id="helpModalDesc"></p>
+      <p class="today-plan-title">Consejos</p>
+      <ul class="help-tips" id="helpModalTips"></ul>
+      <div id="helpModalLinksWrap" style="display:none;">
+        <p class="today-plan-title">Enlaces útiles</p>
+        <ul class="help-tips" id="helpModalLinks"></ul>
+      </div>
+      <div class="modal-actions">
+        <button class="btn primary" type="button" id="helpCloseBtn">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: info de festivo -->
+  <div class="modal-overlay" id="holidayModal">
+    <div class="modal">
+      <h2 id="holidayModalTitle">🎉 Festivo</h2>
+      <p id="holidayModalDesc"></p>
+      <div class="modal-actions">
+        <button class="btn primary" type="button" id="holidayCloseBtn">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: tarjeta personal -->
+  <div class="modal-overlay" id="myCardModal">
+    <div class="modal">
+      <h2 id="myCardTitle">💳 Mi tarjeta</h2>
+
+      <div class="card-section admin-only" id="cardEditFields">
+        <h3>Editar (solo Katerina)</h3>
+        <div class="field"><label>Objetivo del mes</label><input type="text" id="cardGoalInput" placeholder="Ej: conseguir los primeros clientes recurrentes"></div>
+        <div class="field"><label>Objetivo BE (puntos)</label><input type="number" id="cardTargetInput" min="0"></div>
+        <div class="field"><label>Lema del mes</label><input type="text" id="cardMottoInput" placeholder="Ej: la constancia construye la confianza"></div>
+        <button class="btn primary" type="button" id="cardSaveBtn">Guardar</button>
+      </div>
+
+      <div class="card-section" id="cardGoalDisplay" style="display:none;">
+        <h3>Objetivo del mes</h3>
+        <p id="cardGoalText"></p>
+      </div>
+      <div class="card-section" id="cardMottoDisplay" style="display:none;">
+        <h3>Lema del mes</h3>
+        <p id="cardMottoText" style="font-style:italic;"></p>
+      </div>
+
+      <div class="card-section">
+        <h3>Mi progreso</h3>
+        <div class="card-gauge">
+          <div class="card-gauge-ring" id="cardGaugeRing" style="--pct:0%;"><span class="ring-pct" id="cardGaugePct">0%</span></div>
+          <div>
+            <div class="card-gauge-text"><span class="num" id="cardGaugeDone">0</span> / <span id="cardGaugeTarget">600</span> pts</div>
+            <div class="card-gauge-sub" id="cardGaugeSub">¡Cada acción te acerca a tu mejor versión!</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-section">
+        <h3>Nivel BE</h3>
+        <div class="card-levels" id="cardLevels"></div>
+      </div>
+
+      <div class="card-section">
+        <h3>Bonus</h3>
+        <ul class="card-bonus-list" id="cardBonusList"></ul>
+      </div>
+
+      <div class="card-section">
+        <h3>Mi resumen semanal</h3>
+        <div class="card-week-list" id="cardWeekList"></div>
+      </div>
+
+      <div class="card-section">
+        <h3>Mensajes de Katerina</h3>
+        <div class="admin-only" style="display:flex; gap:8px; margin-bottom:10px;">
+          <input type="text" id="cardNewMessage" placeholder="Escribe un mensaje..." style="flex:1; padding:10px 12px; border:1px solid var(--line); border-radius:12px;">
+          <button class="btn primary" type="button" id="cardSendMessageBtn">Enviar</button>
+        </div>
+        <div class="card-messages" id="cardMessages"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn ghost" type="button" id="myCardCloseBtn">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: login -->
+  <div class="modal-overlay open" id="loginModal">
+    <div class="modal">
+      <h2>📅 Calendario BE Success</h2>
+      <div class="login-tabs">
+        <button type="button" class="login-tab active" data-role="girl">Soy una alumna</button>
+        <button type="button" class="login-tab" data-role="admin">Soy Katerina</button>
+      </div>
+      <div id="girlLoginFields">
+        <div class="field"><label>Nombre</label><input type="text" id="loginName" autocomplete="username"></div>
+        <div class="field"><label>Contraseña</label><input type="password" id="loginPasswordGirl" autocomplete="current-password"></div>
+      </div>
+      <div id="adminLoginFields" style="display:none;">
+        <div class="field"><label>Contraseña de administradora</label><input type="password" id="loginPasswordAdmin" autocomplete="current-password"></div>
+      </div>
+      <p class="login-error" id="loginError" style="display:none;"></p>
+      <div class="modal-actions">
+        <button class="btn primary" type="button" id="loginSubmitBtn" style="width:100%;justify-content:center;">Entrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: gestionar alumnas (admin) -->
+  <div class="modal-overlay" id="manageGirlsModal">
+    <div class="modal">
+      <h2>👑 Gestionar alumnas</h2>
+      <div id="girlsList"></div>
+      <p class="today-plan-title" style="margin-top:18px;">Añadir nueva alumna</p>
+      <div class="field"><label>Nombre</label><input type="text" id="newGirlName"></div>
+      <div class="field"><label>Contraseña</label><input type="text" id="newGirlPassword"></div>
+      <div class="modal-actions">
+        <button class="btn ghost" type="button" id="changeAdminPasswordBtn">🔑 Cambiar mi contraseña</button>
+        <button class="btn ghost" type="button" id="manageGirlsCloseBtn">Cerrar</button>
+        <button class="btn primary" type="button" id="newGirlSubmitBtn">Añadir alumna</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Minichat flotante -->
+  <button type="button" class="chat-fab" id="chatFab">💬<span class="unread-dot hidden" id="chatDot"></span></button>
+  <div class="chat-panel" id="chatPanel">
+    <div class="chat-head">
+      <strong id="chatHeadTitle">Chat</strong>
+      <button type="button" id="chatCloseBtn">✕</button>
+    </div>
+    <div class="chat-tabs">
+      <button type="button" class="chat-tab active" id="chatTabPrivate" data-channel="private">🔒 Con Katerina</button>
+      <button type="button" class="chat-tab" id="chatTabGeneral" data-channel="general">🌐 General<span class="unread-dot hidden" id="chatGeneralDot"></span></button>
+    </div>
+    <div class="chat-body" id="chatBody"></div>
+    <div class="chat-emoji-overlay" id="chatEmojiOverlay"></div>
+    <div class="chat-reply-preview" id="chatReplyPreview">
+      <span id="chatReplyText"></span>
+      <button type="button" id="chatReplyCancel">✕</button>
+    </div>
+    <div class="chat-input-row">
+      <input type="text" id="chatInput" placeholder="Escribe un mensaje...">
+      <button type="button" id="chatSendBtn">➤</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  const YEAR = {{ year }};
+  const MONTH = {{ month }};
+  const catalog = JSON.parse(document.getElementById('catalog-data').textContent);
+  const categoryLabels = JSON.parse(document.getElementById('category-labels-data').textContent);
+  const reportFields = JSON.parse(document.getElementById('report-fields-data').textContent);
+  const categoryGuidance = JSON.parse(document.getElementById('category-guidance-data').textContent);
+  const taskGuidance = JSON.parse(document.getElementById('task-guidance-data').textContent);
+  const holidaysData = JSON.parse(document.getElementById('holidays-data').textContent);
+  const birthdaysData = JSON.parse(document.getElementById('birthdays-data').textContent);
+
+  const entriesByDate = {};
+  let currentAddDate = null;
+  let currentReportEntry = null;
+  let selectedDate = new Date();
+
+  let auth = null;
+  let currentGirlId = null;
+  let loginRole = 'girl';
+  const AUTH_KEY = 'beSuccessAuth';
+  const LAST_GIRL_KEY = 'beSuccessLastGirl';
+
+  function loadAuthFromStorage() {
+    try {
+      const raw = localStorage.getItem(AUTH_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.token && parsed.role) return parsed;
+    } catch (e) {}
+    return null;
+  }
+  function saveAuthToStorage(a) { localStorage.setItem(AUTH_KEY, JSON.stringify(a)); }
+  function clearAuthStorage() { localStorage.removeItem(AUTH_KEY); }
+
+  function showLoginModal() { document.getElementById('loginModal').classList.add('open'); }
+  function hideLoginModal() { document.getElementById('loginModal').classList.remove('open'); }
+
+  function handleLoggedOut(message) {
+    clearAuthStorage();
+    auth = null;
+    currentGirlId = null;
+    document.body.classList.remove('role-girl', 'role-admin');
+    document.getElementById('logoutBtn').classList.remove('show');
+    showLoginModal();
+    if (message) toast(message);
+  }
+
+  function apiFetch(url, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({}, opts.headers, auth ? { 'X-Auth-Token': auth.token } : {});
+    return fetch(url, opts).then((r) => {
+      if (r.status === 401) {
+        handleLoggedOut('Sesión caducada, inicia sesión de nuevo.');
+        throw new Error('unauthenticated');
+      }
+      return r;
+    });
+  }
+
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2400);
+  }
+
+  function fmtISO(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+  function startOfWeek(d) { const day = (d.getDay() + 6) % 7; return addDays(d, -day); }
+  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  function populateCatalogSelect() {
+    const sel = document.getElementById('addCatalogSelect');
+    const groups = {};
+    catalog.forEach((item) => {
+      const label = categoryLabels[item.category] || item.category;
+      if (!groups[label]) groups[label] = document.createElement('optgroup');
+      groups[label].label = label;
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = item.title + (item.default_points ? ` (${item.default_points} pts)` : '');
+      opt.dataset.points = item.default_points;
+      groups[label].appendChild(opt);
+    });
+    Object.values(groups).forEach((g) => sel.appendChild(g));
+
+    const catSel = document.getElementById('addCustomCategory');
+    Object.entries(categoryLabels).forEach(([key, label]) => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = label;
+      catSel.appendChild(opt);
+    });
+  }
+
+  function openAddModal(dateStr) {
+    currentAddDate = dateStr;
+    document.getElementById('addModalDate').textContent = dateStr;
+    document.getElementById('addCatalogSelect').value = '';
+    document.getElementById('addCustomTitle').value = '';
+    document.getElementById('addPoints').value = 0;
+    document.getElementById('addModal').classList.add('open');
+  }
+  function closeAddModal() { document.getElementById('addModal').classList.remove('open'); currentAddDate = null; }
+
+  document.getElementById('addCatalogSelect').addEventListener('change', (e) => {
+    const opt = e.target.selectedOptions[0];
+    if (opt && opt.dataset.points !== undefined) {
+      document.getElementById('addPoints').value = opt.dataset.points;
+    }
+  });
+
+  document.querySelectorAll('.day-add-btn:not(#mobileAddBtn)').forEach((btn) => {
+    btn.addEventListener('click', () => openAddModal(btn.dataset.date));
+  });
+  document.getElementById('mobileAddBtn').addEventListener('click', () => openAddModal(fmtISO(selectedDate)));
+  document.getElementById('addCancelBtn').addEventListener('click', closeAddModal);
+
+  document.getElementById('addSubmitBtn').addEventListener('click', () => {
+    const catalogId = document.getElementById('addCatalogSelect').value;
+    const customTitle = document.getElementById('addCustomTitle').value.trim();
+    const category = document.getElementById('addCustomCategory').value;
+    const points = parseInt(document.getElementById('addPoints').value || '0', 10);
+
+    if (!catalogId && !customTitle) { toast('Selecciona o escribe una tarea.'); return; }
+
+    apiFetch('{% url "planner_api_entry_add" %}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        girl_id: currentGirlId,
+        date: currentAddDate,
+        catalog_item_id: catalogId || null,
+        custom_title: catalogId ? '' : customTitle,
+        category: category,
+        points: points,
+      }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.ok) { closeAddModal(); refreshAll(); }
+        else toast(data.error || 'No se pudo añadir.');
+      })
+      .catch(() => toast('Error de red.'));
+  });
+
+  function openHelpModal(entry) {
+    const catFallback = categoryGuidance[entry.category] || { label: entry.category || 'Sin categoría', description: 'Sin guía disponible para esta categoría.', tips: [] };
+    const specific = taskGuidance[entry.title];
+    const g = specific || catFallback;
+    document.getElementById('helpModalTitle').textContent = entry.title;
+    document.getElementById('helpModalCategory').textContent = catFallback.label;
+    document.getElementById('helpModalDesc').textContent = g.description;
+    const tipsEl = document.getElementById('helpModalTips');
+    tipsEl.innerHTML = '';
+    (g.tips || []).forEach((t) => { const li = document.createElement('li'); li.textContent = t; tipsEl.appendChild(li); });
+    const linksWrap = document.getElementById('helpModalLinksWrap');
+    const linksEl = document.getElementById('helpModalLinks');
+    linksEl.innerHTML = '';
+    const links = g.links || [];
+    linksWrap.style.display = links.length ? '' : 'none';
+    links.forEach((l) => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = l.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = l.label;
+      li.appendChild(a);
+      linksEl.appendChild(li);
+    });
+    document.getElementById('helpModal').classList.add('open');
+  }
+  document.getElementById('helpCloseBtn').addEventListener('click', () => document.getElementById('helpModal').classList.remove('open'));
+
+  // ── Festivos vascos y cumpleaños en la cuadrícula del calendario ──
+  function openHolidayModal(mmdd) {
+    const h = holidaysData[mmdd];
+    if (!h) return;
+    document.getElementById('holidayModalTitle').textContent = '🎉 ' + h.name;
+    document.getElementById('holidayModalDesc').textContent = h.desc;
+    document.getElementById('holidayModal').classList.add('open');
+  }
+  document.getElementById('holidayCloseBtn').addEventListener('click', () => document.getElementById('holidayModal').classList.remove('open'));
+
+  function renderSpecialBadges() {
+    document.querySelectorAll('[data-badges]').forEach((el) => {
+      const dateStr = el.dataset.badges;
+      const mmdd = dateStr.slice(5);
+      el.innerHTML = '';
+      const holiday = holidaysData[mmdd];
+      if (holiday) {
+        const badge = document.createElement('div');
+        badge.className = 'badge-holiday';
+        const label = document.createElement('span');
+        label.className = 'label'; label.textContent = '🎉 ' + holiday.name;
+        const info = document.createElement('button');
+        info.type = 'button'; info.className = 'badge-info'; info.textContent = '?';
+        info.title = 'Sobre este festivo';
+        info.addEventListener('click', (ev) => { ev.stopPropagation(); openHolidayModal(mmdd); });
+        badge.append(label, info);
+        el.appendChild(badge);
+      }
+      const names = birthdaysData[mmdd];
+      if (names && names.length) {
+        names.forEach((name) => {
+          const badge = document.createElement('div');
+          badge.className = 'badge-birthday';
+          badge.innerHTML = `<span class="label">🎂 ${name}</span>`;
+          el.appendChild(badge);
+        });
+      }
+    });
+  }
+
+  function createEntryRow(entry, variant) {
+    const row = document.createElement('div');
+    row.className = 'entry-row' + (variant ? ' ' + variant : '') + (entry.completed ? ' completed' : '');
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = entry.completed;
+    cb.addEventListener('change', () => {
+      apiFetch(`/calendario/api/entries/${entry.id}/toggle/`, { method: 'POST' })
+        .then((r) => r.json()).then(() => refreshAll()).catch(() => {});
+    });
+
+    const span = document.createElement('span');
+    span.className = 't';
+    span.textContent = entry.title;
+
+    const helpBtn = document.createElement('button');
+    helpBtn.type = 'button'; helpBtn.title = 'Ayuda'; helpBtn.textContent = '❓';
+    helpBtn.addEventListener('click', () => openHelpModal(entry));
+
+    const reportBtn = document.createElement('button');
+    reportBtn.type = 'button'; reportBtn.title = 'Reportar'; reportBtn.textContent = '📋';
+    reportBtn.addEventListener('click', () => openReportModal(entry));
+
+    const actions = document.createElement('div');
+    actions.className = 'entry-actions';
+    actions.append(helpBtn, reportBtn);
+
+    if (auth && auth.role === 'admin') {
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button'; delBtn.title = 'Eliminar'; delBtn.textContent = '✕';
+      delBtn.addEventListener('click', () => {
+        if (!confirm('¿Eliminar esta tarea del día?')) return;
+        apiFetch(`/calendario/api/entries/${entry.id}/delete/`, { method: 'POST' })
+          .then((r) => r.json()).then(() => refreshAll()).catch(() => {});
+      });
+      actions.appendChild(delBtn);
+    }
+
+    row.append(cb, span, actions);
+    return row;
+  }
+
+  function renderEntries() {
+    document.querySelectorAll('[data-entries]').forEach((el) => { el.innerHTML = ''; });
+    document.querySelectorAll('[data-pts]').forEach((el) => { el.textContent = ''; });
+
+    let monthDone = 0, monthTotal = 0;
+
+    Object.keys(entriesByDate).forEach((dateStr) => {
+      const list = entriesByDate[dateStr];
+      const container = document.querySelector(`[data-entries="${dateStr}"]`);
+      const ptsEl = document.querySelector(`[data-pts="${dateStr}"]`);
+      if (!container) return;
+
+      let dayDone = 0, dayTotal = 0;
+      list.forEach((entry) => {
+        dayTotal += entry.points; monthTotal += entry.points;
+        if (entry.completed) { dayDone += entry.points; monthDone += entry.points; }
+        container.appendChild(createEntryRow(entry, ''));
+      });
+      if (ptsEl && dayTotal) ptsEl.textContent = `${dayDone}/${dayTotal} pts`;
+    });
+
+    document.getElementById('monthProgress').textContent = `${monthDone} / ${monthTotal} pts`;
+  }
+
+  function loadEntries() {
+    return apiFetch(`/calendario/api/entries/?year=${YEAR}&month=${MONTH}&girl_id=${currentGirlId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        Object.keys(entriesByDate).forEach((k) => delete entriesByDate[k]);
+        data.entries.forEach((e) => {
+          if (!entriesByDate[e.date]) entriesByDate[e.date] = [];
+          entriesByDate[e.date].push(e);
+        });
+        renderEntries();
+      })
+      .catch(() => toast('No se pudieron cargar las tareas.'));
+  }
+
+  function openReportModal(entry) {
+    currentReportEntry = entry.id;
+    document.getElementById('reportModalTitle').textContent = entry.title;
+
+    apiFetch(`/calendario/api/entries/${entry.id}/report/`)
+      .then((r) => r.json())
+      .then((data) => {
+        const fields = data.fields || [];
+        const container = document.getElementById('reportFields');
+        container.innerHTML = '';
+        if (!fields.length) {
+          container.innerHTML = '<p style="color:#8a7d74">Sin campos de reporte para esta categoría.</p>';
+        }
+        fields.forEach((f) => {
+          const [key, label, type, options] = f;
+          const wrap = document.createElement('div');
+          wrap.className = 'field';
+          const val = (data.data && data.data[key]) || '';
+          if (type === 'textarea') {
+            wrap.innerHTML = `<label>${label}</label><textarea data-field="${key}">${val}</textarea>`;
+          } else if (type === 'select') {
+            const opts = (options || []).map((o) => `<option value="${o}" ${o === val ? 'selected' : ''}>${o}</option>`).join('');
+            wrap.innerHTML = `<label>${label}</label><select data-field="${key}"><option value="">—</option>${opts}</select>`;
+          } else {
+            wrap.innerHTML = `<label>${label}</label><input type="${type}" data-field="${key}" value="${val}">`;
+          }
+          container.appendChild(wrap);
+        });
+        document.getElementById('reportModal').classList.add('open');
+      })
+      .catch(() => toast('No se pudo cargar el reporte.'));
+  }
+  function closeReportModal() { document.getElementById('reportModal').classList.remove('open'); currentReportEntry = null; }
+
+  document.getElementById('reportCancelBtn').addEventListener('click', closeReportModal);
+  document.getElementById('reportSubmitBtn').addEventListener('click', () => {
+    if (!currentReportEntry) return;
+    const data = {};
+    document.querySelectorAll('#reportFields [data-field]').forEach((el) => { data[el.dataset.field] = el.value; });
+    apiFetch(`/calendario/api/entries/${currentReportEntry}/report/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data }),
+    })
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.ok) { toast('Reporte guardado.'); closeReportModal(); refreshAll(); }
+        else toast('No se pudo guardar.');
+      })
+      .catch(() => toast('Error de red.'));
+  });
+
+  function loadToday() {
+    const now = new Date();
+    const todayStr = fmtISO(now);
+    document.getElementById('todayDate').textContent = capitalize(
+      new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(now)
+    );
+
+    apiFetch(`/calendario/api/entries/?year=${now.getFullYear()}&month=${now.getMonth() + 1}&girl_id=${currentGirlId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const todays = data.entries.filter((e) => e.date === todayStr);
+        const list = document.getElementById('todayPlanList');
+        list.innerHTML = '';
+
+        if (!todays.length) {
+          list.innerHTML = '<span class="today-empty">Sin tareas planificadas para hoy.</span>';
+        } else {
+          todays.forEach((e) => list.appendChild(createEntryRow(e, 'today-row')));
+        }
+
+        const done = todays.filter((e) => e.completed).reduce((s, e) => s + e.points, 0);
+        const total = todays.reduce((s, e) => s + e.points, 0);
+        document.getElementById('todayPoints').textContent = `${done} / ${total} pts hoy`;
+      })
+      .catch(() => {
+        document.getElementById('todayPlanList').innerHTML = '<span class="today-empty">No se pudo cargar.</span>';
+      });
+  }
+
+  // ── Vista móvil: un día grande + tira de la semana ──
+  function renderMobileWeekStrip() {
+    const weekStart = startOfWeek(selectedDate);
+    const chipsEl = document.getElementById('weekChips');
+    chipsEl.innerHTML = '';
+    const todayStr = fmtISO(new Date());
+    const selStr = fmtISO(selectedDate);
+    const dayLetters = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(weekStart, i);
+      const dStr = fmtISO(d);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.dataset.date = dStr;
+      btn.className = 'day-chip' + (dStr === selStr ? ' selected' : '') + (dStr === todayStr ? ' today' : '');
+      btn.innerHTML = `<span>${dayLetters[i]}</span><span class="num">${d.getDate()}</span><span class="dot"></span>`;
+      btn.addEventListener('click', () => { selectedDate = d; renderMobileView(); });
+      chipsEl.appendChild(btn);
+    }
+  }
+
+  function renderMobileDayCard(entries) {
+    const dStr = fmtISO(selectedDate);
+    document.getElementById('mobileDayDate').textContent = capitalize(
+      new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(selectedDate)
+    );
+    const mobileBadgesEl = document.getElementById('mobileDayBadges');
+    mobileBadgesEl.dataset.badges = dStr;
+    renderSpecialBadges();
+
+    const todays = entries.filter((e) => e.date === dStr);
+    const done = todays.filter((e) => e.completed).reduce((s, e) => s + e.points, 0);
+    const total = todays.reduce((s, e) => s + e.points, 0);
+    document.getElementById('mobileDayPoints').textContent = `${done} / ${total} pts`;
+
+    const container = document.getElementById('mobileDayEntries');
+    container.innerHTML = '';
+    if (!todays.length) {
+      container.innerHTML = '<p class="today-empty">Sin tareas para este día.</p>';
+    } else {
+      todays.forEach((entry) => container.appendChild(createEntryRow(entry, 'mobile')));
+    }
+  }
+
+  function renderMobileView() {
+    renderMobileWeekStrip();
+    const y = selectedDate.getFullYear(), m = selectedDate.getMonth() + 1;
+    apiFetch(`/calendario/api/entries/?year=${y}&month=${m}&girl_id=${currentGirlId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const byDate = {};
+        data.entries.forEach((e) => { (byDate[e.date] = byDate[e.date] || []).push(e); });
+        document.querySelectorAll('.day-chip').forEach((chip) => {
+          if (byDate[chip.dataset.date] && byDate[chip.dataset.date].length) chip.classList.add('has-entries');
+        });
+        renderMobileDayCard(data.entries);
+      })
+      .catch(() => toast('No se pudieron cargar las tareas.'));
+  }
+
+  document.getElementById('mobilePrevWeek').addEventListener('click', () => { selectedDate = addDays(selectedDate, -7); renderMobileView(); });
+  document.getElementById('mobileNextWeek').addEventListener('click', () => { selectedDate = addDays(selectedDate, 7); renderMobileView(); });
+
+  function refreshAll() {
+    loadEntries();
+    loadToday();
+    renderMobileView();
+    refreshUnreadBadge();
+    refreshChatBadge();
+  }
+
+  // ── Tarjeta personal (objetivo, progreso, nivel, bonus, semanal, mensajes) ──
+  function refreshUnreadBadge() {
+    if (!currentGirlId) return;
+    apiFetch(`/calendario/api/profile/?year=${YEAR}&month=${MONTH}&girl_id=${currentGirlId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.ok) return;
+        document.getElementById('myCardDot').classList.toggle('hidden', !data.unread_count);
+      })
+      .catch(() => {});
+  }
+
+  function animateNumber(el, from, to, duration, fmt) {
+    const start = performance.now();
+    function tick(now) {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const val = Math.round(from + (to - from) * eased);
+      el.textContent = fmt ? fmt(val) : val;
+      if (t < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function staggerSections() {
+    document.querySelectorAll('#myCardModal .card-section').forEach((el, i) => {
+      el.style.animationDelay = (i * 70) + 'ms';
+    });
+  }
+
+  function renderCardProfile(data) {
+    const isAdmin = auth && auth.role === 'admin';
+    document.getElementById('cardGoalInput').value = data.monthly_goal || '';
+    document.getElementById('cardTargetInput').value = data.points_target || 0;
+    document.getElementById('cardMottoInput').value = data.motto || '';
+
+    document.getElementById('cardGoalDisplay').style.display = (!isAdmin && data.monthly_goal) ? 'block' : 'none';
+    document.getElementById('cardGoalText').textContent = data.monthly_goal || '';
+    document.getElementById('cardMottoDisplay').style.display = (!isAdmin && data.motto) ? 'block' : 'none';
+    document.getElementById('cardMottoText').textContent = data.motto ? `"${data.motto}"` : '';
+
+    const target = data.points_target || 1;
+    const pct = Math.min(100, Math.round((data.month_done / target) * 100));
+    const ring = document.getElementById('cardGaugeRing');
+    ring.style.setProperty('--pct', '0%');
+    document.getElementById('cardGaugeTarget').textContent = data.points_target;
+    requestAnimationFrame(() => {
+      // pequeño delay para que la transición de --pct se note al abrir la tarjeta
+      let start = null;
+      const duration = 1200;
+      function tickPct(now) {
+        if (!start) start = now;
+        const t = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - t, 3);
+        ring.style.setProperty('--pct', (pct * eased).toFixed(1) + '%');
+        document.getElementById('cardGaugePct').textContent = Math.round(pct * eased) + '%';
+        if (t < 1) requestAnimationFrame(tickPct);
+      }
+      requestAnimationFrame(tickPct);
+    });
+    animateNumber(document.getElementById('cardGaugeDone'), 0, data.month_done, 1200);
+    const subEl = document.getElementById('cardGaugeSub');
+    subEl.textContent = pct >= 100 ? '¡Objetivo del mes conseguido! 🎉' : '¡Cada acción te acerca a tu mejor versión!';
+
+    const levelsEl = document.getElementById('cardLevels');
+    levelsEl.innerHTML = '';
+    (data.levels || []).forEach((lvl, i) => {
+      const chip = document.createElement('span');
+      const reached = data.month_done >= lvl.points;
+      chip.className = 'card-level-chip' + (reached ? ` reached lvl-${i}` : '');
+      chip.style.animationDelay = (i * 90) + 'ms';
+      chip.textContent = `${lvl.points} ${lvl.label}`;
+      levelsEl.appendChild(chip);
+    });
+
+    const bonusEl = document.getElementById('cardBonusList');
+    bonusEl.innerHTML = '';
+    (data.bonus_rules || []).forEach((b, i) => {
+      const li = document.createElement('li');
+      li.style.animationDelay = (i * 60) + 'ms';
+      li.innerHTML = `<span>${b.text}</span><strong>+${b.points} pts</strong>`;
+      bonusEl.appendChild(li);
+    });
+
+    const weekEl = document.getElementById('cardWeekList');
+    weekEl.innerHTML = '';
+    if (!data.weekly || !data.weekly.length) {
+      weekEl.innerHTML = '<p class="card-empty">Sin datos todavía este mes.</p>';
+    } else {
+      data.weekly.forEach((w, i) => {
+        const wpct = w.total ? Math.min(100, Math.round((w.done / w.total) * 100)) : 0;
+        const row = document.createElement('div');
+        row.className = 'card-week-row';
+        row.style.animationDelay = (i * 80) + 'ms';
+        row.innerHTML = `
+          <div class="week-top"><span>Semana ${w.week}</span><strong>${w.done} / ${w.total} pts</strong></div>
+          <div class="card-week-bar"><div class="card-week-bar-fill" style="width:${wpct}%; animation-delay:${i * 80 + 200}ms;"></div></div>
+        `;
+        weekEl.appendChild(row);
+      });
+    }
+
+    const msgEl = document.getElementById('cardMessages');
+    msgEl.innerHTML = '';
+    if (!data.messages || !data.messages.length) {
+      msgEl.innerHTML = '<p class="card-empty">Sin mensajes todavía.</p>';
+    } else {
+      data.messages.forEach((m, i) => {
+        const div = document.createElement('div');
+        div.className = 'card-message' + (!m.read ? ' unread' : '');
+        div.style.animationDelay = (i * 70) + 'ms';
+        const when = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(m.created_at));
+        div.innerHTML = `${m.text}<span class="meta">${when}</span>`;
+        msgEl.appendChild(div);
+      });
+    }
+
+    staggerSections();
+  }
+
+  function openMyCard() {
+    if (!currentGirlId) return;
+    const g = girlsCache.find((x) => x.id === currentGirlId);
+    document.getElementById('myCardTitle').textContent = '💳 Tarjeta de ' + (auth.role === 'girl' ? auth.name : (g ? g.name : ''));
+    apiFetch(`/calendario/api/profile/?year=${YEAR}&month=${MONTH}&girl_id=${currentGirlId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.ok) { toast('No se pudo cargar la tarjeta.'); return; }
+        renderCardProfile(data);
+        document.getElementById('myCardModal').classList.add('open');
+        apiFetch('{% url "planner_api_girl_messages_read" %}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ girl_id: currentGirlId }),
+        }).then(() => document.getElementById('myCardDot').classList.add('hidden'));
+      })
+      .catch(() => toast('Error de red.'));
+  }
+
+  document.getElementById('myCardBtn').addEventListener('click', openMyCard);
+  document.getElementById('myCardCloseBtn').addEventListener('click', () => document.getElementById('myCardModal').classList.remove('open'));
+
+  document.getElementById('cardSaveBtn').addEventListener('click', () => {
+    if (!currentGirlId) return;
+    apiFetch(`/calendario/api/girls/${currentGirlId}/profile/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        monthly_goal: document.getElementById('cardGoalInput').value,
+        points_target: parseInt(document.getElementById('cardTargetInput').value || '0', 10),
+        motto: document.getElementById('cardMottoInput').value,
+      }),
+    })
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.ok) { toast('Tarjeta actualizada.'); openMyCard(); }
+        else toast(res.error || 'No se pudo guardar.');
+      })
+      .catch(() => toast('Error de red.'));
+  });
+
+  document.getElementById('cardSendMessageBtn').addEventListener('click', () => {
+    if (!currentGirlId) return;
+    const input = document.getElementById('cardNewMessage');
+    const text = input.value.trim();
+    if (!text) return;
+    apiFetch(`/calendario/api/girls/${currentGirlId}/messages/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    })
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.ok) { input.value = ''; toast('Mensaje enviado.'); openMyCard(); }
+        else toast(res.error || 'No se pudo enviar.');
+      })
+      .catch(() => toast('Error de red.'));
+  });
+
+  // ── Minichat flotante: dos canales (privado con Katerina / general con todas) ──
+  const EMOJIS = [
+    '👍', '👎', '❤️', '🔥', '🎉', '👏', '🙌', '🤔', '😂', '😮', '😢', '😭',
+    '😡', '😍', '🥳', '💪', '✨', '🙏', '😊', '😎', '🤩', '🤗', '👌', '✅',
+    '❌', '⭐', '💯', '🙈', '🌟', '🎯', '📌', '💡', '🍀', '🌈', '😅', '🥰',
+  ];
+  let chatReplyTo = null;
+  let chatPollTimer = null;
+  let activeChatChannel = 'private';
+  let lastRenderedChannel = null;
+  const chatSignatures = { private: null, general: null };
+  let reactionTargetId = null;
+  let reactionTargetChannel = null;
+
+  function chatChannelConfig(channel) {
+    if (channel === 'general') {
+      return {
+        list: '/calendario/api/general-chat/',
+        send: '{% url "planner_api_general_chat_send" %}',
+        react: (id) => `/calendario/api/general-chat/${id}/react/`,
+        read: '{% url "planner_api_general_chat_read" %}',
+        readBody: {},
+      };
+    }
+    return {
+      list: `/calendario/api/chat/?girl_id=${currentGirlId}`,
+      send: '{% url "planner_api_chat_send" %}',
+      react: (id) => `/calendario/api/chat/${id}/react/`,
+      read: '{% url "planner_api_chat_read" %}',
+      readBody: { girl_id: currentGirlId },
+    };
+  }
+
+  function refreshChatBadge() {
+    if (!currentGirlId) return;
+    apiFetch(chatChannelConfig('private').list)
+      .then((r) => r.json())
+      .then((data) => { if (data.ok) document.getElementById('chatDot').classList.toggle('hidden', !data.unread_count); })
+      .catch(() => {});
+    apiFetch(chatChannelConfig('general').list)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.ok) return;
+        document.getElementById('chatGeneralDot').classList.toggle('hidden', !data.unread_count);
+        if (data.unread_count) document.getElementById('chatDot').classList.remove('hidden');
+      })
+      .catch(() => {});
+  }
+
+  function closeEmojiPickers() {
+    document.getElementById('chatEmojiOverlay').classList.remove('show');
+    reactionTargetId = null;
+    reactionTargetChannel = null;
+  }
+
+  function openEmojiOverlay(channel, messageId) {
+    reactionTargetId = messageId;
+    reactionTargetChannel = channel;
+    const overlay = document.getElementById('chatEmojiOverlay');
+    overlay.innerHTML = '';
+    EMOJIS.forEach((emoji) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = emoji;
+      b.addEventListener('click', (e2) => {
+        e2.stopPropagation();
+        apiFetch(chatChannelConfig(reactionTargetChannel).react(reactionTargetId), {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emoji }),
+        }).then(() => {
+          const ch = reactionTargetChannel;
+          closeEmojiPickers();
+          chatSignatures[ch] = null;
+          loadChat();
+        }).catch(() => toast('Error de red.'));
+      });
+      overlay.appendChild(b);
+    });
+    overlay.classList.add('show');
+  }
+
+  function chatSignature(messages) {
+    return messages.map((m) => `${m.id}:${m.reaction}`).join('|');
+  }
+
+  function renderChatMessages(messages, channel) {
+    const sig = chatSignature(messages);
+    const forceRender = channel !== lastRenderedChannel;
+    if (!forceRender && chatSignatures[channel] === sig) return; // nada cambió: no re-pintar (evita el parpadeo)
+    chatSignatures[channel] = sig;
+    lastRenderedChannel = channel;
+
+    const body = document.getElementById('chatBody');
+    body.innerHTML = '';
+    if (!messages.length) {
+      body.innerHTML = '<p class="chat-empty">Todavía no hay mensajes.<br>¡Escribe el primero! 👋</p>';
+      return;
+    }
+    const myRole = auth.role === 'admin' ? 'admin' : 'girl';
+    messages.forEach((m, i) => {
+      const mine = channel === 'general' ? m.mine : (m.sender === myRole);
+      const row = document.createElement('div');
+      row.className = 'chat-bubble-row ' + (mine ? 'mine' : 'theirs');
+
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-bubble';
+      bubble.style.animationDelay = (i % 14 * 25) + 'ms';
+      if (channel === 'general' && !mine) {
+        const label = document.createElement('div');
+        label.className = 'chat-sender-name';
+        label.textContent = m.sender_name;
+        bubble.appendChild(label);
+      }
+      if (m.reply_to_text) {
+        const quote = document.createElement('div');
+        quote.className = 'chat-reply-quote';
+        quote.textContent = (m.reply_to_name ? m.reply_to_name + ': ' : '') + m.reply_to_text.slice(0, 60);
+        bubble.appendChild(quote);
+      }
+      const textSpan = document.createElement('span');
+      textSpan.textContent = m.text;
+      bubble.appendChild(textSpan);
+      row.appendChild(bubble);
+
+      if (m.reaction) {
+        const reactBadge = document.createElement('span');
+        reactBadge.className = 'chat-reaction-badge';
+        reactBadge.textContent = m.reaction;
+        bubble.appendChild(reactBadge);
+      }
+
+      const meta = document.createElement('div');
+      meta.className = 'chat-meta';
+      const when = new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' }).format(new Date(m.created_at));
+      const timeSpan = document.createElement('span');
+      timeSpan.textContent = when;
+      const replyBtn = document.createElement('button');
+      replyBtn.type = 'button'; replyBtn.textContent = '↩ Responder';
+      replyBtn.addEventListener('click', () => {
+        chatReplyTo = m.id;
+        document.getElementById('chatReplyText').textContent = '↩ ' + m.text.slice(0, 50);
+        document.getElementById('chatReplyPreview').classList.add('show');
+        document.getElementById('chatInput').focus();
+      });
+      const reactBtn = document.createElement('button');
+      reactBtn.type = 'button'; reactBtn.textContent = '😊 Reaccionar';
+      reactBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if (reactionTargetId === m.id) { closeEmojiPickers(); return; }
+        openEmojiOverlay(channel, m.id);
+      });
+      meta.append(timeSpan, replyBtn, reactBtn);
+      row.appendChild(meta);
+      body.appendChild(row);
+    });
+    body.scrollTop = body.scrollHeight;
+  }
+
+  function loadChat() {
+    if (!currentGirlId) return;
+    const channel = activeChatChannel;
+    apiFetch(chatChannelConfig(channel).list)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.ok || activeChatChannel !== channel) return;
+        renderChatMessages(data.messages, channel);
+      })
+      .catch(() => {});
+  }
+
+  function markChatChannelRead(channel) {
+    const cfg = chatChannelConfig(channel);
+    apiFetch(cfg.read, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cfg.readBody),
+    }).catch(() => {});
+    if (channel === 'general') document.getElementById('chatGeneralDot').classList.add('hidden');
+    else document.getElementById('chatDot').classList.add('hidden');
+  }
+
+  function updateChatHeader() {
+    const g = girlsCache.find((x) => x.id === currentGirlId);
+    const otherName = auth.role === 'admin' ? (g ? g.name : 'alumna') : 'Katerina';
+    document.getElementById('chatTabPrivate').textContent = auth.role === 'admin' ? ('🔒 Con ' + otherName) : '🔒 Con Katerina';
+    document.getElementById('chatHeadTitle').textContent = activeChatChannel === 'general' ? '💬 Chat general' : '💬 Chat con ' + otherName;
+  }
+
+  function switchChatChannel(channel) {
+    activeChatChannel = channel;
+    closeEmojiPickers();
+    document.getElementById('chatTabPrivate').classList.toggle('active', channel === 'private');
+    document.getElementById('chatTabGeneral').classList.toggle('active', channel === 'general');
+    chatReplyTo = null;
+    document.getElementById('chatReplyPreview').classList.remove('show');
+    updateChatHeader();
+    loadChat();
+    markChatChannelRead(channel);
+  }
+
+  document.getElementById('chatTabPrivate').addEventListener('click', () => switchChatChannel('private'));
+  document.getElementById('chatTabGeneral').addEventListener('click', () => switchChatChannel('general'));
+
+  function openChatPanel() {
+    if (!currentGirlId) return;
+    document.getElementById('chatPanel').classList.add('open');
+    lastRenderedChannel = null;
+    switchChatChannel(activeChatChannel);
+    if (chatPollTimer) clearInterval(chatPollTimer);
+    chatPollTimer = setInterval(loadChat, 6000);
+  }
+  function closeChatPanel() {
+    document.getElementById('chatPanel').classList.remove('open');
+    closeEmojiPickers();
+    if (chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; }
+  }
+
+  document.getElementById('chatFab').addEventListener('click', () => {
+    const panel = document.getElementById('chatPanel');
+    if (panel.classList.contains('open')) closeChatPanel();
+    else openChatPanel();
+  });
+  document.getElementById('chatCloseBtn').addEventListener('click', closeChatPanel);
+  document.getElementById('chatReplyCancel').addEventListener('click', () => {
+    chatReplyTo = null;
+    document.getElementById('chatReplyPreview').classList.remove('show');
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.chat-emoji-overlay') && !e.target.closest('.chat-meta button')) closeEmojiPickers();
+  });
+
+  function sendChatMessage() {
+    if (!currentGirlId) return;
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if (!text) return;
+    const channel = activeChatChannel;
+    const payload = Object.assign({ text }, chatChannelConfig(channel).readBody);
+    if (chatReplyTo) payload.reply_to = chatReplyTo;
+    apiFetch(chatChannelConfig(channel).send, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.ok) {
+          input.value = '';
+          chatReplyTo = null;
+          document.getElementById('chatReplyPreview').classList.remove('show');
+          chatSignatures[channel] = null;
+          loadChat();
+        } else toast(res.error || 'No se pudo enviar.');
+      })
+      .catch(() => toast('Error de red.'));
+  }
+  document.getElementById('chatSendBtn').addEventListener('click', sendChatMessage);
+  document.getElementById('chatInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') sendChatMessage();
+  });
+
+  // ── Instalación como app (PWA) ──
+  const installBtn = document.getElementById('installBtn');
+  let deferredPrompt = null;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (!isStandalone) installBtn.classList.add('show');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.classList.add('show');
+  });
+  installBtn.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      installBtn.classList.remove('show');
+    } else if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+      toast('En iPhone: toca Compartir → "Añadir a pantalla de inicio".');
+    } else {
+      toast('Busca "Instalar app" en el menú de tu navegador.');
+    }
+  });
+  window.addEventListener('appinstalled', () => installBtn.classList.remove('show'));
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('{% url "planner_sw" %}').catch(() => {});
+  }
+
+  // ── Login ──
+  document.querySelectorAll('.login-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      loginRole = tab.dataset.role;
+      document.querySelectorAll('.login-tab').forEach((t) => t.classList.toggle('active', t === tab));
+      document.getElementById('girlLoginFields').style.display = loginRole === 'girl' ? 'block' : 'none';
+      document.getElementById('adminLoginFields').style.display = loginRole === 'admin' ? 'block' : 'none';
+    });
+  });
+
+  function setHeroAvatar(url) {
+    const img = document.getElementById('heroAvatar');
+    if (url) { img.src = url; img.classList.remove('hidden'); }
+    else { img.src = ''; img.classList.add('hidden'); }
+  }
+
+  let girlsCache = [];
+
+  function onLoginSuccess() {
+    hideLoginModal();
+    document.getElementById('logoutBtn').classList.add('show');
+    document.getElementById('myCardBtn').classList.add('show');
+    document.getElementById('chatFab').classList.add('show');
+    document.body.classList.toggle('role-girl', auth.role === 'girl');
+    document.body.classList.toggle('role-admin', auth.role === 'admin');
+    if (auth.role === 'girl') {
+      currentGirlId = auth.girlId;
+      setHeroAvatar(auth.avatarUrl);
+      startApp();
+    } else {
+      loadGirlsForAdmin();
+    }
+  }
+
+  document.getElementById('loginSubmitBtn').addEventListener('click', () => {
+    const errEl = document.getElementById('loginError');
+    errEl.style.display = 'none';
+    const payload = { role: loginRole };
+    if (loginRole === 'admin') {
+      payload.password = document.getElementById('loginPasswordAdmin').value;
+    } else {
+      payload.name = document.getElementById('loginName').value.trim();
+      payload.password = document.getElementById('loginPasswordGirl').value;
+    }
+    fetch('{% url "planner_api_login" %}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.ok) { errEl.textContent = data.error || 'Error al iniciar sesión.'; errEl.style.display = 'block'; return; }
+        auth = { role: data.role, token: data.token, girlId: data.girl_id || null, name: data.name, avatarUrl: data.avatar_url || null };
+        saveAuthToStorage(auth);
+        onLoginSuccess();
+      })
+      .catch(() => { errEl.textContent = 'Error de red.'; errEl.style.display = 'block'; });
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', () => handleLoggedOut());
+
+  // ── Panel de administradora: alumnas ──
+  function renderGirlsManageList(girls) {
+    const wrap = document.getElementById('girlsList');
+    wrap.innerHTML = '';
+    girls.forEach((g) => {
+      const row = document.createElement('div');
+      row.className = 'entry-row today-row';
+
+      let avatarEl;
+      if (g.avatar_url) {
+        avatarEl = document.createElement('img');
+        avatarEl.className = 'girl-avatar-thumb';
+        avatarEl.src = g.avatar_url;
+        avatarEl.alt = g.name;
+      } else {
+        avatarEl = document.createElement('div');
+        avatarEl.className = 'girl-avatar-placeholder';
+        avatarEl.textContent = '🧑';
+      }
+
+      const span = document.createElement('span');
+      span.className = 't';
+      span.textContent = g.name;
+
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'image/*';
+      fileInput.style.display = 'none';
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('avatar', file);
+        apiFetch(`/calendario/api/girls/${g.id}/avatar/`, { method: 'POST', body: formData })
+          .then((r) => r.json())
+          .then((res) => {
+            if (res.ok) { toast('Foto actualizada.'); loadGirlsForAdmin(); }
+            else toast(res.error || 'No se pudo subir la foto.');
+          })
+          .catch(() => toast('Error de red.'));
+      });
+
+      const photoBtn = document.createElement('button');
+      photoBtn.type = 'button'; photoBtn.title = 'Cambiar foto'; photoBtn.textContent = '📷';
+      photoBtn.addEventListener('click', () => fileInput.click());
+
+      const resetBtn = document.createElement('button');
+      resetBtn.type = 'button'; resetBtn.title = 'Nueva contraseña'; resetBtn.textContent = '🔑';
+      resetBtn.addEventListener('click', () => {
+        const pw = prompt(`Nueva contraseña para ${g.name}:`);
+        if (!pw) return;
+        apiFetch(`/calendario/api/girls/${g.id}/reset-password/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pw }),
+        })
+          .then((r) => r.json())
+          .then((res) => { toast(res.ok ? 'Contraseña actualizada.' : (res.error || 'Error')); })
+          .catch(() => toast('Error de red.'));
+      });
+      const birthdayInput = document.createElement('input');
+      birthdayInput.type = 'date';
+      birthdayInput.className = 'girl-birthday-hidden-input';
+      birthdayInput.value = g.birth_date || '';
+      birthdayInput.addEventListener('change', () => {
+        apiFetch(`/calendario/api/girls/${g.id}/profile/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ birth_date: birthdayInput.value }),
+        })
+          .then((r) => r.json())
+          .then((res) => { toast(res.ok ? 'Fecha de nacimiento actualizada.' : (res.error || 'No se pudo guardar.')); })
+          .catch(() => toast('Error de red.'));
+      });
+      const birthdayBtn = document.createElement('button');
+      birthdayBtn.type = 'button'; birthdayBtn.title = 'Fecha de nacimiento'; birthdayBtn.textContent = '🎂';
+      birthdayBtn.addEventListener('click', () => {
+        if (typeof birthdayInput.showPicker === 'function') birthdayInput.showPicker();
+        else { birthdayInput.focus(); birthdayInput.click(); }
+      });
+      const actions = document.createElement('div');
+      actions.className = 'entry-actions';
+      actions.append(photoBtn, resetBtn, birthdayBtn, birthdayInput, fileInput);
+      row.append(avatarEl, span, actions);
+      wrap.appendChild(row);
+    });
+  }
+
+  function loadGirlsForAdmin() {
+    apiFetch('{% url "planner_api_girls" %}')
+      .then((r) => r.json())
+      .then((data) => {
+        const girls = data.girls || [];
+        girlsCache = girls;
+        const sel = document.getElementById('girlSwitcher');
+        sel.innerHTML = '';
+        girls.forEach((g) => {
+          const opt = document.createElement('option');
+          opt.value = g.id;
+          opt.textContent = g.name;
+          sel.appendChild(opt);
+        });
+        const lastId = localStorage.getItem(LAST_GIRL_KEY);
+        const match = girls.find((g) => String(g.id) === lastId);
+        currentGirlId = match ? match.id : (girls[0] ? girls[0].id : null);
+        if (currentGirlId) sel.value = currentGirlId;
+        setHeroAvatar(match ? match.avatar_url : (girls[0] ? girls[0].avatar_url : null));
+        renderGirlsManageList(girls);
+        if (currentGirlId) startApp();
+      })
+      .catch(() => toast('No se pudieron cargar las alumnas.'));
+  }
+
+  document.getElementById('girlSwitcher').addEventListener('change', (e) => {
+    currentGirlId = parseInt(e.target.value, 10);
+    localStorage.setItem(LAST_GIRL_KEY, String(currentGirlId));
+    const g = girlsCache.find((x) => x.id === currentGirlId);
+    setHeroAvatar(g ? g.avatar_url : null);
+    refreshAll();
+  });
+
+  document.getElementById('manageGirlsBtn').addEventListener('click', () => document.getElementById('manageGirlsModal').classList.add('open'));
+  document.getElementById('manageGirlsCloseBtn').addEventListener('click', () => document.getElementById('manageGirlsModal').classList.remove('open'));
+
+  document.getElementById('changeAdminPasswordBtn').addEventListener('click', () => {
+    const current = prompt('Tu contraseña actual:');
+    if (current === null) return;
+    const nueva = prompt('Nueva contraseña:');
+    if (!nueva) return;
+    apiFetch('{% url "planner_api_admin_change_password" %}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ current_password: current, new_password: nueva }),
+    })
+      .then((r) => r.json())
+      .then((res) => toast(res.ok ? 'Contraseña actualizada.' : (res.error || 'Error')))
+      .catch(() => toast('Error de red.'));
+  });
+
+  document.getElementById('newGirlSubmitBtn').addEventListener('click', () => {
+    const name = document.getElementById('newGirlName').value.trim();
+    const password = document.getElementById('newGirlPassword').value;
+    if (!name || !password) { toast('Nombre y contraseña son obligatorios.'); return; }
+    apiFetch('{% url "planner_api_girl_create" %}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, password }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.ok) {
+          toast('Alumna añadida.');
+          document.getElementById('newGirlName').value = '';
+          document.getElementById('newGirlPassword').value = '';
+          loadGirlsForAdmin();
+        } else {
+          toast(data.error || 'No se pudo añadir.');
+        }
+      })
+      .catch(() => toast('Error de red.'));
+  });
+
+  function startApp() {
+    populateCatalogSelect();
+    refreshAll();
+  }
+
+  renderSpecialBadges();
+
+  // ── Arranque: sesión guardada o modal de login ──
+  auth = loadAuthFromStorage();
+  if (auth) {
+    hideLoginModal();
+    document.getElementById('logoutBtn').classList.add('show');
+    document.getElementById('myCardBtn').classList.add('show');
+    document.getElementById('chatFab').classList.add('show');
+    document.body.classList.toggle('role-girl', auth.role === 'girl');
+    document.body.classList.toggle('role-admin', auth.role === 'admin');
+    if (auth.role === 'girl') {
+      currentGirlId = auth.girlId;
+      setHeroAvatar(auth.avatarUrl);
+      startApp();
+    } else {
+      loadGirlsForAdmin();
+    }
+  } else {
+    showLoginModal();
+  }
+})();
+</script>
+</body>
+</html>
