@@ -8,6 +8,13 @@ def _new_token():
     return secrets.token_urlsafe(32)
 
 
+# Versión del texto/base legal de los consentimientos de BusinessContact —
+# cambiar este valor (y guardar el texto anterior en otro sitio) el día que
+# cambie la redacción, para poder saber siempre qué versión aceptó cada
+# contacto en su momento.
+CONSENT_TEXT_VERSION = 'v1-2026-07'
+
+
 # Mismos sectores que el chequeo digital público (chequeo_digital.html CATEGORIES),
 # para que un BusinessProspect pueda pre-rellenar/enlazar directamente su sector.
 SECTOR_CHOICES = [
@@ -182,14 +189,22 @@ class BusinessContact(models.Model):
     # consentimientos separados y revocables — nunca se infieren uno del otro.
     # Cada finalidad tiene su propia fecha de revocación (no una compartida),
     # para poder revocar el contacto comercial sin tocar el envío del informe
-    # ya solicitado, o viceversa.
+    # ya solicitado, o viceversa. Además de cuándo y cómo, se guarda QUÉ
+    # versión del texto/base legal se mostró (consent_config.CONSENT_TEXT_VERSION)
+    # y QUIÉN lo registró (nombre de StaffMember, o 'autoservicio' si lo hizo
+    # la propia empresa) — necesario para poder demostrar más adelante
+    # exactamente qué se aceptó y quién lo dejó constancia.
     consent_receive_report = models.BooleanField(default=False)
     consent_receive_report_at = models.DateTimeField(null=True, blank=True)
     consent_receive_report_method = models.CharField(max_length=50, blank=True)
+    consent_receive_report_version = models.CharField(max_length=20, blank=True)
+    consent_receive_report_actor = models.CharField(max_length=120, blank=True)
     consent_receive_report_revoked_at = models.DateTimeField(null=True, blank=True)
     consent_commercial_contact = models.BooleanField(default=False)
     consent_commercial_contact_at = models.DateTimeField(null=True, blank=True)
     consent_commercial_contact_method = models.CharField(max_length=50, blank=True)
+    consent_commercial_contact_version = models.CharField(max_length=20, blank=True)
+    consent_commercial_contact_actor = models.CharField(max_length=120, blank=True)
     consent_commercial_contact_revoked_at = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)

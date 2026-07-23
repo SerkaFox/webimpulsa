@@ -1,4 +1,6 @@
 import json
+import os
+from unittest import mock
 
 from django.test import Client, TestCase, override_settings
 from django.utils import timezone
@@ -430,6 +432,30 @@ class ConsentSeparationTests(BaseTestCase):
         self.assertIsNone(body['consent_receive_report_revoked_at'])
         self.assertIsNotNone(body['consent_commercial_contact_revoked_at'])
 
+    def test_grant_stores_purpose_method_version_and_actor(self):
+        """Cada consentimiento debe guardar no solo la marca de tiempo, sino
+        también con qué método se obtuvo, qué versión del texto se mostró, y
+        quién lo registró — sin lo cual no se podría demostrar más adelante
+        exactamente qué se aceptó."""
+        from .models import CONSENT_TEXT_VERSION
+        prospect = BusinessProspect.objects.create(name='Consent Fields Co', sector='bar')
+        contact = BusinessContact.objects.create(prospect=prospect, name='Dueña 2')
+        c = self.login()
+
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/contacts/{contact.pk}/consent/',
+                   data=json.dumps({'consent_type': 'report', 'action': 'grant',
+                                    'method': 'llamada', 'actor': 'Ana (equipo)'}),
+                   content_type='application/json')
+        body = json.loads(r.content)['contact']
+        self.assertEqual(body['consent_receive_report_method'], 'llamada')
+        self.assertEqual(body['consent_receive_report_version'], CONSENT_TEXT_VERSION)
+        self.assertEqual(body['consent_receive_report_actor'], 'Ana (equipo)')
+
+        contact.refresh_from_db()
+        self.assertEqual(contact.consent_receive_report_method, 'llamada')
+        self.assertEqual(contact.consent_receive_report_version, CONSENT_TEXT_VERSION)
+        self.assertEqual(contact.consent_receive_report_actor, 'Ana (equipo)')
+
     def test_revoking_report_leaves_commercial_untouched(self):
         prospect = BusinessProspect.objects.create(name='Consent Sep Co 2', sector='bar')
         contact = BusinessContact.objects.create(prospect=prospect, name='Dueño')
@@ -445,12 +471,16 @@ class ConsentSeparationTests(BaseTestCase):
 
 
 class PublishConfirmationAuthorizationTests(BaseTestCase):
+    def _secret(self):
+        return os.environ.get('WI_PUBLISH_CONFIRM_SECRET', '')
+
     def test_ordinary_staff_cannot_self_confirm_publication(self):
         prospect = BusinessProspect.objects.create(name='No Auth Co', sector='bar', publish_consent=True)
         ordinary = StaffMember.objects.create(name='Empleado Normal', can_confirm_publication=False)
         c = self.login()
         r = c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
-                   data=json.dumps({'staff_member_id': ordinary.pk}), content_type='application/json')
+                   data=json.dumps({'staff_member_id': ordinary.pk, 'confirm_secret': self._secret()}),
+                   content_type='application/json')
         self.assertEqual(r.status_code, 403)
         prospect.refresh_from_db()
         self.assertFalse(prospect.publish_confirmed_by_staff)
@@ -460,7 +490,8 @@ class PublishConfirmationAuthorizationTests(BaseTestCase):
         admin = StaffMember.objects.create(name='Admin', can_confirm_publication=True)
         c = self.login()
         r = c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
-                   data=json.dumps({'staff_member_id': admin.pk}), content_type='application/json')
+                   data=json.dumps({'staff_member_id': admin.pk, 'confirm_secret': self._secret()}),
+                   content_type='application/json')
         self.assertEqual(r.status_code, 200)
         prospect.refresh_from_db()
         self.assertTrue(prospect.publish_confirmed_by_staff)
@@ -469,8 +500,55 @@ class PublishConfirmationAuthorizationTests(BaseTestCase):
         prospect = BusinessProspect.objects.create(name='Fake Staff Co', sector='bar', publish_consent=True)
         c = self.login()
         r = c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
-                   data=json.dumps({'staff_member_id': 999999}), content_type='application/json')
+                   data=json.dumps({'staff_member_id': 999999, 'confirm_secret': self._secret()}),
+                   content_type='application/json')
         self.assertEqual(r.status_code, 403)
+
+    def test_spoofing_authorized_staff_id_without_secret_is_rejected(self):
+        """El hallazgo central de la revisión de seguridad: elegir el ID de
+        un StaffMember autorizado en el payload NO basta — la sesión CRM es
+        compartida por todo el equipo, así que sin el secreto aparte,
+        cualquiera podría enviar ese mismo ID y auto-confirmarse."""
+        prospect = BusinessProspect.objects.create(name='Spoof Co', sector='bar', publish_consent=True)
+        admin = StaffMember.objects.create(name='Admin Real', can_confirm_publication=True)
+        c = self.login()  # sesión CRM normal, la misma que tiene cualquier empleado
+
+        # sin secreto en absoluto
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
+                   data=json.dumps({'staff_member_id': admin.pk}), content_type='application/json')
+        self.assertEqual(r.status_code, 403)
+
+        # con un secreto adivinado/incorrecto
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
+                   data=json.dumps({'staff_member_id': admin.pk, 'confirm_secret': 'lo-que-sea-inventado'}),
+                   content_type='application/json')
+        self.assertEqual(r.status_code, 403)
+
+        prospect.refresh_from_db()
+        self.assertFalse(prospect.publish_confirmed_by_staff)
+
+        # con el secreto correcto, la MISMA sesión SÍ puede — confirma que el
+        # secreto (no la sesión CRM genérica) es lo que realmente autoriza
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
+                   data=json.dumps({'staff_member_id': admin.pk, 'confirm_secret': self._secret()}),
+                   content_type='application/json')
+        self.assertEqual(r.status_code, 200)
+        prospect.refresh_from_db()
+        self.assertTrue(prospect.publish_confirmed_by_staff)
+
+    def test_missing_secret_configuration_fails_closed(self):
+        """Si WI_PUBLISH_CONFIRM_SECRET no está configurado en el entorno,
+        el endpoint debe rechazar SIEMPRE, nunca permitir por defecto."""
+        prospect = BusinessProspect.objects.create(name='No Secret Configured Co', sector='bar', publish_consent=True)
+        admin = StaffMember.objects.create(name='Admin Sin Secreto Configurado', can_confirm_publication=True)
+        c = self.login()
+        with mock.patch('prospeccion.views_panel._PUBLISH_CONFIRM_SECRET', ''):
+            r = c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
+                       data=json.dumps({'staff_member_id': admin.pk, 'confirm_secret': 'cualquier-cosa'}),
+                       content_type='application/json')
+        self.assertEqual(r.status_code, 500)
+        prospect.refresh_from_db()
+        self.assertFalse(prospect.publish_confirmed_by_staff)
 
 
 class PublicationRequiresBothFlagsTests(BaseTestCase):
@@ -490,7 +568,9 @@ class PublicationRequiresBothFlagsTests(BaseTestCase):
         self.assertNotIn(prospect.name, public_names())  # falta confirmación admin
 
         c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
-               data=json.dumps({'staff_member_id': admin.pk}), content_type='application/json')
+               data=json.dumps({'staff_member_id': admin.pk,
+                                'confirm_secret': os.environ.get('WI_PUBLISH_CONFIRM_SECRET', '')}),
+               content_type='application/json')
         self.assertIn(prospect.name, public_names())
 
         c.post(f'/panel/prospeccion/{prospect.pk}/publish-consent/',

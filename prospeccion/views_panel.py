@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from collections import Counter
 
 from django.http import HttpResponse, JsonResponse
@@ -11,7 +12,9 @@ from crm.views import _crm_auth
 
 from .constants import SALES_STATUS_COLORS
 from .csv_import import parse_csv, validate_csv_file
-from .models import BusinessContact, BusinessProspect, ChequeoAudit, SECTOR_CHOICES, StaffMember
+from .models import (
+    CONSENT_TEXT_VERSION, BusinessContact, BusinessProspect, ChequeoAudit, SECTOR_CHOICES, StaffMember,
+)
 from .quiz_config import QUESTIONNAIRE_VERSION, QUESTIONS
 from .scoring import compute_score, questions_for_sector
 from .services import (
@@ -19,6 +22,17 @@ from .services import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Secreto APARTE de WI_CRM_PASSWORD, solo para confirmar publicaciones. Es
+# necesario porque _crm_auth es una única sesión compartida por todo el
+# equipo (no hay login individual en este proyecto) — así que elegir un
+# StaffMember en un <select> NO demuestra quién está realmente al otro lado
+# de la petición; cualquiera con la contraseña general del CRM podría, si no
+# fuera por este secreto adicional, enviar el ID de un StaffMember con
+# can_confirm_publication=True y confirmar en su nombre. Este secreto reduce
+# quién puede hacerlo a quien además lo conozca (compartido solo con las
+# personas realmente autorizadas), no a "quien esté logueado en el CRM".
+_PUBLISH_CONFIRM_SECRET = os.getenv('WI_PUBLISH_CONFIRM_SECRET', '')
 
 
 def _prospect_json(p):
@@ -416,6 +430,9 @@ def _contact_json(c):
         'preferred_channel': c.preferred_channel, 'is_primary': c.is_primary, 'notes': c.notes,
         'consent_receive_report': c.consent_receive_report,
         'consent_receive_report_at': c.consent_receive_report_at.isoformat() if c.consent_receive_report_at else None,
+        'consent_receive_report_method': c.consent_receive_report_method,
+        'consent_receive_report_version': c.consent_receive_report_version,
+        'consent_receive_report_actor': c.consent_receive_report_actor,
         'consent_receive_report_revoked_at': (
             c.consent_receive_report_revoked_at.isoformat() if c.consent_receive_report_revoked_at else None
         ),
@@ -423,6 +440,9 @@ def _contact_json(c):
         'consent_commercial_contact_at': (
             c.consent_commercial_contact_at.isoformat() if c.consent_commercial_contact_at else None
         ),
+        'consent_commercial_contact_method': c.consent_commercial_contact_method,
+        'consent_commercial_contact_version': c.consent_commercial_contact_version,
+        'consent_commercial_contact_actor': c.consent_commercial_contact_actor,
         'consent_commercial_contact_revoked_at': (
             c.consent_commercial_contact_revoked_at.isoformat() if c.consent_commercial_contact_revoked_at else None
         ),
@@ -489,11 +509,14 @@ def contact_consent(request, pk, contact_id):
         return JsonResponse({'error': 'consent_type/action inválidos'}, status=400)
 
     now = timezone.now()
+    actor = str(payload.get('actor') or '').strip()[:120] or 'sin identificar'
     if consent_type == 'report':
         if action == 'grant':
             contact.consent_receive_report = True
             contact.consent_receive_report_at = now
             contact.consent_receive_report_method = str(payload.get('method') or '')[:50]
+            contact.consent_receive_report_version = CONSENT_TEXT_VERSION
+            contact.consent_receive_report_actor = actor
             contact.consent_receive_report_revoked_at = None
         else:
             contact.consent_receive_report = False
@@ -503,12 +526,15 @@ def contact_consent(request, pk, contact_id):
             contact.consent_commercial_contact = True
             contact.consent_commercial_contact_at = now
             contact.consent_commercial_contact_method = str(payload.get('method') or '')[:50]
+            contact.consent_commercial_contact_version = CONSENT_TEXT_VERSION
+            contact.consent_commercial_contact_actor = actor
             contact.consent_commercial_contact_revoked_at = None
         else:
             contact.consent_commercial_contact = False
             contact.consent_commercial_contact_revoked_at = now
     contact.save()
-    logger.info('Consentimiento %s %s: prospect #%s contact #%s', consent_type, action, pk, contact.pk)
+    logger.info('Consentimiento %s %s (actor=%s, version=%s): prospect #%s contact #%s',
+                consent_type, action, actor, CONSENT_TEXT_VERSION, pk, contact.pk)
     return JsonResponse({'contact': _contact_json(contact)})
 
 
@@ -550,11 +576,29 @@ def publish_confirm(request, pk):
     True. No hay login individual en el proyecto, así que quien confirma se
     indica explícitamente en el momento de la acción y se valida en servidor;
     un miembro de equipo sin ese permiso no puede auto-confirmarse."""
+    if not _PUBLISH_CONFIRM_SECRET:
+        # fail-closed: sin secreto configurado, nadie puede confirmar (nunca
+        # se permite por defecto), igual que _crm_auth falla si falta
+        # WI_CRM_PASSWORD.
+        return JsonResponse({'error': 'WI_PUBLISH_CONFIRM_SECRET no configurado'}, status=500)
+
     prospect = get_object_or_404(BusinessProspect, pk=pk)
     try:
         payload = json.loads(request.body or '{}')
     except (ValueError, TypeError):
         return JsonResponse({'error': 'JSON inválido'}, status=400)
+
+    # El staff_member_id elegido en el <select> es solo una ETIQUETA para el
+    # registro (quién dice ser) — la sesión CRM es compartida por todo el
+    # equipo, así que por sí sola esa elección no prueba identidad. El
+    # secreto es lo único que de verdad limita quién puede ejecutar esto.
+    provided_secret = payload.get('confirm_secret') or ''
+    if not provided_secret or provided_secret != _PUBLISH_CONFIRM_SECRET:
+        logger.warning(
+            'Intento de confirmar publicación con secreto incorrecto/ausente: prospect #%s staff_id=%s',
+            pk, payload.get('staff_member_id'),
+        )
+        return JsonResponse({'error': 'Secreto de confirmación incorrecto'}, status=403)
 
     staff = StaffMember.objects.filter(pk=payload.get('staff_member_id'), active=True).first()
     if not staff or not staff.can_confirm_publication:
@@ -570,7 +614,7 @@ def publish_confirm(request, pk):
     prospect.publish_confirmed_by_staff = confirm
     prospect.save(update_fields=['publish_confirmed_by_staff', 'updated_at'])
     logger.info(
-        'Publicación %s por %s: prospect #%s',
+        'Publicación %s por %s (secreto verificado): prospect #%s',
         'confirmada' if confirm else 'desconfirmada', staff.name, pk,
     )
     is_public, reason = publication_status(prospect)

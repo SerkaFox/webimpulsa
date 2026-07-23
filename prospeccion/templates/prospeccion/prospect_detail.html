@@ -142,6 +142,11 @@
         <button type="button" class="btn outline" id="btnPrelimDraft">💾 Guardar borrador</button>
         <button type="button" class="btn green" id="btnPrelimComplete">✔ Calcular y completar auditoría</button>
       </div>
+      <small style="color:#8a94a6;display:block;margin-top:6px">
+        El borrador se guarda solo en este navegador/sesión (no es visible para otro compañero ni desde
+        otro dispositivo) hasta que pulses «Calcular y completar auditoría», que sí queda guardado para
+        siempre.
+      </small>
     </div>
 
     <div class="card">
@@ -176,12 +181,16 @@
             <div class="name-line">{{ c.name|default:"(sin nombre)" }} {% if c.is_primary %}<span class="primary-tag">principal</span>{% endif %}</div>
             <div class="meta-line">{{ c.get_role_display }} · {{ c.phone }} {% if c.whatsapp %}· WhatsApp {{ c.whatsapp }}{% endif %} {% if c.email %}· {{ c.email }}{% endif %}</div>
             <div class="consent-line"><span class="consent-dot {% if c.consent_receive_report %}on{% else %}off{% endif %}"></span>
-              Recibir informe {% if c.consent_receive_report %}concedido{% elif c.consent_receive_report_revoked_at %}revocado{% else %}sin registrar{% endif %}
+              Recibir informe {% if c.consent_receive_report %}concedido ({{ c.consent_receive_report_method }}, {{ c.consent_receive_report_version }}, registrado por {{ c.consent_receive_report_actor|default:"—" }}){% elif c.consent_receive_report_revoked_at %}revocado{% else %}sin registrar{% endif %}
               <button class="btn sm outline" data-consent-type="report" data-consent-action="{% if c.consent_receive_report %}revoke{% else %}grant{% endif %}">{% if c.consent_receive_report %}Revocar{% else %}Conceder{% endif %}</button>
             </div>
             <div class="consent-line"><span class="consent-dot {% if c.consent_commercial_contact %}on{% else %}off{% endif %}"></span>
-              Contacto comercial {% if c.consent_commercial_contact %}concedido{% elif c.consent_commercial_contact_revoked_at %}revocado{% else %}sin registrar{% endif %}
+              Contacto comercial {% if c.consent_commercial_contact %}concedido ({{ c.consent_commercial_contact_method }}, {{ c.consent_commercial_contact_version }}, registrado por {{ c.consent_commercial_contact_actor|default:"—" }}){% elif c.consent_commercial_contact_revoked_at %}revocado{% else %}sin registrar{% endif %}
               <button class="btn sm outline" data-consent-type="commercial" data-consent-action="{% if c.consent_commercial_contact %}revoke{% else %}grant{% endif %}">{% if c.consent_commercial_contact %}Revocar{% else %}Conceder{% endif %}</button>
+            </div>
+            <div class="field" style="margin-top:4px">
+              <label style="font-size:.72rem">¿Quién registra este consentimiento? (tu nombre)</label>
+              <input type="text" class="consentActorInput" placeholder="Tu nombre" style="max-width:220px">
             </div>
             <div class="row" style="margin-top:6px">
               <button class="btn sm ghost btnEditContact">✎ Editar</button>
@@ -244,11 +253,17 @@
         </div>
         <div class="field">
           <label>Confirmación administrativa (solo personal autorizado)</label>
+          <p style="font-size:.76rem;color:#5a6d8c;margin:0 0 6px">
+            Elegir un nombre aquí NO prueba tu identidad — esta sesión del CRM la comparte todo el
+            equipo. Además del nombre, hace falta el secreto de confirmación (distinto de la
+            contraseña general del CRM, solo lo conoce quien está autorizado).
+          </p>
           <div class="row" style="gap:6px">
-            <select id="confirmStaffSelect" style="max-width:200px">
+            <select id="confirmStaffSelect" style="max-width:180px">
               <option value="">Elegir quién confirma…</option>
               {% for s in confirming_staff %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
             </select>
+            <input type="password" id="confirmSecretInput" placeholder="Secreto de confirmación" style="max-width:180px">
             <button type="button" class="btn sm green" id="btnPublishConfirm">
               {% if prospect.publish_confirmed_by_staff %}Retirar confirmación{% else %}Confirmar publicación{% endif %}
             </button>
@@ -463,10 +478,17 @@ document.querySelectorAll('[data-consent-type]').forEach(function(btn){
   btn.addEventListener('click', function(){
     var row = btn.closest('.contact-row');
     var cid = row.getAttribute('data-contact-id');
+    var action = btn.getAttribute('data-consent-action');
+    var actorInput = row.querySelector('.consentActorInput');
+    if(action === 'grant' && actorInput && !actorInput.value.trim()){
+      showToast('Indica quién registra este consentimiento');
+      return;
+    }
     postJson(BASE + 'contacts/' + cid + '/consent/', {
       consent_type: btn.getAttribute('data-consent-type'),
-      action: btn.getAttribute('data-consent-action'),
+      action: action,
       method: 'panel_staff',
+      actor: actorInput ? actorInput.value.trim() : '',
     }).then(function(res){
       if(res.data.error){ showToast(res.data.error); return; }
       showToast('Consentimiento actualizado');
@@ -487,9 +509,11 @@ btnPublishConsent.addEventListener('click', function(){
 
 document.getElementById('btnPublishConfirm').addEventListener('click', function(){
   var staffId = document.getElementById('confirmStaffSelect').value;
+  var secret = document.getElementById('confirmSecretInput').value;
   if(!staffId){ showToast('Elige quién confirma'); return; }
+  if(!secret){ showToast('Falta el secreto de confirmación'); return; }
   var currentlyConfirmed = {{ prospect.publish_confirmed_by_staff|yesno:"true,false" }};
-  postJson(BASE + 'publish-confirm/', {staff_member_id: staffId, confirm: !currentlyConfirmed})
+  postJson(BASE + 'publish-confirm/', {staff_member_id: staffId, confirm_secret: secret, confirm: !currentlyConfirmed})
     .then(function(res){
       if(res.status === 403){ showToast(res.data.error); return; }
       if(res.data.error){ showToast(res.data.error); return; }
