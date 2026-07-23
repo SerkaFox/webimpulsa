@@ -206,7 +206,11 @@ function reload(){
         marker.bindPopup(
           '<strong>'+p.name+'</strong><br>'+
           (STATUS_LABELS[p.sales_status] || p.sales_status)+' · puntuación '+score+'<br>'+
-          '<a href="'+p.detail_url+'">Ver ficha →</a>'
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:.85rem">'+
+          '<a href="'+p.detail_url+'">📇 Ver ficha</a>'+
+          '<a href="'+p.detail_url+'#prelimQuestions">🩺 Crear preliminar</a>'+
+          '<a href="'+p.detail_url+'#contactForm">👤 Añadir contacto</a>'+
+          '</div>'
         );
         clusterGroup.addLayer(marker);
       });

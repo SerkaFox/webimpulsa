@@ -7,27 +7,64 @@
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; color: #0c1c42; }
-  .top-bar { background: #1e293b; color: #fff; padding: 14px 20px; display: flex; align-items: center; gap: 14px; }
+  .top-bar { background: #1e293b; color: #fff; padding: 14px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   .top-bar a { color: #93c5fd; text-decoration: none; font-weight: 700; }
-  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 20px; }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 24px 16px; }
   .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
   h1 { font-size: 1.3rem; margin: 0 0 4px; }
   h2 { font-size: .95rem; margin: 0 0 10px; }
+  h3 { font-size: .85rem; margin: 0 0 6px; }
   .badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: .72rem; font-weight: 700; color: #fff; }
+  .pub-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .78rem; font-weight: 700; }
+  .pub-badge.yes { background: rgba(0,158,115,.12); color: #009e73; }
+  .pub-badge.no { background: rgba(90,109,140,.12); color: #5a6d8c; }
   .field { margin-bottom: 10px; }
   .field label { display: block; font-size: .78rem; color: #5a6d8c; margin-bottom: 3px; }
-  select, input[type=text] { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 7px 9px; font-size: .85rem; font-family: inherit; }
+  select, input[type=text], input[type=url], textarea {
+    width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 7px 9px; font-size: .85rem;
+    font-family: inherit;
+  }
   .btn { background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 9px 14px;
     font-size: .85rem; font-weight: 700; cursor: pointer; }
+  .btn.sm { padding: 5px 10px; font-size: .78rem; }
+  .btn.outline { background: #fff; color: #2563eb; border: 1.5px solid #2563eb; }
+  .btn.ghost { background: #f1f5f9; color: #334155; }
+  .btn.danger { background: #fff; color: #dc2626; border: 1.5px solid #fca5a5; }
+  .btn.green { background: #009e73; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; }
   .row > * { flex: 1; min-width: 160px; }
   table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-  td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid #f0f0f0; }
+  td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
   .link-box { background: #eff6ff; border: 1px dashed #93c5fd; border-radius: 8px; padding: 8px 10px;
     font-size: .82rem; word-break: break-all; }
   .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #0c1c42; color: #fff;
-    padding: 8px 14px; border-radius: 999px; font-size: .82rem; opacity: 0; transition: opacity .25s; pointer-events: none; }
+    padding: 8px 14px; border-radius: 999px; font-size: .82rem; opacity: 0; transition: opacity .25s; pointer-events: none;
+    z-index: 50; max-width: 90vw; }
   .toast.show { opacity: 1; }
+
+  /* Auditoría preliminar */
+  .q-item { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+  .q-item .q-text { font-weight: 700; font-size: .86rem; margin-bottom: 6px; }
+  .q-opts { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+  .q-opts label { display: inline-flex; align-items: center; gap: 4px; font-size: .78rem; background: #f8fafc;
+    border: 1.5px solid #e2e8f0; border-radius: 999px; padding: 4px 9px; cursor: pointer; }
+  .q-opts input { margin: 0; }
+  .q-opts label.checked { border-color: #2563eb; background: rgba(37,99,235,.08); }
+  .q-extra { display: flex; gap: 6px; flex-wrap: wrap; }
+  .q-extra input { font-size: .78rem; padding: 5px 8px; }
+  .prelim-summary { display: flex; gap: 18px; flex-wrap: wrap; font-size: .82rem; color: #5a6d8c; margin-bottom: 12px; }
+  .prelim-summary strong { color: #0c1c42; }
+
+  /* Contactos */
+  .contact-row { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+  .contact-row .name-line { font-weight: 700; font-size: .9rem; display: flex; align-items: center; gap: 6px; }
+  .contact-row .meta-line { color: #5a6d8c; font-size: .78rem; margin: 2px 0 8px; }
+  .consent-line { display: flex; align-items: center; gap: 8px; font-size: .78rem; margin-bottom: 4px; flex-wrap: wrap; }
+  .consent-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .consent-dot.on { background: #009e73; }
+  .consent-dot.off { background: #cbd5e1; }
+  .primary-tag { background: #fef3c7; color: #92400e; font-size: .68rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; }
 </style>
 </head>
 <body>
@@ -35,7 +72,7 @@
   <div class="wrap">
 
     <div class="card">
-      <h1>{{ prospect.name }} <span class="badge" id="statusBadge" style="background:#8a94a6">{{ prospect.get_sales_status_display }}</span></h1>
+      <h1>{{ prospect.name }} <span class="badge" style="background:#8a94a6">{{ prospect.get_sales_status_display }}</span></h1>
       <div style="color:#5a6d8c;font-size:.88rem">{{ prospect.get_sector_display }} · {{ prospect.municipality }} {{ prospect.district }}</div>
       <div style="margin-top:8px">Puntuación actual: <strong>{{ prospect.current_score|default:"—" }}</strong>/100</div>
     </div>
@@ -72,18 +109,50 @@
         </div>
         <div class="field">
           <label>Notas del equipo</label>
-          <textarea name="staff_notes" rows="3" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 9px;font-family:inherit">{{ prospect.staff_notes }}</textarea>
+          <textarea name="staff_notes" rows="3">{{ prospect.staff_notes }}</textarea>
         </div>
         <button type="submit" class="btn">Guardar</button>
       </form>
+    </div>
+
+    <!-- ── Auditoría preliminar ─────────────────────────────────────── -->
+    <div class="card">
+      <h2>Auditoría preliminar</h2>
+      <div class="prelim-summary">
+        <span>Último <strong>preliminar</strong>:
+          {% if latest_preliminar %}{{ latest_preliminar.created_at|date:"d/m/Y H:i" }} — {{ latest_preliminar.score }}/100 ({{ latest_preliminar.questionnaire_version }}){% else %}—{% endif %}
+        </span>
+        <span>Último <strong>confirmado</strong>:
+          {% if latest_confirmado %}{{ latest_confirmado.created_at|date:"d/m/Y H:i" }} — {{ latest_confirmado.score }}/100 ({{ latest_confirmado.questionnaire_version }}){% else %}—{% endif %}
+        </span>
+      </div>
+
+      <div class="field">
+        <label>Plantilla sectorial</label>
+        <select id="prelimSector">
+          {% for id, label in sectors %}
+            <option value="{{ id }}" {% if id == prospect.sector %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div id="prelimQuestions">Cargando preguntas…</div>
+
+      <div class="row">
+        <button type="button" class="btn outline" id="btnPrelimDraft">💾 Guardar borrador</button>
+        <button type="button" class="btn green" id="btnPrelimComplete">✔ Calcular y completar auditoría</button>
+      </div>
     </div>
 
     <div class="card">
       <h2>Enlace personal del chequeo</h2>
       <p style="font-size:.85rem;color:#5a6d8c">Compártelo con la empresa para que confirme/corrija el chequeo ya pre-rellenado.</p>
       <div class="link-box" id="personalLink">{{ personal_url }}</div>
-      <button class="btn" id="btnCopyLink" style="margin-top:8px">📋 Copiar enlace</button>
-      {% if audits %}<a class="btn" style="display:inline-block;text-decoration:none;text-align:center;margin-top:8px" href="/panel/prospeccion/{{ prospect.pk }}/pdf/" target="_blank">📄 Ver PDF del último chequeo</a>{% endif %}
+      <div class="row" style="margin-top:8px">
+        <button class="btn outline" id="btnCopyLink">📋 Copiar enlace</button>
+        <a class="btn green" style="text-decoration:none;text-align:center" id="btnWhatsappLink" href="#" target="_blank" rel="noopener">💬 Enviar por WhatsApp</a>
+        {% if audits %}<a class="btn ghost" style="text-decoration:none;text-align:center" href="/panel/prospeccion/{{ prospect.pk }}/pdf/" target="_blank">📄 Abrir resultado (PDF)</a>{% endif %}
+      </div>
     </div>
 
     <div class="card">
@@ -98,16 +167,95 @@
       {% endif %}
     </div>
 
+    <!-- ── Contactos (CRUD completo) ────────────────────────────────── -->
     <div class="card">
-      <h2>Contactos ({{ contacts|length }})</h2>
-      {% if contacts %}
-      <table>
-        <tr><th>Nombre</th><th>Rol</th><th>Teléfono</th><th>Email</th></tr>
+      <h2>Contactos</h2>
+      <div id="contactsList">
         {% for c in contacts %}
-          <tr><td>{{ c.name }}</td><td>{{ c.get_role_display }}</td><td>{{ c.phone }}</td><td>{{ c.email }}</td></tr>
+          <div class="contact-row" data-contact-id="{{ c.id }}">
+            <div class="name-line">{{ c.name|default:"(sin nombre)" }} {% if c.is_primary %}<span class="primary-tag">principal</span>{% endif %}</div>
+            <div class="meta-line">{{ c.get_role_display }} · {{ c.phone }} {% if c.whatsapp %}· WhatsApp {{ c.whatsapp }}{% endif %} {% if c.email %}· {{ c.email }}{% endif %}</div>
+            <div class="consent-line"><span class="consent-dot {% if c.consent_receive_report %}on{% else %}off{% endif %}"></span>
+              Recibir informe {% if c.consent_receive_report %}concedido{% elif c.consent_receive_report_revoked_at %}revocado{% else %}sin registrar{% endif %}
+              <button class="btn sm outline" data-consent-type="report" data-consent-action="{% if c.consent_receive_report %}revoke{% else %}grant{% endif %}">{% if c.consent_receive_report %}Revocar{% else %}Conceder{% endif %}</button>
+            </div>
+            <div class="consent-line"><span class="consent-dot {% if c.consent_commercial_contact %}on{% else %}off{% endif %}"></span>
+              Contacto comercial {% if c.consent_commercial_contact %}concedido{% elif c.consent_commercial_contact_revoked_at %}revocado{% else %}sin registrar{% endif %}
+              <button class="btn sm outline" data-consent-type="commercial" data-consent-action="{% if c.consent_commercial_contact %}revoke{% else %}grant{% endif %}">{% if c.consent_commercial_contact %}Revocar{% else %}Conceder{% endif %}</button>
+            </div>
+            <div class="row" style="margin-top:6px">
+              <button class="btn sm ghost btnEditContact">✎ Editar</button>
+              <button class="btn sm danger btnDeleteContact">🗑 Eliminar</button>
+            </div>
+          </div>
+        {% empty %}
+          <p style="color:#8a94a6;font-size:.85rem">Sin contactos registrados todavía.</p>
         {% endfor %}
-      </table>
-      {% else %}<p style="color:#8a94a6;font-size:.85rem">Sin contactos registrados todavía.</p>{% endif %}
+      </div>
+
+      <h3 style="margin-top:14px">Añadir contacto</h3>
+      <form id="contactForm">
+        <input type="hidden" name="contact_id" value="">
+        <div class="row">
+          <div class="field"><label>Nombre</label><input type="text" name="name"></div>
+          <div class="field"><label>Rol</label>
+            <select name="role">{% for id, label in role_choices %}<option value="{{ id }}">{{ label }}</option>{% endfor %}</select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Teléfono</label><input type="text" name="phone"></div>
+          <div class="field"><label>WhatsApp</label><input type="text" name="whatsapp"></div>
+          <div class="field"><label>Email</label><input type="text" name="email"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Canal preferido</label>
+            <select name="preferred_channel">{% for id, label in channel_choices %}<option value="{{ id }}">{{ label }}</option>{% endfor %}</select>
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end;gap:6px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;margin:0">
+              <input type="checkbox" name="is_primary" style="width:auto"> Es el contacto principal
+            </label>
+          </div>
+        </div>
+        <div class="field"><label>Notas</label><textarea name="notes" rows="2"></textarea></div>
+        <div class="row">
+          <button type="submit" class="btn" id="btnSaveContact">Guardar contacto</button>
+          <button type="button" class="btn ghost" id="btnCancelEditContact" hidden>Cancelar edición</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ── Consentimientos (publicación) ───────────────────────────── -->
+    <div class="card">
+      <h2>Consentimientos de publicación</h2>
+      <p style="margin-bottom:10px">
+        <span class="pub-badge {% if is_public %}yes{% else %}no{% endif %}">{% if is_public %}✓ Visible en mapa público{% else %}✕ No publicable{% endif %}</span>
+        <span style="font-size:.82rem;color:#5a6d8c;display:block;margin-top:4px" id="publicationReason">{{ publication_reason }}</span>
+      </p>
+
+      <div class="row">
+        <div class="field">
+          <label>Consentimiento de publicación de la empresa</label>
+          {% if prospect.publish_consent %}
+            <button type="button" class="btn sm outline" id="btnPublishConsent" data-action="revoke">Revocar consentimiento</button>
+          {% else %}
+            <button type="button" class="btn sm" id="btnPublishConsent" data-action="grant">Registrar consentimiento</button>
+          {% endif %}
+        </div>
+        <div class="field">
+          <label>Confirmación administrativa (solo personal autorizado)</label>
+          <div class="row" style="gap:6px">
+            <select id="confirmStaffSelect" style="max-width:200px">
+              <option value="">Elegir quién confirma…</option>
+              {% for s in confirming_staff %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+            </select>
+            <button type="button" class="btn sm green" id="btnPublishConfirm">
+              {% if prospect.publish_confirmed_by_staff %}Retirar confirmación{% else %}Confirmar publicación{% endif %}
+            </button>
+          </div>
+          {% if not confirming_staff %}<small style="color:#8a94a6">Ningún StaffMember tiene permiso de confirmación todavía.</small>{% endif %}
+        </div>
+      </div>
     </div>
 
     <div class="card">
@@ -126,48 +274,228 @@
   <div class="toast" id="toast"></div>
 
 <script>
+var PK = {{ prospect.pk }};
+var BASE = '/panel/prospeccion/' + PK + '/';
+var ANSWER_OPTIONS = [
+  {value:'si', label:'Sí'}, {value:'en_parte', label:'En parte'}, {value:'no_se', label:'No estoy segura/o'},
+  {value:'no', label:'No'}, {value:'no_aplica', label:'No aplica'},
+];
+var PRELIM_DRAFT = {{ prelim_draft_json|safe }};
+
+function showToast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2400);
+}
+function postJson(url, body){
+  return fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})})
+    .then(function(r){ return r.json().then(function(data){ return {ok: r.ok, status: r.status, data: data}; }); });
+}
+
+/* ---- Estado y responsable ---- */
 document.getElementById('updateForm').addEventListener('submit', function(ev){
   ev.preventDefault();
   var fd = new FormData(ev.target);
-  var body = {
-    sales_status: fd.get('sales_status'),
-    priority: fd.get('priority'),
-    assigned_to_id: fd.get('assigned_to_id') || null,
-    staff_notes: fd.get('staff_notes'),
-  };
-  fetch(window.location.pathname + 'update/', {
-    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
-  }).then(function(r){ return r.json(); }).then(function(data){
-    var t = document.getElementById('toast');
-    t.textContent = data.error || 'Guardado';
-    t.classList.add('show');
-    setTimeout(function(){ t.classList.remove('show'); }, 2200);
-  });
+  postJson(BASE + 'update/', {
+    sales_status: fd.get('sales_status'), priority: fd.get('priority'),
+    assigned_to_id: fd.get('assigned_to_id') || null, staff_notes: fd.get('staff_notes'),
+  }).then(function(res){ showToast(res.data.error || 'Guardado'); });
 });
+
+/* ---- Enlace personal ---- */
 document.getElementById('btnCopyLink').addEventListener('click', function(){
   var text = document.getElementById('personalLink').textContent.trim();
   if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text);
+  showToast('Enlace copiado');
 });
+(function(){
+  var link = document.getElementById('personalLink').textContent.trim();
+  var phone = ('{{ prospect.whatsapp|default:prospect.phone|escapejs }}' || '').replace(/\D/g, '');
+  var msg = 'Hola, hemos preparado el chequeo digital de tu negocio: ' + link + ' — confírmalo o corrígelo, son 2 minutos.';
+  var btn = document.getElementById('btnWhatsappLink');
+  btn.href = phone ? ('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg)) : ('https://wa.me/?text=' + encodeURIComponent(msg));
+})();
 
+/* ---- CRM ---- */
 var btnConvert = document.getElementById('btnConvert');
 if(btnConvert){
   btnConvert.addEventListener('click', function(){
-    fetch(window.location.pathname + 'convert/', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'})
-      .then(function(r){ return r.json(); })
-      .then(function(data){ if(data.lead_url) window.location.reload(); });
+    postJson(BASE + 'convert/').then(function(res){ if(res.data.lead_url) window.location.reload(); });
   });
 }
 var btnDraft = document.getElementById('btnDraftProposal');
 if(btnDraft){
   btnDraft.addEventListener('click', function(){
-    fetch(window.location.pathname + 'draft-proposal/', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'})
-      .then(function(r){ return r.json(); })
-      .then(function(data){
-        if(data.error){ alert(data.error); return; }
-        window.location.href = data.proposal_url;
-      });
+    postJson(BASE + 'draft-proposal/').then(function(res){
+      if(res.data.error){ showToast(res.data.error); return; }
+      window.location.href = res.data.proposal_url;
+    });
   });
 }
+
+/* ---- Auditoría preliminar ---- */
+var prelimAnswers = {}; // {qid: {value, comment, evidence_url}}
+
+function renderQuestion(q){
+  var saved = prelimAnswers[q.id] || {};
+  var opts = ANSWER_OPTIONS.map(function(o){
+    var checked = saved.value === o.value ? 'checked' : '';
+    var cls = saved.value === o.value ? 'checked' : '';
+    return '<label class="'+cls+'"><input type="radio" name="q_'+q.id+'" value="'+o.value+'" '+checked+'>'+o.label+'</label>';
+  }).join('');
+  return '<div class="q-item" data-qid="'+q.id+'">'+
+    '<div class="q-text">'+q.text+'</div>'+
+    '<div class="q-opts">'+opts+'</div>'+
+    '<div class="q-extra">'+
+      '<input type="text" class="q-comment" placeholder="Comentario (opcional)" value="'+(saved.comment||'').replace(/"/g,'&quot;')+'">'+
+      '<input type="url" class="q-evidence" placeholder="URL de evidencia (opcional)" value="'+(saved.evidence_url||'').replace(/"/g,'&quot;')+'">'+
+    '</div>'+
+  '</div>';
+}
+
+function loadPrelimQuestions(sector){
+  fetch('/chequeo-digital/api/questionnaire/'+encodeURIComponent(sector)+'/')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      document.getElementById('prelimQuestions').innerHTML = data.questions.map(renderQuestion).join('');
+      document.querySelectorAll('#prelimQuestions .q-opts input').forEach(function(input){
+        input.addEventListener('change', function(){
+          document.querySelectorAll('input[name="'+input.name+'"]').forEach(function(sibling){
+            sibling.closest('label').classList.toggle('checked', sibling.checked);
+          });
+        });
+      });
+    })
+    .catch(function(){ showToast('No se pudieron cargar las preguntas'); });
+}
+
+function collectPrelimAnswers(){
+  var answers = {};
+  document.querySelectorAll('#prelimQuestions .q-item').forEach(function(item){
+    var qid = item.getAttribute('data-qid');
+    var checked = item.querySelector('.q-opts input:checked');
+    if(!checked) return;
+    answers[qid] = {
+      value: checked.value,
+      comment: item.querySelector('.q-comment').value,
+      evidence_url: item.querySelector('.q-evidence').value,
+    };
+  });
+  return answers;
+}
+
+var prelimSectorSelect = document.getElementById('prelimSector');
+prelimSectorSelect.addEventListener('change', function(){ loadPrelimQuestions(prelimSectorSelect.value); });
+if(PRELIM_DRAFT && PRELIM_DRAFT.answers){
+  prelimAnswers = PRELIM_DRAFT.answers;
+  if(PRELIM_DRAFT.sector) prelimSectorSelect.value = PRELIM_DRAFT.sector;
+}
+loadPrelimQuestions(prelimSectorSelect.value);
+
+document.getElementById('btnPrelimDraft').addEventListener('click', function(){
+  var answers = collectPrelimAnswers();
+  postJson(BASE + 'preliminar/draft/', {sector: prelimSectorSelect.value, answers: answers})
+    .then(function(res){ showToast('Borrador guardado ('+(res.data.count||0)+' respuestas)'); });
+});
+document.getElementById('btnPrelimComplete').addEventListener('click', function(){
+  var answers = collectPrelimAnswers();
+  if(!Object.keys(answers).length){ showToast('Responde al menos una pregunta'); return; }
+  postJson(BASE + 'preliminar/complete/', {sector: prelimSectorSelect.value, answers: answers})
+    .then(function(res){
+      if(res.data.error){ showToast(res.data.error); return; }
+      showToast('Auditoría preliminar creada: '+res.data.score+'/100');
+      setTimeout(function(){ window.location.reload(); }, 900);
+    });
+});
+
+/* ---- Contactos CRUD ---- */
+var contactForm = document.getElementById('contactForm');
+var btnCancelEdit = document.getElementById('btnCancelEditContact');
+
+function resetContactForm(){
+  contactForm.reset();
+  contactForm.contact_id.value = '';
+  document.getElementById('btnSaveContact').textContent = 'Guardar contacto';
+  btnCancelEdit.hidden = true;
+}
+btnCancelEdit.addEventListener('click', resetContactForm);
+
+contactForm.addEventListener('submit', function(ev){
+  ev.preventDefault();
+  var fd = new FormData(contactForm);
+  var body = {
+    name: fd.get('name'), role: fd.get('role'), phone: fd.get('phone'), whatsapp: fd.get('whatsapp'),
+    email: fd.get('email'), preferred_channel: fd.get('preferred_channel'),
+    is_primary: fd.get('is_primary') === 'on', notes: fd.get('notes'),
+  };
+  var contactId = fd.get('contact_id');
+  var url = contactId ? (BASE + 'contacts/' + contactId + '/update/') : (BASE + 'contacts/');
+  postJson(url, body).then(function(res){
+    if(res.data.error){ showToast(res.data.error); return; }
+    showToast(contactId ? 'Contacto actualizado' : 'Contacto añadido');
+    setTimeout(function(){ window.location.reload(); }, 700);
+  });
+});
+
+document.querySelectorAll('.btnDeleteContact').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var row = btn.closest('.contact-row');
+    var cid = row.getAttribute('data-contact-id');
+    if(!confirm('¿Eliminar este contacto?')) return;
+    postJson(BASE + 'contacts/' + cid + '/delete/').then(function(){ row.remove(); showToast('Contacto eliminado'); });
+  });
+});
+
+document.querySelectorAll('.btnEditContact').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var row = btn.closest('.contact-row');
+    var cid = row.getAttribute('data-contact-id');
+    contactForm.contact_id.value = cid;
+    document.getElementById('btnSaveContact').textContent = 'Guardar cambios';
+    btnCancelEdit.hidden = false;
+    contactForm.scrollIntoView({behavior:'smooth', block:'center'});
+    showToast('Edita los campos y pulsa "Guardar cambios" — los valores actuales no se han precargado, corrígelos si hace falta.');
+  });
+});
+
+document.querySelectorAll('[data-consent-type]').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var row = btn.closest('.contact-row');
+    var cid = row.getAttribute('data-contact-id');
+    postJson(BASE + 'contacts/' + cid + '/consent/', {
+      consent_type: btn.getAttribute('data-consent-type'),
+      action: btn.getAttribute('data-consent-action'),
+      method: 'panel_staff',
+    }).then(function(res){
+      if(res.data.error){ showToast(res.data.error); return; }
+      showToast('Consentimiento actualizado');
+      setTimeout(function(){ window.location.reload(); }, 500);
+    });
+  });
+});
+
+/* ---- Consentimientos de publicación ---- */
+var btnPublishConsent = document.getElementById('btnPublishConsent');
+btnPublishConsent.addEventListener('click', function(){
+  postJson(BASE + 'publish-consent/', {action: btnPublishConsent.getAttribute('data-action')})
+    .then(function(res){
+      if(res.data.error){ showToast(res.data.error); return; }
+      window.location.reload();
+    });
+});
+
+document.getElementById('btnPublishConfirm').addEventListener('click', function(){
+  var staffId = document.getElementById('confirmStaffSelect').value;
+  if(!staffId){ showToast('Elige quién confirma'); return; }
+  var currentlyConfirmed = {{ prospect.publish_confirmed_by_staff|yesno:"true,false" }};
+  postJson(BASE + 'publish-confirm/', {staff_member_id: staffId, confirm: !currentlyConfirmed})
+    .then(function(res){
+      if(res.status === 403){ showToast(res.data.error); return; }
+      if(res.data.error){ showToast(res.data.error); return; }
+      window.location.reload();
+    });
+});
 </script>
 </body>
 </html>
