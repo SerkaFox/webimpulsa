@@ -26,6 +26,13 @@ class StaffMember(models.Model):
     name = models.CharField(max_length=120)
     active = models.BooleanField(default=True)
     color = models.CharField(max_length=7, blank=True)
+    # Único campo de "rol" que existe en todo el proyecto: no hay cuentas ni
+    # login individual (_crm_auth es un único password compartido), así que
+    # esto no es un sistema de permisos completo — solo gatilla la única
+    # acción que de verdad necesita distinguirse: confirmar publicación en el
+    # mapa público. Quien confirma se elige explícitamente en el momento de
+    # la acción (no hay sesión ligada a una persona), y se valida en servidor.
+    can_confirm_publication = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -151,12 +158,14 @@ class BusinessContact(models.Model):
     ROLE_ADMIN = 'administrator'
     ROLE_EMPLOYEE = 'employee'
     ROLE_MARKETING = 'marketing'
+    ROLE_UNKNOWN = 'unknown'
     ROLE_CHOICES = [
         (ROLE_OWNER, 'Dueño/a'),
         (ROLE_MANAGER, 'Gerente'),
         (ROLE_ADMIN, 'Administración'),
         (ROLE_EMPLOYEE, 'Empleado/a'),
         (ROLE_MARKETING, 'Marketing'),
+        (ROLE_UNKNOWN, 'Desconocido'),
     ]
     CHANNEL_CHOICES = [('whatsapp', 'WhatsApp'), ('email', 'Email'), ('phone', 'Teléfono')]
 
@@ -164,17 +173,24 @@ class BusinessContact(models.Model):
     name = models.CharField(max_length=200, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_OWNER)
     phone = models.CharField(max_length=50, blank=True)
+    whatsapp = models.CharField(max_length=50, blank=True)
     email = models.CharField(max_length=200, blank=True)
     preferred_channel = models.CharField(max_length=20, choices=CHANNEL_CHOICES, default='whatsapp')
+    is_primary = models.BooleanField(default=False)
+    notes = models.TextField(blank=True)
 
-    # consentimientos separados y revocables — nunca se infieren uno del otro
+    # consentimientos separados y revocables — nunca se infieren uno del otro.
+    # Cada finalidad tiene su propia fecha de revocación (no una compartida),
+    # para poder revocar el contacto comercial sin tocar el envío del informe
+    # ya solicitado, o viceversa.
     consent_receive_report = models.BooleanField(default=False)
     consent_receive_report_at = models.DateTimeField(null=True, blank=True)
     consent_receive_report_method = models.CharField(max_length=50, blank=True)
+    consent_receive_report_revoked_at = models.DateTimeField(null=True, blank=True)
     consent_commercial_contact = models.BooleanField(default=False)
     consent_commercial_contact_at = models.DateTimeField(null=True, blank=True)
     consent_commercial_contact_method = models.CharField(max_length=50, blank=True)
-    consent_revoked_at = models.DateTimeField(null=True, blank=True)
+    consent_commercial_contact_revoked_at = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
