@@ -263,3 +263,17 @@ def create_draft_proposal_for_prospect(prospect):
     prospect.sales_status = prospect.SALES_PRESUPUESTO
     prospect.save(update_fields=['sales_status', 'updated_at'])
     return proposal
+
+
+def publication_status(prospect):
+    """Resumen legible de por qué (no) es visible en el mapa público —
+    misma condición exacta que _published_queryset() en views_public.py,
+    para que el resumen mostrado al equipo nunca diga algo distinto de lo
+    que la API pública realmente hace."""
+    if prospect.publish_revoked_at:
+        return False, f'No publicable: el consentimiento se revocó el {prospect.publish_revoked_at:%d/%m/%Y}.'
+    if not prospect.publish_consent:
+        return False, 'No publicable: falta el consentimiento de publicación de la empresa.'
+    if not prospect.publish_confirmed_by_staff:
+        return False, 'No publicable: pendiente de confirmación por un administrador autorizado.'
+    return True, 'Visible en mapa público.'
