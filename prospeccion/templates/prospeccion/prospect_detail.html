@@ -65,6 +65,18 @@
   .consent-dot.on { background: #009e73; }
   .consent-dot.off { background: #cbd5e1; }
   .primary-tag { background: #fef3c7; color: #92400e; font-size: .68rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; }
+
+  /* Acciones principales */
+  .primary-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .primary-actions .btn { flex: 1; min-width: 150px; padding: 14px 10px; font-size: .9rem; }
+
+  /* Secciones secundarias plegables */
+  details.section-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; }
+  details.section-card summary { padding: 14px 16px; font-size: .95rem; font-weight: 700; cursor: pointer; list-style: none; }
+  details.section-card summary::-webkit-details-marker { display: none; }
+  details.section-card summary::before { content: '▸ '; color: #8a94a6; }
+  details.section-card[open] summary::before { content: '▾ '; }
+  details.section-card .section-body { padding: 0 16px 16px; }
 </style>
 </head>
 <body>
@@ -77,8 +89,16 @@
       <div style="margin-top:8px">Puntuación actual: <strong>{{ prospect.current_score|default:"—" }}</strong>/100</div>
     </div>
 
-    <div class="card">
-      <h2>Estado y responsable</h2>
+    <!-- ── Las 3 acciones principales — nunca hace falta abrir nada más ── -->
+    <div class="primary-actions">
+      <button type="button" class="btn" id="btnGoChequeo">🩺 Hacer chequeo</button>
+      <button type="button" class="btn" id="btnGoContacto">👤 Añadir contacto</button>
+      <button type="button" class="btn green" id="btnPrepararPropuesta">📋 Preparar propuesta</button>
+    </div>
+
+    <details class="section-card" id="statusDetails">
+      <summary>Estado y responsable</summary>
+      <div class="section-body">
       <form id="updateForm">
         <div class="row">
           <div class="field">
@@ -113,11 +133,13 @@
         </div>
         <button type="submit" class="btn">Guardar</button>
       </form>
-    </div>
+      </div>
+    </details>
 
     <!-- ── Auditoría preliminar ─────────────────────────────────────── -->
-    <div class="card">
-      <h2>Auditoría preliminar</h2>
+    <details class="section-card" id="prelimDetails">
+      <summary>Auditoría preliminar</summary>
+      <div class="section-body">
       <div class="prelim-summary">
         <span>Último <strong>preliminar</strong>:
           {% if latest_preliminar %}{{ latest_preliminar.created_at|date:"d/m/Y H:i" }} — {{ latest_preliminar.score }}/100 ({{ latest_preliminar.questionnaire_version }}){% else %}—{% endif %}
@@ -147,10 +169,12 @@
         otro dispositivo) hasta que pulses «Calcular y completar auditoría», que sí queda guardado para
         siempre.
       </small>
-    </div>
+      </div>
+    </details>
 
-    <div class="card">
-      <h2>Enlace personal del chequeo</h2>
+    <details class="section-card">
+      <summary>Enlace personal del chequeo</summary>
+      <div class="section-body">
       <p style="font-size:.85rem;color:#5a6d8c">Compártelo con la empresa para que confirme/corrija el chequeo ya pre-rellenado.</p>
       <div class="link-box" id="personalLink">{{ personal_url }}</div>
       <div class="row" style="margin-top:8px">
@@ -158,10 +182,12 @@
         <a class="btn green" style="text-decoration:none;text-align:center" id="btnWhatsappLink" href="#" target="_blank" rel="noopener">💬 Enviar por WhatsApp</a>
         {% if audits %}<a class="btn ghost" style="text-decoration:none;text-align:center" href="/panel/prospeccion/{{ prospect.pk }}/pdf/" target="_blank">📄 Abrir resultado (PDF)</a>{% endif %}
       </div>
-    </div>
+      </div>
+    </details>
 
-    <div class="card">
-      <h2>CRM</h2>
+    <details class="section-card" id="crmDetails">
+      <summary>CRM</summary>
+      <div class="section-body">
       {% if prospect.converted_client_id %}
         <p style="font-size:.85rem">Ya convertido en cliente: <a href="/wi/crm/{{ prospect.converted_client_id }}/">ver ficha en el CRM →</a></p>
         <button class="btn" id="btnDraftProposal">Crear borrador de presupuesto</button>
@@ -170,11 +196,13 @@
         <button class="btn" id="btnConvert">Convertir en cliente</button>
         <button class="btn" id="btnDraftProposal" style="margin-left:6px">Convertir y crear presupuesto</button>
       {% endif %}
-    </div>
+      </div>
+    </details>
 
     <!-- ── Contactos (CRUD completo) ────────────────────────────────── -->
-    <div class="card">
-      <h2>Contactos</h2>
+    <details class="section-card" id="contactosDetails">
+      <summary>Contactos</summary>
+      <div class="section-body">
       <div id="contactsList">
         {% for c in contacts %}
           <div class="contact-row" data-contact-id="{{ c.id }}">
@@ -232,11 +260,15 @@
           <button type="button" class="btn ghost" id="btnCancelEditContact" hidden>Cancelar edición</button>
         </div>
       </form>
-    </div>
+      </div>
+    </details>
 
     <!-- ── Consentimientos (publicación) ───────────────────────────── -->
-    <div class="card">
-      <h2>Consentimientos de publicación</h2>
+    <details class="section-card">
+      <summary>Consentimientos de publicación
+        <span class="pub-badge {% if is_public %}yes{% else %}no{% endif %}" style="margin-left:8px;font-size:.68rem">{% if is_public %}✓ Visible{% else %}✕ No publicable{% endif %}</span>
+      </summary>
+      <div class="section-body">
       <p style="margin-bottom:10px">
         <span class="pub-badge {% if is_public %}yes{% else %}no{% endif %}">{% if is_public %}✓ Visible en mapa público{% else %}✕ No publicable{% endif %}</span>
         <span style="font-size:.82rem;color:#5a6d8c;display:block;margin-top:4px" id="publicationReason">{{ publication_reason }}</span>
@@ -271,10 +303,12 @@
           {% if not confirming_staff %}<small style="color:#8a94a6">Ningún StaffMember tiene permiso de confirmación todavía.</small>{% endif %}
         </div>
       </div>
-    </div>
+      </div>
+    </details>
 
-    <div class="card">
-      <h2>Historial de chequeos ({{ audits|length }})</h2>
+    <details class="section-card">
+      <summary>Historial de chequeos ({{ audits|length }})</summary>
+      <div class="section-body">
       {% if audits %}
       <table>
         <tr><th>Fecha</th><th>Modo</th><th>Etapa</th><th>Puntuación</th></tr>
@@ -283,7 +317,8 @@
         {% endfor %}
       </table>
       {% else %}<p style="color:#8a94a6;font-size:.85rem">Todavía no se ha hecho ningún chequeo para esta empresa.</p>{% endif %}
-    </div>
+      </div>
+    </details>
 
   </div>
   <div class="toast" id="toast"></div>
@@ -306,6 +341,35 @@ function showToast(msg){
 function postJson(url, body){
   return fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})})
     .then(function(r){ return r.json().then(function(data){ return {ok: r.ok, status: r.status, data: data}; }); });
+}
+
+/* ---- Las 3 acciones principales ---- */
+document.getElementById('btnGoChequeo').addEventListener('click', function(){
+  var d = document.getElementById('prelimDetails');
+  d.open = true;
+  d.scrollIntoView({behavior:'smooth', block:'start'});
+});
+document.getElementById('btnGoContacto').addEventListener('click', function(){
+  var d = document.getElementById('contactosDetails');
+  d.open = true;
+  d.scrollIntoView({behavior:'smooth', block:'start'});
+  var nameInput = document.querySelector('#contactForm input[name="name"]');
+  if(nameInput) setTimeout(function(){ nameInput.focus(); }, 350);
+});
+document.getElementById('btnPrepararPropuesta').addEventListener('click', function(){
+  postJson(BASE + 'draft-proposal/').then(function(res){
+    if(res.data.error){ showToast(res.data.error); return; }
+    window.location.href = res.data.proposal_url;
+  });
+});
+/* Preliminar no es obligatorio para guardar la empresa — "Hacer chequeo"
+   solo abre la sección, nunca bloquea nada más de la ficha. Si se llega
+   aquí con ?start_check=1 (desde "Guardar e iniciar chequeo" del mapa),
+   se abre y se hace scroll automáticamente. */
+if(new URLSearchParams(window.location.search).get('start_check') === '1'){
+  var pd = document.getElementById('prelimDetails');
+  pd.open = true;
+  setTimeout(function(){ pd.scrollIntoView({behavior:'smooth', block:'start'}); }, 200);
 }
 
 /* ---- Estado y responsable ---- */

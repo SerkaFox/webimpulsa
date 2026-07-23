@@ -6,8 +6,9 @@ from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
 from crm.models import Lead, Proposal
+from . import places
 from .csv_import import parse_csv
-from .models import BusinessContact, BusinessProspect, ChequeoAudit, StaffMember
+from .models import BusinessContact, BusinessProspect, ChequeoAudit, PlacesApiUsage, StaffMember
 from .quiz_config import CATEGORY_WEIGHTS
 from .scoring import compute_score, questions_for_sector
 from .services import compute_dedupe_key, convert_prospect_to_lead, create_prospect, find_duplicate
@@ -576,3 +577,234 @@ class PublicationRequiresBothFlagsTests(BaseTestCase):
         c.post(f'/panel/prospeccion/{prospect.pk}/publish-consent/',
                data=json.dumps({'action': 'revoke'}), content_type='application/json')
         self.assertNotIn(prospect.name, public_names())
+
+
+# ── Mapa con búsqueda Google Places (UX simplificado) ─────────────────────
+
+class GooglePlacesModuleTests(TestCase):
+    @override_settings(GOOGLE_PLACES_API_KEY='')
+    def test_search_text_requires_api_key(self):
+        with self.assertRaises(places.PlacesConfigError):
+            places.search_text('bar en Barakaldo')
+
+    def test_field_mask_never_requests_reviews_photos_rating_hours(self):
+        for forbidden in ('review', 'photo', 'rating', 'Hours'):
+            self.assertNotIn(forbidden, places.FIELD_MASK)
+
+    @override_settings(GOOGLE_PLACES_API_KEY='fake-key-for-tests', GOOGLE_PLACES_DAILY_QUOTA=1)
+    def test_search_text_enforces_daily_quota(self):
+        fake_response = mock.Mock()
+        fake_response.raise_for_status = mock.Mock()
+        fake_response.json.return_value = {'places': []}
+        with mock.patch('prospeccion.places.requests.post', return_value=fake_response) as mocked_post:
+            places.search_text('bar')  # 1ª llamada: consume la única unidad de cuota
+            with self.assertRaises(places.PlacesQuotaExceeded):
+                places.search_text('bar')  # 2ª llamada: por encima de cuota
+        self.assertEqual(mocked_post.call_count, 1)  # la 2ª ni siquiera llamó a Google
+
+    @override_settings(GOOGLE_PLACES_API_KEY='fake-key-for-tests')
+    def test_search_text_sends_minimal_field_mask_and_region_bias(self):
+        fake_response = mock.Mock()
+        fake_response.raise_for_status = mock.Mock()
+        fake_response.json.return_value = {'places': [{
+            'id': 'ChIJ123', 'displayName': {'text': 'Bar de Prueba'},
+            'formattedAddress': 'Calle Falsa 123, Barakaldo',
+            'location': {'latitude': 43.29, 'longitude': -2.99},
+            'types': ['bar', 'restaurant'], 'primaryType': 'bar',
+            'nationalPhoneNumber': '944 000 000', 'websiteUri': 'https://bar-de-prueba.example',
+            'googleMapsUri': 'https://maps.google.com/?cid=123',
+        }]}
+        with mock.patch('prospeccion.places.requests.post', return_value=fake_response) as mocked_post:
+            results = places.search_text('bar de prueba', lat=43.29, lng=-2.99)
+        _, kwargs = mocked_post.call_args
+        self.assertEqual(kwargs['headers']['X-Goog-FieldMask'], places.FIELD_MASK)
+        self.assertEqual(kwargs['json']['regionCode'], 'ES')
+        self.assertEqual(kwargs['json']['locationBias']['circle']['center']['latitude'], 43.29)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]['place_id'], 'ChIJ123')
+        self.assertEqual(results[0]['category'], 'bar')
+        for forbidden_key in ('reviews', 'photos', 'rating', 'regularOpeningHours'):
+            self.assertNotIn(forbidden_key, results[0])
+
+    def test_guess_sector_maps_known_google_types(self):
+        self.assertEqual(places.guess_sector(['restaurant', 'food']), 'bar')
+        self.assertEqual(places.guess_sector(['hair_salon']), 'salon')
+        self.assertEqual(places.guess_sector(['car_repair']), 'taller')
+        self.assertEqual(places.guess_sector(['something_unknown']), 'otro')
+
+    def test_resolve_maps_link_extracts_coords_from_at_pattern(self):
+        url = 'https://www.google.com/maps/place/Bar+de+Prueba/@43.2627,-2.9253,17z/data=!xyz'
+        result = places.resolve_maps_link(url)
+        self.assertIsNotNone(result)
+        self.assertAlmostEqual(result['lat'], 43.2627)
+        self.assertAlmostEqual(result['lng'], -2.9253)
+        self.assertEqual(result['name'], 'Bar de Prueba')
+
+    def test_resolve_maps_link_returns_none_for_unparseable_url(self):
+        self.assertIsNone(places.resolve_maps_link('https://example.com/not-a-maps-link'))
+        self.assertIsNone(places.resolve_maps_link(''))
+
+
+class PlacesSearchViewTests(BaseTestCase):
+    def test_requires_query(self):
+        c = self.login()
+        r = c.get('/panel/prospeccion/mapa/api/search/')
+        self.assertEqual(r.status_code, 400)
+
+    def test_finds_existing_webimpulsa_company_first(self):
+        BusinessProspect.objects.create(name='Taller Ejemplo Ya Existente', sector='taller')
+        c = self.login()
+        with mock.patch('prospeccion.views_panel.places.search_text', return_value=[]):
+            r = c.get('/panel/prospeccion/mapa/api/search/', {'q': 'Taller Ejemplo'})
+        data = json.loads(r.content)
+        self.assertEqual(len(data['existing']), 1)
+        self.assertEqual(data['existing'][0]['name'], 'Taller Ejemplo Ya Existente')
+
+    def test_annotates_google_result_as_existing_when_phone_matches(self):
+        BusinessProspect.objects.create(name='Bar Antiguo', sector='bar', phone='944123456')
+        c = self.login()
+        fake_google_result = {
+            'place_id': 'ChIJnew', 'name': 'Bar Antiguo (Google)', 'address': 'Calle X',
+            'lat': 43.29, 'lng': -2.99, 'category': 'bar', 'category_raw': 'bar',
+            'phone': '944 123 456', 'website': '', 'google_maps_url': '',
+        }
+        with mock.patch('prospeccion.views_panel.places.search_text', return_value=[fake_google_result]):
+            r = c.get('/panel/prospeccion/mapa/api/search/', {'q': 'Bar Antiguo'})
+        data = json.loads(r.content)
+        self.assertEqual(len(data['google']), 1)
+        self.assertIsNotNone(data['google'][0]['existing_prospect_id'])
+
+    def test_google_results_never_carry_reviews_photos_rating(self):
+        c = self.login()
+        fake_google_result = {
+            'place_id': 'ChIJnew2', 'name': 'Cafetería Nueva', 'address': '',
+            'lat': None, 'lng': None, 'category': 'bar', 'category_raw': 'cafe',
+            'phone': '', 'website': '', 'google_maps_url': '',
+        }
+        with mock.patch('prospeccion.views_panel.places.search_text', return_value=[fake_google_result]):
+            r = c.get('/panel/prospeccion/mapa/api/search/', {'q': 'Cafetería Nueva'})
+        data = json.loads(r.content)
+        for forbidden_key in ('reviews', 'photos', 'rating', 'regularOpeningHours'):
+            self.assertNotIn(forbidden_key, data['google'][0])
+
+    def test_places_config_error_is_reported_but_existing_matches_still_work(self):
+        BusinessProspect.objects.create(name='Academia Existente', sector='academia')
+        c = self.login()
+        with mock.patch('prospeccion.views_panel.places.search_text',
+                         side_effect=places.PlacesConfigError('sin clave')):
+            r = c.get('/panel/prospeccion/mapa/api/search/', {'q': 'Academia'})
+        data = json.loads(r.content)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(data['existing']), 1)
+        self.assertTrue(data['google_error'])
+
+
+class AddFromPlaceTests(BaseTestCase):
+    def test_create_from_confirmed_place_stores_only_whitelisted_fields(self):
+        c = self.login()
+        payload = {
+            'name': 'Clínica Confirmada', 'address': 'Calle Salud 5', 'sector': 'clinica',
+            'lat': 43.3, 'lng': -3.0, 'phone': '944555555', 'website': 'https://clinica.example',
+            'place_id': 'ChIJconfirmed', 'google_maps_url': 'https://maps.google.com/?cid=999',
+            # campos que Google NUNCA debería haber entregado (no se piden en
+            # FIELD_MASK), y que aunque llegasen aquí en un payload
+            # manipulado, no existen en el modelo:
+            'rating': 4.8, 'reviews': ['excelente'], 'photos': ['http://x/1.jpg'],
+            'opening_hours': {'monday': '9-18'},
+        }
+        r = c.post('/panel/prospeccion/mapa/api/prospects/add-from-place/',
+                    data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(r.status_code, 200)
+        prospect = BusinessProspect.objects.get(name='Clínica Confirmada')
+        self.assertEqual(prospect.google_place_id, 'ChIJconfirmed')
+        self.assertEqual(prospect.gmaps_url, 'https://maps.google.com/?cid=999')
+        self.assertEqual(prospect.source, BusinessProspect.SOURCE_GOOGLE_PLACES)
+        field_names = {f.name for f in BusinessProspect._meta.get_fields()}
+        for forbidden_field in ('rating', 'reviews', 'photos', 'opening_hours'):
+            self.assertNotIn(forbidden_field, field_names)
+
+    def test_dedupe_by_place_id_prevents_duplicate_creation(self):
+        existing = BusinessProspect.objects.create(
+            name='Ya Estaba', sector='bar', google_place_id='ChIJexisting', lat=43.2, lng=-3.1,
+        )
+        c = self.login()
+        payload = {
+            'name': 'Ya Estaba (nombre distinto en Google)', 'sector': 'bar',
+            'lat': 43.2, 'lng': -3.1, 'place_id': 'ChIJexisting',
+        }
+        r = c.post('/panel/prospeccion/mapa/api/prospects/add-from-place/',
+                    data=json.dumps(payload), content_type='application/json')
+        data = json.loads(r.content)
+        self.assertFalse(data['created'])
+        self.assertEqual(data['prospect']['id'], existing.pk)
+        self.assertEqual(BusinessProspect.objects.filter(google_place_id='ChIJexisting').count(), 1)
+
+    def test_requires_name(self):
+        c = self.login()
+        r = c.post('/panel/prospeccion/mapa/api/prospects/add-from-place/',
+                    data=json.dumps({'sector': 'bar'}), content_type='application/json')
+        self.assertEqual(r.status_code, 400)
+
+
+class ManualPinPlacementTests(BaseTestCase):
+    def test_manual_click_creates_prospect_with_exact_coordinates(self):
+        c = self.login()
+        r = c.post('/panel/prospeccion/mapa/api/prospects/add/', data=json.dumps({
+            'name': 'Lugar Marcado a Mano', 'sector': 'otro', 'lat': 43.25, 'lng': -2.95,
+        }), content_type='application/json')
+        data = json.loads(r.content)
+        self.assertTrue(data['created'])
+        prospect = BusinessProspect.objects.get(pk=data['prospect']['id'])
+        self.assertEqual(prospect.lat, 43.25)
+        self.assertEqual(prospect.lng, -2.95)
+        self.assertFalse(prospect.needs_manual_placement)
+        self.assertEqual(prospect.source, BusinessProspect.SOURCE_MAP_CLICK)
+
+
+class ParseMapsLinkViewTests(BaseTestCase):
+    def test_parses_at_pattern_link(self):
+        c = self.login()
+        url = 'https://www.google.com/maps/place/Taller+Test/@43.1,-3.2,15z'
+        r = c.post('/panel/prospeccion/mapa/api/parse-maps-link/',
+                    data=json.dumps({'url': url}), content_type='application/json')
+        data = json.loads(r.content)
+        self.assertAlmostEqual(data['lat'], 43.1)
+        self.assertAlmostEqual(data['lng'], -3.2)
+
+    def test_rejects_unparseable_link(self):
+        c = self.login()
+        r = c.post('/panel/prospeccion/mapa/api/parse-maps-link/',
+                    data=json.dumps({'url': 'https://example.com/nope'}), content_type='application/json')
+        self.assertEqual(r.status_code, 400)
+
+
+class OldRoutesStillWorkTests(BaseTestCase):
+    """El rediseño de /panel/prospeccion/mapa/ no debe romper nada de lo que
+    ya funcionaba: filtros por bbox, alta manual clásica, importación CSV,
+    ficha de prospect con sus acciones existentes."""
+
+    def test_internal_map_renders_without_google_maps_key(self):
+        c = self.login()
+        with override_settings(GOOGLE_MAPS_JS_API_KEY=''):
+            r = c.get('/panel/prospeccion/mapa/')
+        self.assertEqual(r.status_code, 200)
+        self.assertIn(b'GOOGLE_MAPS_JS_API_KEY', r.content)
+
+    def test_bbox_api_still_filters(self):
+        BusinessProspect.objects.create(name='Dentro', sector='bar', lat=43.26, lng=-2.92)
+        BusinessProspect.objects.create(name='Fuera', sector='bar', lat=10.0, lng=10.0)
+        c = self.login()
+        r = c.get('/panel/prospeccion/mapa/api/prospects/',
+                   {'south': 43.0, 'north': 43.5, 'west': -3.2, 'east': -2.7})
+        names = {p['name'] for p in json.loads(r.content)['prospects']}
+        self.assertIn('Dentro', names)
+        self.assertNotIn('Fuera', names)
+
+    def test_prospect_detail_still_renders_with_all_sections(self):
+        prospect = BusinessProspect.objects.create(name='Ficha Clásica', sector='bar')
+        c = self.login()
+        r = c.get(f'/panel/prospeccion/{prospect.pk}/')
+        self.assertEqual(r.status_code, 200)
+        self.assertIn(b'Hacer chequeo', r.content)
+        self.assertIn(b'Preparar propuesta', r.content)
+        self.assertIn('Añadir contacto'.encode('utf-8'), r.content)

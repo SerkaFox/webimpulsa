@@ -10,6 +10,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from crm.views import _crm_auth
 
+from . import places
 from .constants import SALES_STATUS_COLORS
 from .csv_import import parse_csv, validate_csv_file
 from .models import (
@@ -18,7 +19,8 @@ from .models import (
 from .quiz_config import QUESTIONNAIRE_VERSION, QUESTIONS
 from .scoring import compute_score, questions_for_sector
 from .services import (
-    convert_prospect_to_lead, create_draft_proposal_for_prospect, create_prospect, publication_status,
+    convert_prospect_to_lead, create_draft_proposal_for_prospect, create_prospect, find_duplicate,
+    find_existing_matches, publication_status,
 )
 
 logger = logging.getLogger(__name__)
@@ -116,11 +118,13 @@ def dashboard(request):
 
 @_crm_auth
 def internal_map(request):
+    from django.conf import settings as dj_settings
     return render(request, 'prospeccion/map_internal.html', {
         'sectors': SECTOR_CHOICES,
         'sales_statuses': BusinessProspect.SALES_STATUS_CHOICES,
         'staff': StaffMember.objects.filter(active=True),
         'status_colors_json': json.dumps(SALES_STATUS_COLORS),
+        'google_maps_js_api_key': dj_settings.GOOGLE_MAPS_JS_API_KEY,
     })
 
 
@@ -216,6 +220,112 @@ def import_csv_view(request):
         'unresolved': unresolved,
         'errors': parse_errors,
     })
+
+
+def _existing_match_json(p):
+    return {
+        'prospect_id': p.pk,
+        'name': p.name,
+        'address': p.address,
+        'sector': p.sector,
+        'sector_label': p.get_sector_display(),
+        'detail_url': f'/panel/prospeccion/{p.pk}/',
+    }
+
+
+@_crm_auth
+@require_GET
+def places_search(request):
+    """Búsqueda única: primero empresas ya en WebImpulsa, después resultados
+    de Google Places sesgados a la zona visible del mapa (o España por
+    defecto). Cada resultado de Google se anota con el prospect existente
+    si ya hay uno (mismo place_id, teléfono, dominio, nombre+coords cercanas)."""
+    query = (request.GET.get('q') or '').strip()
+    if not query:
+        return JsonResponse({'error': 'Falta el texto de búsqueda'}, status=400)
+
+    existing = [_existing_match_json(p) for p in find_existing_matches(query)]
+
+    lat = lng = None
+    try:
+        lat = float(request.GET['lat'])
+        lng = float(request.GET['lng'])
+    except (KeyError, ValueError):
+        pass
+
+    google_results = []
+    google_error = None
+    try:
+        raw_results = places.search_text(query, lat=lat, lng=lng)
+        for r in raw_results:
+            dup = None
+            if r['lat'] is not None and r['lng'] is not None:
+                dup = find_duplicate(
+                    r['name'], r['phone'], '', r['website'], r['lat'], r['lng'],
+                    google_place_id=r['place_id'],
+                )
+            r['existing_prospect_id'] = dup.pk if dup else None
+            google_results.append(r)
+    except places.PlacesConfigError as e:
+        google_error = str(e)
+    except places.PlacesQuotaExceeded as e:
+        google_error = str(e)
+    except Exception:
+        logger.exception('Error buscando en Google Places: query=%r', query)
+        google_error = 'No se pudo consultar Google Places en este momento'
+
+    return JsonResponse({'existing': existing, 'google': google_results, 'google_error': google_error})
+
+
+@_crm_auth
+@require_POST
+def add_prospect_from_place(request):
+    """Crea un prospect a partir de un resultado de Google Places que el
+    equipo vio y confirmó en el panel (nombre/dirección/coords/categoría/
+    teléfono/web ya visibles en la tarjeta de resultado). Solo se guardan
+    esos campos + google_place_id/gmaps_url — nunca reviews/fotos/rating/
+    horario, que ni siquiera se solicitaron a la API."""
+    try:
+        payload = json.loads(request.body or '{}')
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'JSON inválido'}, status=400)
+
+    name = (payload.get('name') or '').strip()
+    if not name:
+        return JsonResponse({'error': 'El nombre es obligatorio'}, status=400)
+
+    data = {
+        'name': name,
+        'sector': payload.get('sector') or 'otro',
+        'address': payload.get('address') or '',
+        'lat': payload.get('lat'),
+        'lng': payload.get('lng'),
+        'phone': payload.get('phone') or '',
+        'website': payload.get('website') or '',
+        'gmaps_url': payload.get('google_maps_url') or '',
+        'google_place_id': payload.get('place_id') or '',
+    }
+    prospect, created = create_prospect(data, source=BusinessProspect.SOURCE_GOOGLE_PLACES)
+    return JsonResponse({'prospect': _prospect_json(prospect), 'created': created})
+
+
+@_crm_auth
+@require_POST
+def parse_maps_link(request):
+    """Resuelve un enlace de Google Maps pegado a mano (incluye enlaces
+    acortados maps.app.goo.gl, que necesitan que el SERVIDOR siga la
+    redirección — el navegador no puede por CORS) y devuelve lat/lng para
+    prellenar el panel de confirmación."""
+    try:
+        payload = json.loads(request.body or '{}')
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'JSON inválido'}, status=400)
+
+    url = payload.get('url') or ''
+    result = places.resolve_maps_link(url)
+    if not result:
+        return JsonResponse({'error': 'No se pudo interpretar ese enlace de Google Maps'}, status=400)
+    return JsonResponse(result)
 
 
 def _prelim_draft_key(pk):

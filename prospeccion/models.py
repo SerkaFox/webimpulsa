@@ -76,11 +76,13 @@ class BusinessProspect(models.Model):
     SOURCE_MAP_CLICK = 'map_click'
     SOURCE_CSV = 'csv_import'
     SOURCE_PUBLIC_QUIZ = 'public_quiz_upgrade'
+    SOURCE_GOOGLE_PLACES = 'google_places'
     SOURCE_CHOICES = [
         (SOURCE_MANUAL, 'Manual'),
         (SOURCE_MAP_CLICK, 'Clic en el mapa'),
         (SOURCE_CSV, 'Importación CSV'),
         (SOURCE_PUBLIC_QUIZ, 'Chequeo público'),
+        (SOURCE_GOOGLE_PLACES, 'Búsqueda de Google Places'),
     ]
 
     # identidad / color del marcador (sales_status, no el score)
@@ -106,6 +108,11 @@ class BusinessProspect(models.Model):
     whatsapp = models.CharField(max_length=50, blank=True)
     social_links = models.JSONField(default=dict, blank=True)
     gmaps_url = models.CharField(max_length=500, blank=True)
+    # Solo el identificador — nunca reseñas, fotos, rating ni horario. Sirve
+    # para deduplicar con certeza y para volver a "Abrir en Google Maps" sin
+    # tener que guardar más contenido de Google del que el equipo vio y
+    # confirmó al crear el prospecto.
+    google_place_id = models.CharField(max_length=200, blank=True, db_index=True)
 
     # denormalizado desde el último ChequeoAudit CONFIRMADO — para filtros rápidos del mapa
     has_website = models.BooleanField(null=True, blank=True)
@@ -307,3 +314,16 @@ class ChequeoAudit(models.Model):
     def __str__(self):
         who = self.prospect.name if self.prospect_id else 'público'
         return f'Audit {who} — {self.score}/100 ({self.stage})'
+
+
+class PlacesApiUsage(models.Model):
+    """Contador diario de llamadas a la Google Places API — el proyecto no
+    tiene Redis/cache compartida entre workers, así que se persiste en la
+    propia BD para poder aplicar una cuota diaria real (GOOGLE_PLACES_DAILY_
+    QUOTA) sin depender de memoria de un único proceso gunicorn."""
+
+    date = models.DateField(unique=True)
+    count = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f'{self.date}: {self.count} búsquedas'

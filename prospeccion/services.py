@@ -50,17 +50,24 @@ def _phone_digits(phone):
     return digits[-9:] if digits else ''
 
 
-def find_duplicate(name, phone='', email='', website='', lat=None, lng=None, exclude_pk=None):
+def find_duplicate(name, phone='', email='', website='', lat=None, lng=None, exclude_pk=None, google_place_id=''):
     """Empresa existente que probablemente sea la misma, o None. Compara de
-    forma independiente por teléfono, email, dominio, y nombre+distancia
-    corta — un mismo teléfono ya basta para considerarlo duplicado, aunque
-    el nombre esté escrito distinto (typo, razón social vs. nombre comercial,
-    etc.), en vez de exigir que todo coincida a la vez."""
+    forma independiente por google_place_id, teléfono, email, dominio, y
+    nombre+distancia corta — un mismo teléfono ya basta para considerarlo
+    duplicado, aunque el nombre esté escrito distinto (typo, razón social vs.
+    nombre comercial, etc.), en vez de exigir que todo coincida a la vez."""
     from .models import BusinessProspect
 
     qs = BusinessProspect.objects.all()
     if exclude_pk:
         qs = qs.exclude(pk=exclude_pk)
+
+    if google_place_id:
+        # Coincidencia por place_id de Google es la más fiable posible —
+        # si coincide, es literalmente el mismo lugar, sin ambigüedad.
+        match = qs.filter(google_place_id=google_place_id).exclude(google_place_id='').first()
+        if match:
+            return match
 
     phone_digits = _phone_digits(phone)
     if phone_digits:
@@ -98,7 +105,10 @@ def find_duplicate(name, phone='', email='', website='', lat=None, lng=None, exc
 
 def create_prospect(data, source=None):
     """data: dict con al menos 'name'. Devuelve (prospect, created) — si ya
-    existe un duplicado, lo devuelve tal cual con created=False, sin tocarlo."""
+    existe un duplicado, lo devuelve tal cual con created=False, sin tocarlo.
+    Campos de Google Places aceptados aquí (google_place_id, gmaps_url): solo
+    los que el equipo vio y confirmó en el panel — nunca reviews/fotos/rating/
+    horario, que ni siquiera se piden a la API (ver places.py FIELD_MASK)."""
     from .models import BusinessProspect
 
     source = source or BusinessProspect.SOURCE_MANUAL
@@ -108,8 +118,9 @@ def create_prospect(data, source=None):
     website = data.get('website') or ''
     lat = data.get('lat')
     lng = data.get('lng')
+    google_place_id = data.get('google_place_id') or ''
 
-    dup = find_duplicate(name, phone, email, website, lat, lng)
+    dup = find_duplicate(name, phone, email, website, lat, lng, google_place_id=google_place_id)
     if dup:
         return dup, False
 
@@ -127,10 +138,26 @@ def create_prospect(data, source=None):
         website=website,
         whatsapp=data.get('whatsapp') or '',
         gmaps_url=data.get('gmaps_url') or '',
+        google_place_id=google_place_id,
         source=source,
         dedupe_key=compute_dedupe_key(name, phone, email, website),
     )
     return prospect, True
+
+
+def find_existing_matches(query, limit=8):
+    """Empresas ya presentes en WebImpulsa que coinciden con el texto de
+    búsqueda — se muestran primero, antes que los resultados de Google
+    Places, para no ofrecer nunca crear un duplicado de algo que el equipo
+    ya tiene."""
+    from .models import BusinessProspect
+
+    q = (query or '').strip()
+    if not q:
+        return []
+    return list(
+        BusinessProspect.objects.filter(name__icontains=q).select_related('assigned_to')[:limit]
+    )
 
 
 # ── Integración con el CRM existente (crm.Lead / crm.Proposal) ────────────────

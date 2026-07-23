@@ -4,9 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mapa de prospección — WebImpulsa</title>
-<link rel="stylesheet" href="/static/wi/js/vendor/leaflet/leaflet.css">
-<link rel="stylesheet" href="/static/wi/js/vendor/leaflet/MarkerCluster.css">
-<link rel="stylesheet" href="/static/wi/js/vendor/leaflet/MarkerCluster.Default.css">
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; font-family: 'Segoe UI', Arial, sans-serif; color: #0c1c42; }
@@ -16,33 +13,99 @@
   }
   .top-bar a { color: #93c5fd; text-decoration: none; font-weight: 700; }
   .top-bar strong { font-size: .95rem; }
-  .layout { display: flex; height: calc(100vh - 46px); }
-  #map { flex: 1; }
-  .sidebar {
-    width: 320px; flex-shrink: 0; background: #f8fafc; border-left: 1px solid #e2e8f0;
-    overflow-y: auto; padding: 14px;
+
+  .layout { display: grid; grid-template-columns: 1fr; grid-template-areas: "sidebar" "map"; }
+  #map { grid-area: map; height: 46vh; min-height: 260px; background: #eef2f7; position: relative; }
+  .sidebar { grid-area: sidebar; padding: 14px; overflow-y: auto; }
+
+  @media (min-width: 900px) {
+    .layout { grid-template-columns: 1fr 400px; grid-template-areas: "map sidebar"; height: calc(100vh - 46px); }
+    #map { height: 100%; }
+    .sidebar { height: 100%; }
   }
-  .sidebar h2 { font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; color: #5a6d8c; margin: 18px 0 8px; }
-  .sidebar h2:first-child { margin-top: 0; }
+
+  .map-msg {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    text-align: center; padding: 20px; font-size: .88rem; color: #5a6d8c;
+  }
+
+  h2 { font-size: .95rem; margin: 0 0 10px; }
+  h3 { font-size: .82rem; text-transform: uppercase; letter-spacing: .03em; color: #5a6d8c; margin: 16px 0 8px; }
   .field { margin-bottom: 8px; }
   .field label { display: block; font-size: .78rem; color: #5a6d8c; margin-bottom: 3px; }
-  select, input[type=text], input[type=number], input[type=file] {
-    width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 7px 9px; font-size: .85rem;
+  select, input[type=text], input[type=number], input[type=file], input[type=url] {
+    width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; font-size: .9rem;
     font-family: inherit;
   }
   .checks label { display: flex; align-items: center; gap: 6px; font-size: .82rem; margin-bottom: 4px; }
-  .btn { background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 9px 12px;
-    font-size: .85rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 6px; }
+
+  .btn { background: #2563eb; color: #fff; border: none; border-radius: 10px; padding: 12px 14px;
+    font-size: .92rem; font-weight: 700; cursor: pointer; width: 100%; }
+  .btn.sm { padding: 7px 11px; font-size: .8rem; width: auto; border-radius: 8px; }
   .btn:hover { background: #1746a8; }
   .btn.secondary { background: #fff; color: #2563eb; border: 1.5px solid #2563eb; }
-  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 8px; font-size: .82rem; }
-  .card .name { font-weight: 700; }
-  .card .badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: .68rem; font-weight: 700; color: #fff; margin-top: 4px; }
-  .score-pill { float: right; font-weight: 800; color: #2563eb; }
-  .toast { position: fixed; bottom: 16px; left: 340px; background: #0c1c42; color: #fff; padding: 8px 14px;
-    border-radius: 999px; font-size: .82rem; opacity: 0; transition: opacity .25s; pointer-events: none; }
+  .btn.ghost { background: #f1f5f9; color: #334155; }
+  .btn.green { background: #009e73; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  .search-box { display: flex; gap: 8px; margin-bottom: 6px; }
+  .search-box input { flex: 1; font-size: 1rem; padding: 12px 12px; }
+  .search-box button { width: auto; padding: 0 16px; }
+  .search-hint { font-size: .76rem; color: #8a94a6; margin: 0 0 10px; }
+
+  .result-card {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; margin-bottom: 8px;
+  }
+  .result-card .name { font-weight: 700; font-size: .92rem; }
+  .result-card .addr { color: #5a6d8c; font-size: .78rem; margin: 2px 0 8px; }
+  .result-card .cat { display: inline-block; font-size: .68rem; font-weight: 700; color: #2563eb;
+    background: rgba(37,99,235,.08); border-radius: 999px; padding: 2px 8px; margin-right: 6px; }
+  .result-card .exists-badge { display: inline-block; font-size: .68rem; font-weight: 700; color: #92400e;
+    background: #fef3c7; border-radius: 999px; padding: 2px 8px; }
+  .result-card .actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .result-card .actions .btn { width: auto; }
+  .result-card .actions a { text-decoration: none; }
+
+  .section-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #8a94a6;
+    margin: 14px 0 6px; }
+
+  .manual-banner {
+    background: #fef3c7; border: 1.5px solid #f59e0b; border-radius: 10px; padding: 10px 12px;
+    font-size: .85rem; font-weight: 600; color: #92400e; margin-bottom: 8px; display: none;
+  }
+  #map.picking { cursor: crosshair; }
+
+  /* Panel de confirmación — bottom sheet en móvil, modal centrado en escritorio */
+  .overlay { position: fixed; inset: 0; background: rgba(12,28,66,.45); display: none;
+    align-items: flex-end; justify-content: center; z-index: 100; }
+  .overlay.show { display: flex; }
+  .confirm-panel {
+    background: #fff; border-radius: 16px 16px 0 0; padding: 18px; width: 100%; max-width: 480px;
+    max-height: 88vh; overflow-y: auto;
+  }
+  @media (min-width: 640px) {
+    .overlay { align-items: center; }
+    .confirm-panel { border-radius: 16px; margin: 20px; }
+  }
+  .confirm-panel h2 { display: flex; justify-content: space-between; align-items: center; }
+  .confirm-panel .close-x { cursor: pointer; color: #8a94a6; font-size: 1.2rem; background: none; border: none; }
+  .confirm-panel .row2 { display: flex; gap: 10px; }
+  .confirm-panel .row2 > * { flex: 1; }
+  .confirm-panel details { margin: 10px 0; }
+  .confirm-panel summary { font-size: .82rem; color: #2563eb; cursor: pointer; font-weight: 600; }
+  .confirm-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .coords-hint { font-size: .76rem; color: #8a94a6; margin: 2px 0 10px; }
+
+  .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #0c1c42; color: #fff;
+    padding: 8px 14px; border-radius: 999px; font-size: .82rem; opacity: 0; transition: opacity .25s;
+    pointer-events: none; z-index: 200; max-width: 90vw; text-align: center; }
   .toast.show { opacity: 1; }
-  #addForm.picking #map { cursor: crosshair; }
+
+  details.filters-block summary { cursor: pointer; font-size: .85rem; font-weight: 700; color: #334155; padding: 4px 0; }
+  .card-list-item { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 8px; font-size: .82rem; }
+  .card-list-item .name { font-weight: 700; }
+  .score-pill { float: right; font-weight: 800; color: #2563eb; }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: .68rem; font-weight: 700; color: #fff; margin-top: 4px; }
   small.hint { color: #8a94a6; display: block; margin-top: 4px; }
 </style>
 </head>
@@ -55,113 +118,205 @@
 </div>
 
 <div class="layout">
-  <div id="map"></div>
+  <div id="map">
+    {% if not google_maps_js_api_key %}
+      <div class="map-msg">El mapa no está disponible: falta configurar <code>GOOGLE_MAPS_JS_API_KEY</code> en el servidor. La búsqueda y el alta de empresas funcionan igualmente.</div>
+    {% endif %}
+  </div>
 
   <div class="sidebar">
-    <h2>Filtros</h2>
-    <div class="field">
-      <label>Buscar por nombre</label>
-      <input type="text" id="fQ" placeholder="Nombre...">
+    <h2>🔎 Buscar y añadir un negocio</h2>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Nombre, categoría o dirección…">
+      <button class="btn" id="btnSearch">Buscar</button>
     </div>
-    <div class="field">
-      <label>Sector</label>
-      <select id="fSector"><option value="">Todos</option>
-        {% for id, label in sectors %}<option value="{{ id }}">{{ label }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="field">
-      <label>Etapa</label>
-      <select id="fStatus"><option value="">Todas</option>
-        {% for id, label in sales_statuses %}<option value="{{ id }}">{{ label }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="field">
-      <label>Responsable</label>
-      <select id="fAssigned"><option value="">Todos</option>
-        {% for s in staff %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="field">
-      <label>Puntuación mínima</label>
-      <input type="number" id="fMinScore" min="0" max="100" placeholder="0-100">
-    </div>
-    <div class="checks">
-      <label><input type="checkbox" id="fWebsite"> Tiene web</label>
-      <label><input type="checkbox" id="fBooking"> Reserva online</label>
-      <label><input type="checkbox" id="fWhatsapp"> WhatsApp</label>
-      <label><input type="checkbox" id="fUnresolved"> Sin ubicar</label>
-    </div>
-    <button class="btn" id="btnApplyFilters">Aplicar filtros</button>
+    <p class="search-hint">Primero se muestra lo que ya está en WebImpulsa, después resultados de Google cerca de la zona visible del mapa.</p>
 
-    <h2>Añadir empresa</h2>
-    <button class="btn secondary" id="btnPickMap">📍 Clic en el mapa para añadir</button>
-    <form id="addForm" style="margin-top:8px">
-      <div class="field"><label>Nombre *</label><input type="text" id="aName" required></div>
-      <div class="field"><label>Sector</label>
-        <select id="aSector">{% for id, label in sectors %}<option value="{{ id }}">{{ label }}</option>{% endfor %}</select>
+    <div id="searchResults"></div>
+
+    <button class="btn secondary" id="btnManualMode" style="margin-top:6px">+ Añadir lugar manualmente</button>
+    <div class="manual-banner" id="manualBanner">📍 Haz clic en el lugar exacto del negocio en el mapa. Podrás arrastrar el marcador para ajustarlo antes de guardar.</div>
+
+    <h3>Otras formas de añadir</h3>
+    <div class="row2" style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="btn ghost sm" id="btnUseMyLocation" style="flex:1">📍 Usar mi ubicación</button>
+    </div>
+    <div class="field">
+      <label>Pegar enlace de Google Maps</label>
+      <div style="display:flex;gap:6px">
+        <input type="text" id="mapsLinkInput" placeholder="https://maps.app.goo.gl/...">
+        <button class="btn sm secondary" id="btnUseMapsLink">Usar</button>
       </div>
-      <div class="field"><label>Dirección</label><input type="text" id="aAddress"></div>
-      <div class="field"><label>Teléfono</label><input type="text" id="aPhone"></div>
-      <div class="field"><label>Email</label><input type="text" id="aEmail"></div>
-      <div class="field"><label>Web</label><input type="text" id="aWebsite"></div>
-      <input type="hidden" id="aLat"><input type="hidden" id="aLng">
-      <small class="hint" id="pickHint"></small>
-      <button type="submit" class="btn">Guardar empresa</button>
-    </form>
+    </div>
 
-    <h2>Importar CSV</h2>
-    <small class="hint">Columnas: name (obligatoria), sector, address, district, municipality, lat, lng, phone, email, website, whatsapp, gmaps_url. Filas sin lat/lng quedan "sin ubicar".</small>
-    <form id="csvForm" style="margin-top:8px">
-      <input type="file" id="csvFile" accept=".csv">
-      <button type="submit" class="btn secondary">Importar</button>
-    </form>
+    <details class="filters-block">
+      <summary>Filtros del mapa</summary>
+      <div style="margin-top:10px">
+        <div class="field">
+          <label>Buscar por nombre (en el mapa)</label>
+          <input type="text" id="fQ" placeholder="Nombre...">
+        </div>
+        <div class="field">
+          <label>Sector</label>
+          <select id="fSector"><option value="">Todos</option>
+            {% for id, label in sectors %}<option value="{{ id }}">{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>Etapa</label>
+          <select id="fStatus"><option value="">Todas</option>
+            {% for id, label in sales_statuses %}<option value="{{ id }}">{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>Responsable</label>
+          <select id="fAssigned"><option value="">Todos</option>
+            {% for s in staff %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>Puntuación mínima</label>
+          <input type="number" id="fMinScore" min="0" max="100" placeholder="0-100">
+        </div>
+        <div class="checks">
+          <label><input type="checkbox" id="fWebsite"> Tiene web</label>
+          <label><input type="checkbox" id="fBooking"> Reserva online</label>
+          <label><input type="checkbox" id="fWhatsapp"> WhatsApp</label>
+          <label><input type="checkbox" id="fUnresolved"> Sin ubicar</label>
+        </div>
+        <button class="btn" id="btnApplyFilters">Aplicar filtros</button>
+      </div>
+    </details>
 
-    <h2>En esta vista (<span id="listCount">0</span>)</h2>
-    <div id="prospectList"></div>
+    <details class="filters-block">
+      <summary>Importar CSV</summary>
+      <div style="margin-top:10px">
+        <small class="hint">Columnas: name (obligatoria), sector, address, district, municipality, lat, lng, phone, email, website, whatsapp, gmaps_url. Filas sin lat/lng quedan "sin ubicar".</small>
+        <form id="csvForm" style="margin-top:8px">
+          <input type="file" id="csvFile" accept=".csv">
+          <button type="submit" class="btn secondary" style="margin-top:6px">Importar</button>
+        </form>
+      </div>
+    </details>
+
+    <details class="filters-block">
+      <summary>En esta vista (<span id="listCount">0</span>)</summary>
+      <div id="prospectList" style="margin-top:10px"></div>
+    </details>
+  </div>
+</div>
+
+<!-- ── Panel de confirmación ─────────────────────────────────────────── -->
+<div class="overlay" id="confirmOverlay">
+  <div class="confirm-panel">
+    <h2><span id="confirmTitle">Añadir negocio</span>
+      <button class="close-x" id="btnCloseConfirm" type="button">✕</button>
+    </h2>
+    <form id="confirmForm">
+      <div class="field"><label>Nombre *</label><input type="text" id="cName" required></div>
+      <div class="field"><label>Dirección</label><input type="text" id="cAddress"></div>
+      <div class="field"><label>Sector</label>
+        <select id="cSector">{% for id, label in sectors %}<option value="{{ id }}">{{ label }}</option>{% endfor %}</select>
+      </div>
+      <div class="coords-hint" id="cCoordsHint"></div>
+      <input type="hidden" id="cLat"><input type="hidden" id="cLng">
+      <input type="hidden" id="cPlaceId"><input type="hidden" id="cGmapsUrl">
+
+      <details>
+        <summary>Más datos</summary>
+        <div style="margin-top:8px">
+          <div class="field"><label>Teléfono</label><input type="text" id="cPhone"></div>
+          <div class="field"><label>WhatsApp</label><input type="text" id="cWhatsapp"></div>
+          <div class="field"><label>Email</label><input type="text" id="cEmail"></div>
+          <div class="field"><label>Web</label><input type="text" id="cWebsite"></div>
+          <div class="field"><label>Distrito</label><input type="text" id="cDistrict"></div>
+          <div class="field"><label>Municipio</label><input type="text" id="cMunicipality"></div>
+        </div>
+      </details>
+
+      <div class="confirm-actions">
+        <button type="submit" class="btn" id="btnSaveOnly">Guardar</button>
+        <button type="button" class="btn green" id="btnSaveAndCheck">Guardar e iniciar chequeo</button>
+      </div>
+    </form>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script src="/static/wi/js/vendor/leaflet/leaflet.js"></script>
-<script src="/static/wi/js/vendor/leaflet/leaflet.markercluster.js"></script>
+<script>
+window.WI_MAPA = {
+  hasGoogleKey: {{ google_maps_js_api_key|yesno:"true,false" }},
+  statusColors: {{ status_colors_json|safe }},
+  statusLabels: {},
+};
+{% for id, label in sales_statuses %}window.WI_MAPA.statusLabels['{{ id }}'] = '{{ label|escapejs }}';{% endfor %}
+</script>
+{% if google_maps_js_api_key %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_js_api_key }}&loading=async&callback=wiInitMap&v=weekly" async defer></script>
+{% endif %}
 <script>
 (function(){
 'use strict';
 
-var STATUS_COLORS = {{ status_colors_json|safe }};
-var STATUS_LABELS = {};
-{% for id, label in sales_statuses %}STATUS_LABELS['{{ id }}'] = '{{ label|escapejs }}';{% endfor %}
+var STATUS_COLORS = window.WI_MAPA.statusColors;
+var STATUS_LABELS = window.WI_MAPA.statusLabels;
+var DEFAULT_CENTER = {lat: 43.2627, lng: -2.9253}; // Barakaldo/Bilbao
 
-var map = L.map('map').setView([43.2627, -2.9253], 12); // Barakaldo/Bilbao por defecto
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors',
-  maxZoom: 19,
-}).addTo(map);
-
-var clusterGroup = L.markerClusterGroup();
-map.addLayer(clusterGroup);
-
-function markerIcon(color){
-  return L.divIcon({
-    className: '',
-    html: '<div style="width:18px;height:18px;border-radius:50%;background:'+color+';border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25)"></div>',
-    iconSize: [18, 18],
-  });
-}
+var map = null;
+var markers = [];
+var userLocation = null;
 
 function showToast(msg){
   var t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(function(){ t.classList.remove('show'); }, 2400);
+  setTimeout(function(){ t.classList.remove('show'); }, 2600);
+}
+
+function postJson(url, body){
+  return fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})})
+    .then(function(r){ return r.json().then(function(data){ return {ok:r.ok, status:r.status, data:data}; }); });
+}
+
+/* ══════════════════════════ Mapa (Google Maps JS) ══════════════════════════ */
+
+window.wiInitMap = function(){
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: DEFAULT_CENTER, zoom: 12, mapId: null,
+    streetViewControl: false, fullscreenControl: false,
+  });
+  map.addListener('idle', reloadMapProspects);
+  map.addListener('click', function(ev){
+    if(!manualModeActive) return;
+    placeManualMarker(ev.latLng.lat(), ev.latLng.lng());
+  });
+  reloadMapProspects();
+};
+
+function markerIcon(color){
+  return {
+    path: google.maps.SymbolPath.CIRCLE,
+    fillColor: color, fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2, scale: 8,
+  };
+}
+
+function clearMarkers(){
+  markers.forEach(function(m){ m.setMap(null); });
+  markers = [];
 }
 
 function currentFilters(){
-  var b = map.getBounds();
-  var params = new URLSearchParams({
-    south: b.getSouth(), north: b.getNorth(), west: b.getWest(), east: b.getEast(),
-  });
+  var params = new URLSearchParams();
+  if(map){
+    var b = map.getBounds();
+    if(b){
+      params.set('south', b.getSouthWest().lat());
+      params.set('north', b.getNorthEast().lat());
+      params.set('west', b.getSouthWest().lng());
+      params.set('east', b.getNorthEast().lng());
+    }
+  }
   var q = document.getElementById('fQ').value.trim();
   var sector = document.getElementById('fSector').value;
   var status = document.getElementById('fStatus').value;
@@ -179,13 +334,13 @@ function currentFilters(){
   return params;
 }
 
-function renderList(prospects){
+function renderProspectList(prospects){
   document.getElementById('listCount').textContent = prospects.length;
   document.getElementById('countLabel').textContent = prospects.length + ' empresas visibles';
   var el = document.getElementById('prospectList');
   el.innerHTML = prospects.slice(0, 100).map(function(p){
     var score = p.current_score != null ? p.current_score : '—';
-    return '<a class="card" style="display:block;color:inherit;text-decoration:none" href="'+p.detail_url+'">'+
+    return '<a class="card-list-item" style="display:block;color:inherit;text-decoration:none" href="'+p.detail_url+'">'+
       '<span class="score-pill">'+score+'</span>'+
       '<div class="name">'+p.name+'</div>'+
       '<div style="color:#8a94a6">'+p.municipality+' '+p.district+'</div>'+
@@ -194,73 +349,268 @@ function renderList(prospects){
   }).join('');
 }
 
-function reload(){
+function reloadMapProspects(){
   fetch('/panel/prospeccion/mapa/api/prospects/?' + currentFilters().toString())
     .then(function(r){ return r.json(); })
     .then(function(data){
-      clusterGroup.clearLayers();
+      clearMarkers();
       var withCoords = data.prospects.filter(function(p){ return p.lat != null && p.lng != null; });
       withCoords.forEach(function(p){
-        var marker = L.marker([p.lat, p.lng], {icon: markerIcon(p.color)});
+        var marker = new google.maps.Marker({
+          position: {lat: p.lat, lng: p.lng}, map: map, icon: markerIcon(p.color), title: p.name,
+        });
         var score = p.current_score != null ? p.current_score : '—';
-        marker.bindPopup(
-          '<strong>'+p.name+'</strong><br>'+
+        var info = new google.maps.InfoWindow({content:
+          '<div style="font-family:inherit"><strong>'+p.name+'</strong><br>'+
           (STATUS_LABELS[p.sales_status] || p.sales_status)+' · puntuación '+score+'<br>'+
           '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:.85rem">'+
           '<a href="'+p.detail_url+'">📇 Ver ficha</a>'+
-          '<a href="'+p.detail_url+'#prelimQuestions">🩺 Crear preliminar</a>'+
+          '<a href="'+p.detail_url+'?start_check=1">🩺 Crear preliminar</a>'+
           '<a href="'+p.detail_url+'#contactForm">👤 Añadir contacto</a>'+
-          '</div>'
-        );
-        clusterGroup.addLayer(marker);
+          '</div></div>'
+        });
+        marker.addListener('click', function(){ info.open(map, marker); });
+        markers.push(marker);
       });
-      renderList(data.prospects);
+      renderProspectList(data.prospects);
     })
     .catch(function(){ showToast('No se pudo cargar el mapa'); });
 }
 
-map.on('moveend', reload);
-document.getElementById('btnApplyFilters').addEventListener('click', reload);
+document.getElementById('btnApplyFilters').addEventListener('click', reloadMapProspects);
 
-/* alta por clic en el mapa */
-var picking = false;
-document.getElementById('btnPickMap').addEventListener('click', function(){
-  picking = !picking;
-  document.getElementById('pickHint').textContent = picking ? 'Haz clic en el mapa para fijar la ubicación...' : '';
-  this.textContent = picking ? '❌ Cancelar' : '📍 Clic en el mapa para añadir';
-});
-map.on('click', function(ev){
-  if(!picking) return;
-  document.getElementById('aLat').value = ev.latlng.lat.toFixed(6);
-  document.getElementById('aLng').value = ev.latlng.lng.toFixed(6);
-  document.getElementById('pickHint').textContent = 'Ubicación fijada: '+ev.latlng.lat.toFixed(5)+', '+ev.latlng.lng.toFixed(5);
-  picking = false;
-  document.getElementById('btnPickMap').textContent = '📍 Clic en el mapa para añadir';
+/* ══════════════════════════ Búsqueda + alta ══════════════════════════ */
+
+function categoryLabel(sectorId){
+  var select = document.getElementById('cSector');
+  for(var i=0;i<select.options.length;i++){
+    if(select.options[i].value === sectorId) return select.options[i].textContent;
+  }
+  return sectorId;
+}
+
+function renderExistingCard(p){
+  return '<div class="result-card">'+
+    '<span class="cat">Ya en WebImpulsa</span><span class="exists-badge">Ya existe</span>'+
+    '<div class="name" style="margin-top:6px">'+p.name+'</div>'+
+    '<div class="addr">'+(p.address||'')+' · '+p.sector_label+'</div>'+
+    '<div class="actions"><a class="btn sm secondary" href="'+p.detail_url+'">Ver ficha</a></div>'+
+  '</div>';
+}
+
+function renderGoogleCard(r, idx){
+  var existsTag = r.existing_prospect_id ? '<span class="exists-badge">Ya existe</span>' : '';
+  var addBtn = r.existing_prospect_id
+    ? '<a class="btn sm secondary" href="/panel/prospeccion/'+r.existing_prospect_id+'/">Ver ficha existente</a>'
+    : '<button type="button" class="btn sm" data-google-idx="'+idx+'">Añadir a WebImpulsa</button>';
+  var gmapsBtn = r.google_maps_url ? '<a class="btn sm ghost" href="'+r.google_maps_url+'" target="_blank" rel="noopener">Abrir en Google Maps</a>' : '';
+  return '<div class="result-card">'+
+    '<span class="cat">'+categoryLabel(r.category)+'</span>'+existsTag+
+    '<div class="name" style="margin-top:6px">'+r.name+'</div>'+
+    '<div class="addr">'+(r.address||'')+'</div>'+
+    '<div class="actions">'+addBtn+gmapsBtn+'</div>'+
+  '</div>';
+}
+
+var lastGoogleResults = [];
+
+function runSearch(){
+  var q = document.getElementById('searchInput').value.trim();
+  if(!q){ showToast('Escribe algo para buscar'); return; }
+  var params = new URLSearchParams({q: q});
+  var bias = userLocation || (map ? {lat: map.getCenter().lat(), lng: map.getCenter().lng()} : null);
+  if(bias){ params.set('lat', bias.lat); params.set('lng', bias.lng); }
+
+  var resultsEl = document.getElementById('searchResults');
+  resultsEl.innerHTML = '<p style="color:#8a94a6;font-size:.85rem">Buscando…</p>';
+
+  fetch('/panel/prospeccion/mapa/api/search/?' + params.toString())
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(data.error){ resultsEl.innerHTML = ''; showToast(data.error); return; }
+      lastGoogleResults = data.google || [];
+      var html = '';
+      (data.existing || []).forEach(function(p){ html += renderExistingCard(p); });
+      lastGoogleResults.forEach(function(r, idx){ html += renderGoogleCard(r, idx); });
+      if(data.google_error){
+        html += '<p style="color:#dc2626;font-size:.8rem">'+data.google_error+'</p>';
+      }
+      if(!html){ html = '<p style="color:#8a94a6;font-size:.85rem">Sin resultados. Prueba "+ Añadir lugar manualmente".</p>'; }
+      resultsEl.innerHTML = html;
+      resultsEl.querySelectorAll('[data-google-idx]').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          openConfirmPanel({fromGoogle: true, place: lastGoogleResults[parseInt(btn.getAttribute('data-google-idx'), 10)]});
+        });
+      });
+    })
+    .catch(function(){ resultsEl.innerHTML = ''; showToast('No se pudo buscar en este momento'); });
+}
+
+document.getElementById('btnSearch').addEventListener('click', runSearch);
+document.getElementById('searchInput').addEventListener('keydown', function(ev){
+  if(ev.key === 'Enter'){ ev.preventDefault(); runSearch(); }
 });
 
-document.getElementById('addForm').addEventListener('submit', function(ev){
-  ev.preventDefault();
-  var body = {
-    name: document.getElementById('aName').value.trim(),
-    sector: document.getElementById('aSector').value,
-    address: document.getElementById('aAddress').value.trim(),
-    phone: document.getElementById('aPhone').value.trim(),
-    email: document.getElementById('aEmail').value.trim(),
-    website: document.getElementById('aWebsite').value.trim(),
-    lat: document.getElementById('aLat').value ? parseFloat(document.getElementById('aLat').value) : null,
-    lng: document.getElementById('aLng').value ? parseFloat(document.getElementById('aLng').value) : null,
+/* ---- Modo manual: el clic normal en el mapa NUNCA crea nada ---- */
+var manualModeActive = false;
+var manualMarker = null;
+
+document.getElementById('btnManualMode').addEventListener('click', function(){
+  manualModeActive = !manualModeActive;
+  document.getElementById('manualBanner').style.display = manualModeActive ? 'block' : 'none';
+  document.getElementById('map').classList.toggle('picking', manualModeActive);
+  this.textContent = manualModeActive ? '❌ Cancelar modo manual' : '+ Añadir lugar manualmente';
+  if(!manualModeActive && manualMarker){ manualMarker.setMap(null); manualMarker = null; }
+});
+
+function placeManualMarker(lat, lng){
+  if(manualMarker) manualMarker.setMap(null);
+  manualMarker = new google.maps.Marker({
+    position: {lat: lat, lng: lng}, map: map, draggable: true,
+    icon: markerIcon('#2563eb'),
+  });
+  manualModeActive = false;
+  document.getElementById('manualBanner').style.display = 'none';
+  document.getElementById('map').classList.remove('picking');
+  document.getElementById('btnManualMode').textContent = '+ Añadir lugar manualmente';
+  manualMarker.addListener('dragend', function(){
+    var pos = manualMarker.getPosition();
+    document.getElementById('cLat').value = pos.lat();
+    document.getElementById('cLng').value = pos.lng();
+    document.getElementById('cCoordsHint').textContent = 'Ubicación: ' + pos.lat().toFixed(5) + ', ' + pos.lng().toFixed(5);
+  });
+  openConfirmPanel({fromManual: true, lat: lat, lng: lng});
+}
+
+/* ---- Usar mi ubicación ---- */
+document.getElementById('btnUseMyLocation').addEventListener('click', function(){
+  if(!navigator.geolocation){ showToast('Este navegador no permite compartir ubicación'); return; }
+  navigator.geolocation.getCurrentPosition(function(pos){
+    userLocation = {lat: pos.coords.latitude, lng: pos.coords.longitude};
+    if(map){ map.setCenter(userLocation); map.setZoom(15); }
+    showToast('Ubicación detectada — la búsqueda priorizará esta zona');
+  }, function(){
+    showToast('No se pudo obtener tu ubicación');
+  });
+});
+
+/* ---- Pegar enlace de Google Maps ---- */
+document.getElementById('btnUseMapsLink').addEventListener('click', function(){
+  var url = document.getElementById('mapsLinkInput').value.trim();
+  if(!url){ showToast('Pega un enlace de Google Maps'); return; }
+  postJson('/panel/prospeccion/mapa/api/parse-maps-link/', {url: url}).then(function(res){
+    if(res.data.error){ showToast(res.data.error); return; }
+    if(map){ map.setCenter({lat: res.data.lat, lng: res.data.lng}); map.setZoom(17); }
+    openConfirmPanel({fromLink: true, lat: res.data.lat, lng: res.data.lng, name: res.data.name, gmapsUrl: res.data.google_maps_url});
+  });
+});
+
+/* ---- Panel de confirmación ---- */
+var confirmMode = null; // 'google' | 'manual' | 'link'
+
+function openConfirmPanel(opts){
+  document.getElementById('confirmForm').reset();
+  document.getElementById('cPlaceId').value = '';
+  document.getElementById('cGmapsUrl').value = '';
+  document.getElementById('cLat').value = '';
+  document.getElementById('cLng').value = '';
+
+  if(opts.fromGoogle){
+    confirmMode = 'google';
+    var p = opts.place;
+    document.getElementById('confirmTitle').textContent = 'Confirmar datos de Google';
+    document.getElementById('cName').value = p.name || '';
+    document.getElementById('cAddress').value = p.address || '';
+    document.getElementById('cSector').value = p.category || 'otro';
+    document.getElementById('cPhone').value = p.phone || '';
+    document.getElementById('cWebsite').value = p.website || '';
+    document.getElementById('cLat').value = p.lat;
+    document.getElementById('cLng').value = p.lng;
+    document.getElementById('cPlaceId').value = p.place_id || '';
+    document.getElementById('cGmapsUrl').value = p.google_maps_url || '';
+    document.getElementById('cCoordsHint').textContent = (p.lat!=null && p.lng!=null) ? ('Ubicación: '+p.lat.toFixed(5)+', '+p.lng.toFixed(5)) : 'Sin coordenadas — se guardará como "sin ubicar".';
+  } else if(opts.fromManual){
+    confirmMode = 'manual';
+    document.getElementById('confirmTitle').textContent = 'Añadir lugar manualmente';
+    document.getElementById('cLat').value = opts.lat;
+    document.getElementById('cLng').value = opts.lng;
+    document.getElementById('cCoordsHint').textContent = 'Ubicación: ' + opts.lat.toFixed(5) + ', ' + opts.lng.toFixed(5) + ' (arrastra el marcador para ajustar)';
+  } else if(opts.fromLink){
+    confirmMode = 'link';
+    document.getElementById('confirmTitle').textContent = 'Añadir desde enlace de Google Maps';
+    document.getElementById('cName').value = opts.name || '';
+    document.getElementById('cLat').value = opts.lat;
+    document.getElementById('cLng').value = opts.lng;
+    document.getElementById('cGmapsUrl').value = opts.gmapsUrl || '';
+    document.getElementById('cCoordsHint').textContent = 'Ubicación: ' + opts.lat.toFixed(5) + ', ' + opts.lng.toFixed(5);
+  }
+  document.getElementById('confirmOverlay').classList.add('show');
+}
+
+function closeConfirmPanel(){
+  document.getElementById('confirmOverlay').classList.remove('show');
+  if(manualMarker && confirmMode === 'manual'){ manualMarker.setMap(null); manualMarker = null; }
+  confirmMode = null;
+}
+document.getElementById('btnCloseConfirm').addEventListener('click', closeConfirmPanel);
+
+function collectConfirmPayload(){
+  return {
+    name: document.getElementById('cName').value.trim(),
+    address: document.getElementById('cAddress').value.trim(),
+    sector: document.getElementById('cSector').value,
+    lat: document.getElementById('cLat').value ? parseFloat(document.getElementById('cLat').value) : null,
+    lng: document.getElementById('cLng').value ? parseFloat(document.getElementById('cLng').value) : null,
+    phone: document.getElementById('cPhone').value.trim(),
+    whatsapp: document.getElementById('cWhatsapp').value.trim(),
+    email: document.getElementById('cEmail').value.trim(),
+    website: document.getElementById('cWebsite').value.trim(),
+    district: document.getElementById('cDistrict').value.trim(),
+    municipality: document.getElementById('cMunicipality').value.trim(),
+    place_id: document.getElementById('cPlaceId').value,
+    google_maps_url: document.getElementById('cGmapsUrl').value,
   };
-  fetch('/panel/prospeccion/mapa/api/prospects/add/', {
-    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
-  }).then(function(r){ return r.json(); }).then(function(data){
-    if(data.error){ showToast(data.error); return; }
-    showToast(data.created ? 'Empresa añadida' : 'Ya existía una empresa igual — no se duplicó');
-    this.reset();
-    document.getElementById('aLat').value = ''; document.getElementById('aLng').value = '';
-    reload();
-  }.bind(this));
+}
+
+function saveProspect(startCheck){
+  var payload = collectConfirmPayload();
+  if(!payload.name){ showToast('El nombre es obligatorio'); return; }
+
+  var url, body;
+  if(confirmMode === 'google'){
+    url = '/panel/prospeccion/mapa/api/prospects/add-from-place/';
+    body = payload;
+  } else {
+    url = '/panel/prospeccion/mapa/api/prospects/add/';
+    body = payload;
+    body.gmaps_url = payload.google_maps_url;
+  }
+
+  postJson(url, body).then(function(res){
+    if(res.data.error){ showToast(res.data.error); return; }
+    var msg = res.data.created ? 'Empresa añadida' : 'Ya existía una empresa igual — no se duplicó';
+    showToast(msg);
+    closeConfirmPanel();
+    var detailUrl = res.data.prospect.detail_url;
+    if(startCheck){
+      window.location.href = detailUrl + '?start_check=1';
+    } else {
+      reloadMapProspects();
+      document.getElementById('searchInput').value = '';
+      document.getElementById('searchResults').innerHTML = '';
+    }
+  });
+}
+
+document.getElementById('confirmForm').addEventListener('submit', function(ev){
+  ev.preventDefault();
+  saveProspect(false);
+});
+document.getElementById('btnSaveAndCheck').addEventListener('click', function(){
+  saveProspect(true);
 });
 
+/* ---- Importar CSV ---- */
 document.getElementById('csvForm').addEventListener('submit', function(ev){
   ev.preventDefault();
   var file = document.getElementById('csvFile').files[0];
@@ -272,11 +622,15 @@ document.getElementById('csvForm').addEventListener('submit', function(ev){
     .then(function(data){
       if(data.error){ showToast(data.error); return; }
       showToast(data.created+' creadas, '+data.duplicates+' ya existían, '+data.unresolved+' sin ubicar');
-      reload();
+      reloadMapProspects();
     });
 });
 
-reload();
+/* Si no hay clave de Google Maps, el mapa no se inicializa (no hay script
+   cargado) — pero la búsqueda/alta siguen funcionando por completo. */
+if(!window.WI_MAPA.hasGoogleKey){
+  reloadMapProspects = function(){}; // sin mapa, no hay bounds que consultar
+}
 })();
 </script>
 </body>
