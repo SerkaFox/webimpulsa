@@ -1,6 +1,7 @@
 import json
+from collections import Counter
 
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_GET, require_POST
 
@@ -8,7 +9,8 @@ from crm.views import _crm_auth
 
 from .constants import SALES_STATUS_COLORS
 from .csv_import import parse_csv, validate_csv_file
-from .models import BusinessProspect, SECTOR_CHOICES, StaffMember
+from .models import BusinessProspect, ChequeoAudit, SECTOR_CHOICES, StaffMember
+from .quiz_config import QUESTIONS
 from .services import convert_prospect_to_lead, create_draft_proposal_for_prospect, create_prospect
 
 
@@ -54,9 +56,40 @@ def dashboard(request):
         }
         for status_id, label in BusinessProspect.SALES_STATUS_CHOICES
     ]
+
+    won = BusinessProspect.objects.filter(sales_status=BusinessProspect.SALES_WON).count()
+    lost = BusinessProspect.objects.filter(sales_status=BusinessProspect.SALES_LOST).count()
+    decided = won + lost
+    conversion_rate = round(100 * won / decided) if decided else None
+
+    # nota: sqlite no soporta distinct('campo') (eso es DISTINCT ON de
+    # Postgres), así que se busca el último audit confirmado por prospecto
+    # con una consulta por prospecto en vez de una única query agregada —
+    # aceptable aquí porque este dashboard no es de alto tráfico.
+    by_id = {q['id']: q for q in QUESTIONS}
+    problem_counter = Counter()
+    sector_counter = Counter()
+    district_counter = Counter()
+    for p in BusinessProspect.objects.exclude(current_score__isnull=True):
+        sector_counter[p.get_sector_display()] += 1
+        if p.district:
+            district_counter[p.district] += 1
+        latest_audit = p.audits.filter(stage=ChequeoAudit.STAGE_CONFIRMADO).order_by('-created_at').first()
+        if latest_audit:
+            for qid in (latest_audit.fix_ids or []):
+                q = by_id.get(qid)
+                if q:
+                    problem_counter[q['text_by_sector'].get(latest_audit.sector, q['text_by_sector']['_default'])] += 1
+
     return render(request, 'prospeccion/dashboard.html', {
         'total': BusinessProspect.objects.count(),
         'funnel': funnel,
+        'conversion_rate': conversion_rate,
+        'won': won,
+        'lost': lost,
+        'top_problems': problem_counter.most_common(5),
+        'top_sectors': sector_counter.most_common(5),
+        'top_districts': district_counter.most_common(5),
     })
 
 
@@ -212,6 +245,24 @@ def draft_proposal(request, pk):
         'proposal_id': proposal.pk,
         'proposal_url': f'/wi/crm/proposal/{proposal.pk}/',
     })
+
+
+@_crm_auth
+def prospect_pdf(request, pk):
+    from .pdf import generate_audit_pdf
+
+    prospect = get_object_or_404(BusinessProspect, pk=pk)
+    audit = prospect.audits.order_by('-created_at').first()
+    if not audit:
+        return HttpResponse('Este prospecto todavía no tiene ningún chequeo.', status=404, content_type='text/plain')
+
+    pdf_bytes = generate_audit_pdf(audit)
+    if pdf_bytes is None:
+        return HttpResponse('No se pudo generar el PDF.', status=500, content_type='text/plain')
+
+    resp = HttpResponse(pdf_bytes, content_type='application/pdf')
+    resp['Content-Disposition'] = f'inline; filename="chequeo-{prospect.pk}.pdf"'
+    return resp
 
 
 @_crm_auth

@@ -83,6 +83,7 @@
       <p style="font-size:.85rem;color:#5a6d8c">Compártelo con la empresa para que confirme/corrija el chequeo ya pre-rellenado.</p>
       <div class="link-box" id="personalLink">{{ personal_url }}</div>
       <button class="btn" id="btnCopyLink" style="margin-top:8px">📋 Copiar enlace</button>
+      {% if audits %}<a class="btn" style="display:inline-block;text-decoration:none;text-align:center;margin-top:8px" href="/panel/prospeccion/{{ prospect.pk }}/pdf/" target="_blank">📄 Ver PDF del último chequeo</a>{% endif %}
     </div>
 
     <div class="card">
