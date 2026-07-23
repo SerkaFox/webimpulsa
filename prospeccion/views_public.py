@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
+from .constants import compute_public_badges
 from .models import BusinessProspect, ChequeoAudit, SECTOR_CHOICES
 from .quiz_config import ANSWER_OPTIONS, CATEGORY_LABELS, QUESTIONNAIRE_VERSION, QUESTIONS
 from .scoring import compute_score, questions_for_sector
@@ -232,3 +233,63 @@ def submit_personal_audit(request, token):
         'stage': audit.stage,
         **_good_fix_progress(sector, result),
     })
+
+
+# ── Mapa Digital público ───────────────────────────────────────────────────
+# Solo empresas que dieron consentimiento de publicación Y fueron confirmadas
+# por el equipo de WebImpulsa. Nunca expone contactos de empleados, notas
+# internas, presupuestos, historial de ventas ni puntuaciones/insignias
+# negativas o sin confirmar — se calculan al vuelo desde el último audit
+# CONFIRMADO, nunca se guardan como estado aparte.
+
+def _published_queryset():
+    return BusinessProspect.objects.filter(
+        publish_consent=True,
+        publish_confirmed_by_staff=True,
+        publish_revoked_at__isnull=True,
+        lat__isnull=False,
+        lng__isnull=False,
+    )
+
+
+def _public_prospect_json(prospect):
+    audit = prospect.audits.filter(stage=ChequeoAudit.STAGE_CONFIRMADO).order_by('-created_at').first()
+    badges = compute_public_badges(prospect, audit)
+    return {
+        'name': prospect.name,
+        'sector': prospect.sector,
+        'sector_label': prospect.get_sector_display(),
+        'lat': prospect.lat,
+        'lng': prospect.lng,
+        'municipality': prospect.municipality,
+        'district': prospect.district,
+        'website': prospect.website,
+        'whatsapp': prospect.whatsapp,
+        'gmaps_url': prospect.gmaps_url,
+        'badges': [{'key': b['key'], 'label': b['label']} for b in badges],
+    }
+
+
+def public_map(request):
+    return render(request, 'prospeccion/map_public.html', {'sectors': SECTOR_CHOICES})
+
+
+@require_GET
+def public_map_api(request):
+    qs = _published_queryset()
+
+    try:
+        south = float(request.GET['south'])
+        north = float(request.GET['north'])
+        west = float(request.GET['west'])
+        east = float(request.GET['east'])
+        qs = qs.filter(lat__gte=south, lat__lte=north, lng__gte=west, lng__lte=east)
+    except (KeyError, ValueError):
+        pass
+
+    sector = request.GET.get('sector')
+    if sector in _VALID_SECTORS:
+        qs = qs.filter(sector=sector)
+
+    qs = qs[:500]
+    return JsonResponse({'prospects': [_public_prospect_json(p) for p in qs]})

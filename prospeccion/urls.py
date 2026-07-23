@@ -19,4 +19,7 @@ urlpatterns = [
     path('panel/prospeccion/<int:pk>/update/', views_panel.prospect_update, name='prospeccion_update'),
     path('panel/prospeccion/<int:pk>/convert/', views_panel.convert_to_lead, name='prospeccion_convert'),
     path('panel/prospeccion/<int:pk>/draft-proposal/', views_panel.draft_proposal, name='prospeccion_draft_proposal'),
+
+    path('mapa-digital/', views_public.public_map, name='mapa_digital'),
+    path('mapa-digital/api/prospects/', views_public.public_map_api, name='mapa_digital_api'),
 ]

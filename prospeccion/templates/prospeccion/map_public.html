@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mapa Digital — negocios locales bien preparados | WebImpulsa</title>
+<meta name="description" content="Negocios locales que ya tienen su presencia digital al día: fáciles de encontrar, contactar y reservar.">
+<link rel="stylesheet" href="/static/wi/js/vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="/static/wi/js/vendor/leaflet/MarkerCluster.css">
+<link rel="stylesheet" href="/static/wi/js/vendor/leaflet/MarkerCluster.Default.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  .top-bar {
+    background: #1760d6; color: #fff; padding: 12px 18px; display: flex; align-items: center;
+    gap: 12px; font-size: .92rem;
+  }
+  .top-bar strong { font-size: 1rem; }
+  .top-bar select { margin-left: auto; border-radius: 8px; border: none; padding: 6px 10px; font-size: .85rem; }
+  #map { height: calc(100vh - 50px); }
+  .badge { display: inline-block; background: rgba(0,158,115,.12); color: #009e73; font-weight: 700;
+    font-size: .72rem; padding: 2px 8px; border-radius: 999px; margin: 2px 3px 0 0; }
+  .popup-title { font-weight: 800; margin-bottom: 2px; }
+  .popup-sector { color: #5a6d8c; font-size: .82rem; margin-bottom: 6px; }
+  .popup-links a { font-size: .82rem; color: #1760d6; font-weight: 700; margin-right: 10px; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <strong>🗺️ Mapa Digital</strong>
+  <span>Negocios locales con su presencia digital al día</span>
+  <select id="fSector">
+    <option value="">Todos los sectores</option>
+    {% for id, label in sectors %}<option value="{{ id }}">{{ label }}</option>{% endfor %}
+  </select>
+</div>
+
+<div id="map"></div>
+
+<script src="/static/wi/js/vendor/leaflet/leaflet.js"></script>
+<script src="/static/wi/js/vendor/leaflet/leaflet.markercluster.js"></script>
+<script>
+(function(){
+'use strict';
+
+var map = L.map('map').setView([43.2627, -2.9253], 12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors',
+  maxZoom: 19,
+}).addTo(map);
+
+var clusterGroup = L.markerClusterGroup();
+map.addLayer(clusterGroup);
+
+var greenIcon = L.divIcon({
+  className: '',
+  html: '<div style="width:16px;height:16px;border-radius:50%;background:#009e73;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.2)"></div>',
+  iconSize: [16, 16],
+});
+
+function popupHtml(p){
+  var badges = p.badges.map(function(b){ return '<span class="badge">✓ '+b.label+'</span>'; }).join('');
+  var links = [];
+  if(p.website) links.push('<a href="'+p.website+'" target="_blank" rel="noopener">Sitio web</a>');
+  if(p.whatsapp) links.push('<a href="https://wa.me/'+p.whatsapp.replace(/\D/g,'')+'" target="_blank" rel="noopener">WhatsApp</a>');
+  if(p.gmaps_url) links.push('<a href="'+p.gmaps_url+'" target="_blank" rel="noopener">Google Maps</a>');
+  return '<div class="popup-title">'+p.name+'</div>'+
+    '<div class="popup-sector">'+p.sector_label+' · '+(p.municipality||'')+'</div>'+
+    '<div>'+badges+'</div>'+
+    '<div class="popup-links" style="margin-top:8px">'+links.join('')+'</div>';
+}
+
+function reload(){
+  var b = map.getBounds();
+  var params = new URLSearchParams({
+    south: b.getSouth(), north: b.getNorth(), west: b.getWest(), east: b.getEast(),
+  });
+  var sector = document.getElementById('fSector').value;
+  if(sector) params.set('sector', sector);
+
+  fetch('/mapa-digital/api/prospects/?' + params.toString())
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      clusterGroup.clearLayers();
+      data.prospects.forEach(function(p){
+        var marker = L.marker([p.lat, p.lng], {icon: greenIcon});
+        marker.bindPopup(popupHtml(p));
+        clusterGroup.addLayer(marker);
+      });
+    });
+}
+
+map.on('moveend', reload);
+document.getElementById('fSector').addEventListener('change', reload);
+reload();
+})();
+</script>
+</body>
+</html>
