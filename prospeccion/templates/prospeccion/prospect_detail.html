@@ -86,6 +86,18 @@
     </div>
 
     <div class="card">
+      <h2>CRM</h2>
+      {% if prospect.converted_client_id %}
+        <p style="font-size:.85rem">Ya convertido en cliente: <a href="/wi/crm/{{ prospect.converted_client_id }}/">ver ficha en el CRM →</a></p>
+        <button class="btn" id="btnDraftProposal">Crear borrador de presupuesto</button>
+      {% else %}
+        <p style="font-size:.85rem;color:#5a6d8c">Todavía no está en el CRM. Al convertir se usará como contacto: {{ prospect.whatsapp|default:prospect.phone|default:prospect.email|default:"—" }}</p>
+        <button class="btn" id="btnConvert">Convertir en cliente</button>
+        <button class="btn" id="btnDraftProposal" style="margin-left:6px">Convertir y crear presupuesto</button>
+      {% endif %}
+    </div>
+
+    <div class="card">
       <h2>Contactos ({{ contacts|length }})</h2>
       {% if contacts %}
       <table>
@@ -135,6 +147,26 @@ document.getElementById('btnCopyLink').addEventListener('click', function(){
   var text = document.getElementById('personalLink').textContent.trim();
   if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text);
 });
+
+var btnConvert = document.getElementById('btnConvert');
+if(btnConvert){
+  btnConvert.addEventListener('click', function(){
+    fetch(window.location.pathname + 'convert/', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'})
+      .then(function(r){ return r.json(); })
+      .then(function(data){ if(data.lead_url) window.location.reload(); });
+  });
+}
+var btnDraft = document.getElementById('btnDraftProposal');
+if(btnDraft){
+  btnDraft.addEventListener('click', function(){
+    fetch(window.location.pathname + 'draft-proposal/', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'})
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(data.error){ alert(data.error); return; }
+        window.location.href = data.proposal_url;
+      });
+  });
+}
 </script>
 </body>
 </html>

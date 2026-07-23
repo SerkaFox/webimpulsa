@@ -9,7 +9,7 @@ from crm.views import _crm_auth
 from .constants import SALES_STATUS_COLORS
 from .csv_import import parse_csv, validate_csv_file
 from .models import BusinessProspect, SECTOR_CHOICES, StaffMember
-from .services import create_prospect
+from .services import convert_prospect_to_lead, create_draft_proposal_for_prospect, create_prospect
 
 
 def _prospect_json(p):
@@ -166,7 +166,7 @@ def import_csv_view(request):
 
 @_crm_auth
 def prospect_detail(request, pk):
-    prospect = get_object_or_404(BusinessProspect.objects.select_related('assigned_to'), pk=pk)
+    prospect = get_object_or_404(BusinessProspect.objects.select_related('assigned_to', 'converted_client'), pk=pk)
     return render(request, 'prospeccion/prospect_detail.html', {
         'prospect': prospect,
         'contacts': prospect.contacts.all(),
@@ -175,6 +175,42 @@ def prospect_detail(request, pk):
         'personal_url': request.build_absolute_uri(f'/chequeo-digital/e/{prospect.public_token}/'),
         'staff': StaffMember.objects.filter(active=True),
         'sales_statuses': BusinessProspect.SALES_STATUS_CHOICES,
+    })
+
+
+@_crm_auth
+@require_POST
+def convert_to_lead(request, pk):
+    prospect = get_object_or_404(BusinessProspect, pk=pk)
+    try:
+        payload = json.loads(request.body or '{}')
+    except (ValueError, TypeError):
+        payload = {}
+    lead, created = convert_prospect_to_lead(
+        prospect,
+        contact_name=payload.get('contact_name', ''),
+        contact_value=payload.get('contact_value', ''),
+    )
+    return JsonResponse({
+        'created': created,
+        'lead_id': lead.pk,
+        'lead_url': f'/wi/crm/{lead.pk}/',
+    })
+
+
+@_crm_auth
+@require_POST
+def draft_proposal(request, pk):
+    prospect = get_object_or_404(BusinessProspect, pk=pk)
+    if not prospect.converted_client_id:
+        lead, _ = convert_prospect_to_lead(prospect)
+    try:
+        proposal = create_draft_proposal_for_prospect(prospect)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({
+        'proposal_id': proposal.pk,
+        'proposal_url': f'/wi/crm/proposal/{proposal.pk}/',
     })
 
 

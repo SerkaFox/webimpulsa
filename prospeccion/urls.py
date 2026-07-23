@@ -17,4 +17,6 @@ urlpatterns = [
     path('panel/prospeccion/mapa/api/import-csv/', views_panel.import_csv_view, name='prospeccion_import_csv'),
     path('panel/prospeccion/<int:pk>/', views_panel.prospect_detail, name='prospeccion_detail'),
     path('panel/prospeccion/<int:pk>/update/', views_panel.prospect_update, name='prospeccion_update'),
+    path('panel/prospeccion/<int:pk>/convert/', views_panel.convert_to_lead, name='prospeccion_convert'),
+    path('panel/prospeccion/<int:pk>/draft-proposal/', views_panel.draft_proposal, name='prospeccion_draft_proposal'),
 ]

@@ -105,3 +105,135 @@ def create_prospect(data, source=None):
         dedupe_key=compute_dedupe_key(name, phone, email, website),
     )
     return prospect, True
+
+
+# ── Integración con el CRM existente (crm.Lead / crm.Proposal) ────────────────
+# Mismos precios base que los botones "calc-project" de tatiana.html — no se
+# importan de ahí (son JS), se mantiene esta copia como constante de Python.
+PACKAGE_BASE_PRICES = {
+    'Landing page': 390,
+    'Web profesional': 590,
+    'Web con reservas': 890,
+    'Tienda online': 1290,
+    'Proyecto a medida': 1690,
+}
+
+_BOOKING_SECTORS = {'salon', 'bar', 'academia', 'clinica', 'taller', 'inmobiliaria'}
+
+
+def default_package_for_sector(sector):
+    if sector == 'tienda':
+        return 'Tienda online'
+    if sector in _BOOKING_SECTORS:
+        return 'Web con reservas'
+    return 'Web profesional'
+
+
+def _catalog_extra(sector):
+    if sector == 'tienda':
+        return 'Subir catálogo completo'
+    if sector in ('bar', 'academia', 'clinica', 'salon'):
+        return 'Menú/catálogo digital'
+    return None
+
+
+def _main_action_extra(sector):
+    if sector == 'tienda':
+        return 'Pedidos online'
+    if sector in _BOOKING_SECTORS:
+        return 'Citas y reservas online'
+    return None
+
+
+# question_id (de prospeccion.quiz_config) -> nombre de extra en
+# crm.proposal_content.EXTRAS_PRICES, o una función sector -> nombre|None.
+# 'mobile_page' y 'reviews_uptodate' no mapean a ningún extra: el primero es
+# la base de cualquier paquete, el segundo no tiene SKU equivalente todavía.
+FIX_ID_TO_EXTRA = {
+    'gbp_accuracy': 'Ficha en Google Maps',
+    'catalog_visible': _catalog_extra,
+    'one_tap_contact': 'Botón de WhatsApp',
+    'main_action_no_wait': _main_action_extra,
+    'messages_lost': 'Asistente automático 24h',
+    'auto_confirmation': 'Avisos antes de cada cita',
+    'centralized_records': 'Panel para tu equipo',
+    'repetitive_tasks': 'Documentos automáticos PDF',
+    'brings_back_customers': 'Estadísticas de ventas',
+}
+
+
+def extras_from_fix_ids(fix_ids, sector):
+    names = []
+    for qid in fix_ids:
+        entry = FIX_ID_TO_EXTRA.get(qid)
+        if entry is None:
+            continue
+        name = entry(sector) if callable(entry) else entry
+        if name and name not in names:
+            names.append(name)
+    return names
+
+
+def convert_prospect_to_lead(prospect, contact_name='', contact_value=''):
+    """Crea (o reutiliza) un crm.Lead a partir de un BusinessProspect.
+    Devuelve (lead, created). Nunca duplica: si ya está convertido, o si ya
+    existe un Lead con el mismo teléfono/email, se reutiliza ese."""
+    from crm.models import Lead
+    from crm.proposal_content import EXTRAS_PRICES
+    from crm.services import lead_from_payload
+
+    if prospect.converted_client_id:
+        return prospect.converted_client, False
+
+    contact = contact_value or prospect.whatsapp or prospect.phone or prospect.email
+    existing = None
+    if contact:
+        existing = Lead.objects.filter(phone=contact).first() or Lead.objects.filter(email=contact).first()
+    if existing:
+        prospect.converted_client = existing
+        prospect.sales_status = prospect.SALES_CONTACTED
+        prospect.save(update_fields=['converted_client', 'sales_status', 'updated_at'])
+        return existing, False
+
+    latest_audit = prospect.audits.order_by('-created_at').first()
+    fix_ids = latest_audit.fix_ids if latest_audit else []
+    package = default_package_for_sector(prospect.sector)
+    extras = extras_from_fix_ids(fix_ids, prospect.sector)
+    extras_price = sum(EXTRAS_PRICES.get(name, 0) for name in extras)
+
+    payload = {
+        'name': contact_name or prospect.name,
+        'contact': contact,
+        'biz_type': prospect.get_sector_display(),
+        'source': Lead.SRC_MAPA_DIGITAL,
+        'calc': {
+            'package': package,
+            'base': PACKAGE_BASE_PRICES.get(package, 590),
+            'extras': extras,
+            'extras_price': extras_price,
+            'rush': False,
+            'maint': 0, 'maint_name': '',
+            'hours': 0, 'hours_name': '',
+            'hosting': 0,
+        },
+    }
+    lead = lead_from_payload(payload)
+    prospect.converted_client = lead
+    prospect.sales_status = prospect.SALES_CONTACTED
+    prospect.save(update_fields=['converted_client', 'sales_status', 'updated_at'])
+    return lead, True
+
+
+def create_draft_proposal_for_prospect(prospect):
+    """Crea un borrador de Proposal para el Lead ya convertido. Nunca lo
+    envía — igual que crm.services.create_proposal_from_lead, deja el
+    borrador en estado ST_DRAFT para que el equipo lo revise antes."""
+    from crm.services import create_proposal_from_lead
+
+    if not prospect.converted_client_id:
+        raise ValueError('El prospecto todavía no está convertido a cliente')
+
+    proposal = create_proposal_from_lead(prospect.converted_client)
+    prospect.sales_status = prospect.SALES_PRESUPUESTO
+    prospect.save(update_fields=['sales_status', 'updated_at'])
+    return proposal
