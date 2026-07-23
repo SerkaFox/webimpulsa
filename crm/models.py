@@ -30,18 +30,20 @@ class Lead(models.Model):
     ]
 
     # ── sources ───────────────────────────────────────────────────────────────
-    SRC_CALCULATOR = 'calculator'
-    SRC_CONTACT    = 'contact_form'
-    SRC_CHAT       = 'chat'
-    SRC_WHATSAPP   = 'whatsapp'
-    SRC_MANUAL     = 'manual'
+    SRC_CALCULATOR   = 'calculator'
+    SRC_CONTACT      = 'contact_form'
+    SRC_CHAT         = 'chat'
+    SRC_WHATSAPP     = 'whatsapp'
+    SRC_MANUAL       = 'manual'
+    SRC_MAPA_DIGITAL = 'mapa_digital'
 
     SOURCE_CHOICES = [
-        (SRC_CALCULATOR, 'Calculadora'),
-        (SRC_CONTACT,    'Formulario de contacto'),
-        (SRC_CHAT,       'Chat en vivo'),
-        (SRC_WHATSAPP,   'WhatsApp'),
-        (SRC_MANUAL,     'Manual'),
+        (SRC_CALCULATOR,   'Calculadora'),
+        (SRC_CONTACT,      'Formulario de contacto'),
+        (SRC_CHAT,         'Chat en vivo'),
+        (SRC_WHATSAPP,     'WhatsApp'),
+        (SRC_MANUAL,       'Manual'),
+        (SRC_MAPA_DIGITAL, 'Mapa Digital'),
     ]
 
     # ── preferred channel ─────────────────────────────────────────────────────

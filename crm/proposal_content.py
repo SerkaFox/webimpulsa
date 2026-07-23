@@ -43,6 +43,12 @@ EXTRAS_PRICES = {
     'Datos en Excel / Sheets':     120,
     'Panel para tu equipo':        350,
     'App para móvil':              590,
+    # Añadidos para los borradores de presupuesto generados desde el mapa de
+    # prospección (prospeccion/services.py) — todavía no están en el
+    # calculador público de tatiana.html, ese sería un paso aparte y
+    # deliberado si se quiere ofrecerlos también ahí.
+    'Menú/catálogo digital':        90,
+    'Pedidos online':              160,
 }
 
 # ── Extras descriptions ── mirrors the `ex` object (ES) in tatiana.html — used
@@ -70,6 +76,8 @@ EXTRAS_DESCRIPTIONS = {
     'Datos en Excel / Sheets': 'Sincronización automática de reservas, pedidos o solicitudes con Google Sheets o Excel Online.',
     'Panel para tu equipo': 'Panel interno con acceso diferenciado por empleado para asignar tareas y controlar horarios.',
     'App para móvil': 'Aplicación instalable en el móvil para que clientes o empleados accedan al sistema sin depender del navegador.',
+    'Menú/catálogo digital': 'Carta o catálogo de servicios visible en la web, siempre actualizado, sin carga masiva de productos (para eso está «Subir catálogo completo»).',
+    'Pedidos online': 'El cliente hace su pedido (recogida o entrega) directamente desde la web, sin pasarela de pago compleja ni gestión de stock avanzada.',
 }
 
 # ── Hours package / hosting ── mirrors HOURS_CONFIG / calcHostingToggle in tatiana.html ──

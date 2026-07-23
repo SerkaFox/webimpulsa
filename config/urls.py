@@ -4,4 +4,5 @@ urlpatterns = [
     path('', include('core.urls')),
     path('', include('crm.urls')),
     path('', include('planner.urls')),
+    path('', include('prospeccion.urls')),
 ]

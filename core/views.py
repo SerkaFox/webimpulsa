@@ -25,7 +25,14 @@ def home(request):
 
 
 def digital_checkup(request):
-    return render(request, "chequeo_digital.html")
+    return render(request, "chequeo_digital.html", {
+        'mode': 'public',
+        'sector': '',
+        'token': '',
+        'prospect_name': '',
+        'stage': 'confirmado',
+        'prefill_json': '{}',
+    })
 
 
 def ar_business_card(request):

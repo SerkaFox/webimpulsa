@@ -24,6 +24,8 @@
   --q-accent:#00a8cc;
   --q-green:#009e73;
   --q-amber:#c98a11;
+  --q-teal:#0f766e;
+  --q-gray:#8a94a6;
   --q-text:#0c1c42;
   --q-muted:#5a6d8c;
   --q-shadow:0 2px 20px rgba(10,50,150,.09);
@@ -112,8 +114,6 @@ a{text-decoration:none}
   .cat-grid{grid-template-columns:repeat(3,1fr)}
   .q-body{display:grid;grid-template-columns:1.1fr 1fr;gap:2.2rem;align-items:center}
   .q-body .q-options{margin-top:0}
-  .result-cols{display:grid;grid-template-columns:1fr 1fr;gap:1.8rem;align-items:start}
-  .result-cols .result-block{margin-bottom:0}
 }
 
 /* screen transition: sheet fold/flip */
@@ -131,6 +131,12 @@ a{text-decoration:none}
 .qz-shell h1{font-size:clamp(1.5rem,4vw,2.15rem);line-height:1.18;font-weight:850;margin:0 0 1rem}
 .qz-shell h2{font-size:clamp(1.25rem,3.4vw,1.65rem);line-height:1.22;font-weight:850;margin:0 0 1.4rem}
 .qz-sub{color:var(--q-muted);font-size:1.05rem;line-height:1.55;margin-bottom:1.8rem}
+
+.qz-personal-banner{display:flex;align-items:center;gap:.6rem;background:rgba(23,96,214,.08);
+  border:1px solid rgba(23,96,214,.22);border-radius:14px;padding:.8rem 1rem;margin-bottom:1.3rem;
+  font-size:.88rem;color:var(--q-text)}
+.qz-personal-banner .tag{flex-shrink:0;font-weight:800;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;
+  background:var(--q-primary);color:#fff;padding:.3rem .6rem;border-radius:999px}
 
 .btn-qz{
   display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border:none;cursor:pointer;
@@ -170,20 +176,25 @@ a{text-decoration:none}
 .q-icon-badge{width:58px;height:58px;border-radius:16px;background:linear-gradient(135deg,rgba(23,96,214,.12),rgba(0,168,204,.14));
   display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin-bottom:1rem}
 .q-hint{color:var(--q-muted);font-size:.9rem;line-height:1.5;margin:.3rem 0 0}
-.q-options{display:grid;gap:.7rem;margin-top:1.6rem}
+.q-options{display:grid;gap:.6rem;margin-top:1.6rem}
 .q-opt{
   display:flex;align-items:center;justify-content:space-between;background:var(--q-bg);border:1.6px solid var(--q-border);
-  border-radius:14px;padding:1rem 1.2rem;cursor:pointer;font-family:inherit;font-size:.98rem;font-weight:700;color:var(--q-text);
+  border-radius:14px;padding:.85rem 1.1rem;cursor:pointer;font-family:inherit;font-size:.94rem;font-weight:700;color:var(--q-text);
   transition:transform .16s,box-shadow .16s,border-color .16s,background .16s;
 }
 .q-opt:hover{transform:translateY(-2px);box-shadow:var(--q-shadow);border-color:rgba(23,96,214,.4)}
 .q-opt[data-val="si"]:hover{background:rgba(0,158,115,.08);border-color:rgba(0,158,115,.45)}
+.q-opt[data-val="en_parte"]:hover{background:rgba(15,118,110,.08);border-color:rgba(15,118,110,.4)}
+.q-opt[data-val="no_se"]:hover{background:rgba(201,138,17,.08);border-color:rgba(201,138,17,.4)}
 .q-opt[data-val="no"]:hover{background:rgba(214,60,60,.06);border-color:rgba(214,60,60,.35)}
-.q-opt[data-val="nose"]:hover{background:rgba(201,138,17,.08);border-color:rgba(201,138,17,.4)}
+.q-opt[data-val="no_aplica"]:hover{background:rgba(138,148,166,.10);border-color:rgba(138,148,166,.4)}
 .q-opt.picked{transform:scale(.96)}
 .q-opt[data-val="si"].picked{background:rgba(0,158,115,.16);border-color:var(--q-green);box-shadow:var(--q-shadow)}
+.q-opt[data-val="en_parte"].picked{background:rgba(15,118,110,.16);border-color:var(--q-teal);box-shadow:var(--q-shadow)}
+.q-opt[data-val="no_se"].picked{background:rgba(201,138,17,.16);border-color:var(--q-amber);box-shadow:var(--q-shadow)}
 .q-opt[data-val="no"].picked{background:rgba(214,60,60,.12);border-color:#d63c3c;box-shadow:var(--q-shadow)}
-.q-opt[data-val="nose"].picked{background:rgba(201,138,17,.16);border-color:var(--q-amber);box-shadow:var(--q-shadow)}
+.q-opt[data-val="no_aplica"].picked{background:rgba(138,148,166,.18);border-color:var(--q-gray);box-shadow:var(--q-shadow)}
+.q-opt.prefilled:not(.picked){border-style:dashed;border-color:rgba(23,96,214,.5)}
 .q-back{margin-top:1.4rem;background:none;border:none;color:var(--q-muted);font-weight:700;font-size:.85rem;cursor:pointer;
   font-family:inherit;padding:.3rem 0}
 .q-back:hover{color:var(--q-primary)}
@@ -218,6 +229,7 @@ a{text-decoration:none}
 .result-list li{display:flex;align-items:flex-start;gap:.55rem;font-size:.9rem;line-height:1.4;color:var(--q-text)}
 .result-list li .tick{flex-shrink:0;font-weight:900}
 .result-list.good li .tick{color:var(--q-green)}
+.result-list.progress li .tick{color:var(--q-amber)}
 .result-list.fix li .tick{color:var(--q-primary)}
 
 .qz-cta-grid{display:grid;gap:.65rem;margin-top:1.7rem}
@@ -228,7 +240,13 @@ a{text-decoration:none}
 .qz-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
-<body>
+<body
+  data-mode="{{ mode|default:'public' }}"
+  data-sector="{{ sector|default:'' }}"
+  data-token="{{ token|default:'' }}"
+  data-stage="{{ stage|default:'confirmado' }}"
+  data-prospect-name="{{ prospect_name|default:'' }}"
+>
 
 <div class="qz-photo-bg"><span class="photo"></span><span class="photo"></span><span class="photo"></span></div>
 <div class="qz-bg"><span class="shape s1"></span><span class="shape s2"></span><span class="shape s3"></span></div>
@@ -244,11 +262,23 @@ a{text-decoration:none}
   <!-- INTRO -->
   <section class="q-screen active" data-screen="intro" id="screen-intro">
     <div class="qz-card">
-      <div class="qz-eyebrow">Chequeo digital gratuito</div>
-      <h1>¿Puede un cliente encontrarte, entender tus servicios y contactarte en menos de 1 minuto?</h1>
-      <p class="qz-sub">Haz un chequeo rápido y gratuito de la presencia digital de tu negocio. Son solo 2 minutos.</p>
-      <button class="btn-qz btn-qz-primary btn-qz-block" id="btnStart">Empezar chequeo →</button>
-      <div class="qz-resume" id="resumeHint" hidden></div>
+      {% if mode == 'personal' %}
+        <div class="qz-eyebrow">Chequeo digital para {{ prospect_name }}</div>
+        <div class="qz-personal-banner">
+          <span class="tag">{% if stage == 'confirmado' %}Confirmado{% else %}Preliminar{% endif %}</span>
+          <span>Nuestro equipo ya rellenó algunas respuestas a partir de información pública de tu negocio.
+          Solo tienes que confirmarlas o corregirlas, y responder lo que falte.</span>
+        </div>
+        <h1>Confirma el chequeo digital de {{ prospect_name }}</h1>
+        <p class="qz-sub">Son solo 2 minutos. Al final verás tu puntuación y tres mejoras recomendadas.</p>
+        <button class="btn-qz btn-qz-primary btn-qz-block" id="btnStart">Confirmar y empezar →</button>
+      {% else %}
+        <div class="qz-eyebrow">Chequeo digital gratuito</div>
+        <h1>¿Puede un cliente encontrarte, entender tus servicios y contactarte en menos de 1 minuto?</h1>
+        <p class="qz-sub">Haz un chequeo rápido y gratuito de la presencia digital de tu negocio. Son solo 2 minutos.</p>
+        <button class="btn-qz btn-qz-primary btn-qz-block" id="btnStart">Empezar chequeo →</button>
+        <div class="qz-resume" id="resumeHint" hidden></div>
+      {% endif %}
     </div>
   </section>
 
@@ -274,8 +304,10 @@ a{text-decoration:none}
           </div>
           <div class="q-options">
             <button class="q-opt" data-val="si"><span>Sí</span><span>✓</span></button>
-            <button class="q-opt" data-val="nose"><span>No estoy seguro/a</span><span>?</span></button>
+            <button class="q-opt" data-val="en_parte"><span>En parte</span><span>±</span></button>
+            <button class="q-opt" data-val="no_se"><span>No estoy segura/o</span><span>?</span></button>
             <button class="q-opt" data-val="no"><span>No</span><span>✕</span></button>
+            <button class="q-opt" data-val="no_aplica"><span>No aplica</span><span>–</span></button>
           </div>
         </div>
         <button class="q-back" id="btnBack" hidden>‹ Pregunta anterior</button>
@@ -303,9 +335,9 @@ a{text-decoration:none}
           <div class="gauge-label"><span id="scoreNum">0</span><small>/100</small></div>
         </div>
         <div class="score-meta">
-          <div>Tu negocio: <strong id="scoreHeadline">0/100</strong></div>
+          <div><strong id="scoreHeadline">0 puntos activados de 100</strong></div>
           <div class="score-level" id="scoreLevelTag"></div>
-          <div class="score-ref">Nivel recomendado para tu sector: <strong>75/100</strong></div>
+          <div class="score-ref">Nivel recomendado para tu sector: <strong id="scoreBenchmark">75/100</strong></div>
           <div class="score-time" id="scoreTime" hidden></div>
         </div>
       </div>
@@ -314,6 +346,11 @@ a{text-decoration:none}
         <div class="result-block" id="blockGood">
           <h3>✅ Lo que ya tienes bien</h3>
           <ul class="result-list good" id="listGood"></ul>
+        </div>
+
+        <div class="result-block" id="blockProgress" hidden>
+          <h3>🔄 En progreso</h3>
+          <ul class="result-list progress" id="listProgress"></ul>
         </div>
 
         <div class="result-block" id="blockFix">
@@ -346,8 +383,19 @@ a{text-decoration:none}
 'use strict';
 
 /* ---------------------------------------------------------------------
- * DATOS — categorías y preguntas. Añadir/editar aquí es suficiente para
- * extender el quiz sin tocar la lógica de abajo.
+ * CONTEXTO DEL SERVIDOR — modo público (elige sector) o personal (sector
+ * y empresa ya fijados por un enlace /chequeo-digital/e/<token>/).
+ * ------------------------------------------------------------------- */
+var MODE = document.body.getAttribute('data-mode') || 'public';
+var FIXED_SECTOR = document.body.getAttribute('data-sector') || '';
+var TOKEN = document.body.getAttribute('data-token') || '';
+var PROSPECT_NAME = document.body.getAttribute('data-prospect-name') || '';
+var PREFILL = {{ prefill_json|default:'{}'|safe }};
+
+/* ---------------------------------------------------------------------
+ * DATOS ligeros de UI — sectores y enlaces de ejemplo (no puntuables,
+ * seguros de mantener en el cliente). Las preguntas y la puntuación
+ * SIEMPRE vienen del servidor (prospeccion.scoring), nunca se calculan aquí.
  * ------------------------------------------------------------------- */
 var CATEGORIES = [
   {id:'salon',        icon:'💇', label:'Salón de belleza / peluquería / estética'},
@@ -360,151 +408,6 @@ var CATEGORIES = [
   {id:'otro',         icon:'📍', label:'Otro negocio local'}
 ];
 
-var COMMON_QUESTIONS = [
-  {id:'web',        icon:'🌐', text:'¿Tienes una página web o una página clara con tus servicios?',
-    hint:'Es lo primero que mira un cliente antes de decidir confiar en ti.',
-    good:'Tienes una página con tus servicios visibles: la base ya está.',
-    fix:'Crear una página clara de servicios y precios orientativos.'},
-  {id:'ficha',      icon:'📍', text:'¿Tu ficha de Google tiene fotos, horarios, teléfono y dirección actualizados?',
-    hint:'Muchos clientes te descubren primero en el mapa de Google.',
-    good:'Tu ficha de Google está completa y actualizada.',
-    fix:'Mejorar tu ficha de Google: fotos, horarios, teléfono y dirección.'},
-  {id:'wa_click',   icon:'💬', text:'¿Un cliente puede escribirte por WhatsApp con un solo clic?',
-    hint:'Cuantos menos clics, más fácil es que te escriban.',
-    good:'Un cliente puede escribirte por WhatsApp en un solo clic.',
-    fix:'Añadir un botón de WhatsApp con un solo clic.'},
-  {id:'precios',    icon:'💶', text:'¿Se ven claramente tus servicios y precios orientativos?',
-    hint:'Sin sorpresas: el cliente sabe qué esperar antes de contactarte.',
-    good:'Tus servicios y precios orientativos se ven con claridad.',
-    fix:'Mostrar con más claridad tus servicios y precios orientativos.'},
-  {id:'cita_sin_llamar', icon:'📅', text:'¿Un cliente puede pedir cita o enviar una solicitud sin llamar?',
-    hint:'Muchos prefieren escribir antes que llamar por teléfono.',
-    good:'Un cliente puede pedir cita o enviar una solicitud sin llamarte.',
-    fix:'Añadir una forma de pedir cita o enviar solicitud sin llamar.'},
-  {id:'auto_resp',  icon:'🤖', text:'¿Tienes respuestas automáticas cuando estás ocupado/a?',
-    hint:'Así no se pierde ningún mensaje aunque estés ocupado/a.',
-    good:'Ya respondes automáticamente cuando estás ocupado/a.',
-    fix:'Activar respuestas automáticas para cuando estás ocupado/a.'},
-  {id:'recordatorios', icon:'⏰', text:'¿Envías recordatorios para reducir ausencias o citas olvidadas?',
-    hint:'Un simple aviso reduce muchísimo las ausencias.',
-    good:'Envías recordatorios que ayudan a reducir ausencias y olvidos.',
-    fix:'Enviar recordatorios automáticos para reducir ausencias.'},
-  {id:'resenas',    icon:'⭐', text:'¿Tienes reseñas visibles y recientes?',
-    hint:'La opinión de otros clientes genera confianza al instante.',
-    good:'Tus reseñas son visibles y recientes: generan confianza.',
-    fix:'Reunir y mostrar reseñas recientes de tus clientes.'},
-  {id:'contactos',  icon:'📇', text:'¿Tienes una forma sencilla de guardar contactos de clientes interesados?',
-    hint:'Así no se pierden los clientes interesados que aún no compraron.',
-    good:'Ya guardas de forma sencilla los contactos de clientes interesados.',
-    fix:'Conectar una base simple para guardar contactos de clientes interesados.'},
-  {id:'origen',     icon:'📊', text:'¿Puedes saber de dónde llegan tus nuevos clientes?',
-    hint:'Saber de dónde vienen tus clientes ayuda a invertir mejor.',
-    good:'Sabes de dónde llegan tus nuevos clientes.',
-    fix:'Añadir una forma sencilla de saber de dónde llegan tus nuevos clientes.'}
-];
-
-var CATEGORY_QUESTIONS = {
-  salon: [
-    {id:'salon_fotos', icon:'📸', text:'¿Se pueden ver fotos de trabajos reales o diseños?',
-      hint:'Ver resultados reales ayuda a decidirse antes de reservar.',
-      good:'Se ven fotos reales de tus trabajos y diseños.',
-      fix:'Crear una galería con fotos reales de tus trabajos.'},
-    {id:'salon_elegir', icon:'🗓️', text:'¿El cliente puede elegir servicio, día y hora?',
-      hint:'Cuanto más fácil reservar, menos clientes se quedan a medias.',
-      good:'El cliente puede elegir servicio, día y hora fácilmente.',
-      fix:'Añadir una reserva donde el cliente elija servicio, día y hora.'},
-    {id:'salon_prof', icon:'🙋', text:'¿El cliente puede elegir con qué profesional quiere su cita?',
-      hint:'Muchos clientes prefieren repetir siempre con la misma persona.',
-      good:'El cliente puede elegir con qué profesional quiere su cita.',
-      fix:'Añadir la opción de elegir profesional al reservar.'}
-  ],
-  bar: [
-    {id:'bar_menu', icon:'📋', text:'¿Tu menú está visible online y actualizado?',
-      hint:'El cliente decide antes de entrar si ve la carta online.',
-      good:'Tu menú está visible online y actualizado.',
-      fix:'Publicar tu menú/carta online y mantenerlo actualizado.'},
-    {id:'bar_reserva', icon:'🍽️', text:'¿El cliente puede reservar mesa o preguntar disponibilidad fácilmente?',
-      hint:'Evita la incertidumbre de si habrá mesa libre.',
-      good:'El cliente puede reservar mesa o preguntar disponibilidad fácilmente.',
-      fix:'Añadir una forma fácil de reservar mesa o preguntar disponibilidad.'},
-    {id:'bar_fotos', icon:'📷', text:'¿Se ven fotos reales del local, platos o ambiente?',
-      hint:'Las fotos reales despiertan más ganas de venir.',
-      good:'Se ven fotos reales de tu local, platos y ambiente.',
-      fix:'Crear una galería con fotos reales del local, platos y ambiente.'}
-  ],
-  taller: [
-    {id:'taller_estado', icon:'🔎', text:'¿El cliente puede consultar el estado o presupuesto de su reparación online?',
-      hint:'Evita llamadas repetidas solo para preguntar "¿ya está mi coche?".',
-      good:'El cliente puede consultar el estado o presupuesto de su reparación online.',
-      fix:'Añadir una forma de consultar el estado o presupuesto de la reparación online.'},
-    {id:'taller_fotos', icon:'📷', text:'¿Puede enviar fotos o detalles del problema por WhatsApp/formulario?',
-      hint:'Ayuda a dar un diagnóstico más rápido y preciso.',
-      good:'El cliente puede enviarte fotos o detalles del problema por WhatsApp o formulario.',
-      fix:'Permitir enviar fotos o detalles del problema por WhatsApp o formulario.'},
-    {id:'taller_info', icon:'🗺️', text:'¿Se ven servicios, horarios y ubicación claramente?',
-      hint:'El cliente sabe qué esperar antes de acercarse.',
-      good:'Tus servicios, horarios y ubicación se ven con claridad.',
-      fix:'Mostrar con claridad servicios, horarios y ubicación.'}
-  ],
-  academia: [
-    {id:'academia_info', icon:'📚', text:'¿Se ven cursos, horarios, precios y fechas de inicio?',
-      hint:'El alumno decide antes de preguntar si ve toda la info clara.',
-      good:'Se ven cursos, horarios, precios y fechas de inicio con claridad.',
-      fix:'Mostrar cursos, horarios, precios y fechas de inicio con claridad.'},
-    {id:'academia_inscribir', icon:'✍️', text:'¿El alumno puede pedir información o inscribirse online?',
-      hint:'Cuantas menos barreras, más inscripciones sin esfuerzo.',
-      good:'El alumno puede pedir información o inscribirse online.',
-      fix:'Añadir una forma de pedir información o inscribirse online.'},
-    {id:'academia_auto', icon:'🤖', text:'¿Tienes automatización para responder dudas frecuentes?',
-      hint:'Resuelve dudas comunes aunque no estés disponible.',
-      good:'Ya respondes automáticamente a las dudas frecuentes.',
-      fix:'Activar respuestas automáticas para dudas frecuentes.'}
-  ],
-  clinica: [
-    {id:'clinica_prof', icon:'🙋', text:'¿El paciente puede elegir profesional o especialista al pedir cita?',
-      hint:'Ayuda a generar confianza y continuidad en el tratamiento.',
-      good:'El paciente puede elegir profesional o especialista al pedir cita.',
-      fix:'Añadir la opción de elegir profesional o especialista al pedir cita.'},
-    {id:'clinica_info', icon:'📋', text:'¿Se explican claramente servicios, especialidades y horarios?',
-      hint:'La claridad genera confianza antes incluso de la consulta.',
-      good:'Tus servicios, especialidades y horarios se explican con claridad.',
-      fix:'Explicar con claridad tus servicios, especialidades y horarios.'},
-    {id:'clinica_seguros', icon:'💳', text:'¿Queda claro si trabajas con aseguradoras médicas o solo consulta particular?',
-      hint:'Evita llamadas solo para preguntar esto antes de reservar.',
-      good:'Queda claro si trabajas con aseguradoras médicas o solo particular.',
-      fix:'Aclarar si trabajas con aseguradoras médicas o solo consulta particular.'}
-  ],
-  tienda: [
-    {id:'tienda_productos', icon:'🛍️', text:'¿Se pueden ver productos, categorías o novedades online?',
-      hint:'El cliente explora antes de decidir visitarte.',
-      good:'Se ven tus productos, categorías y novedades online.',
-      fix:'Mostrar productos, categorías y novedades online.'},
-    {id:'tienda_disp', icon:'📦', text:'¿El cliente puede preguntar disponibilidad o reservar producto?',
-      hint:'Evita viajes en balde por falta de stock.',
-      good:'El cliente puede preguntar disponibilidad o reservar producto.',
-      fix:'Añadir una forma de preguntar disponibilidad o reservar producto.'},
-    {id:'tienda_promo', icon:'🏷️', text:'¿Tienes promociones o campañas visibles?',
-      hint:'Las promociones visibles animan a comprar antes.',
-      good:'Tus promociones o campañas son visibles.',
-      fix:'Mostrar promociones o campañas de forma visible.'}
-  ],
-  inmobiliaria: [
-    {id:'inmo_ejemplos', icon:'🏘️', text:'¿Se ven ejemplos de trabajos, propiedades o servicios realizados?',
-      hint:'Ver trabajos reales genera confianza inmediata.',
-      good:'Se ven ejemplos de trabajos, propiedades o servicios realizados.',
-      fix:'Mostrar ejemplos de trabajos, propiedades o servicios realizados.'},
-    {id:'inmo_zonas', icon:'📍', text:'¿Queda claro en qué zonas o barrios trabajas?',
-      hint:'Muchos clientes descartan un servicio solo por no saber si cubre su zona.',
-      good:'Queda claro en qué zonas o barrios trabajas.',
-      fix:'Aclarar en qué zonas o barrios trabajas.'},
-    {id:'inmo_filtro', icon:'🔍', text:'¿Tienes formularios o WhatsApp para filtrar interesados?',
-      hint:'Ayuda a centrarte solo en los interesados reales.',
-      good:'Ya tienes formularios o WhatsApp para filtrar interesados.',
-      fix:'Añadir formularios o WhatsApp para filtrar interesados.'}
-  ],
-  otro: []
-};
-
 var EXAMPLE_LINKS = {
   salon:        'https://salon.webimpulsa.es/',
   taller:       'https://taller.webimpulsa.es/',
@@ -516,24 +419,22 @@ var EXAMPLE_LINKS = {
   otro:         'https://webimpulsa.es/'
 };
 
-var SCORE_VALUES  = {si:10, nose:5, no:0};
-var REFERENCE_SCORE = 75;
 var WA_NUMBER = '34613708322';
 var WA_MSG_REPORT = 'Hola, he hecho el chequeo digital y me gustaría recibir el informe para mi negocio.';
 var WA_MSG_QUICK  = 'Hola, he hecho el chequeo digital y me interesa una mejora rápida para mi negocio.';
 var STORAGE_KEY = 'wi_chequeo_digital_v1';
 
 function levelInfo(score){
-  if(score<=35)  return {tag:'Presencia digital básica',            color:'#c98a11', bg:'rgba(201,138,17,.12)'};
-  if(score<=60)  return {tag:'Hay oportunidades rápidas de mejora',  color:'#1760d6', bg:'rgba(23,96,214,.10)'};
-  if(score<=80)  return {tag:'Buen nivel, pero se puede automatizar más', color:'#0095c8', bg:'rgba(0,149,200,.10)'};
-  return               {tag:'Muy buen nivel digital',                color:'#009e73', bg:'rgba(0,158,115,.12)'};
+  if(score<=35)  return {tag:'Buen punto de partida, con mejoras rápidas por delante', color:'#c98a11', bg:'rgba(201,138,17,.12)'};
+  if(score<=60)  return {tag:'Vas bien encaminado — hay mejoras rápidas esperando',     color:'#1760d6', bg:'rgba(23,96,214,.10)'};
+  if(score<=80)  return {tag:'Nivel sólido, con margen para automatizar más',           color:'#0095c8', bg:'rgba(0,149,200,.10)'};
+  return               {tag:'Muy buen nivel digital',                                  color:'#009e73', bg:'rgba(0,158,115,.12)'};
 }
 
 /* ---------------------------------------------------------------------
  * ESTADO
  * ------------------------------------------------------------------- */
-var state = {category:null, questions:[], answers:{}, index:0};
+var state = {category:null, questions:[], answers:{}, index:0, lastResult:null};
 
 var elIntro   = document.getElementById('screen-intro');
 var elCat     = document.getElementById('screen-category');
@@ -567,6 +468,8 @@ function transitionQuestion(dir, updateFn){
 /* ---------------------------------------------------------------------
  * MINI CRONÓMETRO — puramente decorativo: solo cuenta hacia arriba,
  * nunca limita ni penaliza nada. Da ambiente de "concurso" sin presión.
+ * Se omite en modo personal: confirmar datos de tu propio negocio no
+ * necesita sensación de juego/concurso.
  * ------------------------------------------------------------------- */
 var timerHandle = null, timerStartTs = null, timerFinalText = null;
 
@@ -580,6 +483,7 @@ function tickTimer(){
   if(timerStartTs) qzTimerText.textContent = formatElapsed(Date.now() - timerStartTs);
 }
 function startTimer(){
+  if(MODE === 'personal') return;
   timerStartTs = Date.now();
   timerFinalText = null;
   tickTimer();
@@ -634,14 +538,36 @@ function renderCategoryGrid(){
   });
 }
 
+function fetchQuestionnaire(sector){
+  return fetch('/chequeo-digital/api/questionnaire/'+encodeURIComponent(sector)+'/')
+    .then(function(r){ if(!r.ok) throw new Error('no se pudo cargar el cuestionario'); return r.json(); });
+}
+
 function startCategory(catId){
   state.category = catId;
-  state.questions = COMMON_QUESTIONS.concat(CATEGORY_QUESTIONS[catId] || []);
   state.answers = {};
   state.index = 0;
-  showScreen(elQ);
-  renderQuestion();
-  startTimer();
+  fetchQuestionnaire(catId).then(function(data){
+    state.questions = data.questions;
+    showScreen(elQ);
+    renderQuestion();
+    startTimer();
+  }).catch(function(){ showToast('No se pudo cargar el chequeo, inténtalo de nuevo.'); });
+}
+
+function startPersonalFlow(){
+  state.category = FIXED_SECTOR;
+  state.index = 0;
+  state.answers = {};
+  Object.keys(PREFILL).forEach(function(qid){
+    state.answers[qid] = PREFILL[qid].value;
+  });
+  fetchQuestionnaire(FIXED_SECTOR).then(function(data){
+    state.questions = data.questions;
+    showScreen(elQ);
+    renderQuestion();
+    startTimer();
+  }).catch(function(){ showToast('No se pudo cargar el chequeo, inténtalo de nuevo.'); });
 }
 
 function updateProgress(){
@@ -653,11 +579,17 @@ function renderQuestion(){
   var total = state.questions.length;
   var q = state.questions[state.index];
   document.getElementById('qCounter').textContent = 'Pregunta ' + (state.index+1) + ' de ' + total;
-  document.getElementById('qIcon').textContent = q.icon || '🔎';
+  document.getElementById('qIcon').textContent = '🔎';
   document.getElementById('qText').textContent = q.text;
   document.getElementById('qHint').textContent = q.hint || '';
   document.getElementById('btnBack').hidden = (state.index === 0);
-  document.querySelectorAll('#screen-question .q-opt').forEach(function(b){ b.classList.remove('picked'); });
+  var existing = state.answers[q.id];
+  document.querySelectorAll('#screen-question .q-opt').forEach(function(b){
+    b.classList.remove('picked', 'prefilled');
+    if(existing && b.getAttribute('data-val') === existing){
+      b.classList.add('picked', 'prefilled');
+    }
+  });
   updateProgress();
   uiBusy = false;
 }
@@ -685,18 +617,16 @@ function goBack(){
   });
 }
 
-function computeResult(){
-  var total = state.questions.length;
-  var sum = 0;
-  state.questions.forEach(function(q){ sum += SCORE_VALUES[state.answers[q.id]] || 0; });
-  var score = Math.round((sum / (total*10)) * 100);
-  var good = [], fix = [];
-  state.questions.forEach(function(q){
-    var a = state.answers[q.id];
-    if(a === 'si') good.push(q.good);
-    else fix.push(q.fix);
-  });
-  return {score:score, good:good, fix:fix, total:total};
+function submitEndpoint(){
+  return MODE === 'personal'
+    ? '/chequeo-digital/e/'+encodeURIComponent(TOKEN)+'/api/submit/'
+    : '/chequeo-digital/api/submit/';
+}
+
+function submitBody(){
+  return MODE === 'personal'
+    ? {answers: state.answers}
+    : {sector: state.category, answers: state.answers};
 }
 
 function animateGauge(score){
@@ -717,33 +647,33 @@ function animateGauge(score){
   requestAnimationFrame(step);
 }
 
-function renderResult(){
-  var r = computeResult();
+function renderResultList(elId, items, emptyHtml){
+  var el = document.getElementById(elId);
+  if(items && items.length){
+    el.innerHTML = items.map(function(it){ return '<li><span class="tick">•</span><span>'+it.text+'</span></li>'; }).join('');
+  } else if(emptyHtml){
+    el.innerHTML = emptyHtml;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+function renderResult(r){
+  state.lastResult = r;
   var lvl = levelInfo(r.score);
 
-  document.getElementById('scoreHeadline').textContent = r.score + '/100';
+  document.getElementById('scoreHeadline').textContent = r.score + ' puntos activados de 100';
   var tag = document.getElementById('scoreLevelTag');
   tag.textContent = lvl.tag;
   tag.style.color = lvl.color;
   tag.style.background = lvl.bg;
+  document.getElementById('scoreBenchmark').textContent = r.benchmark + '/100';
   animateGauge(r.score);
 
-  var listGood = document.getElementById('listGood');
-  var listFix  = document.getElementById('listFix');
-
-  if(r.good.length){
-    listGood.innerHTML = r.good.map(function(t){ return '<li><span class="tick">✓</span><span>'+t+'</span></li>'; }).join('');
-    document.getElementById('blockGood').hidden = false;
-  } else {
-    listGood.innerHTML = '<li><span class="tick">✓</span><span>Todavía no hay puntos marcados, pero tienes mucho margen para mejorar rápido.</span></li>';
-  }
-
-  if(r.fix.length){
-    listFix.innerHTML = r.fix.map(function(t){ return '<li><span class="tick">→</span><span>'+t+'</span></li>'; }).join('');
-    document.getElementById('blockFix').hidden = false;
-  } else {
-    listFix.innerHTML = '<li><span class="tick">🎉</span><span>¡Genial! Ahora mismo no detectamos mejoras urgentes: sigue así.</span></li>';
-  }
+  renderResultList('listGood', r.good, '<li><span class="tick">✓</span><span>Todavía no hay puntos marcados, pero tienes mucho margen para mejorar rápido.</span></li>');
+  document.getElementById('blockProgress').hidden = !(r.en_progreso && r.en_progreso.length);
+  renderResultList('listProgress', r.en_progreso, null);
+  renderResultList('listFix', r.fix, '<li><span class="tick">🎉</span><span>¡Genial! Ahora mismo no detectamos mejoras urgentes: sigue así.</span></li>');
 
   var timeEl = document.getElementById('scoreTime');
   if(timerFinalText){
@@ -758,25 +688,35 @@ function renderResult(){
   document.getElementById('ctaWhatsapp').setAttribute('href', 'https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(WA_MSG_REPORT));
   document.getElementById('ctaQuick').setAttribute('href', 'https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(WA_MSG_QUICK));
 
-  saveResult(r);
+  if(MODE !== 'personal') saveResult(r);
 }
 
 function finishQuiz(){
-  showScreen(elResult);
-  renderResult();
+  fetch(submitEndpoint(), {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(submitBody())
+  }).then(function(r){
+    if(!r.ok) throw new Error('submit failed');
+    return r.json();
+  }).then(function(r){
+    showScreen(elResult);
+    renderResult(r);
+  }).catch(function(){
+    showToast('No se pudo calcular el resultado, inténtalo de nuevo.');
+  });
 }
 
 /* ---------------------------------------------------------------------
- * PERSISTENCIA (localStorage) — sin backend
+ * CACHÉ DE CONVENIENCIA (localStorage) — solo modo público, solo para
+ * ofrecer "ver tu último resultado otra vez"; la fuente real es el
+ * servidor (ChequeoAudit), esto nunca se usa para calcular nada.
  * ------------------------------------------------------------------- */
 function saveResult(r){
   try{
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       category: state.category,
-      answers: state.answers,
-      score: r.score,
-      good: r.good,
-      fix: r.fix,
+      result: r,
       ts: Date.now()
     }));
   }catch(e){}
@@ -800,16 +740,14 @@ function showResumeHint(){
   if(!last) return;
   var hint = document.getElementById('resumeHint');
   var date = new Date(last.ts).toLocaleDateString('es-ES');
-  hint.innerHTML = 'Ya hiciste este chequeo el '+date+' ('+catLabel(last.category)+'): resultado <strong>'+last.score+'/100</strong>. '+
+  hint.innerHTML = 'Ya hiciste este chequeo el '+date+' ('+catLabel(last.category)+'): resultado <strong>'+last.result.score+'/100</strong>. '+
     '<a href="#" id="resumeLink">Ver ese resultado de nuevo</a>';
   hint.hidden = false;
   document.getElementById('resumeLink').addEventListener('click', function(ev){
     ev.preventDefault();
     state.category = last.category;
-    state.questions = COMMON_QUESTIONS.concat(CATEGORY_QUESTIONS[last.category] || []);
-    state.answers = last.answers;
     showScreen(elResult);
-    renderResult();
+    renderResult(last.result);
   });
 }
 
@@ -820,14 +758,19 @@ function buildResultText(r){
   var lvl = levelInfo(r.score);
   var lines = [];
   lines.push('Chequeo digital gratuito — '+catLabel(state.category));
-  lines.push('Resultado: '+r.score+'/100 ('+lvl.tag+')');
-  lines.push('Nivel recomendado para el sector: 75/100');
+  lines.push('Resultado: '+r.score+' puntos activados de 100 ('+lvl.tag+')');
+  lines.push('Nivel recomendado para el sector: '+r.benchmark+'/100');
   lines.push('');
   lines.push('Lo que ya tienes bien:');
-  (r.good.length ? r.good : ['—']).forEach(function(t){ lines.push('- '+t); });
+  (r.good.length ? r.good.map(function(it){ return it.text; }) : ['—']).forEach(function(t){ lines.push('- '+t); });
+  if(r.en_progreso && r.en_progreso.length){
+    lines.push('');
+    lines.push('En progreso:');
+    r.en_progreso.forEach(function(it){ lines.push('- '+it.text); });
+  }
   lines.push('');
   lines.push('Mejoras rápidas recomendadas:');
-  (r.fix.length ? r.fix : ['—']).forEach(function(t){ lines.push('- '+t); });
+  (r.fix.length ? r.fix.map(function(it){ return it.text; }) : ['—']).forEach(function(t){ lines.push('- '+t); });
   return lines.join('\n');
 }
 
@@ -839,8 +782,8 @@ function showToast(msg){
 }
 
 function copyResult(){
-  var r = computeResult();
-  var text = buildResultText(r);
+  if(!state.lastResult) return;
+  var text = buildResultText(state.lastResult);
   function fallback(){
     var ta = document.createElement('textarea');
     ta.value = text;
@@ -860,15 +803,20 @@ function copyResult(){
 }
 
 function resetQuiz(){
-  state = {category:null, questions:[], answers:{}, index:0};
+  state = {category:null, questions:[], answers:{}, index:0, lastResult:null};
   resetTimer();
-  showScreen(elIntro);
+  if(MODE === 'personal'){
+    showScreen(elIntro);
+  } else {
+    showScreen(elIntro);
+  }
 }
 
 /* ---------------------------------------------------------------------
  * INIT
  * ------------------------------------------------------------------- */
 function tryFullscreen(){
+  if(MODE === 'personal') return;
   var el = document.documentElement;
   try{
     var req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
@@ -880,12 +828,17 @@ function tryFullscreen(){
 }
 document.getElementById('btnStart').addEventListener('click', function(){
   tryFullscreen();
-  showScreen(elCat);
+  if(MODE === 'personal'){
+    startPersonalFlow();
+  } else {
+    showScreen(elCat);
+  }
 });
 document.querySelectorAll('#screen-question .q-opt').forEach(function(btn){
   btn.addEventListener('click', function(){
     if(uiBusy) return;
     uiBusy = true;
+    document.querySelectorAll('#screen-question .q-opt').forEach(function(b){ b.classList.remove('picked'); });
     btn.classList.add('picked');
     var val = btn.getAttribute('data-val');
     setTimeout(function(){ selectAnswer(val); }, 140);
@@ -899,11 +852,16 @@ document.getElementById('btnBack').addEventListener('click', function(){
 document.getElementById('btnRestart').addEventListener('click', resetQuiz);
 document.getElementById('btnCopy').addEventListener('click', copyResult);
 
-renderCategoryGrid();
-showResumeHint();
+if(MODE === 'personal'){
+  document.getElementById('screen-category').remove();
+} else {
+  renderCategoryGrid();
+  showResumeHint();
+}
 })();
 </script>
 
+{% if mode != 'personal' %}
 <script>
 (function(){
   // Música de fondo: dos melodías una detrás de otra, en bucle, con botón de
@@ -950,5 +908,8 @@ showResumeHint();
   });
 })();
 </script>
+{% else %}
+<style>.qz-music-btn{display:none}</style>
+{% endif %}
 </body>
 </html>

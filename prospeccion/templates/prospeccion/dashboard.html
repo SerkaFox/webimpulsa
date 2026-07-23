@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prospección — WebImpulsa</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; color: #0c1c42; }
+  .top-bar { background: #1e293b; color: #fff; padding: 14px 20px; display: flex; align-items: center; gap: 14px; }
+  .top-bar a { color: #93c5fd; text-decoration: none; font-weight: 700; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 24px 20px; }
+  h1 { font-size: 1.3rem; }
+  .funnel { display: grid; gap: 8px; margin-top: 18px; }
+  .stage { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 10px; padding: 10px 14px; }
+  .stage .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .stage .label { flex: 1; font-weight: 700; font-size: .9rem; }
+  .stage .count { font-weight: 900; font-size: 1.1rem; }
+  .total { color: #5a6d8c; margin-top: 4px; font-size: .9rem; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+  @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+  .box { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; }
+  .box h3 { font-size: .85rem; margin: 0 0 8px; }
+  .box ol { margin: 0 0 0 18px; font-size: .85rem; }
+  .box li { margin-bottom: 4px; }
+  .kpi { font-size: 1.6rem; font-weight: 900; }
+</style>
+</head>
+<body>
+  <div class="top-bar"><strong>📊 Prospección</strong><a href="/panel/prospeccion/mapa/">Mapa →</a></div>
+  <div class="wrap">
+    <h1>Embudo de prospección</h1>
+    <div class="total">{{ total }} empresas en total</div>
+    <div class="funnel">
+      {% for stage in funnel %}
+        <div class="stage">
+          <span class="dot" style="background:{{ stage.color }}"></span>
+          <span class="label">{{ stage.label }}</span>
+          <span class="count">{{ stage.count }}</span>
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if conversion_rate is not None %}
+      <p style="margin-top:14px">Tasa de conversión (ganados / decididos): <span class="kpi">{{ conversion_rate }}%</span>
+        <span style="color:#5a6d8c;font-size:.85rem">({{ won }} ganados, {{ lost }} perdidos)</span></p>
+    {% endif %}
+
+    <div class="grid2">
+      <div class="box">
+        <h3>Problemas más frecuentes</h3>
+        <ol>{% for text, count in top_problems %}<li>{{ text }} <strong>({{ count }})</strong></li>{% empty %}<li style="color:#8a94a6">Sin datos todavía</li>{% endfor %}</ol>
+      </div>
+      <div class="box">
+        <h3>Sectores más prospectados</h3>
+        <ol>{% for label, count in top_sectors %}<li>{{ label }} <strong>({{ count }})</strong></li>{% empty %}<li style="color:#8a94a6">Sin datos todavía</li>{% endfor %}</ol>
+      </div>
+      <div class="box">
+        <h3>Distritos más prospectados</h3>
+        <ol>{% for label, count in top_districts %}<li>{{ label }} <strong>({{ count }})</strong></li>{% empty %}<li style="color:#8a94a6">Sin datos todavía</li>{% endfor %}</ol>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

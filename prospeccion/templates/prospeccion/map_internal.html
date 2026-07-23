@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mapa de prospección — WebImpulsa</title>
+<link rel="stylesheet" href="/static/wi/js/vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="/static/wi/js/vendor/leaflet/MarkerCluster.css">
+<link rel="stylesheet" href="/static/wi/js/vendor/leaflet/MarkerCluster.Default.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font-family: 'Segoe UI', Arial, sans-serif; color: #0c1c42; }
+  .top-bar {
+    background: #1e293b; color: #fff; padding: 10px 16px; display: flex; align-items: center;
+    gap: 14px; flex-wrap: wrap; font-size: .88rem;
+  }
+  .top-bar a { color: #93c5fd; text-decoration: none; font-weight: 700; }
+  .top-bar strong { font-size: .95rem; }
+  .layout { display: flex; height: calc(100vh - 46px); }
+  #map { flex: 1; }
+  .sidebar {
+    width: 320px; flex-shrink: 0; background: #f8fafc; border-left: 1px solid #e2e8f0;
+    overflow-y: auto; padding: 14px;
+  }
+  .sidebar h2 { font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; color: #5a6d8c; margin: 18px 0 8px; }
+  .sidebar h2:first-child { margin-top: 0; }
+  .field { margin-bottom: 8px; }
+  .field label { display: block; font-size: .78rem; color: #5a6d8c; margin-bottom: 3px; }
+  select, input[type=text], input[type=number], input[type=file] {
+    width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 7px 9px; font-size: .85rem;
+    font-family: inherit;
+  }
+  .checks label { display: flex; align-items: center; gap: 6px; font-size: .82rem; margin-bottom: 4px; }
+  .btn { background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 9px 12px;
+    font-size: .85rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 6px; }
+  .btn:hover { background: #1746a8; }
+  .btn.secondary { background: #fff; color: #2563eb; border: 1.5px solid #2563eb; }
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 8px; font-size: .82rem; }
+  .card .name { font-weight: 700; }
+  .card .badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: .68rem; font-weight: 700; color: #fff; margin-top: 4px; }
+  .score-pill { float: right; font-weight: 800; color: #2563eb; }
+  .toast { position: fixed; bottom: 16px; left: 340px; background: #0c1c42; color: #fff; padding: 8px 14px;
+    border-radius: 999px; font-size: .82rem; opacity: 0; transition: opacity .25s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  #addForm.picking #map { cursor: crosshair; }
+  small.hint { color: #8a94a6; display: block; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <strong>🗺️ Mapa de prospección</strong>
+  <a href="/panel/prospeccion/">← Panel</a>
+  <span id="countLabel" style="margin-left:auto;color:#93c5fd"></span>
+</div>
+
+<div class="layout">
+  <div id="map"></div>
+
+  <div class="sidebar">
+    <h2>Filtros</h2>
+    <div class="field">
+      <label>Buscar por nombre</label>
+      <input type="text" id="fQ" placeholder="Nombre...">
+    </div>
+    <div class="field">
+      <label>Sector</label>
+      <select id="fSector"><option value="">Todos</option>
+        {% for id, label in sectors %}<option value="{{ id }}">{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label>Etapa</label>
+      <select id="fStatus"><option value="">Todas</option>
+        {% for id, label in sales_statuses %}<option value="{{ id }}">{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label>Responsable</label>
+      <select id="fAssigned"><option value="">Todos</option>
+        {% for s in staff %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label>Puntuación mínima</label>
+      <input type="number" id="fMinScore" min="0" max="100" placeholder="0-100">
+    </div>
+    <div class="checks">
+      <label><input type="checkbox" id="fWebsite"> Tiene web</label>
+      <label><input type="checkbox" id="fBooking"> Reserva online</label>
+      <label><input type="checkbox" id="fWhatsapp"> WhatsApp</label>
+      <label><input type="checkbox" id="fUnresolved"> Sin ubicar</label>
+    </div>
+    <button class="btn" id="btnApplyFilters">Aplicar filtros</button>
+
+    <h2>Añadir empresa</h2>
+    <button class="btn secondary" id="btnPickMap">📍 Clic en el mapa para añadir</button>
+    <form id="addForm" style="margin-top:8px">
+      <div class="field"><label>Nombre *</label><input type="text" id="aName" required></div>
+      <div class="field"><label>Sector</label>
+        <select id="aSector">{% for id, label in sectors %}<option value="{{ id }}">{{ label }}</option>{% endfor %}</select>
+      </div>
+      <div class="field"><label>Dirección</label><input type="text" id="aAddress"></div>
+      <div class="field"><label>Teléfono</label><input type="text" id="aPhone"></div>
+      <div class="field"><label>Email</label><input type="text" id="aEmail"></div>
+      <div class="field"><label>Web</label><input type="text" id="aWebsite"></div>
+      <input type="hidden" id="aLat"><input type="hidden" id="aLng">
+      <small class="hint" id="pickHint"></small>
+      <button type="submit" class="btn">Guardar empresa</button>
+    </form>
+
+    <h2>Importar CSV</h2>
+    <small class="hint">Columnas: name (obligatoria), sector, address, district, municipality, lat, lng, phone, email, website, whatsapp, gmaps_url. Filas sin lat/lng quedan "sin ubicar".</small>
+    <form id="csvForm" style="margin-top:8px">
+      <input type="file" id="csvFile" accept=".csv">
+      <button type="submit" class="btn secondary">Importar</button>
+    </form>
+
+    <h2>En esta vista (<span id="listCount">0</span>)</h2>
+    <div id="prospectList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/static/wi/js/vendor/leaflet/leaflet.js"></script>
+<script src="/static/wi/js/vendor/leaflet/leaflet.markercluster.js"></script>
+<script>
+(function(){
+'use strict';
+
+var STATUS_COLORS = {{ status_colors_json|safe }};
+var STATUS_LABELS = {};
+{% for id, label in sales_statuses %}STATUS_LABELS['{{ id }}'] = '{{ label|escapejs }}';{% endfor %}
+
+var map = L.map('map').setView([43.2627, -2.9253], 12); // Barakaldo/Bilbao por defecto
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors',
+  maxZoom: 19,
+}).addTo(map);
+
+var clusterGroup = L.markerClusterGroup();
+map.addLayer(clusterGroup);
+
+function markerIcon(color){
+  return L.divIcon({
+    className: '',
+    html: '<div style="width:18px;height:18px;border-radius:50%;background:'+color+';border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25)"></div>',
+    iconSize: [18, 18],
+  });
+}
+
+function showToast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2400);
+}
+
+function currentFilters(){
+  var b = map.getBounds();
+  var params = new URLSearchParams({
+    south: b.getSouth(), north: b.getNorth(), west: b.getWest(), east: b.getEast(),
+  });
+  var q = document.getElementById('fQ').value.trim();
+  var sector = document.getElementById('fSector').value;
+  var status = document.getElementById('fStatus').value;
+  var assigned = document.getElementById('fAssigned').value;
+  var minScore = document.getElementById('fMinScore').value;
+  if(q) params.set('q', q);
+  if(sector) params.set('sector', sector);
+  if(status) params.set('sales_status', status);
+  if(assigned) params.set('assigned_to', assigned);
+  if(minScore) params.set('min_score', minScore);
+  if(document.getElementById('fWebsite').checked) params.set('has_website', '1');
+  if(document.getElementById('fBooking').checked) params.set('has_online_booking', '1');
+  if(document.getElementById('fWhatsapp').checked) params.set('has_whatsapp_cta', '1');
+  if(document.getElementById('fUnresolved').checked) params.set('unresolved', '1');
+  return params;
+}
+
+function renderList(prospects){
+  document.getElementById('listCount').textContent = prospects.length;
+  document.getElementById('countLabel').textContent = prospects.length + ' empresas visibles';
+  var el = document.getElementById('prospectList');
+  el.innerHTML = prospects.slice(0, 100).map(function(p){
+    var score = p.current_score != null ? p.current_score : '—';
+    return '<a class="card" style="display:block;color:inherit;text-decoration:none" href="'+p.detail_url+'">'+
+      '<span class="score-pill">'+score+'</span>'+
+      '<div class="name">'+p.name+'</div>'+
+      '<div style="color:#8a94a6">'+p.municipality+' '+p.district+'</div>'+
+      '<span class="badge" style="background:'+p.color+'">'+ (STATUS_LABELS[p.sales_status] || p.sales_status) +'</span>'+
+      '</a>';
+  }).join('');
+}
+
+function reload(){
+  fetch('/panel/prospeccion/mapa/api/prospects/?' + currentFilters().toString())
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      clusterGroup.clearLayers();
+      var withCoords = data.prospects.filter(function(p){ return p.lat != null && p.lng != null; });
+      withCoords.forEach(function(p){
+        var marker = L.marker([p.lat, p.lng], {icon: markerIcon(p.color)});
+        var score = p.current_score != null ? p.current_score : '—';
+        marker.bindPopup(
+          '<strong>'+p.name+'</strong><br>'+
+          (STATUS_LABELS[p.sales_status] || p.sales_status)+' · puntuación '+score+'<br>'+
+          '<a href="'+p.detail_url+'">Ver ficha →</a>'
+        );
+        clusterGroup.addLayer(marker);
+      });
+      renderList(data.prospects);
+    })
+    .catch(function(){ showToast('No se pudo cargar el mapa'); });
+}
+
+map.on('moveend', reload);
+document.getElementById('btnApplyFilters').addEventListener('click', reload);
+
+/* alta por clic en el mapa */
+var picking = false;
+document.getElementById('btnPickMap').addEventListener('click', function(){
+  picking = !picking;
+  document.getElementById('pickHint').textContent = picking ? 'Haz clic en el mapa para fijar la ubicación...' : '';
+  this.textContent = picking ? '❌ Cancelar' : '📍 Clic en el mapa para añadir';
+});
+map.on('click', function(ev){
+  if(!picking) return;
+  document.getElementById('aLat').value = ev.latlng.lat.toFixed(6);
+  document.getElementById('aLng').value = ev.latlng.lng.toFixed(6);
+  document.getElementById('pickHint').textContent = 'Ubicación fijada: '+ev.latlng.lat.toFixed(5)+', '+ev.latlng.lng.toFixed(5);
+  picking = false;
+  document.getElementById('btnPickMap').textContent = '📍 Clic en el mapa para añadir';
+});
+
+document.getElementById('addForm').addEventListener('submit', function(ev){
+  ev.preventDefault();
+  var body = {
+    name: document.getElementById('aName').value.trim(),
+    sector: document.getElementById('aSector').value,
+    address: document.getElementById('aAddress').value.trim(),
+    phone: document.getElementById('aPhone').value.trim(),
+    email: document.getElementById('aEmail').value.trim(),
+    website: document.getElementById('aWebsite').value.trim(),
+    lat: document.getElementById('aLat').value ? parseFloat(document.getElementById('aLat').value) : null,
+    lng: document.getElementById('aLng').value ? parseFloat(document.getElementById('aLng').value) : null,
+  };
+  fetch('/panel/prospeccion/mapa/api/prospects/add/', {
+    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+  }).then(function(r){ return r.json(); }).then(function(data){
+    if(data.error){ showToast(data.error); return; }
+    showToast(data.created ? 'Empresa añadida' : 'Ya existía una empresa igual — no se duplicó');
+    this.reset();
+    document.getElementById('aLat').value = ''; document.getElementById('aLng').value = '';
+    reload();
+  }.bind(this));
+});
+
+document.getElementById('csvForm').addEventListener('submit', function(ev){
+  ev.preventDefault();
+  var file = document.getElementById('csvFile').files[0];
+  if(!file){ showToast('Elige un fichero CSV'); return; }
+  var fd = new FormData();
+  fd.append('file', file);
+  fetch('/panel/prospeccion/mapa/api/import-csv/', {method:'POST', body: fd})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(data.error){ showToast(data.error); return; }
+      showToast(data.created+' creadas, '+data.duplicates+' ya existían, '+data.unresolved+' sin ubicar');
+      reload();
+    });
+});
+
+reload();
+})();
+</script>
+</body>
+</html>
