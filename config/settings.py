@@ -76,6 +76,21 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 PLANNER_ADMIN_PASSWORD = os.getenv('PLANNER_ADMIN_PASSWORD', '1111')
 PLANNER_ADMIN_TOKEN = os.getenv('PLANNER_ADMIN_TOKEN', 'be-admin-9f3ac2d1e7')
 
+# Google Maps — dos claves DISTINTAS con alcance mínimo cada una:
+#  - GOOGLE_MAPS_JS_API_KEY: se envía al navegador para dibujar el mapa base
+#    en /panel/prospeccion/mapa/. Debe restringirse en Google Cloud Console
+#    por dominio (HTTP referrers: webimpulsa.es/*) y por API (solo "Maps
+#    JavaScript API"). Nunca se usa para llamadas de servidor.
+#  - GOOGLE_PLACES_API_KEY: solo se usa desde el servidor (nunca se envía al
+#    cliente), para las búsquedas de Places. Debe restringirse por IP del
+#    servidor y por API (solo "Places API (New)"). Al no exponerse nunca al
+#    navegador, no necesita restricción de dominio.
+# Sin estas claves el buscador de lugares y el mapa interno fallan de forma
+# explícita (ver prospeccion/places.py) en vez de degradar silenciosamente.
+GOOGLE_MAPS_JS_API_KEY = os.getenv('GOOGLE_MAPS_JS_API_KEY', '')
+GOOGLE_PLACES_API_KEY = os.getenv('GOOGLE_PLACES_API_KEY', '')
+GOOGLE_PLACES_DAILY_QUOTA = int(os.getenv('GOOGLE_PLACES_DAILY_QUOTA', '300'))
+
 USE_TZ = True
 
 # Email via Brevo SMTP relay (external) / Mailcow (internal fallback)
