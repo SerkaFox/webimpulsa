@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ prospect.name }} — Prospección</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; color: #0c1c42; }
+  .top-bar { background: #1e293b; color: #fff; padding: 14px 20px; display: flex; align-items: center; gap: 14px; }
+  .top-bar a { color: #93c5fd; text-decoration: none; font-weight: 700; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 20px; }
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  h1 { font-size: 1.3rem; margin: 0 0 4px; }
+  h2 { font-size: .95rem; margin: 0 0 10px; }
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: .72rem; font-weight: 700; color: #fff; }
+  .field { margin-bottom: 10px; }
+  .field label { display: block; font-size: .78rem; color: #5a6d8c; margin-bottom: 3px; }
+  select, input[type=text] { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 7px 9px; font-size: .85rem; font-family: inherit; }
+  .btn { background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 9px 14px;
+    font-size: .85rem; font-weight: 700; cursor: pointer; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row > * { flex: 1; min-width: 160px; }
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid #f0f0f0; }
+  .link-box { background: #eff6ff; border: 1px dashed #93c5fd; border-radius: 8px; padding: 8px 10px;
+    font-size: .82rem; word-break: break-all; }
+  .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #0c1c42; color: #fff;
+    padding: 8px 14px; border-radius: 999px; font-size: .82rem; opacity: 0; transition: opacity .25s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+  <div class="top-bar"><strong>🏢 {{ prospect.name }}</strong><a href="/panel/prospeccion/mapa/">← Mapa</a></div>
+  <div class="wrap">
+
+    <div class="card">
+      <h1>{{ prospect.name }} <span class="badge" id="statusBadge" style="background:#8a94a6">{{ prospect.get_sales_status_display }}</span></h1>
+      <div style="color:#5a6d8c;font-size:.88rem">{{ prospect.get_sector_display }} · {{ prospect.municipality }} {{ prospect.district }}</div>
+      <div style="margin-top:8px">Puntuación actual: <strong>{{ prospect.current_score|default:"—" }}</strong>/100</div>
+    </div>
+
+    <div class="card">
+      <h2>Estado y responsable</h2>
+      <form id="updateForm">
+        <div class="row">
+          <div class="field">
+            <label>Etapa</label>
+            <select name="sales_status">
+              {% for id, label in sales_statuses %}
+                <option value="{{ id }}" {% if id == prospect.sales_status %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label>Prioridad</label>
+            <select name="priority">
+              <option value="low" {% if prospect.priority == 'low' %}selected{% endif %}>Baja</option>
+              <option value="normal" {% if prospect.priority == 'normal' %}selected{% endif %}>Normal</option>
+              <option value="high" {% if prospect.priority == 'high' %}selected{% endif %}>Alta</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Responsable</label>
+            <select name="assigned_to_id">
+              <option value="">Sin asignar</option>
+              {% for s in staff %}
+                <option value="{{ s.id }}" {% if prospect.assigned_to_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Notas del equipo</label>
+          <textarea name="staff_notes" rows="3" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 9px;font-family:inherit">{{ prospect.staff_notes }}</textarea>
+        </div>
+        <button type="submit" class="btn">Guardar</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Enlace personal del chequeo</h2>
+      <p style="font-size:.85rem;color:#5a6d8c">Compártelo con la empresa para que confirme/corrija el chequeo ya pre-rellenado.</p>
+      <div class="link-box" id="personalLink">{{ personal_url }}</div>
+      <button class="btn" id="btnCopyLink" style="margin-top:8px">📋 Copiar enlace</button>
+    </div>
+
+    <div class="card">
+      <h2>Contactos ({{ contacts|length }})</h2>
+      {% if contacts %}
+      <table>
+        <tr><th>Nombre</th><th>Rol</th><th>Teléfono</th><th>Email</th></tr>
+        {% for c in contacts %}
+          <tr><td>{{ c.name }}</td><td>{{ c.get_role_display }}</td><td>{{ c.phone }}</td><td>{{ c.email }}</td></tr>
+        {% endfor %}
+      </table>
+      {% else %}<p style="color:#8a94a6;font-size:.85rem">Sin contactos registrados todavía.</p>{% endif %}
+    </div>
+
+    <div class="card">
+      <h2>Historial de chequeos ({{ audits|length }})</h2>
+      {% if audits %}
+      <table>
+        <tr><th>Fecha</th><th>Modo</th><th>Etapa</th><th>Puntuación</th></tr>
+        {% for a in audits %}
+          <tr><td>{{ a.created_at|date:"d/m/Y H:i" }}</td><td>{{ a.get_mode_display }}</td><td>{{ a.get_stage_display }}</td><td>{{ a.score }}/100</td></tr>
+        {% endfor %}
+      </table>
+      {% else %}<p style="color:#8a94a6;font-size:.85rem">Todavía no se ha hecho ningún chequeo para esta empresa.</p>{% endif %}
+    </div>
+
+  </div>
+  <div class="toast" id="toast"></div>
+
+<script>
+document.getElementById('updateForm').addEventListener('submit', function(ev){
+  ev.preventDefault();
+  var fd = new FormData(ev.target);
+  var body = {
+    sales_status: fd.get('sales_status'),
+    priority: fd.get('priority'),
+    assigned_to_id: fd.get('assigned_to_id') || null,
+    staff_notes: fd.get('staff_notes'),
+  };
+  fetch(window.location.pathname + 'update/', {
+    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+  }).then(function(r){ return r.json(); }).then(function(data){
+    var t = document.getElementById('toast');
+    t.textContent = data.error || 'Guardado';
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 2200);
+  });
+});
+document.getElementById('btnCopyLink').addEventListener('click', function(){
+  var text = document.getElementById('personalLink').textContent.trim();
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text);
+});
+</script>
+</body>
+</html>
