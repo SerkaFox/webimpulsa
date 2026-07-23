@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from crm.models import Lead, Proposal
 from .csv_import import parse_csv
-from .models import BusinessProspect, ChequeoAudit, StaffMember
+from .models import BusinessContact, BusinessProspect, ChequeoAudit, StaffMember
 from .quiz_config import CATEGORY_WEIGHTS
 from .scoring import compute_score, questions_for_sector
 from .services import compute_dedupe_key, convert_prospect_to_lead, create_prospect, find_duplicate
@@ -287,3 +287,212 @@ class ConsentTests(BaseTestCase):
         prospect.save()
         r = c.get('/mapa-digital/api/prospects/', {'south': 43.0, 'north': 43.5, 'west': -3.2, 'east': -2.7})
         self.assertNotIn('Consent Toggle', [p['name'] for p in json.loads(r.content)['prospects']])
+
+
+class PreliminarAuditUiTests(BaseTestCase):
+    def test_complete_creates_preliminar_audit_with_source_comment_evidence(self):
+        prospect = BusinessProspect.objects.create(name='Prelim UI Co', sector='bar')
+        c = self.login()
+        qs = questions_for_sector('bar')
+        answers = {
+            q['id']: {'value': 'si', 'comment': f'visto en la web ({q["id"]})', 'evidence_url': 'https://example.com/x'}
+            for q in qs
+        }
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/preliminar/complete/',
+                   data=json.dumps({'sector': 'bar', 'answers': answers}), content_type='application/json')
+        self.assertEqual(r.status_code, 200)
+        body = json.loads(r.content)
+        self.assertEqual(body['stage'], 'preliminar')
+        self.assertEqual(body['score'], 100)
+
+        audit = ChequeoAudit.objects.get(pk=body['audit_id'])
+        self.assertEqual(audit.stage, ChequeoAudit.STAGE_PRELIMINAR)
+        self.assertTrue(all(a['source'] == 'public_check' for a in audit.answers))
+        self.assertTrue(all(a.get('comment') for a in audit.answers))
+        self.assertTrue(all(a.get('evidence_url') == 'https://example.com/x' for a in audit.answers))
+
+    def test_second_preliminar_does_not_overwrite_first(self):
+        prospect = BusinessProspect.objects.create(name='Prelim Version Co', sector='taller')
+        c = self.login()
+        qs = questions_for_sector('taller')
+
+        answers_low = {q['id']: {'value': 'no'} for q in qs}
+        r1 = c.post(f'/panel/prospeccion/{prospect.pk}/preliminar/complete/',
+                    data=json.dumps({'sector': 'taller', 'answers': answers_low}), content_type='application/json')
+        first_id = json.loads(r1.content)['audit_id']
+
+        answers_high = {q['id']: {'value': 'si'} for q in qs}
+        r2 = c.post(f'/panel/prospeccion/{prospect.pk}/preliminar/complete/',
+                    data=json.dumps({'sector': 'taller', 'answers': answers_high}), content_type='application/json')
+        second_id = json.loads(r2.content)['audit_id']
+
+        self.assertNotEqual(first_id, second_id)
+        first = ChequeoAudit.objects.get(pk=first_id)
+        self.assertEqual(first.score, 0)  # sigue igual, no lo tocó el segundo POST
+        self.assertEqual(prospect.audits.count(), 2)
+
+    def test_draft_save_then_complete_reads_session_draft(self):
+        prospect = BusinessProspect.objects.create(name='Prelim Draft Co', sector='clinica')
+        c = self.login()
+        qs = questions_for_sector('clinica')
+        answers = {q['id']: {'value': 'en_parte'} for q in qs}
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/preliminar/draft/',
+                   data=json.dumps({'sector': 'clinica', 'answers': answers}), content_type='application/json')
+        self.assertEqual(json.loads(r.content)['count'], len(qs))
+
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/preliminar/complete/', data='{}', content_type='application/json')
+        body = json.loads(r.content)
+        # en_parte = 50% en todas las preguntas, pero el redondeo por
+        # categoría (round-half-to-even) sube algunas categorías de peso 15
+        # de 7.5 a 8 — 52 es el resultado correcto, no 50 (verificado con
+        # scoring.compute_score directamente, mismo criterio que ScoringTests).
+        self.assertEqual(body['score'], 52)
+
+        # el borrador se limpia tras completar: la pagina de detalle ya no
+        # debe traer respuestas precargadas para una nueva auditoria
+        r2 = c.get(f'/panel/prospeccion/{prospect.pk}/')
+        html = r2.content.decode()
+        import re
+        m = re.search(r'var PRELIM_DRAFT = (\{.*?\});', html)
+        self.assertIsNotNone(m)
+        draft = json.loads(m.group(1))
+        self.assertEqual(draft, {})
+
+    def test_panel_routes_for_preliminar_require_login(self):
+        prospect = BusinessProspect.objects.create(name='Prelim Auth Co', sector='bar')
+        with override_settings(ALLOWED_HOSTS=['testserver']):
+            c = Client()
+            r = c.post(f'/panel/prospeccion/{prospect.pk}/preliminar/draft/', data='{}', content_type='application/json')
+            self.assertIn('Web-Impulsa CRM', r.content.decode())
+            r = c.post(f'/panel/prospeccion/{prospect.pk}/preliminar/complete/', data='{}', content_type='application/json')
+            self.assertIn('Web-Impulsa CRM', r.content.decode())
+
+
+class ContactCrudTests(BaseTestCase):
+    def test_create_update_delete_contact(self):
+        prospect = BusinessProspect.objects.create(name='Contact CRUD Co', sector='bar')
+        c = self.login()
+
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/contacts/', data=json.dumps({
+            'name': 'Juan', 'role': 'manager', 'phone': '600111222', 'whatsapp': '34600111222',
+            'email': 'juan@x.com', 'preferred_channel': 'whatsapp', 'is_primary': True, 'notes': 'nota',
+        }), content_type='application/json')
+        self.assertEqual(r.status_code, 200)
+        contact_id = json.loads(r.content)['contact']['id']
+        self.assertEqual(BusinessContact.objects.filter(prospect=prospect).count(), 1)
+
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/contacts/{contact_id}/update/',
+                   data=json.dumps({'notes': 'nota editada', 'role': 'owner'}), content_type='application/json')
+        body = json.loads(r.content)['contact']
+        self.assertEqual(body['notes'], 'nota editada')
+        self.assertEqual(body['role'], 'owner')
+
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/contacts/{contact_id}/delete/')
+        self.assertEqual(json.loads(r.content), {'deleted': True})
+        self.assertEqual(BusinessContact.objects.filter(prospect=prospect).count(), 0)
+
+    def test_contact_routes_require_login(self):
+        prospect = BusinessProspect.objects.create(name='Contact Auth Co', sector='bar')
+        contact = BusinessContact.objects.create(prospect=prospect, name='X')
+        with override_settings(ALLOWED_HOSTS=['testserver']):
+            c = Client()
+            for url in (
+                f'/panel/prospeccion/{prospect.pk}/contacts/',
+                f'/panel/prospeccion/{prospect.pk}/contacts/{contact.pk}/update/',
+                f'/panel/prospeccion/{prospect.pk}/contacts/{contact.pk}/delete/',
+                f'/panel/prospeccion/{prospect.pk}/contacts/{contact.pk}/consent/',
+            ):
+                r = c.post(url, data='{}', content_type='application/json')
+                self.assertIn('Web-Impulsa CRM', r.content.decode(), msg=url)
+
+
+class ConsentSeparationTests(BaseTestCase):
+    def test_report_and_commercial_consent_are_independent(self):
+        prospect = BusinessProspect.objects.create(name='Consent Sep Co', sector='bar')
+        contact = BusinessContact.objects.create(prospect=prospect, name='Dueña')
+        c = self.login()
+
+        c.post(f'/panel/prospeccion/{prospect.pk}/contacts/{contact.pk}/consent/',
+               data=json.dumps({'consent_type': 'report', 'action': 'grant', 'method': 'quiz_form'}),
+               content_type='application/json')
+        c.post(f'/panel/prospeccion/{prospect.pk}/contacts/{contact.pk}/consent/',
+               data=json.dumps({'consent_type': 'commercial', 'action': 'grant', 'method': 'quiz_form'}),
+               content_type='application/json')
+        contact.refresh_from_db()
+        self.assertTrue(contact.consent_receive_report)
+        self.assertTrue(contact.consent_commercial_contact)
+
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/contacts/{contact.pk}/consent/',
+                   data=json.dumps({'consent_type': 'commercial', 'action': 'revoke'}), content_type='application/json')
+        body = json.loads(r.content)['contact']
+        self.assertTrue(body['consent_receive_report'])
+        self.assertFalse(body['consent_commercial_contact'])
+        self.assertIsNone(body['consent_receive_report_revoked_at'])
+        self.assertIsNotNone(body['consent_commercial_contact_revoked_at'])
+
+    def test_revoking_report_leaves_commercial_untouched(self):
+        prospect = BusinessProspect.objects.create(name='Consent Sep Co 2', sector='bar')
+        contact = BusinessContact.objects.create(prospect=prospect, name='Dueño')
+        c = self.login()
+        for t in ('report', 'commercial'):
+            c.post(f'/panel/prospeccion/{prospect.pk}/contacts/{contact.pk}/consent/',
+                   data=json.dumps({'consent_type': t, 'action': 'grant'}), content_type='application/json')
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/contacts/{contact.pk}/consent/',
+                   data=json.dumps({'consent_type': 'report', 'action': 'revoke'}), content_type='application/json')
+        body = json.loads(r.content)['contact']
+        self.assertFalse(body['consent_receive_report'])
+        self.assertTrue(body['consent_commercial_contact'])
+
+
+class PublishConfirmationAuthorizationTests(BaseTestCase):
+    def test_ordinary_staff_cannot_self_confirm_publication(self):
+        prospect = BusinessProspect.objects.create(name='No Auth Co', sector='bar', publish_consent=True)
+        ordinary = StaffMember.objects.create(name='Empleado Normal', can_confirm_publication=False)
+        c = self.login()
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
+                   data=json.dumps({'staff_member_id': ordinary.pk}), content_type='application/json')
+        self.assertEqual(r.status_code, 403)
+        prospect.refresh_from_db()
+        self.assertFalse(prospect.publish_confirmed_by_staff)
+
+    def test_authorized_staff_can_confirm_publication(self):
+        prospect = BusinessProspect.objects.create(name='Auth Co', sector='bar', publish_consent=True)
+        admin = StaffMember.objects.create(name='Admin', can_confirm_publication=True)
+        c = self.login()
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
+                   data=json.dumps({'staff_member_id': admin.pk}), content_type='application/json')
+        self.assertEqual(r.status_code, 200)
+        prospect.refresh_from_db()
+        self.assertTrue(prospect.publish_confirmed_by_staff)
+
+    def test_nonexistent_staff_id_rejected(self):
+        prospect = BusinessProspect.objects.create(name='Fake Staff Co', sector='bar', publish_consent=True)
+        c = self.login()
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
+                   data=json.dumps({'staff_member_id': 999999}), content_type='application/json')
+        self.assertEqual(r.status_code, 403)
+
+
+class PublicationRequiresBothFlagsTests(BaseTestCase):
+    def test_publicity_needs_consent_and_staff_confirmation_together(self):
+        prospect = BusinessProspect.objects.create(name='Both Flags Co', sector='bar', lat=43.26, lng=-2.92)
+        admin = StaffMember.objects.create(name='Admin2', can_confirm_publication=True)
+        c = self.login()
+
+        def public_names():
+            r = c.get('/mapa-digital/api/prospects/', {'south': 43.0, 'north': 43.5, 'west': -3.2, 'east': -2.7})
+            return {p['name'] for p in json.loads(r.content)['prospects']}
+
+        self.assertNotIn(prospect.name, public_names())
+
+        c.post(f'/panel/prospeccion/{prospect.pk}/publish-consent/',
+               data=json.dumps({'action': 'grant'}), content_type='application/json')
+        self.assertNotIn(prospect.name, public_names())  # falta confirmación admin
+
+        c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
+               data=json.dumps({'staff_member_id': admin.pk}), content_type='application/json')
+        self.assertIn(prospect.name, public_names())
+
+        c.post(f'/panel/prospeccion/{prospect.pk}/publish-consent/',
+               data=json.dumps({'action': 'revoke'}), content_type='application/json')
+        self.assertNotIn(prospect.name, public_names())
