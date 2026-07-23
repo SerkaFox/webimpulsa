@@ -45,28 +45,54 @@ def _haversine_m(lat1, lng1, lat2, lng2):
 DEDUPE_DISTANCE_M = 60
 
 
+def _phone_digits(phone):
+    digits = re.sub(r'\D', '', phone or '')
+    return digits[-9:] if digits else ''
+
+
 def find_duplicate(name, phone='', email='', website='', lat=None, lng=None, exclude_pk=None):
-    """Empresa existente que probablemente sea la misma, o None. Compara por
-    nombre+teléfono/email/dominio normalizados, y si hay coordenadas, también
-    por nombre igual + distancia corta."""
+    """Empresa existente que probablemente sea la misma, o None. Compara de
+    forma independiente por teléfono, email, dominio, y nombre+distancia
+    corta — un mismo teléfono ya basta para considerarlo duplicado, aunque
+    el nombre esté escrito distinto (typo, razón social vs. nombre comercial,
+    etc.), en vez de exigir que todo coincida a la vez."""
     from .models import BusinessProspect
 
     qs = BusinessProspect.objects.all()
     if exclude_pk:
         qs = qs.exclude(pk=exclude_pk)
 
-    key = compute_dedupe_key(name, phone, email, website)
-    exact = qs.filter(dedupe_key=key).first()
-    if exact:
-        return exact
-
-    if lat is not None and lng is not None:
-        norm_name = _normalize(name)
-        for candidate in qs.filter(lat__isnull=False, lng__isnull=False):
-            if _normalize(candidate.name) != norm_name:
-                continue
-            if _haversine_m(lat, lng, candidate.lat, candidate.lng) <= DEDUPE_DISTANCE_M:
+    phone_digits = _phone_digits(phone)
+    if phone_digits:
+        for candidate in qs.exclude(phone=''):
+            if _phone_digits(candidate.phone) == phone_digits:
                 return candidate
+
+    norm_email = _normalize(email)
+    if norm_email:
+        match = qs.filter(email__iexact=norm_email).exclude(email='').first()
+        if match:
+            return match
+
+    domain = _domain_from_url(website)
+    if domain:
+        for candidate in qs.exclude(website=''):
+            if _domain_from_url(candidate.website) == domain:
+                return candidate
+
+    norm_name = _normalize(name)
+    if norm_name:
+        if lat is not None and lng is not None:
+            for candidate in qs.filter(lat__isnull=False, lng__isnull=False):
+                if _normalize(candidate.name) == norm_name and \
+                        _haversine_m(lat, lng, candidate.lat, candidate.lng) <= DEDUPE_DISTANCE_M:
+                    return candidate
+        # mismo nombre exacto sin coordenadas de por medio — último recurso,
+        # más conservador que los anteriores pero evita duplicar lo obvio.
+        for candidate in qs:
+            if _normalize(candidate.name) == norm_name:
+                return candidate
+
     return None
 
 
