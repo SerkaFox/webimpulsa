@@ -1,0 +1,22 @@
+[Unit]
+Description=WebImpulsa Gunicorn
+After=network.target
+
+[Service]
+User=seradmin
+Group=www-data
+WorkingDirectory=/home/seradmin/webimpulsa/app
+Environment="PATH=/home/seradmin/listoya/venv/bin"
+ExecStart=/home/seradmin/listoya/venv/bin/gunicorn \
+    --workers 2 \
+    --timeout 90 \
+    --bind 127.0.0.1:8001 \
+    --access-logfile /home/seradmin/webimpulsa/logs/access.log \
+    --error-logfile /home/seradmin/webimpulsa/logs/error.log \
+    --log-level info \
+    config.wsgi:application
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
