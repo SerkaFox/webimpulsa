@@ -99,6 +99,15 @@ a{text-decoration:none}
   background:rgba(255,255,255,.9);color:var(--q-primary);box-shadow:var(--q-shadow);font-size:1.05rem;
   display:flex;align-items:center;justify-content:center;cursor:pointer}
 
+/* botón para volver a la web — fijo, visible en todas las pantallas (el
+   pie de página con el enlace queda fuera de la vista con min-height:100vh,
+   y en pantalla completa no se ve en absoluto). Debajo del botón de música
+   para no chocar con el cronómetro del lado contrario. */
+.qz-back-btn{position:fixed;top:64px;left:18px;z-index:20;width:38px;height:38px;border:none;border-radius:50%;
+  background:rgba(255,255,255,.9);color:var(--q-primary);box-shadow:var(--q-shadow);font-size:1.15rem;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;text-decoration:none}
+.qz-back-btn:hover{background:#fff}
+
 .qz-shell{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;
   padding:80px 18px 56px;perspective:1500px}
 
@@ -274,6 +283,7 @@ a{text-decoration:none}
 <div class="qz-timer" id="qzTimer"><span class="dot"></span><span id="qzTimerText">0:00</span></div>
 
 <button class="qz-music-btn" id="qzMusicBtn" aria-label="Silenciar música" title="Silenciar música">🎵</button>
+<a class="qz-back-btn" href="/" id="qzBackBtn" aria-label="Volver a webimpulsa.es" title="Volver a webimpulsa.es">←</a>
 <audio id="qzBgm1" preload="auto" src="/static/wi/audio/chequeo-bgm-1.mp3?v=1"></audio>
 <audio id="qzBgm2" preload="auto" src="/static/wi/audio/chequeo-bgm-2.mp3?v=1"></audio>
 
@@ -897,6 +907,15 @@ function tryFullscreen(){
     }
   }catch(e){}
 }
+document.getElementById('qzBackBtn').addEventListener('click', function(ev){
+  if(document.fullscreenElement){
+    ev.preventDefault();
+    var target = this.getAttribute('href');
+    Promise.resolve(document.exitFullscreen ? document.exitFullscreen() : null)
+      .catch(function(){})
+      .then(function(){ window.location.href = target; });
+  }
+});
 document.getElementById('btnStart').addEventListener('click', function(){
   tryFullscreen();
   if(MODE === 'personal'){

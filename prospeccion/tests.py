@@ -1070,6 +1070,13 @@ class PersonalModeMusicFullscreenParityTests(BaseTestCase):
         self.assertNotIn("if(MODE === 'personal') return;\n  var el = document.documentElement;", html)
         self.assertNotIn('.qz-music-btn{display:none}', html)
 
+    def test_has_a_visible_back_to_site_button(self):
+        c = Client()
+        r = c.get('/chequeo-digital/')
+        html = r.content.decode()
+        self.assertIn('id="qzBackBtn"', html)
+        self.assertIn('href="/"', html)
+
     def test_result_screen_shows_prospect_name_placeholder(self):
         prospect = BusinessProspect.objects.create(name='Nombrada SL', sector='bar')
         c = Client()
