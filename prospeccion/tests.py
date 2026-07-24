@@ -872,6 +872,43 @@ class RecommendationsTests(TestCase):
         self.assertEqual(reco['items'][0]['label'], 'Bolsa 5 horas')
 
 
+class WaBridgeTests(TestCase):
+    """El bridge compartido con `anna` tiene un bug conocido: a veces devuelve
+    HTTP 500 justo después de entregar el mensaje de verdad, al intentar leer
+    result.id de una respuesta undefined de whatsapp-web.js. send_text() debe
+    tratar ESE error concreto como éxito (no bloquear al usuario ni marcar el
+    informe como no enviado), pero seguir fallando ante errores reales."""
+
+    def test_known_result_id_crash_is_treated_as_success(self):
+        import urllib.error
+
+        from prospeccion import wa_bridge
+
+        body = b'{"error":"Cannot read properties of undefined (reading \'id\')"}'
+        http_error = urllib.error.HTTPError(
+            'http://127.0.0.1:8125/messages', 500, 'Internal Server Error', {}, mock.Mock()
+        )
+        http_error.read = mock.Mock(return_value=body)
+        with override_settings(WHATSAPP_BRIDGE_URL='http://127.0.0.1:8125', WHATSAPP_BRIDGE_TOKEN='t'):
+            with mock.patch('prospeccion.wa_bridge.urlopen', side_effect=http_error):
+                result = wa_bridge.send_text('+34600111222', 'hola')
+        self.assertTrue(result['ok'])
+
+    def test_other_bridge_errors_still_raise(self):
+        import urllib.error
+
+        from prospeccion import wa_bridge
+
+        http_error = urllib.error.HTTPError(
+            'http://127.0.0.1:8125/messages', 409, 'Conflict', {}, mock.Mock()
+        )
+        http_error.read = mock.Mock(return_value=b'{"error":"Session is not ready: starting"}')
+        with override_settings(WHATSAPP_BRIDGE_URL='http://127.0.0.1:8125', WHATSAPP_BRIDGE_TOKEN='t'):
+            with mock.patch('prospeccion.wa_bridge.urlopen', side_effect=http_error):
+                with self.assertRaises(wa_bridge.WhatsAppBridgeError):
+                    wa_bridge.send_text('+34600111222', 'hola')
+
+
 class ReceiveReportPublicTests(BaseTestCase):
     def _create_audit(self, **overrides):
         defaults = dict(

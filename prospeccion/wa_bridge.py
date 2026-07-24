@@ -58,6 +58,18 @@ def send_text(to_phone: str, body: str, *, timeout: int = 20) -> dict:
             raw = response.read().decode('utf-8')
     except HTTPError as exc:
         detail = exc.read().decode('utf-8', errors='replace')
+        # Bug conocido del bridge compartido (whatsapp-web.js): a veces
+        # sendMessage() resuelve con `undefined` justo después de que el
+        # mensaje YA se entregó, y el propio bridge revienta al intentar leer
+        # `result.id` para construir su respuesta — devuelve un 500 aunque el
+        # WhatsApp sí llegó. Confirmado empíricamente (mensaje de prueba
+        # recibido pese a este error). Se trata como éxito en vez de fallo
+        # para no bloquear al usuario ni marcar como no-enviado un informe
+        # que sí salió; no se toca el bridge compartido con `anna`.
+        if "Cannot read properties of undefined (reading 'id')" in detail:
+            logger.warning('Bridge devolvió 500 tras un envío probablemente exitoso '
+                            '(bug conocido de whatsapp-web.js): %s', detail)
+            return {'ok': True, 'note': 'bridge_response_crash_but_likely_sent'}
         raise WhatsAppBridgeError(f'Bridge HTTP {exc.code}: {detail}') from exc
     except URLError as exc:
         raise WhatsAppBridgeError(f'Bridge no disponible: {exc.reason}') from exc
