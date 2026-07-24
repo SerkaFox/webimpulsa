@@ -261,6 +261,11 @@ a{text-decoration:none}
   margin-bottom:.8rem;cursor:pointer}
 .reco-consent-label input{margin-top:.15rem}
 
+.qz-publish-consent{display:flex;gap:.6rem;align-items:flex-start;margin-top:1.4rem;padding:.85rem 1rem;
+  border-radius:12px;background:rgba(0,168,204,.07);border:1.5px solid rgba(0,168,204,.2);cursor:pointer;
+  font-size:.85rem;line-height:1.45;color:var(--q-text)}
+.qz-publish-consent input{margin-top:.2rem;flex-shrink:0;width:18px;height:18px}
+
 .qz-cta-grid{display:grid;gap:.65rem;margin-top:1.7rem}
 .qz-foot-actions{display:flex;gap:.9rem;justify-content:center;margin-top:1.3rem;flex-wrap:wrap}
 .qz-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;
@@ -395,6 +400,15 @@ a{text-decoration:none}
         <ul class="reco-list" id="recoList"></ul>
         <div class="reco-total" id="recoTotal" hidden></div>
       </div>
+
+      {% if mode == 'personal' %}
+      <label class="qz-publish-consent">
+        <input type="checkbox" id="publishConsentCheck" {% if default_publish_checked %}checked{% endif %}>
+        <span>Quiero aparecer en el <strong>Mapa Digital de WebImpulsa</strong> — otros negocios y clientes de la
+        zona lo verán (¡y seguro que les da un poco de envidia! 😉). Solo se muestran datos positivos, nunca tu
+        información privada. Puedes desmarcarlo cuando quieras.</span>
+      </label>
+      {% endif %}
 
       <div class="qz-cta-grid">
         <a class="btn-qz btn-qz-primary btn-qz-block" id="ctaExample" target="_blank" rel="noopener">Ver ejemplo para mi negocio</a>
@@ -770,8 +784,35 @@ function renderResult(r){
   document.getElementById('ctaExample').setAttribute('href', exampleUrl);
   document.getElementById('ctaQuick').setAttribute('href', 'https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(buildQuickMessage(r.recommendations)));
 
+  if(MODE === 'personal') sendInitialPublishConsent();
   if(MODE !== 'personal') saveResult(r);
 }
+
+/* ---------------------------------------------------------------------
+ * CONSENTIMIENTO DE PUBLICACIÓN (mapa digital) — dado por la propia empresa
+ * al terminar su chequeo personal. Marcado por defecto; se guarda al mostrar
+ * el resultado (para que "no tocar la casilla" cuente como consentimiento) y
+ * de nuevo cada vez que la cambia, en vez de esperar a un evento de cierre
+ * de ventana poco fiable.
+ * ------------------------------------------------------------------- */
+var publishConsentSent = false;
+function sendPublishConsent(checked){
+  fetch('/chequeo-digital/e/' + TOKEN + '/publish-consent/', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({consent: checked})
+  }).catch(function(){});
+}
+function sendInitialPublishConsent(){
+  if(publishConsentSent) return;
+  publishConsentSent = true;
+  var check = document.getElementById('publishConsentCheck');
+  if(check) sendPublishConsent(check.checked);
+}
+(function(){
+  var check = document.getElementById('publishConsentCheck');
+  if(check) check.addEventListener('change', function(){ sendPublishConsent(check.checked); });
+})();
 
 function finishQuiz(){
   fetch(submitEndpoint(), {

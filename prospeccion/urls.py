@@ -11,6 +11,8 @@ urlpatterns = [
          name='chequeo_submit_personal'),
     path('chequeo-digital/e/<str:token>/receive-report/', views_public.receive_report_personal,
          name='chequeo_receive_report_personal'),
+    path('chequeo-digital/e/<str:token>/publish-consent/', views_public.personal_publish_consent,
+         name='chequeo_personal_publish_consent'),
 
     path('chequeo-digital/api/receive-report/', views_public.receive_report_public,
          name='chequeo_receive_report_public'),

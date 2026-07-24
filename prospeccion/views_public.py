@@ -174,6 +174,12 @@ def personal_audit(request, token):
     if latest_audit:
         prefill = {a['question_id']: a for a in latest_audit.answers}
 
+    # Checkbox de publicación: si la empresa nunca contestó a esto antes
+    # (publish_consent_at vacío), se muestra marcada por defecto; si ya lo
+    # tocó alguna vez (desde aquí o desde el panel de staff), se respeta su
+    # última elección real en vez de forzar "marcada" cada vez.
+    default_publish_checked = prospect.publish_consent_at is None or prospect.publish_consent
+
     context = {
         'mode': 'personal',
         'prospect_name': prospect.name,
@@ -181,6 +187,7 @@ def personal_audit(request, token):
         'token': token,
         'prefill_json': json.dumps(prefill),
         'stage': latest_audit.stage if latest_audit else ChequeoAudit.STAGE_PRELIMINAR,
+        'default_publish_checked': default_publish_checked,
     }
     return render(request, 'chequeo_digital.html', context)
 
@@ -239,6 +246,41 @@ def submit_personal_audit(request, token):
         'report_token': audit.report_token,
         **_good_fix_progress(sector, result),
     })
+
+
+@csrf_exempt
+@require_POST
+def personal_publish_consent(request, token):
+    """Consentimiento de publicación dado por la PROPIA empresa desde su
+    chequeo personal — no requiere que el equipo se lo pregunte aparte. Solo
+    controla el consentimiento (mitad del semáforo): sigue haciendo falta la
+    confirmación administrativa con secreto (publish_confirm) antes de que
+    algo se vea de verdad en /mapa-digital/."""
+    if not _same_origin(request):
+        return JsonResponse({'error': 'origen no permitido'}, status=403)
+
+    prospect = get_object_or_404(BusinessProspect, public_token=token)
+    try:
+        payload = json.loads(request.body or '{}')
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'JSON inválido'}, status=400)
+
+    consent = bool(payload.get('consent'))
+    now = timezone.now()
+    if consent:
+        prospect.publish_consent = True
+        prospect.publish_consent_at = now
+        prospect.publish_revoked_at = None
+    else:
+        prospect.publish_consent = False
+        prospect.publish_confirmed_by_staff = False
+        prospect.publish_revoked_at = now
+    prospect.save(update_fields=[
+        'publish_consent', 'publish_consent_at', 'publish_revoked_at', 'publish_confirmed_by_staff', 'updated_at',
+    ])
+    logger.info('Consentimiento de publicación %s por la propia empresa (chequeo personal): prospect #%s',
+                'otorgado' if consent else 'retirado', prospect.pk)
+    return JsonResponse({'publish_consent': prospect.publish_consent})
 
 
 # ── Informe compartible + envío por WhatsApp al propio respondente ─────────
