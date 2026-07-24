@@ -12,6 +12,7 @@
 
     .top-bar { background: #1e293b; color: #fff; padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
     .top-bar h1 { margin: 0; font-size: 1rem; font-weight: 700; letter-spacing: -.01em; }
+    .top-bar a { color: #93c5fd; font-weight: 700; font-size: .85rem; }
     .top-bar .sub { font-size: .78rem; color: #94a3b8; margin-left: auto; }
 
     .main { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
@@ -48,6 +49,7 @@
 
 <div class="top-bar">
   <h1>🗂 WebImpulsa CRM</h1>
+  <a href="/panel/prospeccion/mapa/">📍 Mapa de prospección</a>
   <span class="sub">{{ total }} lead{% if total != 1 %}s{% endif %} {% if status_filter %}· filtro: {{ status_filter }}{% endif %}{% if search %}· búsqueda: "{{ search }}"{% endif %}</span>
 </div>
 

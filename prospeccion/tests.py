@@ -826,6 +826,28 @@ class OldRoutesStillWorkTests(BaseTestCase):
         self.assertIn('Añadir contacto'.encode('utf-8'), r.content)
 
 
+class CrmProspeccionNavigationTests(BaseTestCase):
+    """Tania entra por /wi/crm/ (contraseña compartida) y antes no había
+    ningún enlace desde ahí hacia el mapa de prospección interno, ni de
+    vuelta — se navegaba solo escribiendo la URL de memoria."""
+
+    def test_crm_leads_list_links_to_prospeccion_map(self):
+        c = self.login()
+        r = c.get('/wi/crm/')
+        self.assertEqual(r.status_code, 200)
+        self.assertIn(b'href="/panel/prospeccion/mapa/"', r.content)
+
+    def test_prospeccion_dashboard_links_back_to_crm(self):
+        c = self.login()
+        r = c.get('/panel/prospeccion/')
+        self.assertIn(b'href="/wi/crm/"', r.content)
+
+    def test_internal_map_links_back_to_crm(self):
+        c = self.login()
+        r = c.get('/panel/prospeccion/mapa/')
+        self.assertIn(b'href="/wi/crm/"', r.content)
+
+
 class MapMarkerScoreAndSearchPlottingTests(BaseTestCase):
     def test_internal_map_renders_score_label_and_search_marker_plotting(self):
         c = self.login()
