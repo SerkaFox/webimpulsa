@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 from collections import Counter
 
 from django.http import HttpResponse, JsonResponse
@@ -25,17 +24,6 @@ from .services import (
 )
 
 logger = logging.getLogger(__name__)
-
-# Secreto APARTE de WI_CRM_PASSWORD, solo para confirmar publicaciones. Es
-# necesario porque _crm_auth es una única sesión compartida por todo el
-# equipo (no hay login individual en este proyecto) — así que elegir un
-# StaffMember en un <select> NO demuestra quién está realmente al otro lado
-# de la petición; cualquiera con la contraseña general del CRM podría, si no
-# fuera por este secreto adicional, enviar el ID de un StaffMember con
-# can_confirm_publication=True y confirmar en su nombre. Este secreto reduce
-# quién puede hacerlo a quien además lo conozca (compartido solo con las
-# personas realmente autorizadas), no a "quien esté logueado en el CRM".
-_PUBLISH_CONFIRM_SECRET = os.getenv('WI_PUBLISH_CONFIRM_SECRET', '')
 
 
 def _prospect_json(p):
@@ -351,7 +339,6 @@ def prospect_detail(request, pk):
         'latest_confirmado': latest_confirmado,
         'personal_url': request.build_absolute_uri(f'/chequeo-digital/e/{prospect.public_token}/'),
         'staff': StaffMember.objects.filter(active=True),
-        'confirming_staff': StaffMember.objects.filter(active=True, can_confirm_publication=True),
         'sales_statuses': BusinessProspect.SALES_STATUS_CHOICES,
         'sectors': SECTOR_CHOICES,
         'role_choices': BusinessContact.ROLE_CHOICES,
@@ -706,9 +693,11 @@ def contact_consent(request, pk, contact_id):
 @_crm_auth
 @require_POST
 def publish_consent_update(request, pk):
-    """Consentimiento de PUBLICACIÓN dado por la propia empresa — cualquier
-    miembro del equipo puede registrarlo, pero por sí solo NO hace nada
-    visible: hace falta además publish_confirmed_by_staff (ver publish_confirm)."""
+    """Override manual del consentimiento de publicación — normalmente lo da
+    la propia empresa desde el checkbox al final de su chequeo personal
+    (ver personal_publish_consent en views_public.py); esto es solo para
+    forzarlo a mano si hace falta. Es la única condición para aparecer en
+    /mapa-digital/, no hay una confirmación administrativa aparte."""
     prospect = get_object_or_404(BusinessProspect, pk=pk)
     try:
         payload = json.loads(request.body or '{}')
@@ -723,64 +712,10 @@ def publish_consent_update(request, pk):
         prospect.publish_revoked_at = None
     elif action == 'revoke':
         prospect.publish_consent = False
-        prospect.publish_confirmed_by_staff = False
         prospect.publish_revoked_at = now
     else:
         return JsonResponse({'error': 'action inválida'}, status=400)
     prospect.save()
     logger.info('Consentimiento de publicación %s: prospect #%s', action, pk)
-    is_public, reason = publication_status(prospect)
-    return JsonResponse({'is_public': is_public, 'reason': reason})
-
-
-@_crm_auth
-@require_POST
-def publish_confirm(request, pk):
-    """Confirmación ADMINISTRATIVA de publicación — la única acción de todo
-    este módulo que exige un StaffMember concreto con can_confirm_publication=
-    True. No hay login individual en el proyecto, así que quien confirma se
-    indica explícitamente en el momento de la acción y se valida en servidor;
-    un miembro de equipo sin ese permiso no puede auto-confirmarse."""
-    if not _PUBLISH_CONFIRM_SECRET:
-        # fail-closed: sin secreto configurado, nadie puede confirmar (nunca
-        # se permite por defecto), igual que _crm_auth falla si falta
-        # WI_CRM_PASSWORD.
-        return JsonResponse({'error': 'WI_PUBLISH_CONFIRM_SECRET no configurado'}, status=500)
-
-    prospect = get_object_or_404(BusinessProspect, pk=pk)
-    try:
-        payload = json.loads(request.body or '{}')
-    except (ValueError, TypeError):
-        return JsonResponse({'error': 'JSON inválido'}, status=400)
-
-    # El staff_member_id elegido en el <select> es solo una ETIQUETA para el
-    # registro (quién dice ser) — la sesión CRM es compartida por todo el
-    # equipo, así que por sí sola esa elección no prueba identidad. El
-    # secreto es lo único que de verdad limita quién puede ejecutar esto.
-    provided_secret = payload.get('confirm_secret') or ''
-    if not provided_secret or provided_secret != _PUBLISH_CONFIRM_SECRET:
-        logger.warning(
-            'Intento de confirmar publicación con secreto incorrecto/ausente: prospect #%s staff_id=%s',
-            pk, payload.get('staff_member_id'),
-        )
-        return JsonResponse({'error': 'Secreto de confirmación incorrecto'}, status=403)
-
-    staff = StaffMember.objects.filter(pk=payload.get('staff_member_id'), active=True).first()
-    if not staff or not staff.can_confirm_publication:
-        logger.warning(
-            'Intento de confirmar publicación sin autorización: prospect #%s staff_id=%s',
-            pk, payload.get('staff_member_id'),
-        )
-        return JsonResponse(
-            {'error': 'Este miembro del equipo no está autorizado a confirmar publicaciones'}, status=403,
-        )
-
-    confirm = bool(payload.get('confirm', True))
-    prospect.publish_confirmed_by_staff = confirm
-    prospect.save(update_fields=['publish_confirmed_by_staff', 'updated_at'])
-    logger.info(
-        'Publicación %s por %s (secreto verificado): prospect #%s',
-        'confirmada' if confirm else 'desconfirmada', staff.name, pk,
-    )
     is_public, reason = publication_status(prospect)
     return JsonResponse({'is_public': is_public, 'reason': reason})

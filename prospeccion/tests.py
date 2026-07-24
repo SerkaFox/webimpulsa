@@ -120,16 +120,14 @@ class PublicTokenSecurityTests(BaseTestCase):
 
 
 class PublicMapPrivacyTests(BaseTestCase):
-    def test_only_consented_and_confirmed_prospects_appear(self):
+    def test_only_consented_and_not_revoked_prospects_appear(self):
         p_no_consent = BusinessProspect.objects.create(name='No Consent', sector='bar', lat=43.26, lng=-2.92)
-        p_unconfirmed = BusinessProspect.objects.create(
-            name='Unconfirmed', sector='bar', lat=43.27, lng=-2.93, publish_consent=True)
         p_revoked = BusinessProspect.objects.create(
             name='Revoked', sector='bar', lat=43.28, lng=-2.94,
-            publish_consent=True, publish_confirmed_by_staff=True, publish_revoked_at=timezone.now())
+            publish_consent=True, publish_revoked_at=timezone.now())
         p_ok = BusinessProspect.objects.create(
             name='Published Co', sector='bar', lat=43.29, lng=-2.95,
-            phone='611000000', publish_consent=True, publish_confirmed_by_staff=True)
+            phone='611000000', publish_consent=True)
 
         c = Client()
         r = c.get('/mapa-digital/api/prospects/', {'south': 43.0, 'north': 43.5, 'west': -3.2, 'east': -2.7})
@@ -283,8 +281,7 @@ class MapFilterTests(BaseTestCase):
 class ConsentTests(BaseTestCase):
     def test_toggling_publish_consent_off_hides_from_public_map(self):
         prospect = BusinessProspect.objects.create(
-            name='Consent Toggle', sector='bar', lat=43.26, lng=-2.92,
-            publish_consent=True, publish_confirmed_by_staff=True)
+            name='Consent Toggle', sector='bar', lat=43.26, lng=-2.92, publish_consent=True)
         c = Client()
         r = c.get('/mapa-digital/api/prospects/', {'south': 43.0, 'north': 43.5, 'west': -3.2, 'east': -2.7})
         self.assertIn('Consent Toggle', [p['name'] for p in json.loads(r.content)['prospects']])
@@ -539,91 +536,13 @@ class ConsentSeparationTests(BaseTestCase):
         self.assertTrue(body['consent_commercial_contact'])
 
 
-class PublishConfirmationAuthorizationTests(BaseTestCase):
-    def _secret(self):
-        return os.environ.get('WI_PUBLISH_CONFIRM_SECRET', '')
+class PublicationRequiresOnlyConsentTests(BaseTestCase):
+    """Ya no hay confirmación administrativa aparte — el consentimiento de
+    publicación (dado normalmente por la propia empresa desde su chequeo
+    personal, o forzado a mano por el equipo) es la única condición."""
 
-    def test_ordinary_staff_cannot_self_confirm_publication(self):
-        prospect = BusinessProspect.objects.create(name='No Auth Co', sector='bar', publish_consent=True)
-        ordinary = StaffMember.objects.create(name='Empleado Normal', can_confirm_publication=False)
-        c = self.login()
-        r = c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
-                   data=json.dumps({'staff_member_id': ordinary.pk, 'confirm_secret': self._secret()}),
-                   content_type='application/json')
-        self.assertEqual(r.status_code, 403)
-        prospect.refresh_from_db()
-        self.assertFalse(prospect.publish_confirmed_by_staff)
-
-    def test_authorized_staff_can_confirm_publication(self):
-        prospect = BusinessProspect.objects.create(name='Auth Co', sector='bar', publish_consent=True)
-        admin = StaffMember.objects.create(name='Admin', can_confirm_publication=True)
-        c = self.login()
-        r = c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
-                   data=json.dumps({'staff_member_id': admin.pk, 'confirm_secret': self._secret()}),
-                   content_type='application/json')
-        self.assertEqual(r.status_code, 200)
-        prospect.refresh_from_db()
-        self.assertTrue(prospect.publish_confirmed_by_staff)
-
-    def test_nonexistent_staff_id_rejected(self):
-        prospect = BusinessProspect.objects.create(name='Fake Staff Co', sector='bar', publish_consent=True)
-        c = self.login()
-        r = c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
-                   data=json.dumps({'staff_member_id': 999999, 'confirm_secret': self._secret()}),
-                   content_type='application/json')
-        self.assertEqual(r.status_code, 403)
-
-    def test_spoofing_authorized_staff_id_without_secret_is_rejected(self):
-        """El hallazgo central de la revisión de seguridad: elegir el ID de
-        un StaffMember autorizado en el payload NO basta — la sesión CRM es
-        compartida por todo el equipo, así que sin el secreto aparte,
-        cualquiera podría enviar ese mismo ID y auto-confirmarse."""
-        prospect = BusinessProspect.objects.create(name='Spoof Co', sector='bar', publish_consent=True)
-        admin = StaffMember.objects.create(name='Admin Real', can_confirm_publication=True)
-        c = self.login()  # sesión CRM normal, la misma que tiene cualquier empleado
-
-        # sin secreto en absoluto
-        r = c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
-                   data=json.dumps({'staff_member_id': admin.pk}), content_type='application/json')
-        self.assertEqual(r.status_code, 403)
-
-        # con un secreto adivinado/incorrecto
-        r = c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
-                   data=json.dumps({'staff_member_id': admin.pk, 'confirm_secret': 'lo-que-sea-inventado'}),
-                   content_type='application/json')
-        self.assertEqual(r.status_code, 403)
-
-        prospect.refresh_from_db()
-        self.assertFalse(prospect.publish_confirmed_by_staff)
-
-        # con el secreto correcto, la MISMA sesión SÍ puede — confirma que el
-        # secreto (no la sesión CRM genérica) es lo que realmente autoriza
-        r = c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
-                   data=json.dumps({'staff_member_id': admin.pk, 'confirm_secret': self._secret()}),
-                   content_type='application/json')
-        self.assertEqual(r.status_code, 200)
-        prospect.refresh_from_db()
-        self.assertTrue(prospect.publish_confirmed_by_staff)
-
-    def test_missing_secret_configuration_fails_closed(self):
-        """Si WI_PUBLISH_CONFIRM_SECRET no está configurado en el entorno,
-        el endpoint debe rechazar SIEMPRE, nunca permitir por defecto."""
-        prospect = BusinessProspect.objects.create(name='No Secret Configured Co', sector='bar', publish_consent=True)
-        admin = StaffMember.objects.create(name='Admin Sin Secreto Configurado', can_confirm_publication=True)
-        c = self.login()
-        with mock.patch('prospeccion.views_panel._PUBLISH_CONFIRM_SECRET', ''):
-            r = c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
-                       data=json.dumps({'staff_member_id': admin.pk, 'confirm_secret': 'cualquier-cosa'}),
-                       content_type='application/json')
-        self.assertEqual(r.status_code, 500)
-        prospect.refresh_from_db()
-        self.assertFalse(prospect.publish_confirmed_by_staff)
-
-
-class PublicationRequiresBothFlagsTests(BaseTestCase):
-    def test_publicity_needs_consent_and_staff_confirmation_together(self):
-        prospect = BusinessProspect.objects.create(name='Both Flags Co', sector='bar', lat=43.26, lng=-2.92)
-        admin = StaffMember.objects.create(name='Admin2', can_confirm_publication=True)
+    def test_publicity_follows_consent_directly(self):
+        prospect = BusinessProspect.objects.create(name='Solo Consentimiento Co', sector='bar', lat=43.26, lng=-2.92)
         c = self.login()
 
         def public_names():
@@ -634,12 +553,6 @@ class PublicationRequiresBothFlagsTests(BaseTestCase):
 
         c.post(f'/panel/prospeccion/{prospect.pk}/publish-consent/',
                data=json.dumps({'action': 'grant'}), content_type='application/json')
-        self.assertNotIn(prospect.name, public_names())  # falta confirmación admin
-
-        c.post(f'/panel/prospeccion/{prospect.pk}/publish-confirm/',
-               data=json.dumps({'staff_member_id': admin.pk,
-                                'confirm_secret': os.environ.get('WI_PUBLISH_CONFIRM_SECRET', '')}),
-               content_type='application/json')
         self.assertIn(prospect.name, public_names())
 
         c.post(f'/panel/prospeccion/{prospect.pk}/publish-consent/',
@@ -650,8 +563,8 @@ class PublicationRequiresBothFlagsTests(BaseTestCase):
 class ClientSelfServicePublishConsentTests(BaseTestCase):
     """La propia empresa puede dar (o quitar) su consentimiento de
     publicación desde el checkbox al final de su chequeo personal — sin que
-    el equipo tenga que preguntárselo aparte y registrarlo a mano. Sigue sin
-    ser suficiente por sí sola: hace falta también publish_confirm."""
+    el equipo tenga que preguntárselo aparte y registrarlo a mano. Es la
+    única condición para aparecer en /mapa-digital/."""
 
     def _post_consent(self, prospect, consent):
         c = Client()
@@ -668,26 +581,22 @@ class ClientSelfServicePublishConsentTests(BaseTestCase):
         self.assertIsNotNone(prospect.publish_consent_at)
         self.assertIsNone(prospect.publish_revoked_at)
 
-    def test_unchecking_also_clears_staff_confirmation(self):
-        prospect = BusinessProspect.objects.create(
-            name='Autoservicio Revoca', sector='bar',
-            publish_consent=True, publish_confirmed_by_staff=True,
-        )
+    def test_unchecking_sets_revoked_at(self):
+        prospect = BusinessProspect.objects.create(name='Autoservicio Revoca', sector='bar', publish_consent=True)
         r = self._post_consent(prospect, False)
         self.assertEqual(r.status_code, 200)
         prospect.refresh_from_db()
         self.assertFalse(prospect.publish_consent)
-        self.assertFalse(prospect.publish_confirmed_by_staff)
         self.assertIsNotNone(prospect.publish_revoked_at)
 
-    def test_still_not_public_without_staff_confirmation(self):
-        prospect = BusinessProspect.objects.create(name='Sin Confirmar', sector='bar', lat=43.26, lng=-2.92)
+    def test_granting_makes_it_public_immediately(self):
+        prospect = BusinessProspect.objects.create(name='Publicada Ya', sector='bar', lat=43.26, lng=-2.92)
         self._post_consent(prospect, True)
         c = Client()
         with override_settings(ALLOWED_HOSTS=['testserver']):
             r = c.get('/mapa-digital/api/prospects/', {'south': 43.0, 'north': 43.5, 'west': -3.2, 'east': -2.7})
         names = {p['name'] for p in json.loads(r.content)['prospects']}
-        self.assertNotIn('Sin Confirmar', names)
+        self.assertIn('Publicada Ya', names)
 
     def test_wrong_token_404s(self):
         c = Client()

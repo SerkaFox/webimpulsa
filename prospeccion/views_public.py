@@ -252,10 +252,8 @@ def submit_personal_audit(request, token):
 @require_POST
 def personal_publish_consent(request, token):
     """Consentimiento de publicación dado por la PROPIA empresa desde su
-    chequeo personal — no requiere que el equipo se lo pregunte aparte. Solo
-    controla el consentimiento (mitad del semáforo): sigue haciendo falta la
-    confirmación administrativa con secreto (publish_confirm) antes de que
-    algo se vea de verdad en /mapa-digital/."""
+    chequeo personal — es la única condición para aparecer en
+    /mapa-digital/ (ya no hay una confirmación administrativa aparte)."""
     if not _same_origin(request):
         return JsonResponse({'error': 'origen no permitido'}, status=403)
 
@@ -273,11 +271,8 @@ def personal_publish_consent(request, token):
         prospect.publish_revoked_at = None
     else:
         prospect.publish_consent = False
-        prospect.publish_confirmed_by_staff = False
         prospect.publish_revoked_at = now
-    prospect.save(update_fields=[
-        'publish_consent', 'publish_consent_at', 'publish_revoked_at', 'publish_confirmed_by_staff', 'updated_at',
-    ])
+    prospect.save(update_fields=['publish_consent', 'publish_consent_at', 'publish_revoked_at', 'updated_at'])
     logger.info('Consentimiento de publicación %s por la propia empresa (chequeo personal): prospect #%s',
                 'otorgado' if consent else 'retirado', prospect.pk)
     return JsonResponse({'publish_consent': prospect.publish_consent})
@@ -416,16 +411,15 @@ def receive_report_personal(request, token):
 
 
 # ── Mapa Digital público ───────────────────────────────────────────────────
-# Solo empresas que dieron consentimiento de publicación Y fueron confirmadas
-# por el equipo de WebImpulsa. Nunca expone contactos de empleados, notas
-# internas, presupuestos, historial de ventas ni puntuaciones/insignias
+# Solo empresas que dieron su propio consentimiento de publicación (checkbox
+# al final de su chequeo personal). Nunca expone contactos de empleados,
+# notas internas, presupuestos, historial de ventas ni puntuaciones/insignias
 # negativas o sin confirmar — se calculan al vuelo desde el último audit
 # CONFIRMADO, nunca se guardan como estado aparte.
 
 def _published_queryset():
     return BusinessProspect.objects.filter(
         publish_consent=True,
-        publish_confirmed_by_staff=True,
         publish_revoked_at__isnull=True,
         lat__isnull=False,
         lng__isnull=False,
