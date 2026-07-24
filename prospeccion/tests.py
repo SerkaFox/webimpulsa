@@ -1,14 +1,16 @@
 import json
 import os
+import tempfile
 from unittest import mock
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
 from crm.models import Lead, Proposal
 from . import places, wa_bridge
 from .csv_import import parse_csv
-from .models import BusinessContact, BusinessProspect, ChequeoAudit, PlacesApiUsage, StaffMember
+from .models import BusinessContact, BusinessProspect, ChequeoAudit, PlacesApiUsage, ProspectPhoto, StaffMember
 from .quiz_config import CATEGORY_WEIGHTS
 from .recommendations import build_recommendations
 from .scoring import compute_score, questions_for_sector
@@ -407,6 +409,71 @@ class ContactCrudTests(BaseTestCase):
                 f'/panel/prospeccion/{prospect.pk}/contacts/{contact.pk}/consent/',
             ):
                 r = c.post(url, data='{}', content_type='application/json')
+                self.assertIn('Web-Impulsa CRM', r.content.decode(), msg=url)
+
+
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+class PhotoGalleryTests(BaseTestCase):
+    def _fake_image(self, name='foto.jpg', content_type='image/jpeg', size=None):
+        return SimpleUploadedFile(name, b'\xff\xd8\xff' + b'0' * (size or 100), content_type=content_type)
+
+    def test_upload_creates_photo_and_shows_in_detail(self):
+        prospect = BusinessProspect.objects.create(name='Con Fotos', sector='bar')
+        c = self.login()
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/photos/', {'photos': [self._fake_image()]})
+        data = json.loads(r.content)
+        self.assertEqual(len(data['photos']), 1)
+        self.assertEqual(prospect.site_photos.count(), 1)
+        detail = c.get(f'/panel/prospeccion/{prospect.pk}/')
+        self.assertIn(b'photo-item', detail.content)
+
+    def test_multiple_files_in_one_request(self):
+        prospect = BusinessProspect.objects.create(name='Varias Fotos', sector='bar')
+        c = self.login()
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/photos/', {
+            'photos': [self._fake_image('a.jpg'), self._fake_image('b.png', 'image/png')],
+        })
+        data = json.loads(r.content)
+        self.assertEqual(len(data['photos']), 2)
+        self.assertEqual(prospect.site_photos.count(), 2)
+
+    def test_rejects_disallowed_extension(self):
+        prospect = BusinessProspect.objects.create(name='Extension Mala', sector='bar')
+        c = self.login()
+        bad_file = SimpleUploadedFile('script.exe', b'x' * 10, content_type='application/octet-stream')
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/photos/', {'photos': [bad_file]})
+        data = json.loads(r.content)
+        self.assertEqual(data['photos'], [])
+        self.assertEqual(len(data['errors']), 1)
+        self.assertEqual(prospect.site_photos.count(), 0)
+
+    def test_rejects_oversized_file(self):
+        prospect = BusinessProspect.objects.create(name='Foto Grande', sector='bar')
+        c = self.login()
+        big_file = self._fake_image(size=13 * 1024 * 1024)
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/photos/', {'photos': [big_file]})
+        data = json.loads(r.content)
+        self.assertEqual(data['photos'], [])
+        self.assertEqual(len(data['errors']), 1)
+
+    def test_delete_removes_photo(self):
+        prospect = BusinessProspect.objects.create(name='Para Borrar', sector='bar')
+        photo = ProspectPhoto.objects.create(prospect=prospect, image=self._fake_image())
+        c = self.login()
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/photos/{photo.pk}/delete/')
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse(ProspectPhoto.objects.filter(pk=photo.pk).exists())
+
+    def test_photo_routes_require_login(self):
+        prospect = BusinessProspect.objects.create(name='Sin Login Fotos', sector='bar')
+        photo = ProspectPhoto.objects.create(prospect=prospect, image=self._fake_image())
+        with override_settings(ALLOWED_HOSTS=['testserver']):
+            c = Client()
+            for url in (
+                f'/panel/prospeccion/{prospect.pk}/photos/',
+                f'/panel/prospeccion/{prospect.pk}/photos/{photo.pk}/delete/',
+            ):
+                r = c.post(url)
                 self.assertIn('Web-Impulsa CRM', r.content.decode(), msg=url)
 
 

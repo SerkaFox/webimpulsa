@@ -325,6 +325,30 @@ class ChequeoAudit(models.Model):
         return f'Audit {who} — {self.score}/100 ({self.stage})'
 
 
+class ProspectPhoto(models.Model):
+    """Fotos reales tomadas in situ por el equipo (varios ángulos del
+    negocio) — complementa la única foto que suele haber en la ficha de
+    Google. Solo referencia visual interna, no se publica automáticamente
+    en ningún sitio."""
+
+    # related_name deliberadamente distinto de "photos" — ese nombre está
+    # reservado por el test de seguridad que garantiza que BusinessProspect
+    # nunca tenga un campo "photos" con datos de Google Places (ver
+    # AddFromPlaceTests). Estas son fotos propias, tomadas por el equipo, sin
+    # relación con las fotos de Google que deliberadamente nunca se piden.
+    prospect = models.ForeignKey(BusinessProspect, on_delete=models.CASCADE, related_name='site_photos')
+    image = models.ImageField(upload_to='prospeccion_fotos/%Y/%m/')
+    caption = models.CharField(max_length=200, blank=True)
+    uploaded_by = models.CharField(max_length=120, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Foto de {self.prospect_id} ({self.created_at:%d/%m/%Y})'
+
+
 class PlacesApiUsage(models.Model):
     """Contador diario de llamadas a la Google Places API — el proyecto no
     tiene Redis/cache compartida entre workers, así que se persiste en la

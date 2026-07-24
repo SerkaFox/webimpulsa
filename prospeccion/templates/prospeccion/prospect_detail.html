@@ -67,6 +67,12 @@
   #prelimDetails small { font-size: .88rem !important; }
 
   /* Contactos */
+  /* Fotos */
+  .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+  .photo-item { position: relative; border-radius: 10px; overflow: hidden; aspect-ratio: 1/1; background: #f1f5f9; }
+  .photo-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-item .btnDeletePhoto { position: absolute; top: 4px; right: 4px; padding: 3px 7px; font-size: .7rem; }
+
   .contact-row { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
   .contact-row .name-line { font-weight: 700; font-size: .9rem; display: flex; align-items: center; gap: 6px; }
   .contact-row .meta-line { color: #5a6d8c; font-size: .78rem; margin: 2px 0 8px; }
@@ -269,6 +275,35 @@
           <button type="submit" class="btn" id="btnSaveContact">Guardar contacto</button>
           <button type="button" class="btn ghost" id="btnCancelEditContact" hidden>Cancelar edición</button>
         </div>
+      </form>
+      </div>
+    </details>
+
+    <!-- ── Fotos in situ (complementan la única foto que suele haber en la
+         ficha de Google) ──────────────────────────────────────────── -->
+    <details class="section-card" id="photosDetails">
+      <summary>Fotos ({{ photos|length }})</summary>
+      <div class="section-body">
+      <p style="font-size:.85rem;color:#5a6d8c;margin-bottom:10px">
+        Haz fotos frescas del negocio desde varios ángulos (fachada, interior, detalles) — no se publican
+        en ningún sitio automáticamente, son referencia interna del equipo.
+      </p>
+      <div class="photo-grid" id="photoGrid">
+        {% for p in photos %}
+          <div class="photo-item" data-photo-id="{{ p.id }}">
+            <img src="{{ p.image.url }}" alt="{{ p.caption|default:'Foto del negocio' }}">
+            <button type="button" class="btn sm danger btnDeletePhoto">🗑</button>
+          </div>
+        {% empty %}
+          <p style="color:#8a94a6;font-size:.85rem;grid-column:1/-1">Todavía no hay fotos de este negocio.</p>
+        {% endfor %}
+      </div>
+      <form id="photoForm" style="margin-top:12px">
+        <div class="field">
+          <label>Añadir fotos (puedes elegir varias a la vez, o hacerlas directamente con la cámara del móvil)</label>
+          <input type="file" name="photos" id="photoInput" accept="image/*" capture="environment" multiple>
+        </div>
+        <button type="submit" class="btn" id="btnUploadPhotos">📸 Subir fotos</button>
       </form>
       </div>
     </details>
@@ -568,6 +603,35 @@ document.querySelectorAll('[data-consent-type]').forEach(function(btn){
       showToast('Consentimiento actualizado');
       setTimeout(function(){ window.location.reload(); }, 500);
     });
+  });
+});
+
+/* ---- Fotos ---- */
+document.getElementById('photoForm').addEventListener('submit', function(ev){
+  ev.preventDefault();
+  var input = document.getElementById('photoInput');
+  if(!input.files.length){ showToast('Elige al menos una foto'); return; }
+  var fd = new FormData();
+  for(var i = 0; i < input.files.length; i++) fd.append('photos', input.files[i]);
+  fetch(BASE + 'photos/', {method: 'POST', body: fd})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(data.error){ showToast(data.error); return; }
+      if(data.errors && data.errors.length) showToast(data.errors.join(' · '));
+      if(data.photos && data.photos.length){
+        showToast(data.photos.length + ' foto(s) subida(s)');
+        setTimeout(function(){ window.location.reload(); }, 700);
+      }
+    })
+    .catch(function(){ showToast('No se pudieron subir las fotos'); });
+});
+
+document.querySelectorAll('.btnDeletePhoto').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var item = btn.closest('.photo-item');
+    var pid = item.getAttribute('data-photo-id');
+    if(!confirm('¿Eliminar esta foto?')) return;
+    postJson(BASE + 'photos/' + pid + '/delete/').then(function(){ item.remove(); showToast('Foto eliminada'); });
   });
 });
 
