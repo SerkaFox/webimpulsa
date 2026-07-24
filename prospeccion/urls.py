@@ -9,6 +9,14 @@ urlpatterns = [
     path('chequeo-digital/e/<str:token>/', views_public.personal_audit, name='chequeo_personal_audit'),
     path('chequeo-digital/e/<str:token>/api/submit/', views_public.submit_personal_audit,
          name='chequeo_submit_personal'),
+    path('chequeo-digital/e/<str:token>/receive-report/', views_public.receive_report_personal,
+         name='chequeo_receive_report_personal'),
+
+    path('chequeo-digital/api/receive-report/', views_public.receive_report_public,
+         name='chequeo_receive_report_public'),
+    path('chequeo-digital/informe/<str:report_token>/', views_public.audit_report, name='chequeo_audit_report'),
+    path('chequeo-digital/informe/<str:report_token>/pdf/', views_public.audit_report_pdf,
+         name='chequeo_audit_report_pdf'),
 
     path('panel/prospeccion/', views_panel.dashboard, name='prospeccion_dashboard'),
     path('panel/prospeccion/mapa/', views_panel.internal_map, name='prospeccion_map'),

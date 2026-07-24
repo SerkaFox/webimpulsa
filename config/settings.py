@@ -91,6 +91,15 @@ GOOGLE_MAPS_JS_API_KEY = os.getenv('GOOGLE_MAPS_JS_API_KEY', '')
 GOOGLE_PLACES_API_KEY = os.getenv('GOOGLE_PLACES_API_KEY', '')
 GOOGLE_PLACES_DAILY_QUOTA = int(os.getenv('GOOGLE_PLACES_DAILY_QUOTA', '300'))
 
+# Bridge de WhatsApp no oficial compartido con el proyecto `anna` (mismo
+# servidor, servicio systemd brimoon-whatsapp-bridge — ver prospeccion/wa_bridge.py).
+# Se usa solo para mandar el informe del chequeo digital al WhatsApp del
+# propio respondente ("de parte de Tania"), nunca para el chat en vivo del
+# sitio (eso sigue siendo core/wa_send.py, la API oficial de Meta).
+WHATSAPP_BRIDGE_URL = os.getenv('WHATSAPP_BRIDGE_URL', 'http://127.0.0.1:8125')
+WHATSAPP_BRIDGE_TOKEN = os.getenv('WHATSAPP_BRIDGE_TOKEN', '')
+WHATSAPP_BRIDGE_SESSION = os.getenv('WHATSAPP_BRIDGE_SESSION', 'aura_demo')
+
 USE_TZ = True
 
 # Email via Brevo SMTP relay (external) / Mailcow (internal fallback)
