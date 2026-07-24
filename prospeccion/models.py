@@ -302,6 +302,15 @@ class ChequeoAudit(models.Model):
     ip_hash = models.CharField(max_length=64, blank=True)
     user_agent = models.CharField(max_length=500, blank=True)
 
+    # enlace público de solo lectura a este resultado (para compartir el
+    # informe sin exponer nada del panel interno) y datos de envío por
+    # WhatsApp al propio respondente — nunca al revés (nunca guardamos aquí
+    # el número de Tania, solo el de quien pidió recibir su informe).
+    report_token = models.CharField(max_length=64, unique=True, db_index=True, default=_new_token)
+    respondent_phone = models.CharField(max_length=50, blank=True)
+    respondent_consent_at = models.DateTimeField(null=True, blank=True)
+    report_sent_at = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
