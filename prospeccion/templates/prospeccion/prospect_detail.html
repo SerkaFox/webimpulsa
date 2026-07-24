@@ -322,6 +322,11 @@
       <div class="row">
         <div class="field">
           <label>Consentimiento de publicación de la empresa</label>
+          <p style="font-size:.76rem;color:#5a6d8c;margin:0 0 6px">
+            Normalmente se marca solo — hay una casilla (marcada por defecto) al final del chequeo
+            personal que la propia empresa puede desmarcar. Este botón es solo para forzarlo a mano si
+            hace falta.
+          </p>
           {% if prospect.publish_consent %}
             <button type="button" class="btn sm outline" id="btnPublishConsent" data-action="revoke">Revocar consentimiento</button>
           {% else %}

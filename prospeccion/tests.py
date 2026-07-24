@@ -647,6 +647,75 @@ class PublicationRequiresBothFlagsTests(BaseTestCase):
         self.assertNotIn(prospect.name, public_names())
 
 
+class ClientSelfServicePublishConsentTests(BaseTestCase):
+    """La propia empresa puede dar (o quitar) su consentimiento de
+    publicación desde el checkbox al final de su chequeo personal — sin que
+    el equipo tenga que preguntárselo aparte y registrarlo a mano. Sigue sin
+    ser suficiente por sí sola: hace falta también publish_confirm."""
+
+    def _post_consent(self, prospect, consent):
+        c = Client()
+        r = c.post(f'/chequeo-digital/e/{prospect.public_token}/publish-consent/',
+                   data=json.dumps({'consent': consent}), content_type='application/json')
+        return r
+
+    def test_grant_sets_consent_and_clears_revocation(self):
+        prospect = BusinessProspect.objects.create(name='Autoservicio Co', sector='bar')
+        r = self._post_consent(prospect, True)
+        self.assertEqual(r.status_code, 200)
+        prospect.refresh_from_db()
+        self.assertTrue(prospect.publish_consent)
+        self.assertIsNotNone(prospect.publish_consent_at)
+        self.assertIsNone(prospect.publish_revoked_at)
+
+    def test_unchecking_also_clears_staff_confirmation(self):
+        prospect = BusinessProspect.objects.create(
+            name='Autoservicio Revoca', sector='bar',
+            publish_consent=True, publish_confirmed_by_staff=True,
+        )
+        r = self._post_consent(prospect, False)
+        self.assertEqual(r.status_code, 200)
+        prospect.refresh_from_db()
+        self.assertFalse(prospect.publish_consent)
+        self.assertFalse(prospect.publish_confirmed_by_staff)
+        self.assertIsNotNone(prospect.publish_revoked_at)
+
+    def test_still_not_public_without_staff_confirmation(self):
+        prospect = BusinessProspect.objects.create(name='Sin Confirmar', sector='bar', lat=43.26, lng=-2.92)
+        self._post_consent(prospect, True)
+        c = Client()
+        with override_settings(ALLOWED_HOSTS=['testserver']):
+            r = c.get('/mapa-digital/api/prospects/', {'south': 43.0, 'north': 43.5, 'west': -3.2, 'east': -2.7})
+        names = {p['name'] for p in json.loads(r.content)['prospects']}
+        self.assertNotIn('Sin Confirmar', names)
+
+    def test_wrong_token_404s(self):
+        c = Client()
+        r = c.post('/chequeo-digital/e/not-a-real-token/publish-consent/',
+                   data=json.dumps({'consent': True}), content_type='application/json')
+        self.assertEqual(r.status_code, 404)
+
+    def test_personal_audit_defaults_checked_when_never_asked_before(self):
+        prospect = BusinessProspect.objects.create(name='Nunca Preguntado', sector='bar')
+        c = Client()
+        r = c.get(f'/chequeo-digital/e/{prospect.public_token}/')
+        self.assertIn(b'id="publishConsentCheck" checked', r.content)
+
+    def test_personal_audit_respects_previous_explicit_decline(self):
+        prospect = BusinessProspect.objects.create(
+            name='Ya Dijo Que No', sector='bar',
+            publish_consent=False, publish_consent_at=timezone.now(), publish_revoked_at=timezone.now(),
+        )
+        c = Client()
+        r = c.get(f'/chequeo-digital/e/{prospect.public_token}/')
+        self.assertNotIn(b'id="publishConsentCheck" checked', r.content)
+
+    def test_public_anonymous_quiz_has_no_publish_checkbox(self):
+        c = Client()
+        r = c.get('/chequeo-digital/')
+        self.assertNotIn(b'<input type="checkbox" id="publishConsentCheck"', r.content)
+
+
 # ── Mapa con búsqueda Google Places (UX simplificado) ─────────────────────
 
 class GooglePlacesModuleTests(TestCase):
