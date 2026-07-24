@@ -46,6 +46,10 @@ urlpatterns = [
     path('panel/prospeccion/<int:pk>/contacts/<int:contact_id>/consent/', views_panel.contact_consent,
          name='prospeccion_contact_consent'),
 
+    path('panel/prospeccion/<int:pk>/photos/', views_panel.photo_upload, name='prospeccion_photo_upload'),
+    path('panel/prospeccion/<int:pk>/photos/<int:photo_id>/delete/', views_panel.photo_delete,
+         name='prospeccion_photo_delete'),
+
     path('panel/prospeccion/<int:pk>/publish-consent/', views_panel.publish_consent_update,
          name='prospeccion_publish_consent'),
     path('panel/prospeccion/<int:pk>/publish-confirm/', views_panel.publish_confirm,

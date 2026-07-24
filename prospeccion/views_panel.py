@@ -14,7 +14,8 @@ from . import places
 from .constants import SALES_STATUS_COLORS
 from .csv_import import parse_csv, validate_csv_file
 from .models import (
-    CONSENT_TEXT_VERSION, BusinessContact, BusinessProspect, ChequeoAudit, SECTOR_CHOICES, StaffMember,
+    CONSENT_TEXT_VERSION, BusinessContact, BusinessProspect, ChequeoAudit, ProspectPhoto, SECTOR_CHOICES,
+    StaffMember,
 )
 from .quiz_config import QUESTIONNAIRE_VERSION, QUESTIONS
 from .scoring import compute_score, questions_for_sector
@@ -343,6 +344,7 @@ def prospect_detail(request, pk):
     return render(request, 'prospeccion/prospect_detail.html', {
         'prospect': prospect,
         'contacts': prospect.contacts.all(),
+        'photos': prospect.site_photos.all(),
         'interactions': prospect.interactions.all()[:50],
         'audits': audits,
         'latest_preliminar': latest_preliminar,
@@ -601,6 +603,59 @@ def contact_delete(request, pk, contact_id):
     name = contact.name
     contact.delete()
     logger.info('Contacto eliminado: prospect #%s contact #%s (%s)', pk, contact_id, name or '(sin nombre)')
+    return JsonResponse({'deleted': True})
+
+
+_PHOTO_ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'}
+_PHOTO_MAX_BYTES = 12 * 1024 * 1024  # 12 MB por foto
+
+
+def _photo_json(photo):
+    return {
+        'id': photo.pk,
+        'url': photo.image.url,
+        'caption': photo.caption,
+        'uploaded_by': photo.uploaded_by,
+        'created_at': photo.created_at.isoformat(),
+    }
+
+
+@_crm_auth
+@require_POST
+def photo_upload(request, pk):
+    prospect = get_object_or_404(BusinessProspect, pk=pk)
+    files = request.FILES.getlist('photos')
+    if not files:
+        return JsonResponse({'error': 'No se ha recibido ninguna foto'}, status=400)
+
+    caption = request.POST.get('caption', '')
+    uploaded_by = request.POST.get('uploaded_by', '')
+    created = []
+    errors = []
+    for f in files:
+        ext = f.name.rsplit('.', 1)[-1].lower() if '.' in f.name else ''
+        if ext not in _PHOTO_ALLOWED_EXTENSIONS:
+            errors.append(f'{f.name}: tipo de archivo no permitido (.{ext})')
+            continue
+        if f.size > _PHOTO_MAX_BYTES:
+            errors.append(f'{f.name}: supera el límite de {_PHOTO_MAX_BYTES // 1024 // 1024} MB')
+            continue
+        photo = ProspectPhoto.objects.create(
+            prospect=prospect, image=f, caption=caption, uploaded_by=uploaded_by,
+        )
+        created.append(_photo_json(photo))
+
+    logger.info('Fotos subidas: prospect #%s creadas=%s errores=%s', pk, len(created), len(errors))
+    return JsonResponse({'photos': created, 'errors': errors})
+
+
+@_crm_auth
+@require_POST
+def photo_delete(request, pk, photo_id):
+    photo = get_object_or_404(ProspectPhoto, pk=photo_id, prospect_id=pk)
+    photo.image.delete(save=False)
+    photo.delete()
+    logger.info('Foto eliminada: prospect #%s photo #%s', pk, photo_id)
     return JsonResponse({'deleted': True})
 
 
