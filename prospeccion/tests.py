@@ -661,6 +661,21 @@ class PlacesSearchViewTests(BaseTestCase):
         self.assertEqual(len(data['existing']), 1)
         self.assertEqual(data['existing'][0]['name'], 'Taller Ejemplo Ya Existente')
 
+    def test_existing_match_carries_lat_lng_color_and_score_for_map_markers(self):
+        BusinessProspect.objects.create(
+            name='Con Ubicación', sector='taller', lat=43.26, lng=-2.92, current_score=67,
+            sales_status=BusinessProspect.SALES_AUDITED,
+        )
+        c = self.login()
+        with mock.patch('prospeccion.views_panel.places.search_text', return_value=[]):
+            r = c.get('/panel/prospeccion/mapa/api/search/', {'q': 'Con Ubicaci'})
+        match = json.loads(r.content)['existing'][0]
+        self.assertEqual(match['lat'], 43.26)
+        self.assertEqual(match['lng'], -2.92)
+        self.assertEqual(match['current_score'], 67)
+        self.assertTrue(match['color'].startswith('#'))
+        self.assertEqual(match['prospect_id'], BusinessProspect.objects.get(name='Con Ubicación').pk)
+
     def test_annotates_google_result_as_existing_when_phone_matches(self):
         BusinessProspect.objects.create(name='Bar Antiguo', sector='bar', phone='944123456')
         c = self.login()
@@ -809,6 +824,16 @@ class OldRoutesStillWorkTests(BaseTestCase):
         self.assertIn(b'Hacer chequeo', r.content)
         self.assertIn(b'Preparar propuesta', r.content)
         self.assertIn('Añadir contacto'.encode('utf-8'), r.content)
+
+
+class MapMarkerScoreAndSearchPlottingTests(BaseTestCase):
+    def test_internal_map_renders_score_label_and_search_marker_plotting(self):
+        c = self.login()
+        r = c.get('/panel/prospeccion/mapa/')
+        html = r.content.decode()
+        self.assertIn('function scoreLabel', html)
+        self.assertIn('function plotSearchMarkers', html)
+        self.assertIn('label: scoreLabel(p.current_score)', html)
 
 
 class RecommendationsTests(TestCase):
