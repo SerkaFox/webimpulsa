@@ -223,14 +223,14 @@ def import_csv_view(request):
 
 
 def _existing_match_json(p):
-    return {
-        'prospect_id': p.pk,
-        'name': p.name,
-        'address': p.address,
-        'sector': p.sector,
-        'sector_label': p.get_sector_display(),
-        'detail_url': f'/panel/prospeccion/{p.pk}/',
-    }
+    # Superconjunto de _prospect_json (mismo contexto autenticado del panel)
+    # + 'prospect_id'/'sector_label' para que el resultado de búsqueda pueda
+    # pintarse también como marcador en el mapa (lat/lng/color/current_score)
+    # y no solo como tarjeta en la lista.
+    data = _prospect_json(p)
+    data['prospect_id'] = p.pk
+    data['sector_label'] = p.get_sector_display()
+    return data
 
 
 @_crm_auth
