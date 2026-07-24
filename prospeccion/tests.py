@@ -6,10 +6,11 @@ from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
 from crm.models import Lead, Proposal
-from . import places
+from . import places, wa_bridge
 from .csv_import import parse_csv
 from .models import BusinessContact, BusinessProspect, ChequeoAudit, PlacesApiUsage, StaffMember
 from .quiz_config import CATEGORY_WEIGHTS
+from .recommendations import build_recommendations
 from .scoring import compute_score, questions_for_sector
 from .services import compute_dedupe_key, convert_prospect_to_lead, create_prospect, find_duplicate
 
@@ -808,3 +809,208 @@ class OldRoutesStillWorkTests(BaseTestCase):
         self.assertIn(b'Hacer chequeo', r.content)
         self.assertIn(b'Preparar propuesta', r.content)
         self.assertIn('Añadir contacto'.encode('utf-8'), r.content)
+
+
+class RecommendationsTests(TestCase):
+    def test_dedupes_repeated_extra_across_questions(self):
+        reco = build_recommendations('bar', ['messages_lost', 'centralized_records'])
+        labels = [it['label'] for it in reco['items']]
+        self.assertEqual(labels.count('Panel para tu equipo'), 1)
+
+    def test_needs_core_site_separated_from_priced_items(self):
+        reco = build_recommendations('salon', ['mobile_page', 'one_tap_contact'])
+        self.assertTrue(reco['needs_core_site'])
+        labels = [it['label'] for it in reco['items']]
+        self.assertEqual(labels, ['Botón de WhatsApp'])
+
+    def test_no_core_site_flag_when_mobile_page_not_in_fix_ids(self):
+        reco = build_recommendations('salon', ['one_tap_contact'])
+        self.assertFalse(reco['needs_core_site'])
+
+    def test_estimated_total_matches_sum_of_items(self):
+        reco = build_recommendations('bar', ['one_tap_contact', 'auto_confirmation'])
+        self.assertEqual(reco['estimated_total'], sum(it['price'] for it in reco['items']))
+
+    def test_sector_aware_main_action_mapping(self):
+        bar_reco = build_recommendations('bar', ['main_action_no_wait'])
+        salon_reco = build_recommendations('salon', ['main_action_no_wait'])
+        self.assertEqual(bar_reco['items'][0]['label'], 'Pedidos online')
+        self.assertEqual(salon_reco['items'][0]['label'], 'Citas y reservas online')
+
+    def test_unmapped_or_unknown_fix_id_ignored(self):
+        reco = build_recommendations('bar', ['not_a_real_question'])
+        self.assertEqual(reco['items'], [])
+        self.assertFalse(reco['needs_core_site'])
+
+    def test_generic_hours_package_used_as_fallback(self):
+        reco = build_recommendations('bar', ['reviews_uptodate'])
+        self.assertEqual(reco['items'][0]['label'], 'Bolsa 5 horas')
+
+
+class ReceiveReportPublicTests(BaseTestCase):
+    def _create_audit(self, **overrides):
+        defaults = dict(
+            prospect=None, mode='public', stage='confirmado', sector='bar',
+            questionnaire_version='v1', answers=[], score=40, category_scores={},
+            good_ids=[], fix_ids=['one_tap_contact'],
+        )
+        defaults.update(overrides)
+        return ChequeoAudit.objects.create(**defaults)
+
+    def _post(self, audit, phone='+34600111222', consent=True):
+        c = Client()
+        return c, c.post(
+            '/chequeo-digital/api/receive-report/',
+            data=json.dumps({'report_token': audit.report_token, 'phone': phone, 'consent': consent}),
+            content_type='application/json',
+        )
+
+    def test_requires_consent(self):
+        audit = self._create_audit()
+        _, r = self._post(audit, consent=False)
+        self.assertEqual(r.status_code, 400)
+
+    def test_rejects_invalid_phone(self):
+        audit = self._create_audit()
+        _, r = self._post(audit, phone='abc')
+        self.assertEqual(r.status_code, 400)
+
+    def test_unknown_report_token_404s(self):
+        c = Client()
+        r = c.post('/chequeo-digital/api/receive-report/',
+                   data=json.dumps({'report_token': 'not-real', 'phone': '+34600111222', 'consent': True}),
+                   content_type='application/json')
+        self.assertEqual(r.status_code, 404)
+
+    def test_sends_and_stores_phone_and_consent(self):
+        audit = self._create_audit()
+        with mock.patch('prospeccion.views_public.wa_bridge.send_text', return_value={'ok': True}) as send_mock:
+            _, r = self._post(audit)
+        self.assertEqual(r.status_code, 200)
+        send_mock.assert_called_once()
+        self.assertEqual(send_mock.call_args[0][0], '+34600111222')
+        audit.refresh_from_db()
+        self.assertEqual(audit.respondent_phone, '+34600111222')
+        self.assertIsNotNone(audit.respondent_consent_at)
+        self.assertIsNotNone(audit.report_sent_at)
+
+    def test_bridge_failure_returns_502_and_does_not_store_phone(self):
+        audit = self._create_audit()
+        with mock.patch('prospeccion.views_public.wa_bridge.send_text',
+                         side_effect=wa_bridge.WhatsAppBridgeError('boom')):
+            _, r = self._post(audit)
+        self.assertEqual(r.status_code, 502)
+        audit.refresh_from_db()
+        self.assertEqual(audit.respondent_phone, '')
+        self.assertIsNone(audit.report_sent_at)
+
+
+class ReceiveReportPersonalTests(BaseTestCase):
+    def test_uses_saved_whatsapp_no_phone_needed_in_request(self):
+        prospect = BusinessProspect.objects.create(name='Con WhatsApp', sector='bar', whatsapp='611222333')
+        ChequeoAudit.objects.create(
+            prospect=prospect, mode='personal', stage='confirmado', sector='bar',
+            questionnaire_version='v1', answers=[], score=50, category_scores={}, good_ids=[], fix_ids=[],
+        )
+        c = Client()
+        with mock.patch('prospeccion.views_public.wa_bridge.send_text', return_value={'ok': True}) as send_mock:
+            r = c.post(f'/chequeo-digital/e/{prospect.public_token}/receive-report/')
+        self.assertEqual(r.status_code, 200)
+        send_mock.assert_called_once()
+        self.assertEqual(send_mock.call_args[0][0], '611222333')
+
+    def test_falls_back_to_phone_when_no_whatsapp(self):
+        prospect = BusinessProspect.objects.create(name='Solo Telefono', sector='bar', phone='611222444')
+        ChequeoAudit.objects.create(
+            prospect=prospect, mode='personal', stage='confirmado', sector='bar',
+            questionnaire_version='v1', answers=[], score=50, category_scores={}, good_ids=[], fix_ids=[],
+        )
+        c = Client()
+        with mock.patch('prospeccion.views_public.wa_bridge.send_text', return_value={'ok': True}):
+            c.post(f'/chequeo-digital/e/{prospect.public_token}/receive-report/')
+        self.assertTrue(prospect.interactions.filter(type='report_sent').exists())
+
+    def test_no_audit_yet_returns_404(self):
+        prospect = BusinessProspect.objects.create(name='Sin Audit', sector='bar', whatsapp='611000000')
+        c = Client()
+        r = c.post(f'/chequeo-digital/e/{prospect.public_token}/receive-report/')
+        self.assertEqual(r.status_code, 404)
+
+    def test_no_phone_saved_returns_400(self):
+        prospect = BusinessProspect.objects.create(name='Sin Telefono', sector='bar')
+        ChequeoAudit.objects.create(
+            prospect=prospect, mode='personal', stage='confirmado', sector='bar',
+            questionnaire_version='v1', answers=[], score=50, category_scores={}, good_ids=[], fix_ids=[],
+        )
+        c = Client()
+        r = c.post(f'/chequeo-digital/e/{prospect.public_token}/receive-report/')
+        self.assertEqual(r.status_code, 400)
+
+    def test_wrong_token_404s(self):
+        c = Client()
+        r = c.post('/chequeo-digital/e/not-a-real-token/receive-report/')
+        self.assertEqual(r.status_code, 404)
+
+
+class AuditReportViewTests(BaseTestCase):
+    def test_wrong_token_404s(self):
+        c = Client()
+        r = c.get('/chequeo-digital/informe/not-a-real-token/')
+        self.assertEqual(r.status_code, 404)
+
+    def test_valid_token_200s_with_score(self):
+        audit = ChequeoAudit.objects.create(
+            prospect=None, mode='public', stage='confirmado', sector='bar',
+            questionnaire_version='v1', answers=[], score=63, category_scores={},
+            good_ids=[], fix_ids=['one_tap_contact'],
+        )
+        c = Client()
+        r = c.get(f'/chequeo-digital/informe/{audit.report_token}/')
+        self.assertEqual(r.status_code, 200)
+        self.assertIn(b'63', r.content)
+
+    def test_public_audit_report_never_shows_a_prospect_name(self):
+        prospect = BusinessProspect.objects.create(name='Secreta SL', sector='bar')
+        other_audit = ChequeoAudit.objects.create(
+            prospect=None, mode='public', stage='confirmado', sector='bar',
+            questionnaire_version='v1', answers=[], score=50, category_scores={}, good_ids=[], fix_ids=[],
+        )
+        c = Client()
+        r = c.get(f'/chequeo-digital/informe/{other_audit.report_token}/')
+        self.assertNotIn(b'Secreta SL', r.content)
+        self.assertIsNotNone(prospect)  # solo para dejar constancia de que existe y no debe filtrarse
+
+
+class AuditReportPdfTests(BaseTestCase):
+    def test_wrong_token_404s(self):
+        c = Client()
+        r = c.get('/chequeo-digital/informe/not-a-real-token/pdf/')
+        self.assertEqual(r.status_code, 404)
+
+    def test_valid_token_returns_pdf(self):
+        audit = ChequeoAudit.objects.create(
+            prospect=None, mode='public', stage='confirmado', sector='bar',
+            questionnaire_version='v1', answers=[], score=50, category_scores={}, good_ids=[], fix_ids=[],
+        )
+        c = Client()
+        with mock.patch('prospeccion.pdf.generate_audit_pdf', return_value=b'%PDF-fake'):
+            r = c.get(f'/chequeo-digital/informe/{audit.report_token}/pdf/')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r['Content-Type'], 'application/pdf')
+
+
+class PersonalModeMusicFullscreenParityTests(BaseTestCase):
+    def test_personal_mode_no_longer_disables_music_or_fullscreen(self):
+        prospect = BusinessProspect.objects.create(name='Paridad Co', sector='bar')
+        c = Client()
+        r = c.get(f'/chequeo-digital/e/{prospect.public_token}/')
+        html = r.content.decode()
+        self.assertNotIn("if(MODE === 'personal') return;\n  var el = document.documentElement;", html)
+        self.assertNotIn('.qz-music-btn{display:none}', html)
+
+    def test_result_screen_shows_prospect_name_placeholder(self):
+        prospect = BusinessProspect.objects.create(name='Nombrada SL', sector='bar')
+        c = Client()
+        r = c.get(f'/chequeo-digital/e/{prospect.public_token}/')
+        self.assertIn(b'resultEyebrow', r.content)
+        self.assertIn(b'data-prospect-name="Nombrada SL"', r.content)
