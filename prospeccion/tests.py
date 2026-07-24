@@ -152,6 +152,7 @@ class PanelAuthTests(TestCase):
             ('GET', '/panel/prospeccion/mapa/api/prospects/'),
             ('GET', f'/panel/prospeccion/{prospect.pk}/'),
             ('GET', f'/panel/prospeccion/{prospect.pk}/pdf/'),
+            ('POST', f'/panel/prospeccion/{prospect.pk}/delete/'),
         ]
         with override_settings(ALLOWED_HOSTS=['testserver']):
             c = Client()
@@ -225,6 +226,45 @@ class ConversionTests(BaseTestCase):
         proposal = Proposal.objects.get(pk=body['proposal_id'])
         self.assertEqual(proposal.status, Proposal.ST_DRAFT)
         self.assertGreater(proposal.total_with_iva, 0)
+
+
+class ProspectDeleteTests(BaseTestCase):
+    def test_delete_removes_prospect_and_related_data(self):
+        prospect = BusinessProspect.objects.create(name='Para Borrar Del Todo', sector='bar')
+        ChequeoAudit.objects.create(
+            prospect=prospect, mode='personal', stage='confirmado', sector='bar',
+            questionnaire_version='v1', answers=[], score=50, category_scores={}, good_ids=[], fix_ids=[],
+        )
+        BusinessContact.objects.create(prospect=prospect, name='Contacto X')
+        c = self.login()
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/delete/')
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse(BusinessProspect.objects.filter(pk=prospect.pk).exists())
+        self.assertFalse(ChequeoAudit.objects.filter(prospect_id=prospect.pk).exists())
+        self.assertFalse(BusinessContact.objects.filter(prospect_id=prospect.pk).exists())
+
+    def test_delete_does_not_remove_the_converted_crm_lead(self):
+        prospect = BusinessProspect.objects.create(name='Convertida Y Borrada', sector='bar', phone='699555666')
+        lead, _ = convert_prospect_to_lead(prospect)
+        c = self.login()
+        r = c.post(f'/panel/prospeccion/{prospect.pk}/delete/')
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(Lead.objects.filter(pk=lead.pk).exists())
+
+    def test_delete_requires_login(self):
+        prospect = BusinessProspect.objects.create(name='Sin Login Borrar', sector='bar')
+        c = Client()
+        with override_settings(ALLOWED_HOSTS=['testserver']):
+            r = c.post(f'/panel/prospeccion/{prospect.pk}/delete/')
+        self.assertIn('Web-Impulsa CRM', r.content.decode())
+        self.assertTrue(BusinessProspect.objects.filter(pk=prospect.pk).exists())
+
+    def test_delete_button_shows_extra_warning_when_converted(self):
+        prospect = BusinessProspect.objects.create(name='Con Aviso', sector='bar', phone='699777888')
+        convert_prospect_to_lead(prospect)
+        c = self.login()
+        r = c.get(f'/panel/prospeccion/{prospect.pk}/')
+        self.assertIn('ya está convertida en cliente'.encode('utf-8'), r.content)
 
 
 class CsvImportTests(TestCase):

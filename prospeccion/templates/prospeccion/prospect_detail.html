@@ -349,6 +349,22 @@
       </div>
     </details>
 
+    <details class="section-card">
+      <summary style="color:#dc2626">Zona de peligro</summary>
+      <div class="section-body">
+      <p style="font-size:.85rem;color:#5a6d8c;margin-bottom:10px">
+        Elimina esta ficha de prospección de forma permanente: historial de chequeos, contactos y fotos
+        se borran con ella.
+        {% if prospect.converted_client_id %}
+          <strong>Esta empresa ya está convertida en cliente</strong> — su ficha en el CRM
+          (<a href="/wi/crm/{{ prospect.converted_client_id }}/">ver ficha</a>) no se borrará, pero perderá
+          el enlace a este historial de prospección.
+        {% endif %}
+      </p>
+      <button type="button" class="btn danger" id="btnDeleteProspect">🗑 Eliminar esta empresa</button>
+      </div>
+    </details>
+
   </div>
   <div class="toast" id="toast"></div>
 
@@ -627,6 +643,16 @@ btnPublishConsent.addEventListener('click', function(){
       if(res.data.error){ showToast(res.data.error); return; }
       window.location.reload();
     });
+});
+
+/* ---- Zona de peligro ---- */
+document.getElementById('btnDeleteProspect').addEventListener('click', function(){
+  if(!confirm('¿Eliminar "{{ prospect.name|escapejs }}" de forma permanente? Esto no se puede deshacer.')) return;
+  postJson(BASE + 'delete/').then(function(res){
+    if(res.data.error){ showToast(res.data.error); return; }
+    showToast('Empresa eliminada');
+    setTimeout(function(){ window.location.href = '/panel/prospeccion/mapa/'; }, 600);
+  });
 });
 
 </script>

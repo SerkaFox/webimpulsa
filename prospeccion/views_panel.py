@@ -425,6 +425,25 @@ def prospect_update(request, pk):
     return JsonResponse({'prospect': _prospect_json(prospect)})
 
 
+@_crm_auth
+@require_POST
+def prospect_delete(request, pk):
+    """Borrado permanente de la ficha de prospección — audits, contactos,
+    interacciones y fotos se van con ella (CASCADE). Si ya está convertida en
+    cliente, el Lead del CRM no se borra (converted_client es SET_NULL), solo
+    se pierde el enlace hacia este historial."""
+    prospect = get_object_or_404(BusinessProspect, pk=pk)
+    name = prospect.name
+    # el CASCADE de Django borra las filas de ProspectPhoto pero no los
+    # ficheros en disco — se borran explícitamente primero, mismo patrón que
+    # photo_delete().
+    for photo in prospect.site_photos.all():
+        photo.image.delete(save=False)
+    prospect.delete()
+    logger.info('Empresa eliminada: prospect #%s (%s)', pk, name)
+    return JsonResponse({'deleted': True})
+
+
 VALID_ANSWER_VALUES = {'si', 'en_parte', 'no_se', 'no', 'no_aplica'}
 
 
