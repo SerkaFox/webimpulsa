@@ -38,10 +38,7 @@ def generate_audit_pdf(audit) -> bytes | None:
     recommendations = [by_id[qid]['fix'] for qid in (audit.fix_ids or []) if qid in by_id][:3]
 
     company_name = audit.prospect.name if audit.prospect_id else 'Autodiagnóstico'
-    if audit.prospect_id:
-        result_url = f'https://webimpulsa.es/chequeo-digital/e/{audit.prospect.public_token}/'
-    else:
-        result_url = 'https://webimpulsa.es/chequeo-digital/'
+    result_url = f'https://webimpulsa.es/chequeo-digital/informe/{audit.report_token}/'
 
     category_scores = audit.category_scores or {}
     categories = [

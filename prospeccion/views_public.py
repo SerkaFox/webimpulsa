@@ -1,16 +1,19 @@
 import hashlib
 import json
 import logging
+import re
 
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
+from . import wa_bridge
 from .constants import compute_public_badges
-from .models import BusinessProspect, ChequeoAudit, SECTOR_CHOICES
+from .models import BusinessProspect, ChequeoAudit, Interaction, SECTOR_CHOICES
 from .quiz_config import ANSWER_OPTIONS, CATEGORY_LABELS, QUESTIONNAIRE_VERSION, QUESTIONS
+from .recommendations import build_recommendations
 from .scoring import compute_score, questions_for_sector
 
 logger = logging.getLogger(__name__)
@@ -71,6 +74,7 @@ def _good_fix_progress(sector, result):
         'good': _items(result['good_ids'], 'good'),
         'fix': _items(result['fix_ids'], 'fix'),
         'en_progreso': _items(result['en_progreso_ids'], 'fix'),
+        'recommendations': build_recommendations(sector, result['fix_ids']),
     }
 
 
@@ -149,6 +153,7 @@ def submit_public_audit(request):
         'category_labels': CATEGORY_LABELS,
         'benchmark': result['benchmark'],
         'stage': audit.stage,
+        'report_token': audit.report_token,
         **_good_fix_progress(sector, result),
     })
     if not request.COOKIES.get('wi_chequeo_session'):
@@ -231,8 +236,141 @@ def submit_personal_audit(request, token):
         'category_labels': CATEGORY_LABELS,
         'benchmark': result['benchmark'],
         'stage': audit.stage,
+        'report_token': audit.report_token,
         **_good_fix_progress(sector, result),
     })
+
+
+# ── Informe compartible + envío por WhatsApp al propio respondente ─────────
+# Página pública de solo lectura de un ChequeoAudit concreto, accesible solo
+# con su `report_token` (no adivinable, no listado en ningún sitio) — no
+# expone datos de contacto de nadie, ni siquiera el nombre de la empresa en
+# el chequeo público anónimo.
+
+_PHONE_RE = re.compile(r'^\+?[0-9][0-9\s\-]{6,20}$')
+
+
+def _valid_phone(phone):
+    return bool(_PHONE_RE.match((phone or '').strip()))
+
+
+def _report_message(audit, recommendations):
+    lines = [
+        f'Hola, soy Tania de WebImpulsa 👋 Aquí tienes el resultado de tu chequeo digital: '
+        f'{audit.score}/100 puntos activados.',
+    ]
+    if recommendations.get('needs_core_site'):
+        lines.append('Todavía no tienes un sitio o canal propio que funcione bien en el móvil — es justo lo primero que te recomendamos.')
+    for item in recommendations.get('items', [])[:3]:
+        lines.append(f"- {item['label']} ({item['price']} €)")
+    lines.append(f'Puedes ver el informe completo aquí: https://webimpulsa.es/chequeo-digital/informe/{audit.report_token}/')
+    return '\n'.join(lines)
+
+
+def audit_report(request, report_token):
+    audit = get_object_or_404(ChequeoAudit, report_token=report_token)
+    result = {
+        'good_ids': audit.good_ids, 'fix_ids': audit.fix_ids,
+        'en_progreso_ids': [a['question_id'] for a in audit.answers if a.get('value') == 'en_parte'],
+    }
+    progress = _good_fix_progress(audit.sector, result)
+    context = {
+        'audit': audit,
+        'company_name': audit.prospect.name if audit.prospect_id else '',
+        'category_labels': CATEGORY_LABELS,
+        'good': progress['good'],
+        'fix': progress['fix'],
+        'en_progreso': progress['en_progreso'],
+        'recommendations': progress['recommendations'],
+    }
+    return render(request, 'prospeccion/audit_report.html', context)
+
+
+@require_GET
+def audit_report_pdf(request, report_token):
+    from .pdf import generate_audit_pdf
+
+    audit = get_object_or_404(ChequeoAudit, report_token=report_token)
+    pdf_bytes = generate_audit_pdf(audit)
+    if pdf_bytes is None:
+        return HttpResponse('No se pudo generar el PDF.', status=500, content_type='text/plain')
+    resp = HttpResponse(pdf_bytes, content_type='application/pdf')
+    resp['Content-Disposition'] = 'inline; filename="chequeo-digital.pdf"'
+    return resp
+
+
+@csrf_exempt
+@require_POST
+def receive_report_public(request):
+    if not _same_origin(request):
+        return JsonResponse({'error': 'origen no permitido'}, status=403)
+    ip_hash = _ip_hash(request)
+    if _rate_limited(ip_hash):
+        return JsonResponse({'error': 'demasiados envíos, inténtalo más tarde'}, status=429)
+
+    try:
+        payload = json.loads(request.body or '{}')
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'JSON inválido'}, status=400)
+
+    report_token = payload.get('report_token') or ''
+    phone = payload.get('phone') or ''
+    consent = bool(payload.get('consent'))
+
+    audit = ChequeoAudit.objects.filter(report_token=report_token).first()
+    if not audit:
+        return JsonResponse({'error': 'chequeo no encontrado'}, status=404)
+    if not consent:
+        return JsonResponse({'error': 'hace falta el consentimiento para enviar el informe'}, status=400)
+    if not _valid_phone(phone):
+        return JsonResponse({'error': 'número de teléfono no válido'}, status=400)
+
+    result = {'good_ids': audit.good_ids, 'fix_ids': audit.fix_ids, 'en_progreso_ids': []}
+    recommendations = build_recommendations(audit.sector, audit.fix_ids)
+
+    try:
+        wa_bridge.send_text(phone, _report_message(audit, recommendations))
+    except wa_bridge.WhatsAppBridgeError as exc:
+        logger.error('No se pudo enviar el informe por WhatsApp (audit #%s): %s', audit.pk, exc)
+        return JsonResponse({'error': 'no se pudo enviar el informe por WhatsApp, inténtalo de nuevo'}, status=502)
+
+    audit.respondent_phone = phone
+    audit.respondent_consent_at = timezone.now()
+    audit.report_sent_at = timezone.now()
+    audit.save(update_fields=['respondent_phone', 'respondent_consent_at', 'report_sent_at'])
+
+    return JsonResponse({'sent': True})
+
+
+@csrf_exempt
+@require_POST
+def receive_report_personal(request, token):
+    if not _same_origin(request):
+        return JsonResponse({'error': 'origen no permitido'}, status=403)
+
+    prospect = get_object_or_404(BusinessProspect, public_token=token)
+    audit = prospect.audits.order_by('-created_at').first()
+    if not audit:
+        return JsonResponse({'error': 'este negocio todavía no tiene ningún chequeo'}, status=404)
+
+    phone = prospect.whatsapp or prospect.phone
+    if not _valid_phone(phone):
+        return JsonResponse({'error': 'no hay un número de WhatsApp guardado para este negocio'}, status=400)
+
+    recommendations = build_recommendations(audit.sector, audit.fix_ids)
+
+    try:
+        wa_bridge.send_text(phone, _report_message(audit, recommendations))
+    except wa_bridge.WhatsAppBridgeError as exc:
+        logger.error('No se pudo enviar el informe por WhatsApp (prospect #%s): %s', prospect.pk, exc)
+        return JsonResponse({'error': 'no se pudo enviar el informe por WhatsApp, inténtalo de nuevo'}, status=502)
+
+    audit.report_sent_at = timezone.now()
+    audit.save(update_fields=['report_sent_at'])
+    Interaction.objects.create(prospect=prospect, type=Interaction.TYPE_REPORT_SENT,
+                                result=f'Informe enviado por WhatsApp a {phone}')
+
+    return JsonResponse({'sent': True})
 
 
 # ── Mapa Digital público ───────────────────────────────────────────────────

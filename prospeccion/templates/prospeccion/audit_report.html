@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{% if company_name %}Chequeo digital de {{ company_name }}{% else %}Tu chequeo digital{% endif %} | WebImpulsa</title>
+<style>
+:root{
+  --q-bg:#edf4ff; --q-primary:#1760d6; --q-accent:#00a8cc; --q-green:#009e73; --q-amber:#c98a11;
+  --q-text:#0c1c42; --q-muted:#5a6d8c; --q-border:rgba(10,50,150,.12);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--q-bg);color:var(--q-text)}
+.wrap{max-width:640px;margin:0 auto;padding:28px 18px 60px}
+.card{background:#fff;border-radius:18px;padding:24px 20px;box-shadow:0 2px 20px rgba(10,50,150,.09)}
+.eyebrow{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--q-primary);margin-bottom:.4rem}
+h1{font-size:1.4rem;margin:0 0 1.2rem}
+.score-row{display:flex;align-items:center;gap:1rem;margin-bottom:1.4rem}
+.score-num{font-size:2.6rem;font-weight:900;color:var(--q-primary)}
+.score-meta{font-size:.85rem;color:var(--q-muted)}
+.block{margin-bottom:1.3rem}
+.block h3{font-size:.98rem;margin:0 0 .6rem}
+.block ul{list-style:none;margin:0;padding:0;display:grid;gap:.4rem}
+.block li{font-size:.88rem;line-height:1.4}
+.block.good li::before{content:'✓ ';color:var(--q-green);font-weight:900}
+.block.fix li::before{content:'💡 '}
+.block.progress li::before{content:'🔄 '}
+.reco{background:rgba(23,96,214,.05);border:1.5px solid rgba(23,96,214,.15);border-radius:14px;padding:1rem 1.1rem;margin-bottom:1.4rem}
+.reco h3{font-size:.98rem;margin:0 0 .6rem}
+.reco-core{background:rgba(201,138,17,.12);color:var(--q-amber);border-radius:10px;padding:.55rem .7rem;font-size:.85rem;font-weight:650;margin-bottom:.6rem}
+.reco ul{list-style:none;margin:0;padding:0;display:grid;gap:.4rem}
+.reco li{display:flex;justify-content:space-between;font-size:.88rem;background:#fff;border:1px solid var(--q-border);border-radius:8px;padding:.5rem .65rem}
+.reco-total{margin-top:.6rem;font-weight:800;font-size:.9rem;text-align:right}
+.pdf-link{display:block;text-align:center;margin-top:1.2rem;background:var(--q-primary);color:#fff;text-decoration:none;
+  padding:.8rem 1rem;border-radius:12px;font-weight:700;font-size:.92rem}
+.disclaimer{font-size:.75rem;color:var(--q-muted);margin-top:1.4rem;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="eyebrow">Resultado del chequeo digital</div>
+    <h1>{% if company_name %}{{ company_name }}{% else %}Tu negocio{% endif %}</h1>
+
+    <div class="score-row">
+      <div class="score-num">{{ audit.score }}</div>
+      <div class="score-meta">/100 puntos activados<br>Nivel recomendado del sector: {{ audit.sector_benchmark }}/100</div>
+    </div>
+
+    <div class="block good">
+      <h3>✅ Lo que ya tienes bien</h3>
+      <ul>{% for item in good %}<li>{{ item.text }}</li>{% empty %}<li>Todavía no hay puntos confirmados.</li>{% endfor %}</ul>
+    </div>
+
+    {% if en_progreso %}
+    <div class="block progress">
+      <h3>🔄 En progreso</h3>
+      <ul>{% for item in en_progreso %}<li>{{ item.text }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    <div class="block fix">
+      <h3>💡 Mejoras rápidas recomendadas</h3>
+      <ul>{% for item in fix %}<li>{{ item.text }}</li>{% empty %}<li>Sin mejoras urgentes detectadas — buen nivel general.</li>{% endfor %}</ul>
+    </div>
+
+    {% if recommendations.needs_core_site or recommendations.items %}
+    <div class="reco">
+      <h3>🧮 Recomendado para tu negocio</h3>
+      {% if recommendations.needs_core_site %}
+        <div class="reco-core">Aún no tienes una página o canal propio que funcione bien en el móvil — es el servicio base de WebImpulsa.</div>
+      {% endif %}
+      {% if recommendations.items %}
+        <ul>{% for it in recommendations.items %}<li><span>{{ it.label }}</span><span>{{ it.price }} €</span></li>{% endfor %}</ul>
+        <div class="reco-total">Estimado: {{ recommendations.estimated_total }} € (orientativo, sin compromiso)</div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <a class="pdf-link" href="{% url 'chequeo_audit_report_pdf' audit.report_token %}" target="_blank" rel="noopener">📄 Descargar en PDF</a>
+  </div>
+  <p class="disclaimer">Informe orientativo generado por WebImpulsa — no sustituye una auditoría técnica completa.</p>
+</div>
+</body>
+</html>

@@ -265,6 +265,7 @@ var DEFAULT_CENTER = {lat: 43.2627, lng: -2.9253}; // Barakaldo/Bilbao
 
 var map = null;
 var markers = [];
+var searchMarkers = [];
 var userLocation = null;
 
 function showToast(msg){
@@ -294,16 +295,30 @@ window.wiInitMap = function(){
   reloadMapProspects();
 };
 
-function markerIcon(color){
+function markerIcon(color, scale){
   return {
     path: google.maps.SymbolPath.CIRCLE,
-    fillColor: color, fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2, scale: 8,
+    fillColor: color, fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2, scale: scale || 8,
   };
+}
+
+// Marker.label solo admite un color de texto, así que el número de la
+// puntuación se pone siempre en blanco — el círculo (scale más grande que el
+// del marcador manual) hace de fondo con contraste suficiente en todos los
+// colores de estado que usa SALES_STATUS_COLORS.
+function scoreLabel(score){
+  if(score == null) return null;
+  return {text: String(score), color: '#fff', fontSize: '11px', fontWeight: '700'};
 }
 
 function clearMarkers(){
   markers.forEach(function(m){ m.setMap(null); });
   markers = [];
+}
+
+function clearSearchMarkers(){
+  searchMarkers.forEach(function(m){ m.setMap(null); });
+  searchMarkers = [];
 }
 
 function currentFilters(){
@@ -357,7 +372,8 @@ function reloadMapProspects(){
       var withCoords = data.prospects.filter(function(p){ return p.lat != null && p.lng != null; });
       withCoords.forEach(function(p){
         var marker = new google.maps.Marker({
-          position: {lat: p.lat, lng: p.lng}, map: map, icon: markerIcon(p.color), title: p.name,
+          position: {lat: p.lat, lng: p.lng}, map: map, icon: markerIcon(p.color, 13), title: p.name,
+          label: scoreLabel(p.current_score) || undefined,
         });
         var score = p.current_score != null ? p.current_score : '—';
         var info = new google.maps.InfoWindow({content:
@@ -390,8 +406,9 @@ function categoryLabel(sectorId){
 }
 
 function renderExistingCard(p){
-  return '<div class="result-card">'+
-    '<span class="cat">Ya en WebImpulsa</span><span class="exists-badge">Ya existe</span>'+
+  var scoreTag = p.current_score != null ? '<span class="exists-badge" style="background:'+p.color+'">'+p.current_score+'/100</span>' : '';
+  return '<div class="result-card" data-existing-id="'+p.prospect_id+'">'+
+    '<span class="cat">Ya en WebImpulsa</span><span class="exists-badge">Ya existe</span>'+scoreTag+
     '<div class="name" style="margin-top:6px">'+p.name+'</div>'+
     '<div class="addr">'+(p.address||'')+' · '+p.sector_label+'</div>'+
     '<div class="actions"><a class="btn sm secondary" href="'+p.detail_url+'">Ver ficha</a></div>'+
@@ -414,6 +431,48 @@ function renderGoogleCard(r, idx){
 
 var lastGoogleResults = [];
 
+// Pinta los resultados de la búsqueda (ya-existentes + Google) también como
+// marcadores en el mapa, no solo como tarjetas en la lista — clicar un
+// marcador hace exactamente lo mismo que clicar su tarjeta: abrir la ficha
+// si ya existe, o abrir el panel de confirmación si es de Google.
+function plotSearchMarkers(existing, googleResults){
+  clearSearchMarkers();
+  var latLngBounds = new window.google.maps.LatLngBounds();
+  var any = false;
+
+  existing.forEach(function(p){
+    if(p.lat == null || p.lng == null) return;
+    any = true;
+    var pos = {lat: p.lat, lng: p.lng};
+    latLngBounds.extend(pos);
+    var marker = new window.google.maps.Marker({
+      position: pos, map: map, icon: markerIcon(p.color || '#8a94a6', 13), title: p.name,
+      label: scoreLabel(p.current_score) || undefined,
+    });
+    var info = new window.google.maps.InfoWindow({content:
+      '<div style="font-family:inherit"><strong>'+p.name+'</strong><br>Ya en WebImpulsa'+
+      (p.current_score != null ? ' · puntuación '+p.current_score : '')+'<br>'+
+      '<a href="'+p.detail_url+'">📇 Ver ficha</a></div>'
+    });
+    marker.addListener('click', function(){ info.open(map, marker); });
+    searchMarkers.push(marker);
+  });
+
+  googleResults.forEach(function(r){
+    if(r.lat == null || r.lng == null) return;
+    any = true;
+    var pos = {lat: r.lat, lng: r.lng};
+    latLngBounds.extend(pos);
+    var marker = new window.google.maps.Marker({
+      position: pos, map: map, icon: markerIcon('#7c3aed', 11), title: r.name,
+    });
+    marker.addListener('click', function(){ openConfirmPanel({fromGoogle: true, place: r}); });
+    searchMarkers.push(marker);
+  });
+
+  if(any) map.fitBounds(latLngBounds, 60);
+}
+
 function runSearch(){
   var q = document.getElementById('searchInput').value.trim();
   if(!q){ showToast('Escribe algo para buscar'); return; }
@@ -427,10 +486,11 @@ function runSearch(){
   fetch('/panel/prospeccion/mapa/api/search/?' + params.toString())
     .then(function(r){ return r.json(); })
     .then(function(data){
-      if(data.error){ resultsEl.innerHTML = ''; showToast(data.error); return; }
+      if(data.error){ resultsEl.innerHTML = ''; clearSearchMarkers(); showToast(data.error); return; }
+      var existingResults = data.existing || [];
       lastGoogleResults = data.google || [];
       var html = '';
-      (data.existing || []).forEach(function(p){ html += renderExistingCard(p); });
+      existingResults.forEach(function(p){ html += renderExistingCard(p); });
       lastGoogleResults.forEach(function(r, idx){ html += renderGoogleCard(r, idx); });
       if(data.google_error){
         html += '<p style="color:#dc2626;font-size:.8rem">'+data.google_error+'</p>';
@@ -442,8 +502,9 @@ function runSearch(){
           openConfirmPanel({fromGoogle: true, place: lastGoogleResults[parseInt(btn.getAttribute('data-google-idx'), 10)]});
         });
       });
+      plotSearchMarkers(existingResults, lastGoogleResults);
     })
-    .catch(function(){ resultsEl.innerHTML = ''; showToast('No se pudo buscar en este momento'); });
+    .catch(function(){ resultsEl.innerHTML = ''; clearSearchMarkers(); showToast('No se pudo buscar en este momento'); });
 }
 
 document.getElementById('btnSearch').addEventListener('click', runSearch);

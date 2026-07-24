@@ -43,18 +43,28 @@
     z-index: 50; max-width: 90vw; }
   .toast.show { opacity: 1; }
 
-  /* Auditoría preliminar */
-  .q-item { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
-  .q-item .q-text { font-weight: 700; font-size: .86rem; margin-bottom: 6px; }
-  .q-opts { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
-  .q-opts label { display: inline-flex; align-items: center; gap: 4px; font-size: .78rem; background: #f8fafc;
-    border: 1.5px solid #e2e8f0; border-radius: 999px; padding: 4px 9px; cursor: pointer; }
-  .q-opts input { margin: 0; }
-  .q-opts label.checked { border-color: #2563eb; background: rgba(37,99,235,.08); }
-  .q-extra { display: flex; gap: 6px; flex-wrap: wrap; }
-  .q-extra input { font-size: .78rem; padding: 5px 8px; }
-  .prelim-summary { display: flex; gap: 18px; flex-wrap: wrap; font-size: .82rem; color: #5a6d8c; margin-bottom: 12px; }
+  /* Auditoría preliminar — más grande y amigable que el resto del panel
+     técnico: es la parte que usa Tania directamente, no solo referencia
+     rápida para desarrollo. Acento cálido (verde) en vez del azul plano
+     genérico del resto de la ficha, para que se note visualmente que es
+     "su" sección. */
+  #prelimDetails .section-body { font-size: 1rem; }
+  #prelimDetails h2, #prelimDetails summary { font-size: 1.1rem; }
+  .q-item { border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 16px 18px; margin-bottom: 16px; }
+  .q-item .q-text { font-weight: 700; font-size: 1.08rem; line-height: 1.4; margin-bottom: 12px; }
+  .q-opts { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .q-opts label { display: inline-flex; align-items: center; gap: 6px; font-size: .98rem; background: #f8fafc;
+    border: 2px solid #e2e8f0; border-radius: 999px; padding: 9px 16px; cursor: pointer; }
+  .q-opts input { margin: 0; width: 16px; height: 16px; }
+  .q-opts label.checked { border-color: #009e73; background: rgba(0,158,115,.1); color: #00714f; font-weight: 700; }
+  .q-extra { display: flex; gap: 8px; flex-wrap: wrap; }
+  .q-extra input { font-size: .88rem; padding: 8px 10px; }
+  .prelim-summary { display: flex; gap: 22px; flex-wrap: wrap; font-size: .95rem; color: #5a6d8c; margin-bottom: 16px; }
   .prelim-summary strong { color: #0c1c42; }
+  #prelimDetails .field label { font-size: .92rem; margin-bottom: 6px; }
+  #prelimDetails select { font-size: 1rem; padding: 10px 12px; }
+  #prelimDetails .btn { font-size: 1rem; padding: 12px 18px; }
+  #prelimDetails small { font-size: .88rem !important; }
 
   /* Contactos */
   .contact-row { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
