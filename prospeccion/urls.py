@@ -54,8 +54,6 @@ urlpatterns = [
 
     path('panel/prospeccion/<int:pk>/publish-consent/', views_panel.publish_consent_update,
          name='prospeccion_publish_consent'),
-    path('panel/prospeccion/<int:pk>/publish-confirm/', views_panel.publish_confirm,
-         name='prospeccion_publish_confirm'),
 
     path('mapa-digital/', views_public.public_map, name='mapa_digital'),
     path('mapa-digital/api/prospects/', views_public.public_map_api, name='mapa_digital_api'),

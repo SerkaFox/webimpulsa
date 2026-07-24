@@ -33,13 +33,6 @@ class StaffMember(models.Model):
     name = models.CharField(max_length=120)
     active = models.BooleanField(default=True)
     color = models.CharField(max_length=7, blank=True)
-    # Único campo de "rol" que existe en todo el proyecto: no hay cuentas ni
-    # login individual (_crm_auth es un único password compartido), así que
-    # esto no es un sistema de permisos completo — solo gatilla la única
-    # acción que de verdad necesita distinguirse: confirmar publicación en el
-    # mapa público. Quien confirma se elige explícitamente en el momento de
-    # la acción (no hay sesión ligada a una persona), y se valida en servidor.
-    can_confirm_publication = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -138,8 +131,9 @@ class BusinessProspect(models.Model):
     )
 
     # consentimiento para el mapa PÚBLICO (aparte de los consentimientos de BusinessContact)
+    # — lo da la propia empresa (checkbox al final de su chequeo personal);
+    # ya no hay una segunda confirmación administrativa aparte.
     publish_consent = models.BooleanField(default=False)
-    publish_confirmed_by_staff = models.BooleanField(default=False)
     publish_consent_at = models.DateTimeField(null=True, blank=True)
     publish_revoked_at = models.DateTimeField(null=True, blank=True)
 
@@ -154,16 +148,14 @@ class BusinessProspect(models.Model):
             models.Index(fields=['lat', 'lng']),
             models.Index(fields=['sector', 'sales_status']),
             models.Index(fields=['assigned_to', 'next_action_at']),
-            models.Index(fields=['publish_consent', 'publish_confirmed_by_staff']),
+            models.Index(fields=['publish_consent']),
         ]
 
     def __str__(self):
         return f'{self.name} ({self.sector})'
 
     def is_published(self):
-        return bool(
-            self.publish_consent and self.publish_confirmed_by_staff and not self.publish_revoked_at
-        )
+        return bool(self.publish_consent and not self.publish_revoked_at)
 
 
 class BusinessContact(models.Model):

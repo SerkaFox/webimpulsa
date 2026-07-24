@@ -319,39 +319,18 @@
         <span style="font-size:.82rem;color:#5a6d8c;display:block;margin-top:4px" id="publicationReason">{{ publication_reason }}</span>
       </p>
 
-      <div class="row">
-        <div class="field">
-          <label>Consentimiento de publicación de la empresa</label>
-          <p style="font-size:.76rem;color:#5a6d8c;margin:0 0 6px">
-            Normalmente se marca solo — hay una casilla (marcada por defecto) al final del chequeo
-            personal que la propia empresa puede desmarcar. Este botón es solo para forzarlo a mano si
-            hace falta.
-          </p>
-          {% if prospect.publish_consent %}
-            <button type="button" class="btn sm outline" id="btnPublishConsent" data-action="revoke">Revocar consentimiento</button>
-          {% else %}
-            <button type="button" class="btn sm" id="btnPublishConsent" data-action="grant">Registrar consentimiento</button>
-          {% endif %}
-        </div>
-        <div class="field">
-          <label>Confirmación administrativa (solo personal autorizado)</label>
-          <p style="font-size:.76rem;color:#5a6d8c;margin:0 0 6px">
-            Elegir un nombre aquí NO prueba tu identidad — esta sesión del CRM la comparte todo el
-            equipo. Además del nombre, hace falta el secreto de confirmación (distinto de la
-            contraseña general del CRM, solo lo conoce quien está autorizado).
-          </p>
-          <div class="row" style="gap:6px">
-            <select id="confirmStaffSelect" style="max-width:180px">
-              <option value="">Elegir quién confirma…</option>
-              {% for s in confirming_staff %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
-            </select>
-            <input type="password" id="confirmSecretInput" placeholder="Secreto de confirmación" style="max-width:180px">
-            <button type="button" class="btn sm green" id="btnPublishConfirm">
-              {% if prospect.publish_confirmed_by_staff %}Retirar confirmación{% else %}Confirmar publicación{% endif %}
-            </button>
-          </div>
-          {% if not confirming_staff %}<small style="color:#8a94a6">Ningún StaffMember tiene permiso de confirmación todavía.</small>{% endif %}
-        </div>
+      <div class="field">
+        <label>Consentimiento de publicación de la empresa</label>
+        <p style="font-size:.76rem;color:#5a6d8c;margin:0 0 6px">
+          Normalmente se marca solo — hay una casilla (marcada por defecto) al final del chequeo
+          personal que la propia empresa puede desmarcar. Este botón es solo para forzarlo a mano si
+          hace falta. Es la única condición para aparecer en el mapa público, no hay un segundo paso.
+        </p>
+        {% if prospect.publish_consent %}
+          <button type="button" class="btn sm outline" id="btnPublishConsent" data-action="revoke">Revocar consentimiento</button>
+        {% else %}
+          <button type="button" class="btn sm" id="btnPublishConsent" data-action="grant">Registrar consentimiento</button>
+        {% endif %}
       </div>
       </div>
     </details>
@@ -650,19 +629,6 @@ btnPublishConsent.addEventListener('click', function(){
     });
 });
 
-document.getElementById('btnPublishConfirm').addEventListener('click', function(){
-  var staffId = document.getElementById('confirmStaffSelect').value;
-  var secret = document.getElementById('confirmSecretInput').value;
-  if(!staffId){ showToast('Elige quién confirma'); return; }
-  if(!secret){ showToast('Falta el secreto de confirmación'); return; }
-  var currentlyConfirmed = {{ prospect.publish_confirmed_by_staff|yesno:"true,false" }};
-  postJson(BASE + 'publish-confirm/', {staff_member_id: staffId, confirm_secret: secret, confirm: !currentlyConfirmed})
-    .then(function(res){
-      if(res.status === 403){ showToast(res.data.error); return; }
-      if(res.data.error){ showToast(res.data.error); return; }
-      window.location.reload();
-    });
-});
 </script>
 </body>
 </html>
