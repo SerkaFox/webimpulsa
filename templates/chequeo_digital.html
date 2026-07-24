@@ -232,6 +232,26 @@ a{text-decoration:none}
 .result-list.progress li .tick{color:var(--q-amber)}
 .result-list.fix li .tick{color:var(--q-primary)}
 
+.reco-panel{background:rgba(23,96,214,.05);border:1.5px solid rgba(23,96,214,.15);border-radius:14px;
+  padding:1.1rem 1.2rem;margin-top:1.5rem}
+.reco-panel h3{font-size:1.02rem;font-weight:800;margin:0 0 .7rem}
+.reco-core{background:rgba(201,138,17,.12);color:var(--q-amber);border-radius:10px;padding:.6rem .8rem;
+  font-size:.88rem;font-weight:650;margin-bottom:.7rem}
+.reco-list{list-style:none;margin:0;padding:0;display:grid;gap:.5rem}
+.reco-list li{display:flex;justify-content:space-between;gap:.6rem;font-size:.9rem;color:var(--q-text);
+  background:#fff;border-radius:8px;padding:.55rem .7rem;border:1px solid var(--q-border)}
+.reco-list li .reco-price{font-weight:800;color:var(--q-primary);white-space:nowrap}
+.reco-total{margin-top:.7rem;font-weight:800;font-size:.95rem;text-align:right;color:var(--q-text)}
+.reco-send-form{margin-top:.9rem;background:rgba(0,158,115,.06);border:1.5px solid rgba(0,158,115,.2);
+  border-radius:14px;padding:1rem 1.1rem}
+.reco-send-label{display:block;font-size:.85rem;font-weight:650;margin-bottom:.5rem}
+.reco-send-row{margin-bottom:.6rem}
+.reco-send-row input{width:100%;padding:.6rem .8rem;border-radius:10px;border:1.5px solid var(--q-border);
+  font-size:.95rem;font-family:inherit}
+.reco-consent-label{display:flex;align-items:flex-start;gap:.5rem;font-size:.82rem;color:var(--q-muted);
+  margin-bottom:.8rem;cursor:pointer}
+.reco-consent-label input{margin-top:.15rem}
+
 .qz-cta-grid{display:grid;gap:.65rem;margin-top:1.7rem}
 .qz-foot-actions{display:flex;gap:.9rem;justify-content:center;margin-top:1.3rem;flex-wrap:wrap}
 .qz-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;
@@ -318,7 +338,7 @@ a{text-decoration:none}
   <!-- RESULT -->
   <section class="q-screen" data-screen="result" id="screen-result">
     <div class="qz-card">
-      <div class="qz-eyebrow">Resultado del chequeo digital</div>
+      <div class="qz-eyebrow" id="resultEyebrow">Resultado del chequeo digital</div>
 
       <div class="score-wrap">
         <div class="score-gauge">
@@ -359,10 +379,29 @@ a{text-decoration:none}
         </div>
       </div>
 
+      <div class="reco-panel" id="recoPanel" hidden>
+        <h3>🧮 Recomendado para tu negocio</h3>
+        <div class="reco-core" id="recoCore" hidden></div>
+        <ul class="reco-list" id="recoList"></ul>
+        <div class="reco-total" id="recoTotal" hidden></div>
+      </div>
+
       <div class="qz-cta-grid">
         <a class="btn-qz btn-qz-primary btn-qz-block" id="ctaExample" target="_blank" rel="noopener">Ver ejemplo para mi negocio</a>
-        <a class="btn-qz btn-qz-green btn-qz-block" id="ctaWhatsapp" target="_blank" rel="noopener">Recibir informe por WhatsApp</a>
-        <a class="btn-qz btn-qz-outline btn-qz-block" id="ctaQuick" target="_blank" rel="noopener">Quiero una mejora rápida</a>
+        <button type="button" class="btn-qz btn-qz-green btn-qz-block" id="ctaWhatsapp">Recibir informe por WhatsApp</button>
+        <a class="btn-qz btn-qz-outline btn-qz-block" id="ctaQuick" target="_blank" rel="noopener">Hablar con Tania sobre esto</a>
+      </div>
+
+      <div class="reco-send-form" id="recoSendForm" hidden>
+        <label class="reco-send-label" for="recoPhone">Tu WhatsApp (para enviarte el informe)</label>
+        <div class="reco-send-row">
+          <input type="tel" id="recoPhone" placeholder="+34 6xx xxx xxx" inputmode="tel">
+        </div>
+        <label class="reco-consent-label">
+          <input type="checkbox" id="recoConsent">
+          Acepto recibir este informe por WhatsApp
+        </label>
+        <button type="button" class="btn-qz btn-qz-green btn-qz-block" id="recoSendBtn">Enviar</button>
       </div>
 
       <div class="qz-foot-actions">
@@ -420,8 +459,6 @@ var EXAMPLE_LINKS = {
 };
 
 var WA_NUMBER = '34613708322';
-var WA_MSG_REPORT = 'Hola, he hecho el chequeo digital y me gustaría recibir el informe para mi negocio.';
-var WA_MSG_QUICK  = 'Hola, he hecho el chequeo digital y me interesa una mejora rápida para mi negocio.';
 var STORAGE_KEY = 'wi_chequeo_digital_v1';
 
 function levelInfo(score){
@@ -647,6 +684,36 @@ function animateGauge(score){
   requestAnimationFrame(step);
 }
 
+function renderRecommendations(reco){
+  var panel = document.getElementById('recoPanel');
+  var coreEl = document.getElementById('recoCore');
+  var listEl = document.getElementById('recoList');
+  var totalEl = document.getElementById('recoTotal');
+  var hasItems = reco && reco.items && reco.items.length;
+  if(!reco || (!reco.needs_core_site && !hasItems)){
+    panel.hidden = true;
+    return;
+  }
+  panel.hidden = false;
+  coreEl.hidden = !reco.needs_core_site;
+  if(reco.needs_core_site){
+    coreEl.textContent = 'Aún no tienes una página o canal propio que funcione bien en el móvil — es el servicio base de WebImpulsa.';
+  }
+  listEl.innerHTML = hasItems ? reco.items.map(function(it){
+    return '<li><span>'+it.label+'</span><span class="reco-price">'+it.price+' €</span></li>';
+  }).join('') : '';
+  totalEl.hidden = !hasItems;
+  if(hasItems) totalEl.textContent = 'Estimado: ' + reco.estimated_total + ' € (orientativo, sin compromiso)';
+}
+
+function buildQuickMessage(reco){
+  var lines = ['Hola, he hecho el chequeo digital y me interesan estas mejoras:'];
+  if(reco && reco.needs_core_site) lines.push('- Tener un sitio o canal propio que funcione bien en el móvil');
+  (reco && reco.items || []).forEach(function(it){ lines.push('- '+it.label+' ('+it.price+' €)'); });
+  if(lines.length === 1) lines.push('Cuéntame qué me recomiendas para mi negocio.');
+  return lines.join('\n');
+}
+
 function renderResultList(elId, items, emptyHtml){
   var el = document.getElementById(elId);
   if(items && items.length){
@@ -662,6 +729,11 @@ function renderResult(r){
   state.lastResult = r;
   var lvl = levelInfo(r.score);
 
+  var eyebrow = document.getElementById('resultEyebrow');
+  eyebrow.textContent = (MODE === 'personal' && PROSPECT_NAME)
+    ? ('Resultado del chequeo digital — ' + PROSPECT_NAME)
+    : 'Resultado del chequeo digital';
+
   document.getElementById('scoreHeadline').textContent = r.score + ' puntos activados de 100';
   var tag = document.getElementById('scoreLevelTag');
   tag.textContent = lvl.tag;
@@ -674,6 +746,7 @@ function renderResult(r){
   document.getElementById('blockProgress').hidden = !(r.en_progreso && r.en_progreso.length);
   renderResultList('listProgress', r.en_progreso, null);
   renderResultList('listFix', r.fix, '<li><span class="tick">🎉</span><span>¡Genial! Ahora mismo no detectamos mejoras urgentes: sigue así.</span></li>');
+  renderRecommendations(r.recommendations);
 
   var timeEl = document.getElementById('scoreTime');
   if(timerFinalText){
@@ -685,8 +758,7 @@ function renderResult(r){
 
   var exampleUrl = EXAMPLE_LINKS[state.category] || EXAMPLE_LINKS.otro;
   document.getElementById('ctaExample').setAttribute('href', exampleUrl);
-  document.getElementById('ctaWhatsapp').setAttribute('href', 'https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(WA_MSG_REPORT));
-  document.getElementById('ctaQuick').setAttribute('href', 'https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(WA_MSG_QUICK));
+  document.getElementById('ctaQuick').setAttribute('href', 'https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(buildQuickMessage(r.recommendations)));
 
   if(MODE !== 'personal') saveResult(r);
 }
@@ -816,7 +888,6 @@ function resetQuiz(){
  * INIT
  * ------------------------------------------------------------------- */
 function tryFullscreen(){
-  if(MODE === 'personal') return;
   var el = document.documentElement;
   try{
     var req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
@@ -852,6 +923,66 @@ document.getElementById('btnBack').addEventListener('click', function(){
 document.getElementById('btnRestart').addEventListener('click', resetQuiz);
 document.getElementById('btnCopy').addEventListener('click', copyResult);
 
+/* ---------------------------------------------------------------------
+ * RECIBIR INFORME POR WHATSAPP — va al número del propio respondente
+ * (nunca abre un chat con Tania). En modo público pide el teléfono y el
+ * consentimiento; en modo personal usa el WhatsApp ya guardado del negocio
+ * y envía con un solo toque.
+ * ------------------------------------------------------------------- */
+var ctaWhatsappBtn = document.getElementById('ctaWhatsapp');
+var recoSendForm   = document.getElementById('recoSendForm');
+var recoPhoneInput = document.getElementById('recoPhone');
+var recoConsentInput = document.getElementById('recoConsent');
+var recoSendBtn    = document.getElementById('recoSendBtn');
+
+if(MODE === 'personal'){
+  ctaWhatsappBtn.textContent = 'Enviarte el informe a tu WhatsApp';
+}
+
+function sendReportEndpoint(){
+  return MODE === 'personal'
+    ? ('/chequeo-digital/e/' + TOKEN + '/receive-report/')
+    : '/chequeo-digital/api/receive-report/';
+}
+function sendReportBody(){
+  if(MODE === 'personal') return {};
+  return {
+    report_token: state.lastResult && state.lastResult.report_token,
+    phone: recoPhoneInput.value,
+    consent: recoConsentInput.checked,
+  };
+}
+function doSendReport(){
+  recoSendBtn.disabled = true;
+  fetch(sendReportEndpoint(), {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(sendReportBody())
+  }).then(function(r){ return r.json().then(function(data){ return {ok: r.ok, data: data}; }); })
+    .then(function(res){
+      recoSendBtn.disabled = false;
+      if(!res.ok || res.data.error){ showToast(res.data.error || 'No se pudo enviar el informe.'); return; }
+      recoSendForm.hidden = true;
+      showToast('¡Informe enviado a tu WhatsApp!');
+    })
+    .catch(function(){ recoSendBtn.disabled = false; showToast('No se pudo enviar el informe, inténtalo de nuevo.'); });
+}
+ctaWhatsappBtn.addEventListener('click', function(){
+  if(MODE === 'personal'){
+    doSendReport();
+  } else {
+    recoSendForm.hidden = !recoSendForm.hidden;
+    if(!recoSendForm.hidden) recoPhoneInput.focus();
+  }
+});
+recoSendBtn.addEventListener('click', function(){
+  if(MODE !== 'personal' && (!recoPhoneInput.value.trim() || !recoConsentInput.checked)){
+    showToast('Indica tu WhatsApp y acepta el consentimiento.');
+    return;
+  }
+  doSendReport();
+});
+
 if(MODE === 'personal'){
   document.getElementById('screen-category').remove();
 } else {
@@ -861,13 +992,13 @@ if(MODE === 'personal'){
 })();
 </script>
 
-{% if mode != 'personal' %}
 <script>
 (function(){
   // Música de fondo: dos melodías una detrás de otra, en bucle, con botón de
   // silencio en la esquina para quien no quiera oírla. Los navegadores
   // bloquean el autoplay con sonido sin gesto del usuario, así que se intenta
   // arrancar sola y, si falla, se engancha al primer click/touch de la página.
+  // Se activa igual en modo público y personal.
   var bgm1 = document.getElementById('qzBgm1');
   var bgm2 = document.getElementById('qzBgm2');
   var btn = document.getElementById('qzMusicBtn');
@@ -908,8 +1039,5 @@ if(MODE === 'personal'){
   });
 })();
 </script>
-{% else %}
-<style>.qz-music-btn{display:none}</style>
-{% endif %}
 </body>
 </html>
