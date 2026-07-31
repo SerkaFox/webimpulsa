@@ -1,4 +1,4 @@
-"""Client portal views for WebImpulsa CRM.
+"""Client portal views for CreaGanaWeb CRM.
 
 URL scheme (all public — authenticated by magic-link token):
   GET/POST  /p/<token>/                  portal entry + PIN verification + main view
@@ -37,7 +37,7 @@ from .services import (
 _WI_TG_TOKEN   = os.getenv('WI_TG_TOKEN', '')
 _WI_TG_CHAT_ID = os.getenv('WI_TG_CHAT_ID', '')
 _OPERATOR_PHONES = [p.strip() for p in os.getenv('WI_OPERATOR_PHONE', '').split(',') if p.strip()]
-_BASE_URL = os.getenv('WI_BASE_URL', 'https://webimpulsa.es')
+_BASE_URL = os.getenv('WI_BASE_URL', 'https://creaganaweb.es')
 
 # If Tatiana's admin chat polled within this window, she's "online" for this
 # lead — skip duplicate WhatsApp/Telegram pings for new client chat messages.
@@ -128,14 +128,14 @@ def _send_acceptance_emails(proposal, access, pdf_bytes=None) -> None:
         f'Total IVA: {proposal.total_with_iva}€\n'
         f'Firmado:   {signed_at}\n'
         f'Firma:     {proposal.accepted_signature or "—"}\n\n'
-        f'→ CRM: https://webimpulsa.es/wi/crm/leads/{lead.pk}/\n'
+        f'→ CRM: https://creaganaweb.es/wi/crm/leads/{lead.pk}/\n'
     )
     try:
         msg_int = EmailMultiAlternatives(
             subject=f'✅ Propuesta aceptada — {lead.name} | {proposal.number}',
             body=body_int,
-            from_email='info@webimpulsa.es',
-            to=['info@webimpulsa.es'],
+            from_email='info@creaganaweb.es',
+            to=['info@creaganaweb.es'],
             connection=_mailcow(),
         )
         if pdf_bytes:
@@ -163,7 +163,7 @@ def _send_acceptance_emails(proposal, access, pdf_bytes=None) -> None:
   <!-- Header bar -->
   <tr><td style="padding:20px 32px 16px;border-bottom:3px solid #16a34a">
     <table width="100%" cellpadding="0" cellspacing="0"><tr>
-      <td><img src="https://webimpulsa.es/static/wi/img/logo.webp" alt="Web-Impulsa" height="34" style="display:block"></td>
+      <td><img src="https://creaganaweb.es/static/wi/img/logo.webp" alt="CreaGanaWeb" height="34" style="display:block"></td>
       <td align="right" style="font-size:12px;color:#5a6d8c">
         <span style="background:#f0fdf4;color:#15803d;font-weight:700;padding:4px 10px;border-radius:20px;font-size:11px">
           ✅ Propuesta firmada
@@ -174,7 +174,7 @@ def _send_acceptance_emails(proposal, access, pdf_bytes=None) -> None:
 
   <!-- Greeting -->
   <tr><td style="padding:26px 32px 0">
-    <p style="font-size:20px;font-weight:800;color:#0c1c42;margin:0 0 8px">¡Gracias, {first}! 🎉</p>
+    <p style="font-size:20px;font-weight:800;color:#081747;margin:0 0 8px">¡Gracias, {first}! 🎉</p>
     <p style="font-size:14px;color:#5a6d8c;line-height:1.65;margin:0 0 20px">
       Tu propuesta ha quedado <strong style="color:#15803d">firmada y registrada</strong>.
       Adjunta encontrarás una copia firmada en PDF para tus archivos.
@@ -188,7 +188,7 @@ def _send_acceptance_emails(proposal, access, pdf_bytes=None) -> None:
       <tr><td>
         <p style="font-size:10px;font-weight:700;color:#15803d;text-transform:uppercase;
                   letter-spacing:.08em;margin:0 0 10px">Resumen del acuerdo</p>
-        <table width="100%" cellpadding="0" cellspacing="0" style="color:#0c1c42">
+        <table width="100%" cellpadding="0" cellspacing="0" style="color:#081747">
           <tr>
             <td style="padding:3px 0;color:#5a6d8c;font-size:13px;width:44%">Proyecto</td>
             <td style="padding:3px 0;font-weight:700;font-size:13px">{proposal.project_name or proposal.package}</td>
@@ -199,7 +199,7 @@ def _send_acceptance_emails(proposal, access, pdf_bytes=None) -> None:
           </tr>
           <tr>
             <td style="padding:3px 0;color:#5a6d8c;font-size:13px">Total (IVA incl.)</td>
-            <td style="padding:3px 0;font-weight:800;font-size:15px;color:#1760d6">{proposal.total_with_iva}€</td>
+            <td style="padding:3px 0;font-weight:800;font-size:15px;color:#5725F4">{proposal.total_with_iva}€</td>
           </tr>
           <tr>
             <td style="padding:3px 0;color:#5a6d8c;font-size:13px">Firmado por</td>
@@ -217,11 +217,11 @@ def _send_acceptance_emails(proposal, access, pdf_bytes=None) -> None:
   <!-- CTA cabinet -->
   <tr><td style="padding:0 32px 24px">
     <p style="font-size:14px;color:#5a6d8c;margin:0 0 14px;line-height:1.5">
-      Hemos preparado tu <strong style="color:#0c1c42">área de cliente</strong> donde podrás
+      Hemos preparado tu <strong style="color:#081747">área de cliente</strong> donde podrás
       ver el progreso del proyecto, enviar archivos (logo, fotos, textos) y escribirnos directamente.
     </p>
     <a href="{cabinet_url}"
-       style="display:block;background:#1760d6;color:#fff;text-decoration:none;
+       style="display:block;background:#5725F4;color:#fff;text-decoration:none;
               text-align:center;padding:14px 24px;border-radius:8px;
               font-size:15px;font-weight:800;letter-spacing:.01em">
       Entrar a mi área de cliente →
@@ -233,18 +233,18 @@ def _send_acceptance_emails(proposal, access, pdf_bytes=None) -> None:
 
   <!-- Next steps -->
   <tr><td style="padding:0 32px 24px">
-    <p style="font-size:12px;font-weight:700;color:#0c1c42;margin:0 0 8px">¿Qué pasa ahora?</p>
+    <p style="font-size:12px;font-weight:700;color:#081747;margin:0 0 8px">¿Qué pasa ahora?</p>
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr><td style="padding:4px 0;font-size:13px;color:#334155">
-        <span style="color:#1760d6;font-weight:700">1.</span>&nbsp;
+        <span style="color:#5725F4;font-weight:700">1.</span>&nbsp;
         Te contactamos en menos de 24h para coordinar el inicio
       </td></tr>
       <tr><td style="padding:4px 0;font-size:13px;color:#334155">
-        <span style="color:#1760d6;font-weight:700">2.</span>&nbsp;
+        <span style="color:#5725F4;font-weight:700">2.</span>&nbsp;
         Pago del 50% inicial para arrancar el proyecto
       </td></tr>
       <tr><td style="padding:4px 0;font-size:13px;color:#334155">
-        <span style="color:#1760d6;font-weight:700">3.</span>&nbsp;
+        <span style="color:#5725F4;font-weight:700">3.</span>&nbsp;
         ¡Empezamos! Seguimiento en tu área de cliente
       </td></tr>
     </table>
@@ -254,22 +254,22 @@ def _send_acceptance_emails(proposal, access, pdf_bytes=None) -> None:
   <tr><td style="padding:16px 32px;background:#f8fafc;border-top:1px solid #e2e8f0">
     <table width="100%" cellpadding="0" cellspacing="0"><tr>
       <td>
-        <p style="margin:0 0 2px;font-size:13px;font-weight:700;color:#0c1c42">Equipo Web-Impulsa</p>
+        <p style="margin:0 0 2px;font-size:13px;font-weight:700;color:#081747">Equipo CreaGanaWeb</p>
         <p style="margin:0;font-size:12px;color:#5a6d8c">
-          <a href="mailto:info@webimpulsa.es" style="color:#1760d6;text-decoration:none">info@webimpulsa.es</a>
+          <a href="mailto:info@creaganaweb.es" style="color:#5725F4;text-decoration:none">info@creaganaweb.es</a>
           &nbsp;·&nbsp;
-          <a href="https://wa.me/34613708322" style="color:#1760d6;text-decoration:none">+34 613 708 322</a>
+          <a href="https://wa.me/34613708322" style="color:#5725F4;text-decoration:none">+34 613 708 322</a>
         </p>
       </td>
       <td align="right">
         <a href="{cabinet_url}"
-           style="display:inline-block;background:#edf4ff;color:#1760d6;font-size:11px;
+           style="display:inline-block;background:#edf4ff;color:#5725F4;font-size:11px;
                   font-weight:700;padding:6px 14px;border-radius:20px;text-decoration:none">
           Mi área →
         </a>
       </td>
     </tr></table>
-    <p style="margin:10px 0 0;font-size:11px;color:#cbd5e1;text-align:center">© 2026 Web-Impulsa · España</p>
+    <p style="margin:10px 0 0;font-size:11px;color:#cbd5e1;text-align:center">© 2026 CreaGanaWeb · España</p>
   </td></tr>
 
 </table>
@@ -280,18 +280,18 @@ def _send_acceptance_emails(proposal, access, pdf_bytes=None) -> None:
 
     plain_client = (
         f'Hola {first},\n\n'
-        f'Tu propuesta Web-Impulsa está firmada. Adjunta encontrarás una copia en PDF.\n\n'
+        f'Tu propuesta CreaGanaWeb está firmada. Adjunta encontrarás una copia en PDF.\n\n'
         f'Propuesta: {proposal.number} — {proposal.total_with_iva}€ (IVA incl.)\n'
         f'Firmado por: {proposal.accepted_by_name} el {signed_at}\n\n'
         f'Tu área de cliente: {cabinet_url}\n\n'
         f'Nos pondremos en contacto en menos de 24h.\n\n'
-        f'Equipo Web-Impulsa\ninfo@webimpulsa.es | +34 613 708 322\n'
+        f'Equipo CreaGanaWeb\ninfo@creaganaweb.es | +34 613 708 322\n'
     )
     try:
         msg_cli = EmailMultiAlternatives(
-            subject=f'✅ Propuesta firmada — {proposal.number} | Web-Impulsa',
+            subject=f'✅ Propuesta firmada — {proposal.number} | CreaGanaWeb',
             body=plain_client,
-            from_email='info@webimpulsa.es',
+            from_email='info@creaganaweb.es',
             to=[lead.email],
             connection=_brevo(),
         )
@@ -663,14 +663,14 @@ def portal_accept_proposal(request, token):
         f'✅ <b>Propuesta aceptada</b>\n'
         f'Cliente: {name} ({nif or "sin NIF"}) — {client_type}\n'
         f'Propuesta: {proposal.number} — {proposal.total_with_iva}€\n'
-        f'→ https://webimpulsa.es/wi/crm/{lead.pk}/'
+        f'→ https://creaganaweb.es/wi/crm/{lead.pk}/'
     )
     _notify_tg(tg_text)
     _notify_wa(
         f'✅ PROPUESTA ACEPTADA\n'
         f'Cliente: {name} ({client_type})\nNIF: {nif or "—"}\n'
         f'Propuesta: {proposal.number} — {proposal.total_with_iva}€\n'
-        f'CRM: https://webimpulsa.es/wi/crm/{lead.pk}/'
+        f'CRM: https://creaganaweb.es/wi/crm/{lead.pk}/'
     )
 
     try:
@@ -693,13 +693,13 @@ def portal_manifest(request, token):
 
     icon = '/static/wi/img/apple-icon.png'
     manifest = {
-        'name': f'Web-Impulsa — {access.lead.name}',
+        'name': f'CreaGanaWeb — {access.lead.name}',
         'short_name': 'Mi proyecto',
         'start_url': f'/p/{token}/',
         'scope': f'/p/{token}/',
         'display': 'standalone',
         'background_color': '#eef3ff',
-        'theme_color': '#1760d6',
+        'theme_color': '#5725F4',
         'icons': [
             {'src': icon, 'sizes': '180x180', 'type': 'image/png'},
             {'src': icon, 'sizes': '192x192', 'type': 'image/png', 'purpose': 'any'},
@@ -800,13 +800,13 @@ def portal_send_message(request, token):
             f'💬 <b>Mensaje del portal</b> — {lead.name}\n'
             f'Proyecto: {lead.package or "—"}\n\n'
             f'{text}\n\n'
-            f'→ https://webimpulsa.es/wi/crm/{lead.pk}/'
+            f'→ https://creaganaweb.es/wi/crm/{lead.pk}/'
         )
         _notify_tg(notify_text)
         _notify_wa(
             f'💬 Mensaje portal — {lead.name}\n'
             f'{text}\n'
-            f'CRM: https://webimpulsa.es/wi/crm/{lead.pk}/'
+            f'CRM: https://creaganaweb.es/wi/crm/{lead.pk}/'
         )
 
     return JsonResponse({'ok': True, 'message': serialize_chat_message(msg)})
@@ -1027,13 +1027,13 @@ def portal_pay_stripe_success(request, token):
         f'💳✅ <b>Pago con tarjeta recibido</b>\n'
         f'Cliente: {lead.name}\n'
         f'Importe: {half}€ · Stripe\n'
-        f'→ <a href="https://webimpulsa.es/wi/crm/{lead.pk}/">CRM</a>'
+        f'→ <a href="https://creaganaweb.es/wi/crm/{lead.pk}/">CRM</a>'
     )
     _notify_wa(
         f'💳✅ PAGO CON TARJETA RECIBIDO\n'
         f'Cliente: {lead.name}\n'
         f'Importe: {half}€ · Stripe\n'
-        f'CRM: https://webimpulsa.es/wi/crm/{lead.pk}/'
+        f'CRM: https://creaganaweb.es/wi/crm/{lead.pk}/'
     )
 
     return redirect(f'/p/{token}/pay/?paid=1&card=1')
@@ -1088,13 +1088,13 @@ def portal_client_paid(request, token):
         f'Cliente: {lead.name}\n'
         f'Importe: {half}€ · {method_label}\n'
         f'Estado: pendiente de confirmar\n'
-        f'→ <a href="https://webimpulsa.es/wi/crm/{lead.pk}/">CRM</a>'
+        f'→ <a href="https://creaganaweb.es/wi/crm/{lead.pk}/">CRM</a>'
     )
     _notify_wa(
         f'💳 PAGO NOTIFICADO\n'
         f'Cliente: {lead.name}\n'
         f'Importe: {half}€ · {method_label}\n'
-        f'Confirmar en CRM: https://webimpulsa.es/wi/crm/{lead.pk}/'
+        f'Confirmar en CRM: https://creaganaweb.es/wi/crm/{lead.pk}/'
     )
 
     return redirect(f'/p/{token}/pay/?paid=1')

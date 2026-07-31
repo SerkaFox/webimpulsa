@@ -225,7 +225,7 @@ def _existing_match_json(p):
 @_crm_auth
 @require_GET
 def places_search(request):
-    """Búsqueda única: primero empresas ya en WebImpulsa, después resultados
+    """Búsqueda única: primero empresas ya en CreaGanaWeb, después resultados
     de Google Places sesgados a la zona visible del mapa (o España por
     defecto). Cada resultado de Google se anota con el prospect existente
     si ya hay uno (mismo place_id, teléfono, dominio, nombre+coords cercanas)."""

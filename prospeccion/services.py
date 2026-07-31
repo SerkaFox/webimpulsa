@@ -146,7 +146,7 @@ def create_prospect(data, source=None):
 
 
 def find_existing_matches(query, limit=8):
-    """Empresas ya presentes en WebImpulsa que coinciden con el texto de
+    """Empresas ya presentes en CreaGanaWeb que coinciden con el texto de
     búsqueda — se muestran primero, antes que los resultados de Google
     Places, para no ofrecer nunca crear un duplicado de algo que el equipo
     ya tiene."""

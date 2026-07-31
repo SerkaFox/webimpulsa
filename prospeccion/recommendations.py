@@ -2,7 +2,7 @@
 del catálogo ya existente (`crm.proposal_content`), en vez de un mensaje
 genérico de "necesitas mejorar tu presencia digital". La pregunta `mobile_page`
 ("¿tienes un canal propio que funcione bien en el móvil?") es el servicio base
-de WebImpulsa, no un extra — se marca aparte (`needs_core_site`) para no
+de CreaGanaWeb, no un extra — se marca aparte (`needs_core_site`) para no
 ofrecer una web a quien ya la tiene ni mezclarla con la lista de add-ons.
 """
 from crm.proposal_content import EXTRAS_DESCRIPTIONS, EXTRAS_PRICES, HOURS_PACKAGES

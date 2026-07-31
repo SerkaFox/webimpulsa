@@ -3,33 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chequeo digital gratuito para tu negocio | WebImpulsa</title>
+<title>Chequeo digital gratuito para tu negocio | CreaGanaWeb</title>
 <meta name="description" content="Descubre en 2 minutos si un cliente puede encontrarte, entender tus servicios y contactarte en menos de 1 minuto. Chequeo digital gratuito para negocios locales.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://webimpulsa.es/chequeo-digital/">
+<link rel="canonical" href="https://creaganaweb.es/chequeo-digital/">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://webimpulsa.es/chequeo-digital/">
-<meta property="og:title" content="Chequeo digital gratuito para tu negocio | WebImpulsa">
+<meta property="og:url" content="https://creaganaweb.es/chequeo-digital/">
+<meta property="og:title" content="Chequeo digital gratuito para tu negocio | CreaGanaWeb">
 <meta property="og:description" content="¿Puede un cliente encontrarte, entender tus servicios y contactarte en menos de 1 minuto? Hazlo el chequeo, son solo 2 minutos.">
-<meta property="og:image" content="https://webimpulsa.es/static/wi/img/logo.webp">
+<meta property="og:image" content="https://creaganaweb.es/static/wi/img/logo.webp">
 <meta property="og:locale" content="es_ES">
-<link rel="icon" type="image/png" href="/static/wi/img/favicon.png">
+<link rel="icon" type="image/svg+xml" href="/static/wi/img/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/wi/img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/static/wi/img/favicon-192.png">
+<link rel="apple-touch-icon" href="/static/wi/img/apple-icon.png">
+<link rel="stylesheet" href="/static/wi/css/brand.css">
 <style>
 :root{
-  --q-bg:#edf4ff;
-  --q-card:#ffffff;
-  --q-border:rgba(10,50,150,.12);
-  --q-primary:#1760d6;
-  --q-primary2:#0095c8;
-  --q-accent:#00a8cc;
-  --q-green:#009e73;
+  --q-bg:var(--wi-bg);
+  --q-card:var(--wi-card);
+  --q-border:var(--wi-border);
+  --q-primary:var(--wi-primary);
+  --q-primary2:var(--wi-magenta);
+  --q-accent:var(--wi-accent);
+  --q-green:var(--wi-green);
   --q-amber:#c98a11;
   --q-teal:#0f766e;
   --q-gray:#8a94a6;
-  --q-text:#0c1c42;
-  --q-muted:#5a6d8c;
-  --q-shadow:0 2px 20px rgba(10,50,150,.09);
-  --q-shadow-hover:0 10px 34px rgba(10,50,150,.16);
+  --q-text:var(--wi-text);
+  --q-muted:var(--wi-muted);
+  --q-shadow:var(--wi-shadow);
+  --q-shadow-hover:var(--wi-shadow-hover);
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -46,9 +50,9 @@ a{text-decoration:none}
 .qz-photo-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--q-bg)}
 .qz-photo-bg .photo{position:absolute;inset:0;background-size:cover;background-position:center;
   opacity:0;animation:qzPhotoFade 18s ease-in-out infinite;animation-fill-mode:both}
-.qz-photo-bg .photo:nth-child(1){background-image:url('/static/wi/img/chequeo-bg-1.webp');animation-delay:0s}
-.qz-photo-bg .photo:nth-child(2){background-image:url('/static/wi/img/chequeo-bg-2.webp');animation-delay:6s}
-.qz-photo-bg .photo:nth-child(3){background-image:url('/static/wi/img/chequeo-bg-3.webp');animation-delay:12s}
+.qz-photo-bg .photo:nth-child(1){background-image:url('/static/wi/img/backgrounds/03-digital-questionnaire.webp');animation-delay:0s}
+.qz-photo-bg .photo:nth-child(2){background-image:url('/static/wi/img/backgrounds/02-inner-page-hero.webp');animation-delay:6s}
+.qz-photo-bg .photo:nth-child(3){background-image:url('/static/wi/img/backgrounds/09-analytics-growth.webp');animation-delay:12s}
 @keyframes qzPhotoFade{0%{opacity:0}11%{opacity:1}33%{opacity:1}44%{opacity:0}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){
   .qz-photo-bg .photo{animation:none;opacity:0}
@@ -58,7 +62,7 @@ a{text-decoration:none}
 /* floating background shapes — gentle, transform-only, no layout thrash */
 .qz-bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
 .qz-bg .shape{position:absolute;border-radius:50%;opacity:.35;filter:blur(2px);will-change:transform}
-.qz-bg .s1{width:420px;height:420px;left:-140px;top:-120px;background:radial-gradient(circle at 30% 30%,rgba(23,96,214,.35),rgba(23,96,214,0) 70%);animation:qzFloat1 22s ease-in-out infinite}
+.qz-bg .s1{width:420px;height:420px;left:-140px;top:-120px;background:radial-gradient(circle at 30% 30%,rgba(87,37,244,.35),rgba(87,37,244,0) 70%);animation:qzFloat1 22s ease-in-out infinite}
 .qz-bg .s2{width:340px;height:340px;right:-100px;top:20%;background:radial-gradient(circle at 60% 40%,rgba(0,168,204,.30),rgba(0,168,204,0) 70%);animation:qzFloat2 26s ease-in-out infinite}
 .qz-bg .s3{width:300px;height:300px;left:10%;bottom:-140px;background:radial-gradient(circle at 50% 50%,rgba(0,158,115,.22),rgba(0,158,115,0) 70%);animation:qzFloat3 30s ease-in-out infinite}
 @keyframes qzFloat1{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,40px)}}
@@ -68,10 +72,10 @@ a{text-decoration:none}
 
 /* progress bar — bottom, flowing "plasma" fill */
 .qz-progress{position:fixed;left:14px;right:14px;bottom:14px;height:12px;border-radius:999px;
-  background:rgba(23,96,214,.10);z-index:20;overflow:hidden;box-shadow:inset 0 1px 3px rgba(10,50,150,.12)}
+  background:rgba(87,37,244,.10);z-index:20;overflow:hidden;box-shadow:inset 0 1px 3px rgba(8,23,71,.12)}
 .qz-progress-bar{
   height:100%;width:0%;border-radius:999px;position:relative;
-  background:linear-gradient(90deg,#1760d6,#00c2d6,#00e0b8,#00c2d6,#1760d6);
+  background:linear-gradient(90deg,#5725F4,#00c2d6,#00e0b8,#00c2d6,#5725F4);
   background-size:300% 100%;
   animation:qzPlasma 3.2s linear infinite;
   transition:width .5s cubic-bezier(.3,.15,.15,1);
@@ -141,8 +145,8 @@ a{text-decoration:none}
 .qz-shell h2{font-size:clamp(1.25rem,3.4vw,1.65rem);line-height:1.22;font-weight:850;margin:0 0 1.4rem}
 .qz-sub{color:var(--q-muted);font-size:1.05rem;line-height:1.55;margin-bottom:1.8rem}
 
-.qz-personal-banner{display:flex;align-items:center;gap:.6rem;background:rgba(23,96,214,.08);
-  border:1px solid rgba(23,96,214,.22);border-radius:14px;padding:.8rem 1rem;margin-bottom:1.3rem;
+.qz-personal-banner{display:flex;align-items:center;gap:.6rem;background:rgba(87,37,244,.08);
+  border:1px solid rgba(87,37,244,.22);border-radius:14px;padding:.8rem 1rem;margin-bottom:1.3rem;
   font-size:.88rem;color:var(--q-text)}
 .qz-personal-banner .tag{flex-shrink:0;font-weight:800;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;
   background:var(--q-primary);color:#fff;padding:.3rem .6rem;border-radius:999px}
@@ -154,14 +158,14 @@ a{text-decoration:none}
 }
 .btn-qz:hover{transform:translateY(-2px)}
 .btn-qz-primary{background:linear-gradient(135deg,var(--q-primary),var(--q-primary2));color:#fff;
-  box-shadow:0 6px 22px rgba(23,96,214,.32)}
-.btn-qz-primary:hover{box-shadow:0 10px 30px rgba(23,96,214,.42)}
+  box-shadow:0 6px 22px rgba(87,37,244,.32)}
+.btn-qz-primary:hover{box-shadow:0 10px 30px rgba(87,37,244,.42)}
 .btn-qz-green{background:linear-gradient(135deg,var(--q-green),#00c89a);color:#fff;box-shadow:0 6px 22px rgba(0,160,120,.30)}
 .btn-qz-green:hover{box-shadow:0 10px 30px rgba(0,160,120,.40)}
-.btn-qz-outline{background:transparent;color:var(--q-primary);border:1.6px solid rgba(23,96,214,.4)}
-.btn-qz-outline:hover{background:rgba(23,96,214,.06)}
-.btn-qz-ghost{background:transparent;color:var(--q-muted);border:1.5px solid rgba(12,28,66,.18);font-size:.88rem;padding:.65rem 1.2rem}
-.btn-qz-ghost:hover{color:var(--q-text);border-color:rgba(12,28,66,.32)}
+.btn-qz-outline{background:transparent;color:var(--q-primary);border:1.6px solid rgba(87,37,244,.4)}
+.btn-qz-outline:hover{background:rgba(87,37,244,.06)}
+.btn-qz-ghost{background:transparent;color:var(--q-muted);border:1.5px solid rgba(8,23,71,.18);font-size:.88rem;padding:.65rem 1.2rem}
+.btn-qz-ghost:hover{color:var(--q-text);border-color:rgba(8,23,71,.32)}
 .btn-qz-block{width:100%}
 
 .qz-resume{margin-top:1.4rem;font-size:.86rem;color:var(--q-muted);background:var(--q-bg);border:1px dashed var(--q-border);
@@ -177,12 +181,12 @@ a{text-decoration:none}
   border-radius:14px;padding:1rem 1.05rem;cursor:pointer;font-family:inherit;font-size:.92rem;font-weight:650;color:var(--q-text);
   transition:transform .18s,box-shadow .18s,border-color .18s;
 }
-.cat-opt:hover{transform:translateY(-3px);box-shadow:var(--q-shadow);border-color:rgba(23,96,214,.4)}
+.cat-opt:hover{transform:translateY(-3px);box-shadow:var(--q-shadow);border-color:rgba(87,37,244,.4)}
 .cat-opt .ic{font-size:1.5rem;flex-shrink:0}
 
 /* question */
 .q-counter{color:var(--q-muted);font-weight:700;font-size:.82rem;letter-spacing:.03em;margin-bottom:.6rem}
-.q-icon-badge{width:58px;height:58px;border-radius:16px;background:linear-gradient(135deg,rgba(23,96,214,.12),rgba(0,168,204,.14));
+.q-icon-badge{width:58px;height:58px;border-radius:16px;background:linear-gradient(135deg,rgba(87,37,244,.12),rgba(0,168,204,.14));
   display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin-bottom:1rem}
 .q-hint{color:var(--q-muted);font-size:.9rem;line-height:1.5;margin:.3rem 0 0}
 .q-options{display:grid;gap:.6rem;margin-top:1.6rem}
@@ -191,7 +195,7 @@ a{text-decoration:none}
   border-radius:14px;padding:.85rem 1.1rem;cursor:pointer;font-family:inherit;font-size:.94rem;font-weight:700;color:var(--q-text);
   transition:transform .16s,box-shadow .16s,border-color .16s,background .16s;
 }
-.q-opt:hover{transform:translateY(-2px);box-shadow:var(--q-shadow);border-color:rgba(23,96,214,.4)}
+.q-opt:hover{transform:translateY(-2px);box-shadow:var(--q-shadow);border-color:rgba(87,37,244,.4)}
 .q-opt[data-val="si"]:hover{background:rgba(0,158,115,.08);border-color:rgba(0,158,115,.45)}
 .q-opt[data-val="en_parte"]:hover{background:rgba(15,118,110,.08);border-color:rgba(15,118,110,.4)}
 .q-opt[data-val="no_se"]:hover{background:rgba(201,138,17,.08);border-color:rgba(201,138,17,.4)}
@@ -203,7 +207,7 @@ a{text-decoration:none}
 .q-opt[data-val="no_se"].picked{background:rgba(201,138,17,.16);border-color:var(--q-amber);box-shadow:var(--q-shadow)}
 .q-opt[data-val="no"].picked{background:rgba(214,60,60,.12);border-color:#d63c3c;box-shadow:var(--q-shadow)}
 .q-opt[data-val="no_aplica"].picked{background:rgba(138,148,166,.18);border-color:var(--q-gray);box-shadow:var(--q-shadow)}
-.q-opt.prefilled:not(.picked){border-style:dashed;border-color:rgba(23,96,214,.5)}
+.q-opt.prefilled:not(.picked){border-style:dashed;border-color:rgba(87,37,244,.5)}
 .q-back{margin-top:1.4rem;background:none;border:none;color:var(--q-muted);font-weight:700;font-size:.85rem;cursor:pointer;
   font-family:inherit;padding:.3rem 0}
 .q-back:hover{color:var(--q-primary)}
@@ -221,7 +225,7 @@ a{text-decoration:none}
 .score-wrap{display:flex;flex-wrap:wrap;align-items:center;gap:1.6rem;margin-bottom:1.6rem}
 .score-gauge{position:relative;width:150px;height:150px;flex-shrink:0}
 .score-gauge svg{width:100%;height:100%;transform:rotate(-90deg)}
-.gauge-track{fill:none;stroke:rgba(23,96,214,.12);stroke-width:12}
+.gauge-track{fill:none;stroke:rgba(87,37,244,.12);stroke-width:12}
 .gauge-fill{fill:none;stroke:url(#qzGaugeGrad);stroke-width:12;stroke-linecap:round;
   stroke-dasharray:439.8;stroke-dashoffset:439.8;transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1)}
 .gauge-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
@@ -241,7 +245,7 @@ a{text-decoration:none}
 .result-list.progress li .tick{color:var(--q-amber)}
 .result-list.fix li .tick{color:var(--q-primary)}
 
-.reco-panel{background:rgba(23,96,214,.05);border:1.5px solid rgba(23,96,214,.15);border-radius:14px;
+.reco-panel{background:rgba(87,37,244,.05);border:1.5px solid rgba(87,37,244,.15);border-radius:14px;
   padding:1.1rem 1.2rem;margin-top:1.5rem}
 .reco-panel h3{font-size:1.02rem;font-weight:800;margin:0 0 .7rem}
 .reco-core{background:rgba(201,138,17,.12);color:var(--q-amber);border-radius:10px;padding:.6rem .8rem;
@@ -288,7 +292,7 @@ a{text-decoration:none}
 <div class="qz-timer" id="qzTimer"><span class="dot"></span><span id="qzTimerText">0:00</span></div>
 
 <button class="qz-music-btn" id="qzMusicBtn" aria-label="Silenciar música" title="Silenciar música">🎵</button>
-<a class="qz-back-btn" href="/" id="qzBackBtn" aria-label="Volver a webimpulsa.es" title="Volver a webimpulsa.es">←</a>
+<a class="qz-back-btn" href="/" id="qzBackBtn" aria-label="Volver a creaganaweb.es" title="Volver a creaganaweb.es">←</a>
 <audio id="qzBgm1" preload="auto" src="/static/wi/audio/chequeo-bgm-1.mp3?v=1"></audio>
 <audio id="qzBgm2" preload="auto" src="/static/wi/audio/chequeo-bgm-2.mp3?v=1"></audio>
 
@@ -360,8 +364,9 @@ a{text-decoration:none}
           <svg viewBox="0 0 160 160">
             <defs>
               <linearGradient id="qzGaugeGrad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#1760d6"/>
-                <stop offset="100%" stop-color="#00a8cc"/>
+                <stop offset="0%" stop-color="#5725F4"/>
+                <stop offset="50%" stop-color="#B52BC3"/>
+                <stop offset="100%" stop-color="#FF6657"/>
               </linearGradient>
             </defs>
             <circle class="gauge-track" cx="80" cy="80" r="70"/>
@@ -404,7 +409,7 @@ a{text-decoration:none}
       {% if mode == 'personal' %}
       <label class="qz-publish-consent">
         <input type="checkbox" id="publishConsentCheck" {% if default_publish_checked %}checked{% endif %}>
-        <span>Quiero aparecer en el <strong>Mapa Digital de WebImpulsa</strong> — otros negocios y clientes de la
+        <span>Quiero aparecer en el <strong>Mapa Digital de CreaGanaWeb</strong> — otros negocios y clientes de la
         zona lo verán (¡y seguro que les da un poco de envidia! 😉). Solo se muestran datos positivos, nunca tu
         información privada. Puedes desmarcarlo cuando quieras.</span>
       </label>
@@ -437,7 +442,7 @@ a{text-decoration:none}
 
 </main>
 
-<footer class="qz-footer"><a href="/">webimpulsa.es</a></footer>
+<footer class="qz-footer"><a href="/">creaganaweb.es</a></footer>
 
 <div class="qz-toast" id="qzToast"></div>
 
@@ -479,7 +484,7 @@ var EXAMPLE_LINKS = {
   clinica:      'https://clinica.webimpulsa.es/',
   tienda:       'https://tienda.webimpulsa.es/',
   inmobiliaria: 'https://inmobiliaria.webimpulsa.es/',
-  otro:         'https://webimpulsa.es/'
+  otro:         'https://creaganaweb.es/'
 };
 
 var WA_NUMBER = '34613708322';
@@ -487,8 +492,8 @@ var STORAGE_KEY = 'wi_chequeo_digital_v1';
 
 function levelInfo(score){
   if(score<=35)  return {tag:'Buen punto de partida, con mejoras rápidas por delante', color:'#c98a11', bg:'rgba(201,138,17,.12)'};
-  if(score<=60)  return {tag:'Vas bien encaminado — hay mejoras rápidas esperando',     color:'#1760d6', bg:'rgba(23,96,214,.10)'};
-  if(score<=80)  return {tag:'Nivel sólido, con margen para automatizar más',           color:'#0095c8', bg:'rgba(0,149,200,.10)'};
+  if(score<=60)  return {tag:'Vas bien encaminado — hay mejoras rápidas esperando',     color:'#5725F4', bg:'rgba(87,37,244,.10)'};
+  if(score<=80)  return {tag:'Nivel sólido, con margen para automatizar más',           color:'#B52BC3', bg:'rgba(181,43,195,.10)'};
   return               {tag:'Muy buen nivel digital',                                  color:'#009e73', bg:'rgba(0,158,115,.12)'};
 }
 
@@ -721,7 +726,7 @@ function renderRecommendations(reco){
   panel.hidden = false;
   coreEl.hidden = !reco.needs_core_site;
   if(reco.needs_core_site){
-    coreEl.textContent = 'Aún no tienes una página o canal propio que funcione bien en el móvil — es el servicio base de WebImpulsa.';
+    coreEl.textContent = 'Aún no tienes una página o canal propio que funcione bien en el móvil — es el servicio base de CreaGanaWeb.';
   }
   listEl.innerHTML = hasItems ? reco.items.map(function(it){
     return '<li><span>'+it.label+'</span><span class="reco-price">'+it.price+' €</span></li>';

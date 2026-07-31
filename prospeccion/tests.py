@@ -158,7 +158,7 @@ class PanelAuthTests(TestCase):
             c = Client()
             for method, url in routes:
                 r = c.get(url) if method == 'GET' else c.post(url)
-                self.assertIn('Web-Impulsa CRM', r.content.decode(), msg=f'{url} no pidió login')
+                self.assertIn('CreaGanaWeb CRM', r.content.decode(), msg=f'{url} no pidió login')
 
 
 class DedupeTests(TestCase):
@@ -256,7 +256,7 @@ class ProspectDeleteTests(BaseTestCase):
         c = Client()
         with override_settings(ALLOWED_HOSTS=['testserver']):
             r = c.post(f'/panel/prospeccion/{prospect.pk}/delete/')
-        self.assertIn('Web-Impulsa CRM', r.content.decode())
+        self.assertIn('CreaGanaWeb CRM', r.content.decode())
         self.assertTrue(BusinessProspect.objects.filter(pk=prospect.pk).exists())
 
     def test_delete_button_shows_extra_warning_when_converted(self):
@@ -406,9 +406,9 @@ class PreliminarAuditUiTests(BaseTestCase):
         with override_settings(ALLOWED_HOSTS=['testserver']):
             c = Client()
             r = c.post(f'/panel/prospeccion/{prospect.pk}/preliminar/draft/', data='{}', content_type='application/json')
-            self.assertIn('Web-Impulsa CRM', r.content.decode())
+            self.assertIn('CreaGanaWeb CRM', r.content.decode())
             r = c.post(f'/panel/prospeccion/{prospect.pk}/preliminar/complete/', data='{}', content_type='application/json')
-            self.assertIn('Web-Impulsa CRM', r.content.decode())
+            self.assertIn('CreaGanaWeb CRM', r.content.decode())
 
 
 class ContactCrudTests(BaseTestCase):
@@ -446,7 +446,7 @@ class ContactCrudTests(BaseTestCase):
                 f'/panel/prospeccion/{prospect.pk}/contacts/{contact.pk}/consent/',
             ):
                 r = c.post(url, data='{}', content_type='application/json')
-                self.assertIn('Web-Impulsa CRM', r.content.decode(), msg=url)
+                self.assertIn('CreaGanaWeb CRM', r.content.decode(), msg=url)
 
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
@@ -511,7 +511,7 @@ class PhotoGalleryTests(BaseTestCase):
                 f'/panel/prospeccion/{prospect.pk}/photos/{photo.pk}/delete/',
             ):
                 r = c.post(url)
-                self.assertIn('Web-Impulsa CRM', r.content.decode(), msg=url)
+                self.assertIn('CreaGanaWeb CRM', r.content.decode(), msg=url)
 
 
 class ConsentSeparationTests(BaseTestCase):

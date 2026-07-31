@@ -38,7 +38,7 @@ def generate_audit_pdf(audit) -> bytes | None:
     recommendations = [by_id[qid]['fix'] for qid in (audit.fix_ids or []) if qid in by_id][:3]
 
     company_name = audit.prospect.name if audit.prospect_id else 'Autodiagnóstico'
-    result_url = f'https://webimpulsa.es/chequeo-digital/informe/{audit.report_token}/'
+    result_url = f'https://creaganaweb.es/chequeo-digital/informe/{audit.report_token}/'
 
     category_scores = audit.category_scores or {}
     categories = [
@@ -57,7 +57,7 @@ def generate_audit_pdf(audit) -> bytes | None:
             'result_url': result_url,
         }
         html_str = render_to_string('prospeccion/audit_pdf.html', ctx)
-        pdf_bytes = HTML(string=html_str, base_url='https://webimpulsa.es').write_pdf()
+        pdf_bytes = HTML(string=html_str, base_url='https://creaganaweb.es').write_pdf()
         logger.info('PDF generado: audit #%s (%d bytes)', audit.pk, len(pdf_bytes))
         return pdf_bytes
     except Exception as exc:

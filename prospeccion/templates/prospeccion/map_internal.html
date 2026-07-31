@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mapa de prospección — WebImpulsa</title>
+<title>Mapa de prospección — CreaGanaWeb</title>
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; font-family: 'Segoe UI', Arial, sans-serif; color: #0c1c42; }
@@ -131,7 +131,7 @@
       <input type="text" id="searchInput" placeholder="Nombre, categoría o dirección…">
       <button class="btn" id="btnSearch">Buscar</button>
     </div>
-    <p class="search-hint">Primero se muestra lo que ya está en WebImpulsa, después resultados de Google cerca de la zona visible del mapa.</p>
+    <p class="search-hint">Primero se muestra lo que ya está en CreaGanaWeb, después resultados de Google cerca de la zona visible del mapa.</p>
 
     <div id="searchResults"></div>
 
@@ -409,7 +409,7 @@ function categoryLabel(sectorId){
 function renderExistingCard(p){
   var scoreTag = p.current_score != null ? '<span class="exists-badge" style="background:'+p.color+'">'+p.current_score+'/100</span>' : '';
   return '<div class="result-card" data-existing-id="'+p.prospect_id+'">'+
-    '<span class="cat">Ya en WebImpulsa</span><span class="exists-badge">Ya existe</span>'+scoreTag+
+    '<span class="cat">Ya en CreaGanaWeb</span><span class="exists-badge">Ya existe</span>'+scoreTag+
     '<div class="name" style="margin-top:6px">'+p.name+'</div>'+
     '<div class="addr">'+(p.address||'')+' · '+p.sector_label+'</div>'+
     '<div class="actions"><a class="btn sm secondary" href="'+p.detail_url+'">Ver ficha</a></div>'+
@@ -420,7 +420,7 @@ function renderGoogleCard(r, idx){
   var existsTag = r.existing_prospect_id ? '<span class="exists-badge">Ya existe</span>' : '';
   var addBtn = r.existing_prospect_id
     ? '<a class="btn sm secondary" href="/panel/prospeccion/'+r.existing_prospect_id+'/">Ver ficha existente</a>'
-    : '<button type="button" class="btn sm" data-google-idx="'+idx+'">Añadir a WebImpulsa</button>';
+    : '<button type="button" class="btn sm" data-google-idx="'+idx+'">Añadir a CreaGanaWeb</button>';
   var gmapsBtn = r.google_maps_url ? '<a class="btn sm ghost" href="'+r.google_maps_url+'" target="_blank" rel="noopener">Abrir en Google Maps</a>' : '';
   return '<div class="result-card">'+
     '<span class="cat">'+categoryLabel(r.category)+'</span>'+existsTag+
@@ -451,7 +451,7 @@ function plotSearchMarkers(existing, googleResults){
       label: scoreLabel(p.current_score) || undefined,
     });
     var info = new window.google.maps.InfoWindow({content:
-      '<div style="font-family:inherit"><strong>'+p.name+'</strong><br>Ya en WebImpulsa'+
+      '<div style="font-family:inherit"><strong>'+p.name+'</strong><br>Ya en CreaGanaWeb'+
       (p.current_score != null ? ' · puntuación '+p.current_score : '')+'<br>'+
       '<a href="'+p.detail_url+'">📇 Ver ficha</a></div>'
     });

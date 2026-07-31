@@ -1,4 +1,4 @@
-"""WhatsApp template registry and sending adapter for WebImpulsa CRM.
+"""WhatsApp template registry and sending adapter for CreaGanaWeb CRM.
 
 Templates must be approved in Meta Business Manager before use.
 The adapter currently stubs all sends; wire up real credentials by:

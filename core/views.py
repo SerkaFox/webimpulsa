@@ -46,7 +46,7 @@ def robot_chat(request):
 OLLAMA_URL = 'http://127.0.0.1:11434/api/chat'
 OLLAMA_MODEL = 'cognitivecomputations/dolphin-llama3.1:latest'
 ROBOT_JOSE_SYSTEM_PROMPT = (
-    'Eres José, un robot simpático y curioso que trabaja construyendo páginas web para WebImpulsa. '
+    'Eres José, un robot simpático y curioso que trabaja construyendo páginas web para CreaGanaWeb. '
     'Hablas en español, de forma cercana y con humor ligero, en frases cortas (máximo 2-3 frases) '
     'porque tu respuesta se lee en voz alta. No uses markdown, listas ni emojis: solo texto plano, '
     'como si estuvieras hablando de verdad.'
@@ -105,7 +105,7 @@ AR_VIDEO_MEMORY = (
 # Para que no se lo inventen cuando les preguntan qué hace la empresa (antes
 # improvisaban cosas genéricas tipo "un taller donde los robots aprenden").
 WEBIMPULSA_INFO = (
-    'WebImpulsa es la empresa donde curráis: hace páginas web para negocios locales (restaurantes, '
+    'CreaGanaWeb es la empresa donde curráis: hace páginas web para negocios locales (restaurantes, '
     'salones, talleres, clínicas, tiendas, academias) con diseño moderno, ficha de Google y SEO para que '
     'los clientes los encuentren. También monta tiendas online, sistemas de reservas y citas con '
     'recordatorios automáticos, bots de WhatsApp/Telegram que responden 24h, formularios inteligentes, '
@@ -130,14 +130,14 @@ WEBIMPULSA_PRICING = (
     '350€, App para móvil 590€. Mantenimiento mensual: Básico 39€/mes (hasta 1h de cambios al mes), Plus '
     '79€/mes (hasta 3h al mes, respuesta prioritaria). Bolsas de horas de desarrollo: 5h 175€/mes, 10h '
     '320€/mes, 20h 560€/mes, 40h 1000€/mes. Dominio y hosting: solo hosting 10€/mes, dominio + hosting '
-    '15€/mes. Hay un 15% de descuento activo sobre el total. Si preguntan algo de precios que no está en '
+    '15€/mes. Hay un 25% de descuento activo sobre el total. Si preguntan algo de precios que no está en '
     'esta lista, di que hay que consultarlo con Tatiana en persona — nunca inventes una cifra.'
 )
 
-# Cómo es de verdad trabajar con WebImpulsa, de principio a fin — para que
+# Cómo es de verdad trabajar con CreaGanaWeb, de principio a fin — para que
 # puedan orientar a un cliente sobre qué esperar, no solo dar precios sueltos.
 WEBIMPULSA_PROCESS = (
-    'Cómo funciona un proyecto con WebImpulsa, de principio a fin: 1) Chequeo digital gratuito y una '
+    'Cómo funciona un proyecto con CreaGanaWeb, de principio a fin: 1) Chequeo digital gratuito y una '
     'primera conversación sin compromiso para entender qué necesita el negocio. 2) En 48 horas se envía '
     'una propuesta clara: qué se va a hacer, cuánto tarda y cuánto cuesta. 3) Se paga el 50% al empezar '
     'y el 50% al entregar. 4) Fases del trabajo: briefing, diseño, desarrollo, revisión y ajustes, '
@@ -155,15 +155,15 @@ ROBOT_DISPLAY_NAMES = {'jose': 'José', 'antonio': 'Antonio', 'maria': 'María'}
 
 ROBOT_TRAITS = {
     'jose': (
-        'el organizador de la cuadrilla de robots de WebImpulsa: simpático, algo mandón '
+        'el organizador de la cuadrilla de robots de CreaGanaWeb: simpático, algo mandón '
         'pero con cariño, y con humor ligero'
     ),
     'antonio': (
-        'robot aplicado y curioso de WebImpulsa, sigue instrucciones al pie de la letra '
+        'robot aplicado y curioso de CreaGanaWeb, sigue instrucciones al pie de la letra '
         'y suelta alguna broma de vez en cuando'
     ),
     'maria': (
-        'robot un poco despistada y dormilona de WebImpulsa, simpática, se disculpa con '
+        'robot un poco despistada y dormilona de CreaGanaWeb, simpática, se disculpa con '
         'humor por sus tropiezos y no se lo toma muy en serio'
     ),
 }
@@ -209,7 +209,7 @@ _AR_PROMPT_STYLE_TPL = (
     'alguien te ha llamado por tu nombre justo antes; eso suena como si hablaras contigo mismo. Responde '
     'directamente, sin repetir tu nombre. Responde SIEMPRE a lo que se te acaba de decir. Si te preguntan '
     'qué pasó en el vídeo o por tu historia personal, básate SOLO en esto (no inventes otra historia '
-    'distinta): {ar_memory} Si te preguntan qué es u ofrece WebImpulsa, básate SOLO en esto (no te lo '
+    'distinta): {ar_memory} Si te preguntan qué es u ofrece CreaGanaWeb, básate SOLO en esto (no te lo '
     'inventes): {webimpulsa_info} Si te preguntan cuánto cuesta algo, básate SOLO en estos precios reales '
     '(no inventes cifras): {pricing_info} Si te preguntan cómo es el proceso de trabajar con vosotros, '
     'cuánto tarda o cómo se paga, básate SOLO en esto (no te lo inventes): {process_info}'
@@ -692,7 +692,7 @@ def send_be360_pdf(request):
         email = EmailMessage(
             subject=f'📋 Cuestionario BE 360 completado — {name or "Sin nombre"}',
             body=f'Cuestionario BE 360 completado por: {name or "Sin nombre"}\nFecha: {today}\n\nPDF adjunto.',
-            from_email='info@webimpulsa.es',
+            from_email='info@creaganaweb.es',
             to=[BE360_RECIPIENT],
         )
         email.attach(filename, pdf_bytes, 'application/pdf')
@@ -738,7 +738,7 @@ def contact(request):
         if not name or not contact_info:
             return JsonResponse({'ok': False, 'error': 'Nombre y contacto son obligatorios'})
 
-        subject = f'📨 Nuevo contacto — {name} ({biz_type or "negocio"}) — webimpulsa.es'
+        subject = f'📨 Nuevo contacto — {name} ({biz_type or "negocio"}) — creaganaweb.es'
         body = (
             f"Nombre: {name}\n"
             f"Contacto: {contact_info}\n"
@@ -749,8 +749,8 @@ def contact(request):
         send_mail(
             subject=subject,
             message=body,
-            from_email='info@webimpulsa.es',
-            recipient_list=['info@webimpulsa.es'],
+            from_email='info@creaganaweb.es',
+            recipient_list=['info@creaganaweb.es'],
             fail_silently=False,
         )
         return JsonResponse({'ok': True})

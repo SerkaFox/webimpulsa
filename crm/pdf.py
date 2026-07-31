@@ -31,12 +31,12 @@ def generate_proposal_pdf(proposal) -> bytes | None:
         ctx = {
             'proposal':    proposal,
             'company': {
-                'trade_name': c.get('trade_name', 'WebImpulsa'),
+                'trade_name': c.get('trade_name', 'CreaGanaWeb'),
                 'legal_name': c.get('legal_name', ''),
                 'nif':        c.get('nif', ''),
-                'email':      c.get('email', 'info@webimpulsa.es'),
+                'email':      c.get('email', 'info@creaganaweb.es'),
                 'phone':      c.get('phone', '+34 613 708 322'),
-                'website':    c.get('website', 'https://webimpulsa.es'),
+                'website':    c.get('website', 'https://creaganaweb.es'),
                 'address':    c.get('address', ''),
                 'city':       c.get('city', ''),
             },
@@ -58,7 +58,7 @@ def generate_proposal_pdf(proposal) -> bytes | None:
             ]
 
         html_str = render_to_string('crm/proposal_pdf.html', ctx)
-        pdf_bytes = HTML(string=html_str, base_url='https://webimpulsa.es').write_pdf()
+        pdf_bytes = HTML(string=html_str, base_url='https://creaganaweb.es').write_pdf()
         logger.info('PDF generated: proposal %s (%d bytes)', proposal.number, len(pdf_bytes))
         return pdf_bytes
 

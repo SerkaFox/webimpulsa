@@ -66,7 +66,7 @@ def _crm_auth(view):
 # ── public API ────────────────────────────────────────────────────────────────
 
 def _mailcow_connection():
-    """Direct connection to local Mailcow — for internal @webimpulsa.es delivery."""
+    """Direct connection to local Mailcow — for internal @creaganaweb.es delivery."""
     return get_connection(
         backend='django.core.mail.backends.smtp.EmailBackend',
         host='127.0.0.1', port=25, use_tls=False,
@@ -98,7 +98,7 @@ def _send_lead_emails(lead) -> None:
     # ── 1. Internal notification to Tatiana via Mailcow ───────────────────────
     subject_tanya = f'📋 Nueva solicitud — {lead.name} | {pkg} | {price_s}'
     body_tanya = (
-        f"Nueva solicitud en webimpulsa.es\n"
+        f"Nueva solicitud en creaganaweb.es\n"
         f"{'─'*40}\n"
         f"Nombre:   {lead.name}\n"
         f"Contacto: {contact}\n"
@@ -106,11 +106,11 @@ def _send_lead_emails(lead) -> None:
         f"{'─'*40}\n"
         f"Proyecto:    {pkg}\n"
         f"Presupuesto: {price_s}\n\n"
-        f"→ CRM: https://webimpulsa.es/wi/crm/leads/{lead.pk}/\n"
+        f"→ CRM: https://creaganaweb.es/wi/crm/leads/{lead.pk}/\n"
     )
     try:
-        send_mail(subject_tanya, body_tanya, 'info@webimpulsa.es',
-                  ['info@webimpulsa.es'], connection=_mailcow_connection())
+        send_mail(subject_tanya, body_tanya, 'info@creaganaweb.es',
+                  ['info@creaganaweb.es'], connection=_mailcow_connection())
     except Exception as exc:
         logger.error('Lead notify email failed #%d: %s', lead.pk, exc)
 
@@ -125,7 +125,7 @@ def _send_lead_emails(lead) -> None:
     except Exception as exc:
         logger.error('Proposal/portal setup failed #%d: %s', lead.pk, exc)
         proposal  = None
-        portal_url = 'https://webimpulsa.es'
+        portal_url = 'https://creaganaweb.es'
 
     # ── 3. Generate attachments ───────────────────────────────────────────────
     pdf_bytes  = generate_proposal_pdf(proposal) if proposal else None
@@ -144,7 +144,7 @@ def _send_lead_emails(lead) -> None:
         f"Tu propuesta está lista — la encontrarás adjunta (PDF y Word).\n"
         f"También puedes revisarla y aceptarla online: {portal_url}\n\n"
         f"Proyecto: {pkg}\nPresupuesto: {price_s}\n\n"
-        f"info@webimpulsa.es | +34 613 708 322 | webimpulsa.es\n"
+        f"info@creaganaweb.es | +34 613 708 322 | creaganaweb.es\n"
     )
     html_client = f"""<!DOCTYPE html>
 <html lang="es">
@@ -156,19 +156,19 @@ def _send_lead_emails(lead) -> None:
 
   <!-- Logo bar -->
   <tr>
-    <td style="padding:20px 32px 16px;border-bottom:3px solid #1760d6">
+    <td style="padding:20px 32px 16px;border-bottom:3px solid #5725F4">
       <table width="100%" cellpadding="0" cellspacing="0"><tr>
-        <td><img src="https://webimpulsa.es/static/wi/img/logo.webp" alt="Web-Impulsa" height="36" style="display:block"></td>
-        <td align="right" style="font-size:12px;color:#5a6d8c"><a href="https://webimpulsa.es" style="color:#1760d6;text-decoration:none;font-weight:600">webimpulsa.es</a></td>
+        <td><img src="https://creaganaweb.es/static/wi/img/logo.webp" alt="CreaGanaWeb" height="36" style="display:block"></td>
+        <td align="right" style="font-size:12px;color:#5a6d8c"><a href="https://creaganaweb.es" style="color:#5725F4;text-decoration:none;font-weight:600">creaganaweb.es</a></td>
       </tr></table>
     </td>
   </tr>
 
   <!-- Greeting -->
   <tr><td style="padding:26px 32px 0">
-    <p style="font-size:20px;font-weight:800;color:#0c1c42;margin:0 0 8px">Hola {first} 👋</p>
+    <p style="font-size:20px;font-weight:800;color:#081747;margin:0 0 8px">Hola {first} 👋</p>
     <p style="font-size:14px;color:#5a6d8c;line-height:1.65;margin:0 0 20px">
-      Tu propuesta personalizada está lista. Tienes <strong style="color:#0c1c42">dos opciones</strong>:
+      Tu propuesta personalizada está lista. Tienes <strong style="color:#081747">dos opciones</strong>:
       revisarla online o descargar los archivos adjuntos (PDF y Word).
     </p>
   </td></tr>
@@ -176,7 +176,7 @@ def _send_lead_emails(lead) -> None:
   <!-- CTA portal -->
   <tr><td style="padding:0 32px 20px">
     <a href="{portal_url}"
-       style="display:block;background:#1760d6;color:#ffffff;text-decoration:none;
+       style="display:block;background:#5725F4;color:#ffffff;text-decoration:none;
               text-align:center;padding:14px 24px;border-radius:8px;
               font-size:15px;font-weight:800;letter-spacing:.01em">
       Ver y aceptar propuesta online →
@@ -202,12 +202,12 @@ def _send_lead_emails(lead) -> None:
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td width="48%" style="background:#f5f9ff;border:1px solid #d0e1fa;border-radius:8px;padding:12px 14px">
-          <p style="margin:0 0 3px;font-size:12px;font-weight:700;color:#0c1c42">📄 PDF</p>
+          <p style="margin:0 0 3px;font-size:12px;font-weight:700;color:#081747">📄 PDF</p>
           <p style="margin:0;font-size:11px;color:#5a6d8c">Para imprimir o firmar a mano</p>
         </td>
         <td width="4%"></td>
         <td width="48%" style="background:#f5f9ff;border:1px solid #d0e1fa;border-radius:8px;padding:12px 14px">
-          <p style="margin:0 0 3px;font-size:12px;font-weight:700;color:#0c1c42">📝 Word</p>
+          <p style="margin:0 0 3px;font-size:12px;font-weight:700;color:#081747">📝 Word</p>
           <p style="margin:0;font-size:11px;color:#5a6d8c">Para editar tus datos (NIF, dirección)</p>
         </td>
       </tr>
@@ -217,17 +217,17 @@ def _send_lead_emails(lead) -> None:
   <!-- Summary box -->
   <tr><td style="padding:0 32px 26px">
     <table width="100%" cellpadding="0" cellspacing="0"
-           style="background:#f5f9ff;border-left:4px solid #1760d6;border-radius:0 8px 8px 0;padding:16px 18px">
+           style="background:#f5f9ff;border-left:4px solid #5725F4;border-radius:0 8px 8px 0;padding:16px 18px">
       <tr><td>
-        <p style="font-size:10px;font-weight:700;color:#1760d6;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">Tu proyecto</p>
-        <table width="100%" cellpadding="0" cellspacing="0" style="color:#0c1c42">
+        <p style="font-size:10px;font-weight:700;color:#5725F4;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">Tu proyecto</p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="color:#081747">
           <tr>
             <td style="padding:4px 0;color:#5a6d8c;font-size:13px;width:44%">Paquete</td>
             <td style="padding:4px 0;font-weight:700;font-size:13px">{pkg}</td>
           </tr>
           <tr>
             <td style="padding:2px 0;color:#5a6d8c;font-size:13px">Presupuesto</td>
-            <td style="padding:2px 0;font-weight:700;font-size:15px;color:#1760d6">{price_s} + IVA</td>
+            <td style="padding:2px 0;font-weight:700;font-size:15px;color:#5725F4">{price_s} + IVA</td>
           </tr>
           {biz_row}
         </table>
@@ -239,18 +239,18 @@ def _send_lead_emails(lead) -> None:
   <tr><td style="padding:16px 32px;background:#f8fafc;border-top:1px solid #e2e8f0">
     <table width="100%" cellpadding="0" cellspacing="0"><tr>
       <td>
-        <p style="margin:0 0 2px;font-size:13px;font-weight:700;color:#0c1c42">Equipo Web-Impulsa</p>
+        <p style="margin:0 0 2px;font-size:13px;font-weight:700;color:#081747">Equipo CreaGanaWeb</p>
         <p style="margin:0;font-size:12px;color:#5a6d8c">
-          <a href="mailto:info@webimpulsa.es" style="color:#1760d6;text-decoration:none">info@webimpulsa.es</a>
+          <a href="mailto:info@creaganaweb.es" style="color:#5725F4;text-decoration:none">info@creaganaweb.es</a>
           &nbsp;·&nbsp;
-          <a href="https://wa.me/34613708322" style="color:#1760d6;text-decoration:none">+34 613 708 322</a>
+          <a href="https://wa.me/34613708322" style="color:#5725F4;text-decoration:none">+34 613 708 322</a>
         </p>
       </td>
       <td align="right">
-        <a href="{portal_url}" style="display:inline-block;background:#edf4ff;color:#1760d6;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;text-decoration:none">Portal →</a>
+        <a href="{portal_url}" style="display:inline-block;background:#edf4ff;color:#5725F4;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;text-decoration:none">Portal →</a>
       </td>
     </tr></table>
-    <p style="margin:10px 0 0;font-size:11px;color:#cbd5e1;text-align:center">© 2026 Web-Impulsa · España</p>
+    <p style="margin:10px 0 0;font-size:11px;color:#cbd5e1;text-align:center">© 2026 CreaGanaWeb · España</p>
   </td></tr>
 
 </table>
@@ -261,19 +261,19 @@ def _send_lead_emails(lead) -> None:
 
     # ── 5. Send email with attachments ────────────────────────────────────────
     try:
-        subject_client = f'Tu propuesta Web-Impulsa — {pkg}'
+        subject_client = f'Tu propuesta CreaGanaWeb — {pkg}'
         msg = EmailMultiAlternatives(
             subject=subject_client,
             body=plain_text,
-            from_email='info@webimpulsa.es',
+            from_email='info@creaganaweb.es',
             to=[lead.email],
             connection=_brevo_connection(),
         )
         msg.attach_alternative(html_client, 'text/html')
         if pdf_bytes:
-            msg.attach(f'Propuesta_Web-Impulsa_{safe_name}.pdf', pdf_bytes, 'application/pdf')
+            msg.attach(f'Propuesta_CreaGanaWeb_{safe_name}.pdf', pdf_bytes, 'application/pdf')
         if docx_bytes:
-            msg.attach(f'Propuesta_Web-Impulsa_{safe_name}.docx', docx_bytes,
+            msg.attach(f'Propuesta_CreaGanaWeb_{safe_name}.docx', docx_bytes,
                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
         msg.send()
         logger.info('Client email sent to %s (pdf=%s docx=%s portal=%s)',

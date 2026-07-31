@@ -1,0 +1,45 @@
+/* CreaGanaWeb — shared brand tokens.
+   One source of truth for color across the site, replacing the old per-page
+   :root blocks (which had drifted into two competing "brand blues"). */
+:root {
+  --wi-navy:     #081747;
+  --wi-violet:   #5725F4;
+  --wi-magenta:  #B52BC3;
+  --wi-coral:    #FF6657;
+  --wi-gradient: linear-gradient(90deg, #5725F4, #B52BC3, #FF6657);
+
+  --wi-primary: #5725F4;
+  --wi-primary-2: #B52BC3;
+  --wi-accent:  #FF6657;
+  --wi-text:    #081747;
+  --wi-muted:   #5a6d8c;
+  --wi-green:   #009e73;
+
+  --wi-bg:      #f6f5fb;
+  --wi-surface: #ffffff;
+  --wi-card:    #ffffff;
+  --wi-border:  rgba(8,23,71,.12);
+  --wi-line:    rgba(8,23,71,.08);
+  --wi-shadow:       0 2px 20px rgba(87,37,244,.10);
+  --wi-shadow-hover: 0 8px 40px rgba(87,37,244,.20);
+}
+
+.wi-gradient-text {
+  background: var(--wi-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.wi-gradient-bg { background: var(--wi-gradient); }
+
+/* Small light card behind the logo when it sits on a dark surface — the new
+   logo's wordmark is navy, so it disappears on dark backgrounds unlike the
+   old flat-blue one (which could just be CSS-inverted). */
+.wi-logo-card {
+  display: inline-flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 10px;
+  padding: 8px 14px;
+}

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>{% if company_name %}Chequeo digital de {{ company_name }}{% else %}Tu chequeo digital{% endif %} | WebImpulsa</title>
+<title>{% if company_name %}Chequeo digital de {{ company_name }}{% else %}Tu chequeo digital{% endif %} | CreaGanaWeb</title>
 <style>
 :root{
   --q-bg:#edf4ff; --q-primary:#1760d6; --q-accent:#00a8cc; --q-green:#009e73; --q-amber:#c98a11;
@@ -69,7 +69,7 @@ h1{font-size:1.4rem;margin:0 0 1.2rem}
     <div class="reco">
       <h3>🧮 Recomendado para tu negocio</h3>
       {% if recommendations.needs_core_site %}
-        <div class="reco-core">Aún no tienes una página o canal propio que funcione bien en el móvil — es el servicio base de WebImpulsa.</div>
+        <div class="reco-core">Aún no tienes una página o canal propio que funcione bien en el móvil — es el servicio base de CreaGanaWeb.</div>
       {% endif %}
       {% if recommendations.items %}
         <ul>{% for it in recommendations.items %}<li><span>{{ it.label }}</span><span>{{ it.price }} €</span></li>{% endfor %}</ul>
@@ -80,7 +80,7 @@ h1{font-size:1.4rem;margin:0 0 1.2rem}
 
     <a class="pdf-link" href="{% url 'chequeo_audit_report_pdf' audit.report_token %}" target="_blank" rel="noopener">📄 Descargar en PDF</a>
   </div>
-  <p class="disclaimer">Informe orientativo generado por WebImpulsa — no sustituye una auditoría técnica completa.</p>
+  <p class="disclaimer">Informe orientativo generado por CreaGanaWeb — no sustituye una auditoría técnica completa.</p>
 </div>
 </body>
 </html>

@@ -3,14 +3,14 @@
 
 var VAT_RATE=.21;
 
-// Editar aqui los datos legales y fiscales reales de WebImpulsa cuando esten confirmados.
+// Editar aqui los datos legales y fiscales reales de CreaGanaWeb cuando esten confirmados.
 var WEBIMPULSA_COMPANY={
-  tradeName:'WebImpulsa',
+  tradeName:'CreaGanaWeb',
   legalName:'Titular / razon social pendiente',
   taxId:'NIF/CIF/NIE pendiente',
-  email:'info@webimpulsa.es',
+  email:'info@creaganaweb.es',
   phone:'WhatsApp pendiente',
-  website:'https://webimpulsa.es',
+  website:'https://creaganaweb.es',
   address:'Direccion fiscal pendiente',
   logoUrl:'/static/wi/img/logo.webp'
 };
@@ -44,7 +44,7 @@ var CONDITIONS=[
   'Los retrasos en la entrega de materiales por parte del cliente pueden modificar los plazos.',
   'Se incluyen ajustes razonables durante la fase de revision. Cambios sustanciales o nuevas funcionalidades fuera del alcance se presupuestaran aparte.',
   'Dominio, hosting, licencias, pasarelas de pago, plugins premium, fotografias, traducciones y servicios de terceros no estan incluidos salvo indicacion expresa.',
-  'WebImpulsa no se responsabiliza de interrupciones o cambios de condiciones de servicios externos.',
+  'CreaGanaWeb no se responsabiliza de interrupciones o cambios de condiciones de servicios externos.',
   'La entrega final se realizara una vez abonado el importe pendiente.',
   'El cliente es responsable de la veracidad del contenido facilitado y de contar con derechos de uso sobre imagenes, marcas y materiales enviados.',
   'Los textos legales definitivos, politica de privacidad, cookies, aviso legal y condiciones de contratacion deben ser revisados por un profesional legal si el proyecto lo requiere.',
@@ -99,10 +99,10 @@ function renderProposal(data){
   var clientName=data.client.name||'Cliente pendiente';
   var rows=data.pricing.items.map(function(item){return '<tr><td>'+escapeHtml(item.concept)+'</td><td class="num">'+item.qty+'</td><td class="num">'+eur(item.unit)+'</td><td class="num">'+eur(item.subtotal)+'</td></tr>';}).join('');
   return '<article class="proposal-a4"><div class="proposal-doc">'+
-  '<header class="proposal-hero"><div><img class="proposal-logo" src="'+escapeHtml(data.company.logoUrl)+'" alt="WebImpulsa"><div class="proposal-kicker">Presupuesto / Propuesta comercial</div><h1>'+escapeHtml(data.project.name||'Proyecto web profesional')+'</h1><div class="proposal-number">'+escapeHtml(data.budgetNumber)+'</div></div><div class="proposal-hero-card"><div class="proposal-meta-row"><span>Fecha</span><strong>'+escapeHtml(formatDate(data.issueDate))+'</strong></div><div class="proposal-meta-row"><span>Validez</span><strong>'+escapeHtml(data.validUntilText)+'</strong></div><div class="proposal-meta-row"><span>Tipo</span><strong>'+escapeHtml(data.project.type)+'</strong></div><div class="proposal-meta-row"><span>Total IVA incl.</span><strong>'+eur(data.pricing.totalWithVat)+'</strong></div></div></header>'+
-  '<section class="proposal-two-cols"><div class="proposal-party"><h2>WebImpulsa</h2><p><strong>'+escapeHtml(data.company.tradeName)+'</strong></p><p>'+textOrDash(data.company.legalName)+'</p><p>NIF/CIF/NIE: '+textOrDash(data.company.taxId)+'</p><p>Email: '+textOrDash(data.company.email)+'</p><p>Tel./WhatsApp: '+textOrDash(data.company.phone)+'</p><p>Web: '+textOrDash(data.company.website)+'</p><p>Direccion: '+textOrDash(data.company.address)+'</p></div>'+
+  '<header class="proposal-hero"><div><img class="proposal-logo" src="'+escapeHtml(data.company.logoUrl)+'" alt="CreaGanaWeb"><div class="proposal-kicker">Presupuesto / Propuesta comercial</div><h1>'+escapeHtml(data.project.name||'Proyecto web profesional')+'</h1><div class="proposal-number">'+escapeHtml(data.budgetNumber)+'</div></div><div class="proposal-hero-card"><div class="proposal-meta-row"><span>Fecha</span><strong>'+escapeHtml(formatDate(data.issueDate))+'</strong></div><div class="proposal-meta-row"><span>Validez</span><strong>'+escapeHtml(data.validUntilText)+'</strong></div><div class="proposal-meta-row"><span>Tipo</span><strong>'+escapeHtml(data.project.type)+'</strong></div><div class="proposal-meta-row"><span>Total IVA incl.</span><strong>'+eur(data.pricing.totalWithVat)+'</strong></div></div></header>'+
+  '<section class="proposal-two-cols"><div class="proposal-party"><h2>CreaGanaWeb</h2><p><strong>'+escapeHtml(data.company.tradeName)+'</strong></p><p>'+textOrDash(data.company.legalName)+'</p><p>NIF/CIF/NIE: '+textOrDash(data.company.taxId)+'</p><p>Email: '+textOrDash(data.company.email)+'</p><p>Tel./WhatsApp: '+textOrDash(data.company.phone)+'</p><p>Web: '+textOrDash(data.company.website)+'</p><p>Direccion: '+textOrDash(data.company.address)+'</p></div>'+
   '<div class="proposal-party"><h2>Cliente</h2><p><strong>'+escapeHtml(clientName)+'</strong></p><p>NIF/CIF/NIE: '+textOrDash(data.client.taxId)+'</p><p>Contacto: '+textOrDash(data.client.contactPerson)+'</p><p>Email: '+textOrDash(data.client.email)+'</p><p>Telefono: '+textOrDash(data.client.phone)+'</p><p>Direccion: '+textOrDash(data.client.address)+'</p><p>Ciudad/provincia: '+textOrDash(data.client.city)+'</p><p>Tipo de negocio: '+textOrDash(data.client.businessType)+'</p></div></section>'+
-  '<section class="proposal-section"><h2>Resumen ejecutivo</h2><p>WebImpulsa presenta esta propuesta para el diseno y desarrollo de una solucion web orientada a mejorar la presencia digital, captar clientes y facilitar la gestion del negocio.</p>'+(data.project.goal?'<p><strong>Objetivo principal:</strong> '+nl2br(data.project.goal)+'</p>':'')+(data.project.businessDescription?'<p><strong>Descripcion del negocio:</strong> '+nl2br(data.project.businessDescription)+'</p>':'')+'</section>'+
+  '<section class="proposal-section"><h2>Resumen ejecutivo</h2><p>CreaGanaWeb presenta esta propuesta para el diseno y desarrollo de una solucion web orientada a mejorar la presencia digital, captar clientes y facilitar la gestion del negocio.</p>'+(data.project.goal?'<p><strong>Objetivo principal:</strong> '+nl2br(data.project.goal)+'</p>':'')+(data.project.businessDescription?'<p><strong>Descripcion del negocio:</strong> '+nl2br(data.project.businessDescription)+'</p>':'')+'</section>'+
   '<section class="proposal-section"><h2>Alcance del proyecto</h2>'+list(data.scope,'proposal-grid-list')+(data.project.selectedFeatures?'<p><strong>Funcionalidades indicadas por el cliente:</strong><br>'+nl2br(data.project.selectedFeatures)+'</p>':'')+'</section>'+
   '<section class="proposal-section"><h2>Fuera de alcance</h2>'+list(data.outOfScope,'proposal-grid-list')+'</section>'+
   '<section class="proposal-section"><h2>Fases de trabajo</h2>'+list(data.phases,'proposal-grid-list')+'</section>'+

@@ -27,7 +27,7 @@ def _js_round(x: float) -> int:
     """Round the same way JS Math.round does (half-up, not banker's rounding)."""
     return math.floor(x + 0.5)
 
-_PORTAL_BASE_URL = os.getenv('WI_BASE_URL', 'https://webimpulsa.es')
+_PORTAL_BASE_URL = os.getenv('WI_BASE_URL', 'https://creaganaweb.es')
 
 # ── Lead creation ─────────────────────────────────────────────────────────────
 
@@ -408,12 +408,12 @@ def proposal_to_template_input(proposal) -> dict:
         'paymentMethod':       proposal.payment_method,
         'customPayment':       proposal.payment_custom,
         'company': {
-            'tradeName': c.get('trade_name', 'WebImpulsa'),
+            'tradeName': c.get('trade_name', 'CreaGanaWeb'),
             'legalName': c.get('legal_name', ''),
             'taxId':     c.get('nif', ''),
-            'email':     c.get('email', 'info@webimpulsa.es'),
+            'email':     c.get('email', 'info@creaganaweb.es'),
             'phone':     c.get('phone', ''),
-            'website':   c.get('website', 'https://webimpulsa.es'),
+            'website':   c.get('website', 'https://creaganaweb.es'),
             'address':   c.get('address', ''),
             'logoUrl':   c.get('logo_url', '/static/wi/img/logo.webp'),
         },

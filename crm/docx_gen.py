@@ -161,9 +161,9 @@ def generate_proposal_docx(proposal) -> bytes | None:
         rh.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
 
         # Left: company name
-        _cell_para(lh, c.get('trade_name', 'Web-Impulsa'),
+        _cell_para(lh, c.get('trade_name', 'CreaGanaWeb'),
                    bold=True, size_pt=22, color=_C_WHITE)
-        _add_cell_line(lh, c.get('website', 'webimpulsa.es'),
+        _add_cell_line(lh, c.get('website', 'creaganaweb.es'),
                        size_pt=9, color=(0xBF, 0xDB, 0xFE))
 
         # Right: proposal metadata
@@ -196,7 +196,7 @@ def generate_proposal_docx(proposal) -> bytes | None:
 
         # Emisor
         _cell_para(li, 'EMISOR', bold=True, size_pt=8, color=_C_BLUE)
-        _add_cell_line(li, c.get('trade_name', 'Web-Impulsa'), bold=True, size_pt=11, color=_C_DARK)
+        _add_cell_line(li, c.get('trade_name', 'CreaGanaWeb'), bold=True, size_pt=11, color=_C_DARK)
         if c.get('legal_name'): _add_cell_line(li, c['legal_name'], size_pt=10, color=_C_DARK)
         if c.get('nif'):        _add_cell_line(li, f"NIF/NIE: {c['nif']}", size_pt=10, color=_C_DARK)
         if c.get('address'):    _add_cell_line(li, c['address'], size_pt=10, color=_C_DARK)
@@ -410,8 +410,8 @@ def generate_proposal_docx(proposal) -> bytes | None:
         # FOOTER
         # ═══════════════════════════════════════════════════════════════════════
         foot_text = (
-            f"{c.get('trade_name','Web-Impulsa')} · {c.get('email','info@webimpulsa.es')}"
-            f" · {c.get('phone','')} · {c.get('website','webimpulsa.es')}"
+            f"{c.get('trade_name','CreaGanaWeb')} · {c.get('email','info@creaganaweb.es')}"
+            f" · {c.get('phone','')} · {c.get('website','creaganaweb.es')}"
             + (f" · NIF {c['nif']}" if c.get('nif') else '')
         )
         pf = doc.add_paragraph(foot_text)

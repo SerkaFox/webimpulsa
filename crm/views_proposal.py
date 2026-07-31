@@ -1,4 +1,4 @@
-"""Proposal views for WebImpulsa CRM — all protected by HTTP Basic Auth.
+"""Proposal views for CreaGanaWeb CRM — all protected by HTTP Basic Auth.
 
 URL scheme:
   GET   /wi/crm/<pk>/proposal/          create draft or open latest, redirect to editor
@@ -24,7 +24,7 @@ from .views import _crm_auth
 
 logger = logging.getLogger(__name__)
 
-_PORTAL_BASE_URL = __import__('os').getenv('WI_BASE_URL', 'https://webimpulsa.es')
+_PORTAL_BASE_URL = __import__('os').getenv('WI_BASE_URL', 'https://creaganaweb.es')
 
 
 def _safe_json(obj) -> str:

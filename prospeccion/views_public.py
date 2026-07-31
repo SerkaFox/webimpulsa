@@ -293,14 +293,14 @@ def _valid_phone(phone):
 
 def _report_message(audit, recommendations):
     lines = [
-        f'Hola, soy Tania de WebImpulsa 👋 Aquí tienes el resultado de tu chequeo digital: '
+        f'Hola, soy Tania de CreaGanaWeb 👋 Aquí tienes el resultado de tu chequeo digital: '
         f'{audit.score}/100 puntos activados.',
     ]
     if recommendations.get('needs_core_site'):
         lines.append('Todavía no tienes un sitio o canal propio que funcione bien en el móvil — es justo lo primero que te recomendamos.')
     for item in recommendations.get('items', [])[:3]:
         lines.append(f"- {item['label']} ({item['price']} €)")
-    lines.append(f'Puedes ver el informe completo aquí: https://webimpulsa.es/chequeo-digital/informe/{audit.report_token}/')
+    lines.append(f'Puedes ver el informe completo aquí: https://creaganaweb.es/chequeo-digital/informe/{audit.report_token}/')
     return '\n'.join(lines)
 
 

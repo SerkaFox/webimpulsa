@@ -3,12 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Habla con José — WebImpulsa</title>
+<title>Habla con José — CreaGanaWeb</title>
 <meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="/static/wi/img/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/wi/img/favicon-32.png">
 <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.5.0/dist/aframe-extras.min.js"></script>
 <style>
-  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: linear-gradient(160deg, #0c1c42 0%, #123066 100%); }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: linear-gradient(160deg, #081747 0%, #123066 100%); }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Helvetica Neue', Arial, sans-serif; }
 
   a-scene { position: fixed; inset: 0; z-index: 1; }
@@ -48,7 +50,7 @@
   }
   .mic-btn {
     width: 74px; height: 74px; border-radius: 50%; border: none; cursor: pointer;
-    background: linear-gradient(90deg, #1760d6, #17b0d6); color: #fff; font-size: 1.8rem;
+    background: linear-gradient(90deg, #5725F4, #17b0d6); color: #fff; font-size: 1.8rem;
     box-shadow: 0 10px 30px rgba(23, 96, 214, .45);
     transition: transform .15s ease, box-shadow .15s ease;
   }
@@ -83,7 +85,7 @@
     position: fixed; inset: 0; z-index: 10;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     text-align: center; padding: 24px; color: #fff;
-    background: linear-gradient(160deg, #0c1c42 0%, #123066 100%);
+    background: linear-gradient(160deg, #081747 0%, #123066 100%);
   }
   .intro-overlay.hidden { display: none; }
   .intro-overlay img.logo {
@@ -93,7 +95,7 @@
   .intro-overlay h2 { font-size: 1.2rem; margin: 0 0 10px; }
   .intro-overlay p { font-size: .92rem; line-height: 1.55; color: #cfe0ff; max-width: 340px; margin: 0 0 26px; }
   .btn-start {
-    background: linear-gradient(90deg, #1760d6, #17b0d6); color: #fff; border: none; border-radius: 999px;
+    background: linear-gradient(90deg, #5725F4, #17b0d6); color: #fff; border: none; border-radius: 999px;
     font-size: 1rem; font-weight: 700; padding: 14px 34px; box-shadow: 0 10px 30px rgba(23, 96, 214, .35);
   }
 </style>
@@ -101,9 +103,9 @@
 <body>
 
   <div class="intro-overlay" id="introOverlay">
-    <img class="logo" src="/static/wi/img/logo.webp" alt="WebImpulsa">
+    <img class="logo" src="/static/wi/img/logo.webp" alt="CreaGanaWeb">
     <h2>Habla con José 🤖</h2>
-    <p>José es un robot de WebImpulsa. Pulsa el botón, di algo y él te responderá en voz alta. Necesita permiso de micrófono.</p>
+    <p>José es un robot de CreaGanaWeb. Pulsa el botón, di algo y él te responderá en voz alta. Necesita permiso de micrófono.</p>
     <button class="btn-start" id="startBtn">Empezar</button>
   </div>
 

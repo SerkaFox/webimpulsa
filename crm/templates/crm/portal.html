@@ -4,12 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>Portal cliente — Web-Impulsa</title>
+  <title>Portal cliente — CreaGanaWeb</title>
   {% if step == 'portal' and proposal %}<link rel="stylesheet" href="/static/wi/css/proposal-print.css">{% endif %}
   {% if step == 'portal' %}
   <link rel="manifest" href="/p/{{ access.token }}/manifest.json">
+  <link rel="stylesheet" href="/static/wi/css/brand.css">
+  <link rel="icon" type="image/svg+xml" href="/static/wi/img/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/wi/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/wi/img/favicon-192.png">
   <link rel="apple-touch-icon" href="/static/wi/img/apple-icon.png">
-  <meta name="theme-color" content="#1760d6">
+  <meta name="theme-color" content="#5725F4">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Mi proyecto">
@@ -23,10 +27,10 @@
       color: #1e293b;
       min-height: 100vh;
       overflow-x: hidden;
-      background-color: #eef3ff;
+      background-color: #f6f5fb;
       background-image:
-        linear-gradient(180deg, rgba(238,243,255,.5) 0%, rgba(238,243,255,.65) 45%, rgba(238,243,255,.8) 100%),
-        url('/static/wi/img/bg-waves.webp');
+        linear-gradient(180deg, rgba(246,245,251,.55) 0%, rgba(246,245,251,.7) 45%, rgba(246,245,251,.85) 100%),
+        url('/static/wi/img/backgrounds/05-crm-customers.webp');
       background-size: cover;
       background-position: top center;
       background-repeat: no-repeat;
@@ -55,7 +59,7 @@
 
     /* ── header ── */
     .wi-header {
-      background: linear-gradient(135deg, rgba(23,96,214,.94) 0%, rgba(37,99,235,.94) 100%);
+      background: linear-gradient(135deg, rgba(87,37,244,.94) 0%, rgba(87,37,244,.94) 100%);
       backdrop-filter: blur(14px) saturate(160%);
       -webkit-backdrop-filter: blur(14px) saturate(160%);
       color: #fff;
@@ -64,7 +68,7 @@
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
-      box-shadow: 0 4px 24px rgba(23,96,214,.22);
+      box-shadow: 0 4px 24px rgba(87,37,244,.22);
       position: relative;
       z-index: 2;
     }
@@ -108,7 +112,7 @@
       border: 1px solid rgba(255,255,255,.65);
       border-radius: 16px;
       padding: 22px 24px;
-      box-shadow: 0 8px 30px rgba(37,99,235,.10), 0 1px 2px rgba(15,23,42,.04);
+      box-shadow: 0 8px 30px rgba(87,37,244,.10), 0 1px 2px rgba(15,23,42,.04);
       transition: transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s ease;
       animation: wiCardIn .5s cubic-bezier(.22,1,.36,1) both;
       transform-style: preserve-3d;
@@ -116,7 +120,7 @@
     }
     .wi-card:hover {
       transform: translateY(-3px);
-      box-shadow: 0 16px 40px rgba(37,99,235,.16), 0 2px 4px rgba(15,23,42,.06);
+      box-shadow: 0 16px 40px rgba(87,37,244,.16), 0 2px 4px rgba(15,23,42,.06);
     }
     .wi-card-title {
       font-size: .7rem;
@@ -135,7 +139,7 @@
       font-size: .8rem;
       font-weight: 800;
       background: #eff6ff;
-      color: #2563eb;
+      color: #5725F4;
       margin-bottom: 10px;
     }
     .status-badge.green  { background: #f0fdf4; color: #16a34a; }
@@ -160,7 +164,7 @@
 
     .next-step-box {
       background: #eff6ff;
-      border-left: 3px solid #2563eb;
+      border-left: 3px solid #5725F4;
       border-radius: 0 8px 8px 0;
       padding: 10px 14px;
       font-size: .86rem;
@@ -195,7 +199,7 @@
       margin-bottom: 12px;
     }
     .upload-area:hover, .upload-area.dragover {
-      border-color: #2563eb;
+      border-color: #5725F4;
       background: #eff6ff;
       transform: scale(1.01);
     }
@@ -217,7 +221,7 @@
     .file-icon { font-size: 1.3rem; flex-shrink: 0; }
     .file-name { font-weight: 600; flex: 1; min-width: 0; word-break: break-word; }
     .file-meta { color: #94a3b8; font-size: .74rem; white-space: nowrap; }
-    .file-dl { color: #2563eb; font-size: .78rem; text-decoration: none; white-space: nowrap; }
+    .file-dl { color: #5725F4; font-size: .78rem; text-decoration: none; white-space: nowrap; }
     .file-dl:hover { text-decoration: underline; }
 
     /* ── button ── */
@@ -231,7 +235,7 @@
     .btn-primary {
       display: block;
       width: 100%;
-      background: #2563eb;
+      background: #5725F4;
       color: #fff;
       border: none;
       border-radius: 10px;
@@ -242,8 +246,8 @@
       text-align: center;
       text-decoration: none;
     }
-    .btn-primary:hover { background: #1d4ed8; box-shadow: 0 8px 20px rgba(37,99,235,.35); transform: translateY(-1px); }
-    .btn-primary:active { transform: scale(.97); box-shadow: 0 3px 10px rgba(37,99,235,.3); }
+    .btn-primary:hover { background: #1d4ed8; box-shadow: 0 8px 20px rgba(87,37,244,.35); transform: translateY(-1px); }
+    .btn-primary:active { transform: scale(.97); box-shadow: 0 3px 10px rgba(87,37,244,.3); }
     .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; box-shadow: none; transform: none; }
 
     .btn-wa {
@@ -285,7 +289,7 @@
       outline: none;
       margin-bottom: 14px;
     }
-    .pin-input:focus { border-color: #2563eb; }
+    .pin-input:focus { border-color: #5725F4; }
     .pin-error { color: #dc2626; font-size: .82rem; margin-bottom: 12px; }
 
     /* ── invalid/expired ── */
@@ -307,7 +311,7 @@
     .proj-progress-fill {
       height: 100%;
       border-radius: 6px;
-      background: linear-gradient(90deg, #1760d6, #38bdf8, #1760d6);
+      background: linear-gradient(90deg, #5725F4, #38bdf8, #5725F4);
       background-size: 200% 100%;
       animation: wiProgressShimmer 2.6s linear infinite, wiProgressGrow 1s cubic-bezier(.22,1,.36,1) both;
     }
@@ -317,7 +321,7 @@
     /* ── upload progress ── */
     .upload-progress { margin-top: 10px; display: none; }
     .progress-bar { height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden; }
-    .progress-fill { height: 100%; background: #2563eb; transition: width .3s; width: 0; }
+    .progress-fill { height: 100%; background: #5725F4; transition: width .3s; width: 0; }
     .progress-label { font-size: .75rem; color: #64748b; margin-top: 4px; text-align: center; }
     .upload-result-ok { color: #16a34a; font-size: .82rem; margin-top: 8px; }
     .upload-result-err { color: #dc2626; font-size: .82rem; margin-top: 8px; }
@@ -443,7 +447,7 @@
     .wi-modal .lang-switcher .lang-btn {
       background: #eff6ff;
       border-color: #dbeafe;
-      color: #1760d6;
+      color: #5725F4;
     }
     .wi-modal .lang-switcher .lang-btn:hover { background: #dbeafe; }
 
@@ -465,12 +469,12 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       color: #5a6d8c;
-      box-shadow: 0 2px 8px rgba(37,99,235,.06);
+      box-shadow: 0 2px 8px rgba(87,37,244,.06);
     }
     .main-tab-btn.active {
-      background: #2563eb;
+      background: #5725F4;
       color: #fff;
-      box-shadow: 0 8px 20px rgba(37,99,235,.32);
+      box-shadow: 0 8px 20px rgba(87,37,244,.32);
     }
 
     /* ── "add to home screen" banner ── */
@@ -492,7 +496,7 @@
       color: #475569;
       line-height: 1.5;
     }
-    .pwa-banner-text strong { color: #0c1c42; font-size: .88rem; }
+    .pwa-banner-text strong { color: #081747; font-size: .88rem; }
     .pwa-banner-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
     .pwa-dismiss {
       border: none; background: none; color: #94a3b8; font-size: 1rem;
@@ -506,7 +510,7 @@
     /* ── chat widget ── */
     .chat-avatar {
       width: 48px; height: 48px; border-radius: 50%;
-      background: linear-gradient(135deg,#1760d6,#2563eb);
+      background: linear-gradient(135deg,#5725F4,#5725F4);
       color: #fff; font-size: 1.2rem; font-weight: 900;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
@@ -532,7 +536,7 @@
       resize: vertical; outline: none; box-sizing: border-box;
       margin-bottom: 8px;
     }
-    .chat-input:focus { border-color: #2563eb; }
+    .chat-input:focus { border-color: #5725F4; }
     .btn-tg {
       display: flex; align-items: center; justify-content: center; gap: 8px;
       background: #2aabee; color: #fff; border: none; border-radius: 10px;
@@ -551,7 +555,7 @@
 
 <div class="wi-header">
   <div style="background:#fff;border-radius:9px;padding:5px;display:flex;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,.15);flex-shrink:0">
-    <img src="/static/wi/img/apple-icon.png" alt="Web-Impulsa" height="24" style="display:block">
+    <img src="/static/wi/img/apple-icon.png" alt="CreaGanaWeb" height="24" style="display:block">
   </div>
   <div class="wi-header-right">
     {% if step == 'portal' and portal_mode == 'cabinet' %}
@@ -648,7 +652,7 @@
   <!-- Payment notification sent -->
   <div class="wi-card" style="text-align:center;padding:32px 24px">
     <div style="font-size:3rem;margin-bottom:12px">{% if card_ok %}✅{% else %}📨{% endif %}</div>
-    <div style="font-weight:900;font-size:1.1rem;color:#0c1c42;margin-bottom:8px"
+    <div style="font-weight:900;font-size:1.1rem;color:#081747;margin-bottom:8px"
          data-i18n="{% if card_ok %}pay.card_ok_title{% else %}pay.notify_ok_title{% endif %}">
       {% if card_ok %}¡Pago recibido, gracias!{% else %}¡Gracias por avisarnos!{% endif %}
     </div>
@@ -688,7 +692,7 @@
   <div class="wi-card">
     <div class="wi-card-title">{{ pay_label|default:"Primer pago" }}</div>
     <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px">
-      <span style="font-size:2rem;font-weight:900;color:#1760d6">{{ half }}€</span>
+      <span style="font-size:2rem;font-weight:900;color:#5725F4">{{ half }}€</span>
       <span style="font-size:.82rem;color:#94a3b8" data-i18n="pay.iva_included">IVA incluido</span>
     </div>
     {% if proposal %}
@@ -705,7 +709,7 @@
     <div style="display:flex;border-bottom:1px solid #e2e8f0">
       <button id="tabTransfer" onclick="showTab('transfer')"
               style="flex:1;border:none;background:#eff6ff;padding:13px;font-size:.86rem;
-                     font-weight:800;color:#1760d6;cursor:pointer;border-bottom:2px solid #1760d6">
+                     font-weight:800;color:#5725F4;cursor:pointer;border-bottom:2px solid #5725F4">
         🏦 <span data-i18n="pay.tab_transfer">Transferencia bancaria</span>
       </button>
       <button id="tabBizum" onclick="showTab('bizum')"
@@ -729,13 +733,13 @@
           <div>
             <div style="font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;
                         letter-spacing:.05em;margin-bottom:3px">IBAN</div>
-            <div style="font-size:.92rem;font-weight:800;color:#0c1c42;font-family:monospace;
+            <div style="font-size:.92rem;font-weight:800;color:#081747;font-family:monospace;
                         letter-spacing:.04em" id="val_iban">{{ iban }}</div>
           </div>
           <button onclick="copyVal('val_iban','btn_iban')" id="btn_iban"
                   style="border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;
                          padding:7px 14px;font-size:.78rem;font-weight:700;cursor:pointer;
-                         color:#1760d6;white-space:nowrap;flex-shrink:0" data-i18n="pay.copy_btn">
+                         color:#5725F4;white-space:nowrap;flex-shrink:0" data-i18n="pay.copy_btn">
             Copiar
           </button>
         </div>
@@ -744,19 +748,19 @@
           <div>
             <div style="font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;
                         letter-spacing:.05em;margin-bottom:3px" data-i18n="pay.concept_label">Concepto (importante)</div>
-            <div style="font-size:.88rem;font-weight:800;color:#0c1c42" id="val_concepto">
+            <div style="font-size:.88rem;font-weight:800;color:#081747" id="val_concepto">
               {{ concepto }}
             </div>
           </div>
           <button onclick="copyVal('val_concepto','btn_con')" id="btn_con"
                   style="border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;
                          padding:7px 14px;font-size:.78rem;font-weight:700;cursor:pointer;
-                         color:#1760d6;white-space:nowrap;flex-shrink:0" data-i18n="pay.copy_btn">
+                         color:#5725F4;white-space:nowrap;flex-shrink:0" data-i18n="pay.copy_btn">
             Copiar
           </button>
         </div>
         <div style="font-size:.76rem;color:#94a3b8;line-height:1.5;padding:4px 2px">
-          <span data-i18n="pay.exact_amount">Importe exacto:</span> <strong style="color:#0c1c42">{{ half }}€</strong>.
+          <span data-i18n="pay.exact_amount">Importe exacto:</span> <strong style="color:#081747">{{ half }}€</strong>.
           <span data-i18n="pay.include_concept">Incluye el concepto tal como aparece para poder identificar tu pago.</span>
         </div>
       </div>
@@ -776,13 +780,13 @@
           <div>
             <div style="font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;
                         letter-spacing:.05em;margin-bottom:3px" data-i18n="pay.bizum_phone_label">Teléfono Bizum</div>
-            <div style="font-size:1.1rem;font-weight:900;color:#0c1c42;font-family:monospace"
+            <div style="font-size:1.1rem;font-weight:900;color:#081747;font-family:monospace"
                  id="val_bizum">{{ bizum }}</div>
           </div>
           <button onclick="copyVal('val_bizum','btn_biz')" id="btn_biz"
                   style="border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;
                          padding:7px 14px;font-size:.78rem;font-weight:700;cursor:pointer;
-                         color:#1760d6;white-space:nowrap;flex-shrink:0" data-i18n="pay.copy_btn">
+                         color:#5725F4;white-space:nowrap;flex-shrink:0" data-i18n="pay.copy_btn">
             Copiar
           </button>
         </div>
@@ -791,20 +795,20 @@
           <div>
             <div style="font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;
                         letter-spacing:.05em;margin-bottom:3px" data-i18n="pay.concept_label2">Concepto</div>
-            <div style="font-size:.88rem;font-weight:800;color:#0c1c42" id="val_concepto_biz">
+            <div style="font-size:.88rem;font-weight:800;color:#081747" id="val_concepto_biz">
               {{ concepto }}
             </div>
           </div>
           <button onclick="copyVal('val_concepto_biz','btn_cbiz')" id="btn_cbiz"
                   style="border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;
                          padding:7px 14px;font-size:.78rem;font-weight:700;cursor:pointer;
-                         color:#1760d6;white-space:nowrap;flex-shrink:0" data-i18n="pay.copy_btn">
+                         color:#5725F4;white-space:nowrap;flex-shrink:0" data-i18n="pay.copy_btn">
             Copiar
           </button>
         </div>
         <div style="font-size:.76rem;color:#94a3b8;line-height:1.5;padding:4px 2px">
-          <span data-i18n="pay.exact_amount">Importe exacto:</span> <strong style="color:#0c1c42">{{ half }}€</strong>.
-          <span data-i18n="pay.holder_label2">Titular:</span> <strong style="color:#0c1c42">{{ holder }}</strong>.
+          <span data-i18n="pay.exact_amount">Importe exacto:</span> <strong style="color:#081747">{{ half }}€</strong>.
+          <span data-i18n="pay.holder_label2">Titular:</span> <strong style="color:#081747">{{ holder }}</strong>.
         </div>
       </div>
       <form method="post" action="/p/{{ access.token }}/pay/notify/" style="margin-top:16px">
@@ -880,8 +884,8 @@ function showTab(t) {
     if (panel) panel.style.display = key === t ? '' : 'none';
     if (btn) {
       btn.style.background = key === t ? '#eff6ff' : '#fff';
-      btn.style.color      = key === t ? '#1760d6' : '#5a6d8c';
-      btn.style.borderBottomColor = key === t ? '#1760d6' : 'transparent';
+      btn.style.color      = key === t ? '#5725F4' : '#5a6d8c';
+      btn.style.borderBottomColor = key === t ? '#5725F4' : 'transparent';
     }
   });
 }
@@ -892,7 +896,7 @@ function copyVal(id, btnId) {
     var orig = btn.textContent;
     btn.textContent = '✓ Copiado';
     btn.style.color = '#16a34a';
-    setTimeout(function(){ btn.textContent = orig; btn.style.color = '#1760d6'; }, 1800);
+    setTimeout(function(){ btn.textContent = orig; btn.style.color = '#5725F4'; }, 1800);
   });
 }
 </script>
@@ -917,7 +921,7 @@ function copyVal(id, btnId) {
         <div class="status-badge{% if lead.status == 'finalizado' %} green{% elif lead.status == 'perdido' %} gray{% endif %}" style="margin-bottom:0" data-i18n="status.{{ lead.status }}">
           {{ status_label }}
         </div>
-        <div style="font-weight:900;font-size:1rem;color:#0c1c42" {% if lead.package %}data-i18n="pkg.{{ lead.package|slugify }}"{% endif %}>{{ lead.package|default:"Proyecto Web-Impulsa" }}</div>
+        <div style="font-weight:900;font-size:1rem;color:#081747" {% if lead.package %}data-i18n="pkg.{{ lead.package|slugify }}"{% endif %}>{{ lead.package|default:"Proyecto CreaGanaWeb" }}</div>
         {% if lead.estimated_price %}<div style="font-size:.82rem;color:#5a6d8c">{{ lead.estimated_price }}€ <span data-i18n="cabinet.estimated">estimado</span></div>{% endif %}
         {% if lead.extras %}
         <div class="extras-row" style="width:100%;margin-top:0">
@@ -972,9 +976,9 @@ function copyVal(id, btnId) {
         <div style="background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:10px 16px;
                     display:flex;align-items:center;justify-content:space-between">
           <span style="font-size:.78rem;font-weight:900;text-transform:uppercase;
-                       letter-spacing:.07em;color:#1760d6" data-i18n="proposal.data_signature">Datos y firma</span>
+                       letter-spacing:.07em;color:#5725F4" data-i18n="proposal.data_signature">Datos y firma</span>
           <span id="portalProposalTotal"
-                style="font-size:.95rem;font-weight:900;color:#0c1c42">—</span>
+                style="font-size:.95rem;font-weight:900;color:#081747">—</span>
         </div>
         <!-- Form fields -->
         <div style="padding:16px">
@@ -988,19 +992,19 @@ function copyVal(id, btnId) {
                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;
                               border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem">
                   <input type="radio" name="client_type" value="particular" required
-                         onchange="wiOnClientTypeChange()" style="accent-color:#2563eb">
+                         onchange="wiOnClientTypeChange()" style="accent-color:#5725F4">
                   <span data-i18n="form.client_type_particular">Particular</span>
                 </label>
                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;
                               border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem">
                   <input type="radio" name="client_type" value="autonomo"
-                         onchange="wiOnClientTypeChange()" style="accent-color:#2563eb">
+                         onchange="wiOnClientTypeChange()" style="accent-color:#5725F4">
                   <span data-i18n="form.client_type_autonomo">Autónomo</span>
                 </label>
                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;
                               border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem">
                   <input type="radio" name="client_type" value="empresa"
-                         onchange="wiOnClientTypeChange()" style="accent-color:#2563eb">
+                         onchange="wiOnClientTypeChange()" style="accent-color:#5725F4">
                   <span data-i18n="form.client_type_empresa">Empresa</span>
                 </label>
               </div>
@@ -1078,19 +1082,19 @@ function copyVal(id, btnId) {
                 <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;
                               border:1.5px solid #e2e8f0;border-radius:8px;font-size:.83rem">
                   <input type="radio" name="accept_payment_plan" value="50-50" {% if proposal.payment_method != '3-way' and proposal.payment_method != 'full' %}checked{% endif %}
-                         onchange="updatePaymentPlanNote()" style="accent-color:#2563eb">
+                         onchange="updatePaymentPlanNote()" style="accent-color:#5725F4">
                   <span data-i18n="form.plan_5050">50% ahora + 50% a la entrega</span>
                 </label>
                 <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;
                               border:1.5px solid #e2e8f0;border-radius:8px;font-size:.83rem">
                   <input type="radio" name="accept_payment_plan" value="3-way" {% if proposal.payment_method == '3-way' %}checked{% endif %}
-                         onchange="updatePaymentPlanNote()" style="accent-color:#2563eb">
+                         onchange="updatePaymentPlanNote()" style="accent-color:#5725F4">
                   <span data-i18n="form.plan_3way">3 pagos (33% cada uno)</span>
                 </label>
                 <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;
                               border:1.5px solid #e2e8f0;border-radius:8px;font-size:.83rem">
                   <input type="radio" name="accept_payment_plan" value="full" {% if proposal.payment_method == 'full' %}checked{% endif %}
-                         onchange="updatePaymentPlanNote()" style="accent-color:#2563eb">
+                         onchange="updatePaymentPlanNote()" style="accent-color:#5725F4">
                   <span data-i18n="form.plan_full">Pago único</span>
                 </label>
               </div>
@@ -1104,16 +1108,16 @@ function copyVal(id, btnId) {
               <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;margin-bottom:8px;
                             font-size:.82rem;color:#1e293b;line-height:1.4">
                 <input type="checkbox" name="consent_all" required
-                       style="margin-top:2px;width:16px;height:16px;flex-shrink:0;accent-color:#2563eb">
+                       style="margin-top:2px;width:16px;height:16px;flex-shrink:0;accent-color:#5725F4">
                 <span>
                   <span data-i18n="form.consents_title">Confirmo que he leído y acepto los datos fiscales, el alcance, el precio, las condiciones de pago, hosting/soporte y la protección de datos de esta propuesta.</span>
-                  <a href="#" onclick="event.preventDefault();toggleConsentsModal()" style="color:#1760d6;font-weight:700;white-space:nowrap" data-i18n="form.consents_info_btn">ℹ Ver detalle</a>
+                  <a href="#" onclick="event.preventDefault();toggleConsentsModal()" style="color:#5725F4;font-weight:700;white-space:nowrap" data-i18n="form.consents_info_btn">ℹ Ver detalle</a>
                 </span>
               </label>
               <label id="withdrawalBlock" style="display:none;align-items:flex-start;gap:8px;cursor:pointer;
                             margin-bottom:8px;font-size:.82rem;color:#1e293b;line-height:1.4">
                 <input type="checkbox" name="consent_withdrawal"
-                       style="margin-top:2px;width:16px;height:16px;flex-shrink:0;accent-color:#2563eb">
+                       style="margin-top:2px;width:16px;height:16px;flex-shrink:0;accent-color:#5725F4">
                 <span>{{ withdrawal_consent_text }}</span>
               </label>
             </div>
@@ -1152,8 +1156,8 @@ function copyVal(id, btnId) {
       <div id="portalProposalTotal"
            style="display:flex;justify-content:space-between;align-items:center;
                   background:#eff6ff;border-radius:8px;padding:10px 14px;margin-top:4px">
-        <span style="font-size:.82rem;color:#2563eb;font-weight:700" data-i18n="proposal.total_iva_label">Total (IVA 21% incluido):</span>
-        <span style="font-size:1.05rem;font-weight:900;color:#1760d6">—</span>
+        <span style="font-size:.82rem;color:#5725F4;font-weight:700" data-i18n="proposal.total_iva_label">Total (IVA 21% incluido):</span>
+        <span style="font-size:1.05rem;font-weight:900;color:#5725F4">—</span>
       </div>
       {% endif %}
 
@@ -1220,7 +1224,7 @@ function copyVal(id, btnId) {
         <div class="wi-card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
             <div class="wi-card-title" style="margin:0" data-i18n="cabinet.progress_title">Progreso del proyecto</div>
-            <span style="font-size:.8rem;font-weight:800;color:#1760d6">{{ progress_pct }}%</span>
+            <span style="font-size:.8rem;font-weight:800;color:#5725F4">{{ progress_pct }}%</span>
           </div>
           <div class="proj-progress-track">
             <div class="proj-progress-fill" style="width:{{ progress_pct }}%"></div>
@@ -1233,7 +1237,7 @@ function copyVal(id, btnId) {
               {% if m.status == 'done' %}
               <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#f0fdf4;color:#16a34a;font-size:13px">✓</span>
               {% elif m.status == 'in_progress' %}
-              <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#eff6ff;color:#2563eb;font-size:11px;font-weight:900">▶</span>
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#eff6ff;color:#5725F4;font-size:11px;font-weight:900">▶</span>
               {% elif m.status == 'blocked' %}
               <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#fef2f2;color:#dc2626;font-size:13px">!</span>
               {% else %}
@@ -1242,7 +1246,7 @@ function copyVal(id, btnId) {
             </div>
             <div style="flex:1;min-width:0">
               <div style="font-size:.86rem;font-weight:{% if m.status == 'done' %}600{% else %}700{% endif %};
-                          color:{% if m.status == 'done' %}#16a34a{% elif m.status == 'in_progress' %}#1760d6{% elif m.status == 'blocked' %}#dc2626{% else %}#64748b{% endif %}">
+                          color:{% if m.status == 'done' %}#16a34a{% elif m.status == 'in_progress' %}#5725F4{% elif m.status == 'blocked' %}#dc2626{% else %}#64748b{% endif %}">
                 {{ m.title }}
               </div>
               {% if m.description %}
@@ -1327,7 +1331,7 @@ function copyVal(id, btnId) {
       <div class="wi-modal-header">
         <div style="font-size:.95rem;min-width:0">
           <span style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8" data-i18n="cabinet.project_label">Proyecto</span>
-          <span style="font-weight:900;color:#0c1c42" {% if lead.package %}data-i18n="pkg.{{ lead.package|slugify }}"{% endif %}>{{ lead.package|default:"Proyecto Web-Impulsa" }}</span>
+          <span style="font-weight:900;color:#081747" {% if lead.package %}data-i18n="pkg.{{ lead.package|slugify }}"{% endif %}>{{ lead.package|default:"Proyecto CreaGanaWeb" }}</span>
         </div>
         <button type="button" class="wi-modal-close" onclick="toggleProjectModal()">✕</button>
       </div>
@@ -1370,7 +1374,7 @@ function copyVal(id, btnId) {
       <div style="margin-top:14px;padding-top:14px;border-top:1px solid #e2e8f0">
         <div class="wi-card-title" style="margin-bottom:8px" data-i18n="cabinet.invoice_title">Tu factura</div>
         <div style="font-size:.84rem;color:#334155;line-height:1.7;margin-bottom:10px">
-          <span style="color:#94a3b8" data-i18n="cabinet.total_label">Total</span> <strong style="color:#0c1c42">{{ invoice_total }}€</strong>
+          <span style="color:#94a3b8" data-i18n="cabinet.total_label">Total</span> <strong style="color:#081747">{{ invoice_total }}€</strong>
           · <span style="color:#94a3b8" data-i18n="cabinet.paid_label">Pagado</span> <strong style="color:#16a34a">{{ paid_total }}€</strong>
           · <span style="color:#94a3b8" data-i18n="cabinet.pending_label">Pendiente</span> <strong style="color:{% if owed_total > 0 %}#dc2626{% else %}#16a34a{% endif %}">{{ owed_total }}€</strong>
         </div>
@@ -1383,7 +1387,7 @@ function copyVal(id, btnId) {
 
         {% if owed_total > 0 %}
         <a href="/p/{{ access.token }}/pay/"
-           style="display:block;text-align:center;background:#2563eb;color:#fff;text-decoration:none;
+           style="display:block;text-align:center;background:#5725F4;color:#fff;text-decoration:none;
                   border-radius:10px;padding:11px;font-size:.88rem;font-weight:800" data-i18n="cabinet.pay_now_btn">
           💳 Pagar ahora →
         </a>
@@ -1509,7 +1513,7 @@ function copyVal(id, btnId) {
 <div id="consentsModalBackdrop" class="wi-modal-backdrop" style="display:none" onclick="if(event.target===this) toggleConsentsModal()">
   <div class="wi-modal">
     <div class="wi-modal-header">
-      <div style="font-weight:900;color:#0c1c42;font-size:.95rem" data-i18n="form.consents_modal_title">Qué estás confirmando</div>
+      <div style="font-weight:900;color:#081747;font-size:.95rem" data-i18n="form.consents_modal_title">Qué estás confirmando</div>
       <button type="button" class="wi-modal-close" onclick="toggleConsentsModal()">✕</button>
     </div>
     <ul style="margin:12px 0 0;padding-left:18px">
@@ -1537,7 +1541,7 @@ function copyVal(id, btnId) {
 </div>{# end .wi-main #}
 
 <div class="wi-footer">
-  Web-Impulsa · <a href="https://webimpulsa.es" target="_blank">webimpulsa.es</a>
+  CreaGanaWeb · <a href="https://creaganaweb.es" target="_blank">creaganaweb.es</a>
 </div>
 
 <script>

@@ -3,8 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Tarjeta AR — WebImpulsa</title>
+<title>Tarjeta AR — CreaGanaWeb</title>
 <meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="/static/wi/img/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/wi/img/favicon-32.png">
 <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.5.0/dist/aframe-extras.min.js"></script>
 <script src="/static/wi/ar/mindar-image-aframe.prod.js"></script>
@@ -18,7 +20,7 @@
     position: fixed; inset: 0; z-index: 10;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     text-align: center; padding: 24px;
-    background: linear-gradient(160deg, #0c1c42 0%, #123066 100%);
+    background: linear-gradient(160deg, #081747 0%, #123066 100%);
     color: #fff;
     font-family: 'Helvetica Neue', Arial, sans-serif;
   }
@@ -34,7 +36,7 @@
   .overlay p { font-size: .95rem; line-height: 1.55; color: #cfe0ff; max-width: 340px; margin: 0 0 26px; }
 
   .btn-ar {
-    background: linear-gradient(90deg, #1760d6, #17b0d6);
+    background: linear-gradient(90deg, #5725F4, #17b0d6);
     color: #fff; border: none; border-radius: 999px;
     font-size: 1rem; font-weight: 700; padding: 14px 34px;
     box-shadow: 0 10px 30px rgba(23, 96, 214, .35);
@@ -111,7 +113,7 @@
        los subtítulos y tapaba parte del texto cuando la frase era larga. */
     position: fixed; left: 18px; bottom: 26px; z-index: 7;
     width: 64px; height: 64px; border-radius: 50%; border: none; cursor: pointer;
-    background: linear-gradient(90deg, #1760d6, #17b0d6); color: #fff; font-size: 1.5rem;
+    background: linear-gradient(90deg, #5725F4, #17b0d6); color: #fff; font-size: 1.5rem;
     box-shadow: 0 10px 30px rgba(23, 96, 214, .45);
     transition: transform .15s ease, box-shadow .15s ease;
   }
@@ -152,9 +154,9 @@
 
   <!-- INTRO -->
   <div class="overlay" id="introOverlay">
-    <img class="logo" src="/static/wi/img/logo.webp" alt="WebImpulsa">
+    <img class="logo" src="/static/wi/img/logo.webp" alt="CreaGanaWeb">
     <h1>Dale vida a tu tarjeta</h1>
-    <p>Activa la cámara y apunta al logotipo impreso en tu tarjeta de WebImpulsa para ver la animación.</p>
+    <p>Activa la cámara y apunta al logotipo impreso en tu tarjeta de CreaGanaWeb para ver la animación.</p>
     <button class="btn-ar" id="startBtn">Activar cámara</button>
     <button class="btn-link" id="backBtnIntro">← Volver al sitio</button>
   </div>
@@ -759,7 +761,7 @@ AFRAME.registerComponent('crew-show', {
         <a-entity id="b_card2"  gltf-model="#mHeader" position="1.0 0.4 0.2"  visible="false"></a-entity>
         <a-entity id="b_footer" gltf-model="#mHeader" position="1.0 0.4 0.2"  visible="false"></a-entity>
 
-        <!-- zona clicable del sitio terminado: tap = ir a webimpulsa.es.
+        <!-- zona clicable del sitio terminado: tap = ir a creaganaweb.es.
              Cubre TODA la pared (footer y≈-0.65 hasta header y≈3.9, tras
              duplicar la altura de los paneles) — antes medía solo 2.4 de
              alto centrada en 0.75 y se quedaba corta arriba: no se podía

@@ -1,5 +1,5 @@
 """
-Live chat backend for webimpulsa.es
+Live chat backend for creaganaweb.es
 
 Flow:
   visitor  → POST /wi/chat/start/   → creates session, shows greeting (no WA template yet)
@@ -69,7 +69,7 @@ def _send_wa_template(session: ChatSession, visitor_text: str) -> None:
             try:
                 result = wa_send.send_text(
                     phone,
-                    f"🌐 webimpulsa.es — nuevo chat [{ticket_id}]\n\n"
+                    f"🌐 creaganaweb.es — nuevo chat [{ticket_id}]\n\n"
                     f"{short_text}\n\n"
                     f"_Responde a ESTE mensaje para contestar al visitante._"
                 )
@@ -152,7 +152,7 @@ def start_chat(request):
                 session=session,
                 sender=ChatMessage.SYSTEM,
                 text=(
-                    "¡Hola! Somos el equipo de WebImpulsa. "
+                    "¡Hola! Somos el equipo de CreaGanaWeb. "
                     "¿Tienes alguna duda o quieres saber más sobre nuestros servicios? Escríbenos 😊"
                 ),
             )
@@ -193,7 +193,7 @@ def send_message(request):
             _send_wa_template(session, text)
             _send_tg(
                 session,
-                f"💬 <b>Nuevo chat en webimpulsa.es</b>\n\n"
+                f"💬 <b>Nuevo chat en creaganaweb.es</b>\n\n"
                 f"🎫 Ticket: <b>WEB-{session.short_id}</b>\n"
                 f"📝 Mensaje: <i>{text[:300]}</i>\n\n"
                 f"Responde aquí para chatear con el visitante.",

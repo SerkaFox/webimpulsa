@@ -1,5 +1,5 @@
 """
-Proposal content constants for WebImpulsa.
+Proposal content constants for CreaGanaWeb.
 
 == EDIT COMPANY DATA ==
 Set environment variables WI_COMPANY_* or edit WI_COMPANY below with real
@@ -10,12 +10,12 @@ import os
 # ── Company data ── edit here or via environment variables ────────────────────
 # TODO: fill legal_name, nif, address when company registration is confirmed
 WI_COMPANY = {
-    'trade_name': os.getenv('WI_COMPANY_NAME',    'Web-Impulsa'),
+    'trade_name': os.getenv('WI_COMPANY_NAME',    'CreaGanaWeb'),
     'legal_name': os.getenv('WI_COMPANY_LEGAL',   ''),
     'nif':        os.getenv('WI_COMPANY_NIF',     ''),
-    'email':      os.getenv('WI_COMPANY_EMAIL',   'info@webimpulsa.es'),
+    'email':      os.getenv('WI_COMPANY_EMAIL',   'info@creaganaweb.es'),
     'phone':      os.getenv('WI_COMPANY_PHONE',   '+34 613 708 322'),
-    'website':    os.getenv('WI_COMPANY_WEBSITE', 'https://webimpulsa.es'),
+    'website':    os.getenv('WI_COMPANY_WEBSITE', 'https://creaganaweb.es'),
     'address':    os.getenv('WI_COMPANY_ADDRESS', ''),
     'city':       os.getenv('WI_COMPANY_CITY',    ''),
     'logo_url':   '/static/wi/img/logo.webp',
@@ -196,8 +196,8 @@ PHASES = [
 _COMMON_CONDITIONS = [
     'Este documento constituye un presupuesto/propuesta comercial y no una factura. La factura se emitirá conforme a la normativa fiscal aplicable tras la aceptación y/o el pago correspondiente.',
     'El inicio de los trabajos y los plazos indicados dependen de: (a) el pago según el calendario acordado, y (b) la entrega por el cliente de los materiales y accesos necesarios (textos, imágenes, logotipos, credenciales, etc.). Un retraso del cliente en la entrega de materiales desplaza proporcionalmente los plazos.',
-    'El cliente es responsable de los textos, imágenes y contenidos que aporte, y de disponer de los derechos y la legalidad necesarios sobre ellos; de sus propias copias de seguridad de datos que no estén alojados por Web-Impulsa; de los accesos y credenciales que facilite; y de los servicios de terceros que decida utilizar (hosting externo, dominios, plugins, Google, WhatsApp Business, pasarelas de pago, etc.).',
-    'Web-Impulsa no garantiza el funcionamiento ininterrumpido de servicios de terceros ajenos a su control (Google, WhatsApp, proveedores de hosting/dominio, plugins), ni resultados de posicionamiento SEO, posiciones concretas en buscadores, volumen de visitas, ventas, ni la ausencia de pérdida de clientes, por depender de factores externos no controlables por Web-Impulsa.',
+    'El cliente es responsable de los textos, imágenes y contenidos que aporte, y de disponer de los derechos y la legalidad necesarios sobre ellos; de sus propias copias de seguridad de datos que no estén alojados por CreaGanaWeb; de los accesos y credenciales que facilite; y de los servicios de terceros que decida utilizar (hosting externo, dominios, plugins, Google, WhatsApp Business, pasarelas de pago, etc.).',
+    'CreaGanaWeb no garantiza el funcionamiento ininterrumpido de servicios de terceros ajenos a su control (Google, WhatsApp, proveedores de hosting/dominio, plugins), ni resultados de posicionamiento SEO, posiciones concretas en buscadores, volumen de visitas, ventas, ni la ausencia de pérdida de clientes, por depender de factores externos no controlables por CreaGanaWeb.',
     'El cliente debe revisar el sitio en la URL de pruebas (staging) y dar su conformidad por escrito antes de la publicación definitiva. Una vez aceptada la entrega, cualquier cambio adicional se gestiona y presupuesta aparte, salvo pacto expreso en contrario.',
     'Se incluyen ajustes razonables durante la fase de revisión previa a la entrega. Cambios sustanciales, nuevas funcionalidades o modificaciones fuera del alcance descrito se presupuestarán aparte.',
     'Dominio, hosting, licencias, pasarelas de pago, plugins premium, fotografías profesionales, traducciones y demás servicios de terceros no están incluidos salvo que se indiquen expresamente en el alcance de esta propuesta.',
@@ -208,13 +208,13 @@ _COMMON_CONDITIONS = [
 ]
 
 CONDITIONS_BUSINESS = _COMMON_CONDITIONS + [
-    'Responsabilidad de Web-Impulsa: queda limitada al daño directo y probado causado por un incumplimiento culpable de Web-Impulsa. En la medida permitida por la ley, el importe total de dicha responsabilidad se limita al importe efectivamente pagado por el cliente en el pedido concreto, quedando excluidos los daños indirectos y el lucro cesante. No se excluye la responsabilidad que la ley no permita limitar (dolo o negligencia grave). Como condición previa a cualquier reclamación, el cliente deberá notificar el problema por escrito a Web-Impulsa y concederle un plazo razonable para su subsanación.',
+    'Responsabilidad de CreaGanaWeb: queda limitada al daño directo y probado causado por un incumplimiento culpable de CreaGanaWeb. En la medida permitida por la ley, el importe total de dicha responsabilidad se limita al importe efectivamente pagado por el cliente en el pedido concreto, quedando excluidos los daños indirectos y el lucro cesante. No se excluye la responsabilidad que la ley no permita limitar (dolo o negligencia grave). Como condición previa a cualquier reclamación, el cliente deberá notificar el problema por escrito a CreaGanaWeb y concederle un plazo razonable para su subsanación.',
     'Legislación aplicable: legislación española. Para cualquier controversia, ambas partes se someten a los Juzgados y Tribunales de Barakaldo (Bizkaia), salvo que la normativa aplicable disponga otro fuero de forma imperativa.',
 ]
 
 CONDITIONS_CONSUMER = _COMMON_CONDITIONS + [
     'Derecho de desistimiento: al tratarse de un contrato de prestación de servicios celebrado a distancia, dispones de un plazo de 14 días naturales desde la aceptación de esta propuesta para desistir del contrato sin necesidad de justificación, conforme al art. 102 y siguientes del Real Decreto Legislativo 1/2007 (TRLGDCU). Si solicitas expresamente que los trabajos comiencen antes de que finalice ese plazo, y el servicio llega a ejecutarse completamente, perderás tu derecho de desistimiento (art. 103.a TRLGDCU) — esta circunstancia se recoge de forma separada mediante un consentimiento expreso adicional, y no se presume.',
-    'Responsabilidad de Web-Impulsa: queda limitada al daño directo y probado causado por un incumplimiento culpable de Web-Impulsa, sin que ello afecte a los derechos y garantías que la normativa de consumo reconoce de forma irrenunciable. Como condición previa a cualquier reclamación, deberás notificar el problema por escrito a Web-Impulsa y concederle un plazo razonable para su subsanación.',
+    'Responsabilidad de CreaGanaWeb: queda limitada al daño directo y probado causado por un incumplimiento culpable de CreaGanaWeb, sin que ello afecte a los derechos y garantías que la normativa de consumo reconoce de forma irrenunciable. Como condición previa a cualquier reclamación, deberás notificar el problema por escrito a CreaGanaWeb y concederle un plazo razonable para su subsanación.',
     'Legislación aplicable: legislación española. Para cualquier controversia, y sin perjuicio de otros fueros que puedan corresponderte legalmente, serán competentes los Juzgados y Tribunales de tu domicilio como consumidor (art. 90.2 TRLGDCU, derecho irrenunciable).',
 ]
 

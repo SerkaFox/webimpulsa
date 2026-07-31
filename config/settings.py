@@ -11,6 +11,11 @@ DEBUG = os.getenv("DJANGO_DEBUG", "0") == "1"
 raw_hosts = os.getenv("DJANGO_ALLOWED_HOSTS", "")
 ALLOWED_HOSTS = [h.strip() for h in raw_hosts.split(",") if h.strip()]
 
+# Derived straight from ALLOWED_HOSTS so it can't drift out of sync when a
+# domain is added/removed — needed for POSTs to work once served over HTTPS
+# behind the reverse proxy (was missing entirely before the creaganaweb.es cutover).
+CSRF_TRUSTED_ORIGINS = [f"https://{h}" for h in ALLOWED_HOSTS]
+
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -79,7 +84,7 @@ PLANNER_ADMIN_TOKEN = os.getenv('PLANNER_ADMIN_TOKEN', 'be-admin-9f3ac2d1e7')
 # Google Maps — dos claves DISTINTAS con alcance mínimo cada una:
 #  - GOOGLE_MAPS_JS_API_KEY: se envía al navegador para dibujar el mapa base
 #    en /panel/prospeccion/mapa/. Debe restringirse en Google Cloud Console
-#    por dominio (HTTP referrers: webimpulsa.es/*) y por API (solo "Maps
+#    por dominio (HTTP referrers: creaganaweb.es/*) y por API (solo "Maps
 #    JavaScript API"). Nunca se usa para llamadas de servidor.
 #  - GOOGLE_PLACES_API_KEY: solo se usa desde el servidor (nunca se envía al
 #    cliente), para las búsquedas de Places. Debe restringirse por IP del

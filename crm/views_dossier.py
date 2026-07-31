@@ -1,4 +1,4 @@
-"""Dossier and export views for WebImpulsa CRM — all protected by HTTP Basic Auth.
+"""Dossier and export views for CreaGanaWeb CRM — all protected by HTTP Basic Auth.
 
 URL scheme:
   GET  /wi/crm/<pk>/dossier/            single-lead ZIP dossier
@@ -205,7 +205,7 @@ def _csv_evidence(evidence):
 
 def _readme(lead, data):
     lines = [
-        'DOSSIER DE ACTIVIDAD PROFESIONAL — WebImpulsa',
+        'DOSSIER DE ACTIVIDAD PROFESIONAL — CreaGanaWeb',
         '=' * 50,
         f'Cliente: {lead.name}',
         f'Proyecto: {lead.package or "—"}',
@@ -244,7 +244,7 @@ def dossier_zip(request, pk):
     lead = get_object_or_404(Lead, pk=pk)
     data = _gather_lead_data(lead)
     buf  = _build_zip(lead, data)
-    fname = f'dossier_webimpulsa_{lead.pk:04d}_{date.today().strftime("%Y%m%d")}.zip'
+    fname = f'dossier_creaganaweb_{lead.pk:04d}_{date.today().strftime("%Y%m%d")}.zip'
     resp = HttpResponse(buf.read(), content_type='application/zip')
     resp['Content-Disposition'] = f'attachment; filename="{fname}"'
     return resp

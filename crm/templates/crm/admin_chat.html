@@ -8,7 +8,7 @@
       {{ lead.name|slice:":1"|upper }}
     </div>
     <div>
-      <div style="font-weight:800;font-size:.9rem;color:#0c1c42">{{ lead.name }}</div>
+      <div style="font-weight:800;font-size:.9rem;color:#081747">{{ lead.name }}</div>
       <div id="adminChatPresence" style="font-size:.74rem;color:#94a3b8">···</div>
     </div>
   </div>
@@ -22,7 +22,7 @@
   <div id="adminChatReplyBar" style="display:none;padding:8px 12px;background:#eff6ff;border-top:1px solid #dbeafe;
                                       font-size:.76rem;color:#1e293b;align-items:center;justify-content:space-between;gap:8px">
     <div style="overflow:hidden">
-      <div style="font-weight:700;color:#2563eb">Respondiendo</div>
+      <div style="font-weight:700;color:#5725F4">Respondiendo</div>
       <div id="adminChatReplyText" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
     </div>
     <button onclick="adminChatCancelReply()" style="border:none;background:none;color:#94a3b8;font-size:1rem;cursor:pointer;flex-shrink:0">✕</button>
@@ -39,7 +39,7 @@
                        font-size:.82rem;font-family:inherit;resize:none;outline:none;line-height:1.45"
                 placeholder="Escribe un mensaje al cliente…"></textarea>
       <button onclick="adminChatSend()" id="adminChatSendBtn"
-              style="background:#2563eb;color:#fff;border:none;border-radius:10px;padding:8px 14px;
+              style="background:#5725F4;color:#fff;border:none;border-radius:10px;padding:8px 14px;
                      font-size:.82rem;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0;align-self:flex-end">
         Enviar →
       </button>

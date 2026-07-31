@@ -3,43 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Web-Impulsa | Webs profesionales, reservas y automatización para negocios en España</title>
+  <title>CreaGanaWeb | Webs profesionales, reservas y automatización para negocios en España</title>
   <meta name="description" content="Creamos webs profesionales, tiendas online, sistemas de reservas y automatización para restaurantes, salones, talleres, clínicas y negocios locales. Precios claros desde 390€. Sin letra pequeña.">
   <meta name="keywords" content="diseño web negocios locales, crear tienda online España, sistema reservas restaurante, automatización WhatsApp empresa, web para salón de belleza, taller mecánico web profesional, desarrollo web barato España">
-  <meta name="author" content="Web-Impulsa">
+  <meta name="author" content="CreaGanaWeb">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://webimpulsa.es/">
+  <link rel="canonical" href="https://creaganaweb.es/">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://webimpulsa.es/">
-  <meta property="og:title" content="Web-Impulsa — Webs, reservas y automatización para negocios locales en España">
+  <meta property="og:url" content="https://creaganaweb.es/">
+  <meta property="og:title" content="CreaGanaWeb — Webs, reservas y automatización para negocios locales en España">
   <meta property="og:description" content="Webs profesionales, tiendas online, sistemas de reservas y bots de automatización para restaurantes, salones, talleres y clínicas. Precios desde 390€.">
-  <meta property="og:image" content="https://webimpulsa.es/static/wi/img/logo.webp">
+  <meta property="og:image" content="https://creaganaweb.es/static/wi/img/logo.webp">
   <meta property="og:locale" content="es_ES">
-  <meta property="og:site_name" content="Web-Impulsa">
+  <meta property="og:site_name" content="CreaGanaWeb">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Web-Impulsa — Webs y automatización para negocios locales">
+  <meta name="twitter:title" content="CreaGanaWeb — Webs y automatización para negocios locales">
   <meta name="twitter:description" content="Webs profesionales, tiendas online, reservas online y automatización para negocios locales en España. Desde 290€.">
-  <meta name="twitter:image" content="https://webimpulsa.es/static/wi/img/logo.webp">
-  <link rel="icon" type="image/png" href="/static/wi/img/favicon.png">
+  <meta name="twitter:image" content="https://creaganaweb.es/static/wi/img/logo.webp">
+  <link rel="icon" type="image/svg+xml" href="/static/wi/img/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/wi/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/wi/img/favicon-192.png">
   <link rel="apple-touch-icon" href="/static/wi/img/apple-icon.png">
   <link href="/static/sergei/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
   <link href="/static/wi/css/proposal-print.css" rel="stylesheet">
+  <link href="/static/wi/css/brand.css" rel="stylesheet">
   <style>
-    :root {
-      --wi-bg:      #edf4ff;
-      --wi-surface: #f5f9ff;
-      --wi-card:    #ffffff;
-      --wi-border:  rgba(10,50,150,.12);
-      --wi-primary: #1760d6;
-      --wi-accent:  #00a8cc;
-      --wi-green:   #009e73;
-      --wi-text:    #0c1c42;
-      --wi-muted:   #5a6d8c;
-      --wi-glow:    0 4px 32px rgba(23,96,214,.18);
-      --wi-line:    rgba(0,0,0,.08);
-      --wi-shadow:  0 2px 20px rgba(10,50,150,.09);
-      --wi-shadow-hover: 0 8px 40px rgba(10,50,150,.18);
-    }
     html { scroll-behavior: smooth; scroll-padding-top: 80px; }
     body {
       margin: 0;
@@ -111,27 +99,27 @@
     .wi-card:hover {
       transform: translateY(-4px);
       box-shadow: var(--wi-shadow-hover);
-      border-color: rgba(23,96,214,.28);
+      border-color: rgba(87,37,244,.28);
     }
 
     /* BUTTONS */
     .btn { border-radius: 10px; font-weight: 750; transition: transform .18s, box-shadow .18s; }
     .btn:hover { transform: translateY(-2px); }
     .btn-primary {
-      background: linear-gradient(135deg, #1760d6, #0095c8);
+      background: var(--wi-gradient);
       border: none;
       color: #fff;
-      box-shadow: 0 4px 18px rgba(23,96,214,.30);
+      box-shadow: 0 4px 18px rgba(87,37,244,.30);
     }
-    .btn-primary:hover { box-shadow: 0 6px 28px rgba(23,96,214,.42); color: #fff; }
+    .btn-primary:hover { box-shadow: 0 6px 28px rgba(87,37,244,.42); color: #fff; }
     .btn-outline-primary {
       color: var(--wi-primary);
-      border: 1.5px solid rgba(23,96,214,.40);
+      border: 1.5px solid rgba(87,37,244,.40);
       background: transparent;
     }
-    .btn-outline-primary:hover { background: rgba(23,96,214,.07); color: var(--wi-primary); border-color: var(--wi-primary); }
-    .btn-outline-dark-wi { color: var(--wi-text); border: 1.5px solid rgba(12,28,66,.25); background: transparent; }
-    .btn-outline-dark-wi:hover { background: rgba(12,28,66,.05); color: var(--wi-text); }
+    .btn-outline-primary:hover { background: rgba(87,37,244,.07); color: var(--wi-primary); border-color: var(--wi-primary); }
+    .btn-outline-dark-wi { color: var(--wi-text); border: 1.5px solid rgba(8,23,71,.25); background: transparent; }
+    .btn-outline-dark-wi:hover { background: rgba(8,23,71,.05); color: var(--wi-text); }
     .btn-green {
       background: linear-gradient(135deg, #00a878, #00c89a);
       border: none;
@@ -148,8 +136,8 @@
       align-items: center;
       overflow: hidden;
       background:
-        linear-gradient(to right, rgba(237,244,255,.98) 0%, rgba(237,244,255,.92) 50%, rgba(237,244,255,.70) 100%),
-        url('/static/wi/img/bg-3.webp') center/cover no-repeat;
+        linear-gradient(to right, rgba(248,249,255,.97) 0%, rgba(248,249,255,.84) 48%, rgba(248,249,255,.22) 100%),
+        url('/static/wi/img/backgrounds/01-home-main-hero.webp') center/cover no-repeat;
       border-bottom: 1px solid var(--wi-line);
     }
     .hero > .container { position: relative; z-index: 2; }
@@ -164,20 +152,20 @@
     .biz-chip {
       display: inline-flex; align-items: center; gap: .35rem;
       padding: .32rem .72rem;
-      border: 1.5px solid rgba(23,96,214,.18);
-      background: rgba(23,96,214,.06);
+      border: 1.5px solid rgba(87,37,244,.18);
+      background: rgba(87,37,244,.06);
       color: var(--wi-text);
       border-radius: 999px; font-weight: 700; font-size: .88rem;
       transition: border-color .2s, background .2s;
     }
-    .biz-chip:hover { border-color: rgba(23,96,214,.40); background: rgba(23,96,214,.11); }
+    .biz-chip:hover { border-color: rgba(87,37,244,.40); background: rgba(87,37,244,.11); }
 
     /* HERO IMAGE PANEL */
     .hero-img-wrap { position: relative; max-width: 400px; }
     .hero-dash-img {
       width: 100%; border-radius: 20px;
-      border: 1px solid rgba(23,96,214,.18);
-      box-shadow: 0 24px 80px rgba(23,96,214,.20), 0 8px 32px rgba(0,0,0,.12);
+      border: 1px solid rgba(87,37,244,.18);
+      box-shadow: 0 24px 80px rgba(87,37,244,.20), 0 8px 32px rgba(0,0,0,.12);
     }
     .hero-badge {
       position: absolute; bottom: -18px; right: -16px;
@@ -211,10 +199,10 @@
     .service-tags { margin-top: .9rem; display: flex; flex-wrap: wrap; gap: .3rem; }
     .stag {
       padding: .22rem .55rem;
-      border: 1px solid rgba(23,96,214,.18);
+      border: 1px solid rgba(87,37,244,.18);
       border-radius: 999px; font-size: .74rem;
       color: var(--wi-primary);
-      background: rgba(23,96,214,.06);
+      background: rgba(87,37,244,.06);
       font-weight: 650;
     }
 
@@ -236,7 +224,7 @@
     .quiz-opt {
       display: flex; flex-direction: column; align-items: center; gap: .45rem;
       padding: 1rem .75rem;
-      border: 1.5px solid rgba(23,96,214,.15);
+      border: 1.5px solid rgba(87,37,244,.15);
       border-radius: 12px;
       background: var(--wi-bg);
       cursor: pointer; text-align: center;
@@ -244,9 +232,9 @@
     }
     .quiz-opt:hover, .quiz-opt.selected {
       border-color: var(--wi-primary);
-      background: rgba(23,96,214,.07);
+      background: rgba(87,37,244,.07);
       transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(23,96,214,.14);
+      box-shadow: 0 4px 16px rgba(87,37,244,.14);
     }
     .quiz-opt-icon { font-size: 1.75rem; flex-shrink: 0; }
     img.quiz-opt-icon { width: 36px; height: 36px; font-size: 0; object-fit: contain; }
@@ -263,8 +251,8 @@
     .case-card { padding: 1.8rem; }
     .case-badge {
       display: inline-flex; align-items: center;
-      border: 1px solid rgba(23,96,214,.20);
-      background: rgba(23,96,214,.07);
+      border: 1px solid rgba(87,37,244,.20);
+      background: rgba(87,37,244,.07);
       color: var(--wi-primary); border-radius: 999px;
       padding: .28rem .62rem; font-size: .74rem; font-weight: 820;
       text-transform: uppercase; letter-spacing: .05em; margin-bottom: .85rem;
@@ -282,8 +270,8 @@
       width: 44px; height: 44px;
       display: inline-flex; align-items: center; justify-content: center;
       border-radius: 12px;
-      background: linear-gradient(135deg, rgba(23,96,214,.14), rgba(0,168,204,.14));
-      border: 1.5px solid rgba(23,96,214,.22);
+      background: linear-gradient(135deg, rgba(87,37,244,.14), rgba(0,168,204,.14));
+      border: 1.5px solid rgba(87,37,244,.22);
       color: var(--wi-primary); font-weight: 900; font-size: .98rem; flex-shrink: 0;
     }
     .process-step .wi-card { padding: .9rem 1.1rem; }
@@ -312,21 +300,21 @@
       display: grid; grid-template-columns: repeat(auto-fill, minmax(125px, 1fr)); gap: .55rem;
     }
     .calc-project {
-      border: 2px solid rgba(23,96,214,.15); border-radius: 14px;
+      border: 2px solid rgba(87,37,244,.15); border-radius: 14px;
       background: var(--wi-surface); padding: 1rem .7rem;
       cursor: pointer; text-align: center;
       transition: all .22s;
     }
     .calc-project:hover {
-      border-color: rgba(23,96,214,.40);
-      background: rgba(23,96,214,.05);
+      border-color: rgba(87,37,244,.40);
+      background: rgba(87,37,244,.05);
       transform: translateY(-2px);
-      box-shadow: 0 4px 18px rgba(23,96,214,.12);
+      box-shadow: 0 4px 18px rgba(87,37,244,.12);
     }
     .calc-project.active {
       border-color: var(--wi-primary);
-      background: rgba(23,96,214,.08);
-      box-shadow: 0 0 0 3px rgba(23,96,214,.14), 0 4px 20px rgba(23,96,214,.16);
+      background: rgba(87,37,244,.08);
+      box-shadow: 0 0 0 3px rgba(87,37,244,.14), 0 4px 20px rgba(87,37,244,.16);
     }
     .calc-project img {
       width: 50px; height: 50px; object-fit: contain;
@@ -340,7 +328,7 @@
       display: grid; grid-template-columns: 1fr 1fr; gap: .5rem;
     }
     .calc-extra {
-      position: relative; border: 2px solid rgba(23,96,214,.12);
+      position: relative; border: 2px solid rgba(87,37,244,.12);
       border-radius: 12px; background: var(--wi-surface);
       padding: .8rem .9rem .8rem .75rem;
       cursor: pointer;
@@ -349,13 +337,13 @@
       user-select: none;
     }
     .calc-extra:hover {
-      border-color: rgba(23,96,214,.35);
-      background: rgba(23,96,214,.04);
+      border-color: rgba(87,37,244,.35);
+      background: rgba(87,37,244,.04);
     }
     .calc-extra.selected {
       border-color: var(--wi-primary);
-      background: rgba(23,96,214,.07);
-      box-shadow: 0 0 0 2px rgba(23,96,214,.12);
+      background: rgba(87,37,244,.07);
+      box-shadow: 0 0 0 2px rgba(87,37,244,.12);
     }
     .calc-extra-icon {
       font-size: 1.35rem; flex-shrink: 0; width: 32px; height: 32px;
@@ -366,7 +354,7 @@
     .calc-extra-price { font-size: .78rem; color: var(--wi-primary); font-weight: 800; }
     .calc-extra-check {
       width: 20px; height: 20px; border-radius: 6px;
-      border: 1.5px solid rgba(23,96,214,.30);
+      border: 1.5px solid rgba(87,37,244,.30);
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0; font-size: .72rem; font-weight: 900;
       transition: all .18s; color: transparent;
@@ -377,13 +365,13 @@
     .calc-info-btn {
       position: absolute; top: .4rem; right: .4rem;
       width: 18px; height: 18px; border-radius: 50%;
-      background: rgba(23,96,214,.10); border: 1px solid rgba(23,96,214,.20);
+      background: rgba(87,37,244,.10); border: 1px solid rgba(87,37,244,.20);
       color: var(--wi-primary); font-size: .65rem; font-weight: 900;
       display: flex; align-items: center; justify-content: center;
       cursor: help; z-index: 2; line-height: 1;
       transition: background .15s;
     }
-    .calc-info-btn:hover { background: rgba(23,96,214,.20); }
+    .calc-info-btn:hover { background: rgba(87,37,244,.20); }
 
     /* Rush toggle */
     .calc-rush {
@@ -407,12 +395,12 @@
     .calc-maint-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: .5rem; }
     .calc-hours-grid { grid-template-columns: repeat(5,1fr); }
     .calc-maint-opt {
-      display: block; border: 2px solid rgba(23,96,214,.12);
+      display: block; border: 2px solid rgba(87,37,244,.12);
       border-radius: 12px; background: var(--wi-surface);
       padding: .85rem .7rem; cursor: pointer; text-align: center;
       transition: all .2s; user-select: none;
     }
-    .calc-maint-opt:hover { border-color: rgba(23,96,214,.35); }
+    .calc-maint-opt:hover { border-color: rgba(87,37,244,.35); }
     .calc-maint-opt.selected {
       border-color: var(--wi-accent); background: rgba(0,168,204,.07);
       box-shadow: 0 0 0 2px rgba(0,168,204,.15);
@@ -425,7 +413,7 @@
     .calc-price-panel {
       background: #fff; border: 1px solid var(--wi-border);
       border-radius: 20px; padding: 1.8rem;
-      box-shadow: 0 8px 40px rgba(23,96,214,.12);
+      box-shadow: 0 8px 40px rgba(87,37,244,.12);
     }
     .calc-price-panel-title { font-weight: 900; font-size: 1rem; margin-bottom: 1.2rem; color: var(--wi-text); }
     .calc-price-row {
@@ -437,7 +425,7 @@
     .calc-price-row .value { font-weight: 800; color: var(--wi-text); }
     .calc-discount-row .label { color: #d44; }
     .calc-discount-row .value { color: #d44; }
-    .calc-total-row { padding-top: 1rem; margin-top: .4rem; border-top: 2px solid rgba(23,96,214,.12) !important; }
+    .calc-total-row { padding-top: 1rem; margin-top: .4rem; border-top: 2px solid rgba(87,37,244,.12) !important; }
     .calc-total-row .label { font-weight: 820; font-size: 1rem; color: var(--wi-text); }
     .calc-total-row .value { font-size: 1.7rem; font-weight: 900; color: var(--wi-primary); }
     .calc-maint-summary { padding-top: .8rem; margin-top: .6rem; border-top: 1px dashed rgba(0,168,204,.25); }
@@ -454,7 +442,7 @@
     /* QUIZ RESULT */
     .quiz-result-card { }
     .qr-thinking {
-      background: rgba(23,96,214,.05); border-radius: 14px; border-left: 3px solid var(--wi-primary);
+      background: rgba(87,37,244,.05); border-radius: 14px; border-left: 3px solid var(--wi-primary);
       padding: .7rem 1rem; margin-bottom: 1rem; font-size: .86rem; color: var(--wi-muted); line-height: 1.6;
     }
     .qr-thinking-title { font-weight: 800; color: var(--wi-primary); margin-bottom: .35rem; font-size: .82rem; text-transform: uppercase; letter-spacing: .03em; }
@@ -462,7 +450,7 @@
     .qr-advisor-line::before { content: "💭 "; }
     .qr-project-rec {
       display: flex; align-items: center; gap: 1rem;
-      background: linear-gradient(135deg,rgba(23,96,214,.07),rgba(0,168,204,.05));
+      background: linear-gradient(135deg,rgba(87,37,244,.07),rgba(0,168,204,.05));
       border: 2px solid var(--wi-primary); border-radius: 16px; padding: 1rem 1.2rem; margin-bottom: 1rem;
     }
     .qr-project-rec img { width: 48px; height: 48px; object-fit: contain; flex-shrink: 0; }
@@ -471,7 +459,7 @@
     .qr-extras-title { font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--wi-muted); margin: 0 0 .45rem; }
     .qr-extras-chips { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: 1rem; }
     .qr-chip {
-      background: rgba(23,96,214,.08); border: 1px solid rgba(23,96,214,.20); color: var(--wi-primary);
+      background: rgba(87,37,244,.08); border: 1px solid rgba(87,37,244,.20); color: var(--wi-primary);
       border-radius: 999px; padding: .2rem .65rem; font-size: .78rem; font-weight: 750;
     }
     .qr-benefits { margin-bottom: 1.1rem; }
@@ -491,7 +479,7 @@
       background: #fff; margin-bottom: .5rem; overflow: hidden;
       box-shadow: var(--wi-shadow); transition: border-color .2s;
     }
-    .faq-item.open { border-color: rgba(23,96,214,.30); }
+    .faq-item.open { border-color: rgba(87,37,244,.30); }
     .faq-q {
       display: flex; justify-content: space-between; align-items: center;
       padding: 1rem 1.2rem; cursor: pointer;
@@ -512,16 +500,16 @@
     .domain-input-wrap { position: relative; max-width: 490px; }
     .domain-input-wrap input {
       width: 100%; padding: .85rem 1.1rem; padding-right: 140px;
-      background: #fff; border: 1.5px solid rgba(23,96,214,.22);
+      background: #fff; border: 1.5px solid rgba(87,37,244,.22);
       border-radius: 12px; color: var(--wi-text); font-size: 1rem;
       outline: none; transition: border-color .2s;
     }
-    .domain-input-wrap input:focus { border-color: var(--wi-primary); box-shadow: 0 0 0 3px rgba(23,96,214,.10); }
+    .domain-input-wrap input:focus { border-color: var(--wi-primary); box-shadow: 0 0 0 3px rgba(87,37,244,.10); }
     .domain-input-wrap input::placeholder { color: var(--wi-muted); }
     .domain-check-btn {
       position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
       padding: .55rem 1.1rem;
-      background: linear-gradient(135deg, var(--wi-primary), #0095c8);
+      background: var(--wi-gradient);
       border: none; border-radius: 8px; color: #fff;
       font-weight: 800; cursor: pointer; font-size: .88rem; transition: opacity .2s;
     }
@@ -541,14 +529,14 @@
     .contact-form input,
     .contact-form textarea,
     .contact-form select {
-      background: #fff; border: 1.5px solid rgba(23,96,214,.18);
+      background: #fff; border: 1.5px solid rgba(87,37,244,.18);
       color: var(--wi-text); border-radius: 10px;
     }
     .contact-form input:focus,
     .contact-form textarea:focus,
     .contact-form select:focus {
       background: #fff; border-color: var(--wi-primary);
-      color: var(--wi-text); box-shadow: 0 0 0 3px rgba(23,96,214,.10);
+      color: var(--wi-text); box-shadow: 0 0 0 3px rgba(87,37,244,.10);
     }
     .contact-form select option { background: #fff; color: var(--wi-text); }
     .contact-form input::placeholder,
@@ -585,7 +573,7 @@
       background: var(--wi-card); border: 1px solid var(--wi-border); border-radius: 16px;
       padding: 1.4rem 1.3rem; height: 100%; box-shadow: var(--wi-shadow); transition: box-shadow .2s, border-color .2s;
     }
-    .infra-card:hover { box-shadow: var(--wi-shadow-hover); border-color: rgba(23,96,214,.22); }
+    .infra-card:hover { box-shadow: var(--wi-shadow-hover); border-color: rgba(87,37,244,.22); }
     .infra-card-icon { width: 44px; height: 44px; object-fit: contain; margin-bottom: .9rem; display: block; }
     .infra-card h3 { font-size: .97rem; font-weight: 820; color: var(--wi-text); margin-bottom: .45rem; }
     .infra-card p { font-size: .88rem; color: var(--wi-muted); line-height: 1.6; margin-bottom: .75rem; }
@@ -594,7 +582,7 @@
       font-size: .72rem; font-weight: 750; color: var(--wi-accent); background: rgba(0,168,204,.08);
       border: 1px solid rgba(0,168,204,.20); border-radius: 999px; padding: .15rem .55rem;
     }
-    .auto-examples { background: rgba(23,96,214,.04); border: 1px solid rgba(23,96,214,.12); border-radius: 16px; padding: 1.6rem 1.8rem; }
+    .auto-examples { background: rgba(87,37,244,.04); border: 1px solid rgba(87,37,244,.12); border-radius: 16px; padding: 1.6rem 1.8rem; }
     .auto-examples h3 { font-size: 1rem; font-weight: 820; color: var(--wi-text); margin-bottom: 1rem; }
     .auto-example-item {
       display: flex; align-items: flex-start; gap: .65rem;
@@ -605,8 +593,8 @@
     .auto-example-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--wi-primary); flex-shrink: 0; margin-top: .42rem; }
     /* IDEA BOX */
     .idea-box {
-      background: linear-gradient(135deg, rgba(23,96,214,.06), rgba(0,168,204,.04));
-      border: 1px solid rgba(23,96,214,.18); border-radius: 18px; padding: 1.8rem;
+      background: linear-gradient(135deg, rgba(87,37,244,.06), rgba(0,168,204,.04));
+      border: 1px solid rgba(87,37,244,.18); border-radius: 18px; padding: 1.8rem;
     }
     .idea-box h3 { font-size: 1.1rem; font-weight: 820; color: var(--wi-text); margin-bottom: .7rem; }
     .idea-box p { font-size: .93rem; color: var(--wi-muted); line-height: 1.7; margin-bottom: 1.2rem; }
@@ -630,7 +618,7 @@
       color: var(--wi-muted); line-height: 1.4; letter-spacing: .02em;
       transition: background .15s, color .15s, border-color .15s;
     }
-    .lang-btn:hover { background: rgba(23,96,214,.08); color: var(--wi-primary); border-color: var(--wi-primary); }
+    .lang-btn:hover { background: rgba(87,37,244,.08); color: var(--wi-primary); border-color: var(--wi-primary); }
     .lang-btn.lang-current { display: none; }
     @media (max-width: 991px) { .lang-switcher { margin-top: .5rem; } }
     /* ── RING CAROUSEL ─────────────────────────────────────────────────────── */
@@ -642,12 +630,12 @@
       position: absolute; width: 200px; height: 248px; left: -100px; top: -124px;
       border-radius: 16px; overflow: hidden;
       background: var(--wi-card); border: 1px solid var(--wi-border);
-      box-shadow: 0 6px 28px rgba(23,96,214,.10);
+      box-shadow: 0 6px 28px rgba(87,37,244,.10);
       cursor: pointer; backface-visibility: hidden;
       transition: box-shadow .2s, border-color .2s;
     }
-    .ring-card:hover { box-shadow: 0 10px 36px rgba(23,96,214,.18); }
-    .ring-card.ring-card-active { box-shadow: 0 14px 48px rgba(23,96,214,.28) !important; border-color: var(--wi-primary) !important; }
+    .ring-card:hover { box-shadow: 0 10px 36px rgba(87,37,244,.18); }
+    .ring-card.ring-card-active { box-shadow: 0 14px 48px rgba(87,37,244,.28) !important; border-color: var(--wi-primary) !important; }
     .ring-card-img { width: 100%; height: 142px; object-fit: cover; display: block; }
     .ring-card-body { padding: .65rem .85rem .55rem; }
     .ring-card-badge {
@@ -713,11 +701,11 @@
     "@graph": [
       {
         "@type": "LocalBusiness",
-        "@id": "https://webimpulsa.es/#business",
-        "name": "Web-Impulsa",
+        "@id": "https://creaganaweb.es/#business",
+        "name": "CreaGanaWeb",
         "description": "Agencia de desarrollo web y automatización para negocios locales en España. Webs profesionales, tiendas online, sistemas de reservas y automatización con bots.",
-        "url": "https://webimpulsa.es",
-        "email": "info@webimpulsa.es",
+        "url": "https://creaganaweb.es",
+        "email": "info@creaganaweb.es",
         "areaServed": {"@type": "Country", "name": "España"},
         "priceRange": "€€",
         "knowsLanguage": ["es", "ru"],
@@ -734,11 +722,11 @@
       },
       {
         "@type": "WebSite",
-        "@id": "https://webimpulsa.es/#website",
-        "url": "https://webimpulsa.es",
-        "name": "Web-Impulsa",
+        "@id": "https://creaganaweb.es/#website",
+        "url": "https://creaganaweb.es",
+        "name": "CreaGanaWeb",
         "description": "Webs profesionales y automatización para negocios locales en España",
-        "publisher": {"@id": "https://webimpulsa.es/#business"},
+        "publisher": {"@id": "https://creaganaweb.es/#business"},
         "inLanguage": "es"
       }
     ]
@@ -751,9 +739,9 @@
   <!-- INFO MODAL (for extras) -->
   <div class="modal fade" id="calcInfoModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" style="max-width:380px">
-      <div class="modal-content" style="border-radius:18px;border:1px solid rgba(23,96,214,.15);box-shadow:0 20px 60px rgba(23,96,214,.18)">
+      <div class="modal-content" style="border-radius:18px;border:1px solid rgba(87,37,244,.15);box-shadow:0 20px 60px rgba(87,37,244,.18)">
         <div class="modal-header" style="border-bottom:1px solid rgba(0,0,0,.07);padding:1.2rem 1.4rem .8rem">
-          <h6 class="modal-title fw-bold" id="calcInfoTitle" style="color:#0c1c42;font-size:1rem"></h6>
+          <h6 class="modal-title fw-bold" id="calcInfoTitle" style="color:var(--wi-text);font-size:1rem"></h6>
           <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <div class="modal-body" id="calcInfoBody" style="font-size:.92rem;line-height:1.68;color:#5a6d8c;padding:1rem 1.4rem 1.4rem"></div>
@@ -765,7 +753,7 @@
   <nav class="navbar navbar-expand-lg fixed-top">
     <div class="container">
       <a class="navbar-brand" href="#inicio">
-        <img src="/static/wi/img/logo.webp" alt="Web-Impulsa" height="52">
+        <img src="/static/wi/img/logo.webp" alt="CreaGanaWeb" height="52">
       </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-label="Menú">
         <span class="navbar-toggler-icon"></span>
@@ -1002,7 +990,7 @@
   <section id="quiz" class="section-shell section-alt">
     <div class="container">
       <div class="section-kicker text-center">Descubre qué necesitas</div>
-      <h2 class="section-title text-center mb-2">¿Qué puede hacer Web-Impulsa por tu negocio?</h2>
+      <h2 class="section-title text-center mb-2">¿Qué puede hacer CreaGanaWeb por tu negocio?</h2>
       <p class="section-subtitle text-center mx-auto mb-5">Responde 4 preguntas rápidas y te diremos exactamente qué solución encaja con tu caso.</p>
       <div class="row justify-content-center">
         <div class="col-lg-9">
@@ -1069,7 +1057,7 @@
   <section id="casos" class="section-shell section-wave-2">
     <div class="container">
       <div class="section-kicker">Pruébalo tú mismo</div>
-      <h2 class="section-title mb-2">Así es un proyecto real de Web-Impulsa.</h2>
+      <h2 class="section-title mb-2">Así es un proyecto real de CreaGanaWeb.</h2>
       <p class="section-subtitle mb-1">Esto no es una maqueta: es una web completa y funcional, igual que la que podemos construir para tu negocio. Entra, haz clic donde quieras y prueba a reservar una cita — todo funciona de verdad.</p>
       <p class="ring-hint">Pulsa el proyecto para ver detalles →</p>
       <div class="ring-scene" id="ringScene" tabindex="0" aria-label="Carrusel de proyectos, usa flechas para navegar">
@@ -1371,7 +1359,7 @@
         </div>
 
         <div id="flexResult" style="display:none">
-          <div style="background:linear-gradient(135deg,#1760d6 0%,#1246a8 100%);border-radius:12px;padding:18px 20px;color:#fff;margin-bottom:14px">
+          <div style="background:var(--wi-gradient);border-radius:12px;padding:18px 20px;color:#fff;margin-bottom:14px">
             <div id="flexBestLabel" style="font-size:.75rem;font-weight:700;opacity:.8;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Mejor opción para tu presupuesto</div>
             <div style="font-size:1.4rem;font-weight:900" id="flexPkgName">—</div>
             <div style="font-size:.85rem;opacity:.85;margin-top:2px"><span id="flexBaseLabel">Precio base:</span> <span id="flexPkgBase">—</span></div>
@@ -1550,7 +1538,7 @@
           </div>
           <div class="d-flex flex-wrap gap-2">
             <a href="https://wa.me/34613708322" target="_blank" rel="noopener" class="btn btn-green">WhatsApp directo</a>
-            <a href="mailto:info@webimpulsa.es" class="btn btn-outline-dark-wi">Enviar email</a>
+            <a href="mailto:info@creaganaweb.es" class="btn btn-outline-dark-wi">Enviar email</a>
           </div>
         </div>
         <div class="col-lg-7 fade-up">
@@ -1596,11 +1584,11 @@
   <!-- FOOTER -->
   <footer style="padding:2.5rem 0">
     <div class="container d-flex flex-wrap justify-content-between align-items-center gap-3">
-      <img src="/static/wi/img/logo.webp" alt="Web-Impulsa" height="32" style="filter:brightness(0) invert(1);opacity:.85">
-      <div style="font-size:.84rem;opacity:.60">© 2026 Web-Impulsa · webimpulsa.es</div>
+      <span class="wi-logo-card"><img src="/static/wi/img/logo.webp" alt="CreaGanaWeb" height="26"></span>
+      <div style="font-size:.84rem;opacity:.60">© 2026 CreaGanaWeb · creaganaweb.es</div>
       <div class="d-flex flex-wrap gap-3">
         <a href="tel:+34613708322" style="font-size:.84rem">613 708 322</a>
-        <a href="mailto:info@webimpulsa.es" style="font-size:.84rem">info@webimpulsa.es</a>
+        <a href="mailto:info@creaganaweb.es" style="font-size:.84rem">info@creaganaweb.es</a>
         <a href="https://wa.me/34613708322" target="_blank" rel="noopener" style="font-size:.84rem">WhatsApp</a>
       </div>
     </div>
@@ -1643,10 +1631,10 @@ eu:{group:'Automatizazio aurreratuak',diseno:{name:'Diseinu premium',infoTitle:'
 ru:{group:'Расширенная автоматизация',diseno:{name:'Премиум дизайн',infoTitle:'Что такое премиум дизайн?',info:'Плавные анимации, дизайнерские шрифты, уникальные визуальные элементы и тщательная вёрстка. Чтобы посетители говорили «какой красивый сайт!» и вы выделялись среди конкурентов.'},textos:{name:'Тексты, которые продают',infoTitle:'Что такое тексты, которые продают?',info:'Пишем все тексты для сайта: описания услуг, цепляющие заголовки, фразы доверия и призывы к действию. Текст, который превращает посетителей в клиентов, а не заполнитель.'},seo:{name:'Появиться в Google',infoTitle:'Что значит появиться в Google?',info:'Оптимизируем сайт, чтобы он выходил когда кто-то ищет то, что вы предлагаете. Настраиваем заголовки, описания, скорость загрузки и структуру. Без этого сайт существует, но никто его не находит.'},google:{name:'Карточка в Google Картах',infoTitle:'Что такое карточка в Google Картах?',info:'Создаём и оптимизируем ваш профиль в Google Картах. При поиске «ресторан рядом» или «мастерская в [вашем городе]» ваш бизнес появляется с фото, расписанием и адресом.'},formulario:{name:'Умная форма обратной связи',infoTitle:'Что такое умная форма обратной связи?',info:'Более полная форма: многошаговая, с полями которые появляются по выбору пользователя, и прямой отправкой на ваш email или WhatsApp. Намного больше чем обычное «имя + сообщение».'},whatsapp:{name:'Кнопка WhatsApp',infoTitle:'Что такое кнопка WhatsApp?',info:'Плавающая зелёная кнопка WhatsApp на всех страницах сайта. Посетитель нажимает — мгновенно открывается переписка с вами. Не нужно искать номер. Эффективно конвертирует посетителей в клиентов.'},reservas:{name:'Онлайн-запись на приём',infoTitle:'Что такое онлайн-запись?',info:'Встроенный в сайт календарь где клиенты видят вашу занятость и выбирают время сами, без звонков. Вы получаете уведомление по email или WhatsApp на каждую новую запись. Идеально для салонов, клиник, академий и любого бизнеса с записью.'},integracion:{name:'Онлайн-оплата и подключения',infoTitle:'Что такое онлайн-оплата и подключения?',info:'Подключаем сайт к платёжной системе для приёма оплат онлайн, к системе заказов, базе клиентов или любому другому инструменту который вы уже используете. Всё синхронизируется автоматически, без двойного ввода данных.'},multiidioma:{name:'Сайт на нескольких языках',infoTitle:'Что такое сайт на нескольких языках?',info:'Весь сайт на двух и более языках (например, испанский + английский). Посетитель меняет язык одним кликом. Идеально для международных клиентов или туристов.'},analytics:{name:'Статистика продаж',infoTitle:'Что такое статистика продаж?',info:'Подробная панель метрик: лучшие товары, сколько людей покупает, брошенные корзины, откуда приходят клиенты. Для решений на основе реальных данных, а не интуиции.'},importacion:{name:'Загрузить весь каталог',infoTitle:'Что такое загрузка каталога?',info:'Загружаем все ваши товары сразу из файла Excel. Если у вас десятки или сотни товаров — это экономит целые дни работы.'},recordatorios:{name:'Напоминания перед визитом',infoTitle:'Что такое напоминания перед визитом?',info:'Система автоматически отправляет напоминание через WhatsApp или email за 24 часа до каждой записи. Сокращает неявки на 50–70% — проверено в салонах, клиниках и академиях.'},bot:{name:'Автоматический помощник 24ч',infoTitle:'Что такое автоматический помощник?',info:'Бот подключённый к вашему WhatsApp или Telegram, который отвечает на частые вопросы, собирает заявки и отправляет подтверждения — без вашего участия. Клиенты получают мгновенный ответ в любое время.'},correo:{name:'Почта с вашим доменом',infoTitle:'Что такое почта с вашим доменом?',info:'Настраиваем личную почту с вашим собственным доменом (имя@вашакомпания.com). Клиенты видят профессиональный адрес вместо Gmail или Hotmail. Включает настройку DNS, SSL и перенаправлений.'},instagram:{name:'Галерея Instagram',infoTitle:'Что такое галерея Instagram?',info:'Подключаем ваш аккаунт Instagram к сайту для автоматического отображения последних фото или работ. Идеально для салонов, фотографов, ресторанов или любого бизнеса который хочет показывать свои работы без усилий.'},area_privada:{name:'Личный кабинет клиентов',infoTitle:'Что такое личный кабинет?',info:'Защищённое паролем пространство где клиенты могут видеть свои заказы, бронирования, счета или документы. Доступно с мобильного или компьютера, без дополнительных приложений.'},pdf_auto:{name:'Автоматические документы PDF',infoTitle:'Что такое автоматические документы?',info:'Когда кто-то делает заказ или подтверждает запись, система автоматически генерирует смету, наряд или подтверждение в PDF и отправляет по email. Нулевая ручная работа.'},sheets:{name:'Данные в Excel / Sheets',infoTitle:'Что такое данные в Excel / Sheets?',info:'Подключаем сайт к Google Sheets или Excel Online. Каждая запись, заказ или заявка автоматически появляется в вашей таблице. Если вы уже работаете с Excel — это идеально встраивается.'},panel_emp:{name:'Панель для команды',infoTitle:'Что такое панель для команды?',info:'Внутренняя панель где каждый сотрудник видит только своё. Назначайте задачи, отслеживайте статус работ и управляйте расписаниями. Идеально для команд от 3 человек.'},app_android:{name:'Мобильное приложение',infoTitle:'Что такое мобильное приложение?',info:'Приложение которое клиенты или сотрудники устанавливают на телефон и всегда имеют вашу систему под рукой. Без браузера — как настоящее приложение на экране.'}}
 };
 var quiz={
-es:{bizLabels:{restaurante:'restaurante/cafetería',salon:'salón o spa',taller:'taller',clinica:'clínica',academia:'academia',empresa:'empresa',tienda:'tienda',otro:'negocio'},bizNames:{restaurante:'Restaurante/Cafetería',salon:'Salón/Spa',taller:'Taller',clinica:'Clínica/Salud',empresa:'Empresa',tienda:'Tienda',academia:'Academia',otro:'Otro negocio'},probNames:{sinweb:'No tengo web',clientes:'Necesito más clientes',reservas:'Gestiono reservas a mano',manual:'Demasiado trabajo manual',gestion:'No controlo mis datos',escalar:'Quiero escalar',ampliar:'Quiero añadir funciones',mantenimiento:'Solo mantenimiento'},benefits:{custom:[{metric:'Ahorra 20h/semana',text:'en gestión manual con flujos automatizados'},{metric:'100% centralizado',text:'todos los datos, accesos y procesos en un solo lugar'},{metric:'Escala contigo',text:'añadimos módulos conforme crece tu equipo'}],reservas:[{metric:'Ahorra 10h/semana',text:'tus clientes reservan solos sin llamarte'},{metric:'−80% reservas perdidas',text:'confirmaciones y recordatorios automáticos'},{metric:'Disponible 24h',text:'clientes reservan a las 2am desde el sofá'}],tienda:[{metric:'Vendes 24h',text:'sin estar presente ni gestionar pedidos a mano'},{metric:'+45% alcance',text:'clientes de toda España y más allá'},{metric:'−90% errores',text:'pedidos y pagos gestionados automáticamente'}],landing:[{metric:'+40% consultas',text:'Google te encuentra cuando buscan tus servicios'},{metric:'Online en 7 días',text:'presencia profesional que genera confianza inmediata'},{metric:'Coste mínimo',text:'la solución más eficaz para empezar a crecer'}],proManual:[{metric:'−70% trabajo manual',text:'los formularios y flujos se encargan solos'},{metric:'Todo conectado',text:'tu web integrada con tu email, CRM o sistema de pedidos'},{metric:'Control total',text:'visualiza el estado de cada cliente o solicitud'}],proDefault:[{metric:'+60% confianza',text:'imagen profesional que convierte visitantes en clientes'},{metric:'Visible en Google',text:'aparecer cuando buscan tus servicios en tu ciudad'},{metric:'Lista en 2-3 semanas',text:'web completa y adaptada a tu negocio'}],automation:[{metric:'Ahorra 5-10h/semana',text:'en tareas repetitivas que el bot hace solo'},{metric:'Disponible 24h',text:'el bot responde aunque no estés conectado'},{metric:'Retorno en semanas',text:'inversión recuperada rápido al eliminar trabajo manual'}],ampliar:[{metric:'Sin empezar de cero',text:'integramos lo que falta sobre lo que ya funciona'},{metric:'Coste mínimo',text:'solo pagas por lo que añades, no por rehacer todo'},{metric:'Resultado en días',text:'no en semanas — el proyecto ya existe, solo lo ampliamos'}],maintenance:[{metric:'Tranquilidad total',text:'alguien vigila que tu web funcione correctamente'},{metric:'Sin sorpresas',text:'actualizaciones de seguridad y backups incluidos'},{metric:'Desde 39€/mes',text:'sin contratos largos — cancela cuando quieras'}]},advisorByProb:{sinweb:'Un {biz} sin web pierde clientes que buscan online antes de llamar.',clientes:'Para conseguir más clientes, lo primero es que te encuentren — ahí es donde más impacto tiene la inversión.',reservas:'Las reservas manuales cuestan tiempo y generan errores. Un sistema en línea lo resuelve de raíz.',manual:'Si el problema es trabajo repetitivo, la respuesta es un bot o script — no una web nueva. Automatizamos exactamente lo que te roba tiempo.',gestion:'Sin datos centralizados, es difícil tomar buenas decisiones. Un panel lo cambia completamente.',escalar:'Si el sistema actual no da más, es el momento justo para ampliar o migrar sin tirar lo que ya funciona.',ampliar:'Si ya tienes algo funcionando, lo inteligente es añadir lo que falta — no empezar de cero y gastar el doble.',mantenimiento:'Tener a alguien que cuide tu web mes a mes evita problemas de seguridad, caídas y pérdida de datos.'},advisorByBiz:{restaurante:'Para restaurantes, la ficha en Google Maps es especialmente crítica — "restaurante cerca de mí" tiene millones de búsquedas.',salon:'Los salones de belleza con reservas online ven una reducción drástica en no-shows gracias a los recordatorios automáticos.',taller:'Los talleres ganan mucho con presupuestos y órdenes de trabajo digitales — se acaba el papel y se acortan los tiempos.',clinica:'Para clínicas, la gestión de citas y el historial de pacientes en un solo sistema marca la diferencia operativa.'},advisorBySize:{solo:'Como autónomo, priorizamos que la solución sea rápida, sin complicaciones y con ROI claro desde el primer mes.',grande:'Con más de 20 personas en el equipo, conviene añadir roles de acceso diferenciados y gestión de empleados.'},advisorByWhen:{urgente:'Mencionas que lo necesitas cuanto antes — con entrega urgente podemos arrancar en 72 horas.'},ui:{analysis:'Análisis de tu situación',recommend:'Te recomendamos:',discount:'descuento −25% activo',noCommit:'sin compromiso — cancela cuando quieras',desde:'desde',extrasTitle:'Extras recomendados para tu caso',calcBtn:'Ver mi resultado en calculadora →',scheduleBtn:'Agendar llamada',resetBtn:'Repetir el test',waPrefix:'Hola, hice el test en webimpulsa.es y me salió esta recomendación:',waBiz:'Negocio',waProb:'Problema',waRec:'Recomendación',waQ:'¿Podemos hablar?'}},
-en:{bizLabels:{restaurante:'restaurant/café',salon:'salon or spa',taller:'workshop',clinica:'clinic',academia:'academy',empresa:'company',tienda:'shop',otro:'business'},bizNames:{restaurante:'Restaurant/Café',salon:'Salon/Spa',taller:'Workshop',clinica:'Clinic/Health',empresa:'Company',tienda:'Shop',academia:'Academy',otro:'Other business'},probNames:{sinweb:'No website',clientes:'Need more customers',reservas:'Managing bookings manually',manual:'Too much manual work',gestion:'Not tracking my data',escalar:'Want to scale',ampliar:'Want to add features',mantenimiento:'Maintenance only'},benefits:{custom:[{metric:'Save 20h/week',text:'on manual management with automated flows'},{metric:'100% centralized',text:'all data, access and processes in one place'},{metric:'Scales with you',text:'we add modules as your team grows'}],reservas:[{metric:'Save 10h/week',text:'customers book on their own without calling you'},{metric:'−80% lost bookings',text:'automatic confirmations and reminders'},{metric:'Available 24h',text:'customers book at 2am from their sofa'}],tienda:[{metric:'Sell 24h',text:'without being present or managing orders manually'},{metric:'+45% reach',text:'customers from all over Spain and beyond'},{metric:'−90% errors',text:'orders and payments managed automatically'}],landing:[{metric:'+40% enquiries',text:'Google finds you when people search for your services'},{metric:'Online in 7 days',text:'professional presence that builds instant trust'},{metric:'Minimal cost',text:'the most effective solution to start growing'}],proManual:[{metric:'−70% manual work',text:'forms and flows handle it automatically'},{metric:'All connected',text:'your site integrated with email, CRM or order system'},{metric:'Full control',text:'view the status of each customer or request'}],proDefault:[{metric:'+60% trust',text:'professional image that turns visitors into customers'},{metric:'Visible on Google',text:'appear when people search for your services in your city'},{metric:'Ready in 2-3 weeks',text:'complete website adapted to your business'}],automation:[{metric:'Save 5-10h/week',text:'on repetitive tasks the bot handles automatically'},{metric:'Available 24h',text:'the bot replies even when you\'re offline'},{metric:'Fast ROI',text:'investment recovered quickly by eliminating manual work'}],ampliar:[{metric:'No starting from scratch',text:'we integrate what\'s missing into what already works'},{metric:'Minimal cost',text:'you only pay for what you add, not to redo everything'},{metric:'Result in days',text:'not weeks — the project already exists, we just extend it'}],maintenance:[{metric:'Total peace of mind',text:'someone watches that your site works correctly'},{metric:'No surprises',text:'security updates and backups included'},{metric:'From €39/mo',text:'no long contracts — cancel whenever you want'}]},advisorByProb:{sinweb:'A {biz} without a website loses customers who search online before calling.',clientes:"To get more customers, the first thing is to be found — that's where investment has the most impact.",reservas:'Manual bookings waste time and create errors. An online system solves it at the root.',manual:'If the problem is repetitive work, the answer is a bot or script — not a new website. We automate exactly what is stealing your time.',gestion:'Without centralised data, making good decisions is hard. A dashboard changes everything.',escalar:"If the current system can't keep up, now is the right moment to extend or migrate without throwing away what already works.",ampliar:"If you already have something working, the smart move is to add what's missing — not start from scratch and spend twice as much.",mantenimiento:'Having someone look after your site month to month prevents security issues, downtime and data loss.'},advisorByBiz:{restaurante:'For restaurants, the Google Maps listing is especially critical — "restaurant near me" gets millions of searches.',salon:'Beauty salons with online booking see a drastic reduction in no-shows thanks to automatic reminders.',taller:'Workshops gain a lot with digital quotes and work orders — paper ends and turnaround times shorten.',clinica:'For clinics, managing appointments and patient history in one system makes a huge operational difference.'},advisorBySize:{solo:"As a sole trader, we prioritise a fast, hassle-free solution with clear ROI from the first month.",grande:"With more than 20 people on the team, it's worth adding differentiated access roles and employee management."},advisorByWhen:{urgente:'You mention needing it as soon as possible — with urgent delivery we can start in 72 hours.'},ui:{analysis:'Situation analysis',recommend:'We recommend:',discount:'launch discount −25% active',noCommit:'no commitment — cancel whenever you want',desde:'from',extrasTitle:'Recommended extras for your case',calcBtn:'See result in calculator →',scheduleBtn:'Schedule a call',resetBtn:'Retake the test',waPrefix:'Hi, I took the test on webimpulsa.es and got this recommendation:',waBiz:'Business',waProb:'Problem',waRec:'Recommendation',waQ:'Can we talk?'}},
-eu:{bizLabels:{restaurante:'jatetxea/kafetegia',salon:'apaindegia edo spa',taller:'tailerra',clinica:'klinika',academia:'akademia',empresa:'enpresa',tienda:'denda',otro:'negozioa'},bizNames:{restaurante:'Jatetxea/Kafetegia',salon:'Apaindegia/Spa',taller:'Tailerra',clinica:'Klinika/Osasuna',empresa:'Enpresa',tienda:'Denda',academia:'Akademia',otro:'Beste negozio bat'},probNames:{sinweb:'Ez dut webgunerik',clientes:'Bezero gehiago behar ditut',reservas:'Erreserbak eskuz kudeatzen ditut',manual:'Lan manual gehiegi dago',gestion:'Ez ditut nire datuak kontrolatzen',escalar:'Hazi nahi dut',ampliar:'Funtzio berriak gehitu nahi ditut',mantenimiento:'Mantentze-lana soilik'},benefits:{custom:[{metric:'Aurreztu 20h/astean',text:'fluxu automatizatuekin kudeaketa manualean'},{metric:'%100 zentralizatuta',text:'datu, sarbide eta prozesu guztiak toki bakarrean'},{metric:'Zurekin hazten da',text:'moduluak gehitzen ditugu zure taldea hazten den heinean'}],reservas:[{metric:'Aurreztu 10h/astean',text:'bezeroek bakarrik erreserba egiten dute deitu gabe'},{metric:'−%80 erreserba galduak',text:'baieztatze eta gogorarazpen automatikoak'},{metric:'24h erabilgarri',text:'bezeroek gaueko 2etan sofatik erreserba egiten dute'}],tienda:[{metric:'24h saltzen duzu',text:'bertan egon gabe eta eskaerak eskuz kudeatu gabe'},{metric:'+%45 irismena',text:'Espainia osoko eta handikagoko bezeroak'},{metric:'−%90 erroreak',text:'eskaerak eta ordainketak automatikoki kudeatuta'}],landing:[{metric:'+%40 kontsultak',text:'Google-k aurkitzen zaitu zerbitzuak bilatzean'},{metric:'Online 7 egunetan',text:'berehala konfiantza sortzen duen presentzia profesionala'},{metric:'Koste txikiena',text:'hazteko hasierako irtenbide eraginkorrenena'}],proManual:[{metric:'−%70 lan manuala',text:'formularioak eta fluxuak bakarrik arduratzen dira'},{metric:'Dena konektatuta',text:'zure weba email, CRM edo eskaera sistemarekin integratuta'},{metric:'Kontrol osoa',text:'bezero edo eskaera bakoitzaren egoera ikusi'}],proDefault:[{metric:'+%60 konfiantza',text:'bisitariak bezero bihurtzen dituen irudi profesionala'},{metric:'Google-n ikusgai',text:'zure hirian zerbitzuak bilatzean agertu'},{metric:'2-3 astetan prest',text:'web osoa zure negozioari egokituta'}],automation:[{metric:'Aurreztu 5-10h/astean',text:'botak bakarrik egiten dituen lan errepikakorretan'},{metric:'24h erabilgarri',text:'botak erantzuten du konektatuta ez bazaude ere'},{metric:'Errentagarritasun azkarra',text:'inbertsioa lan manuala kenduta aste gutxitan berreskuratzen da'}],ampliar:[{metric:'Hutsetik hasi gabe',text:'dagoeneko funtzionatzen duenari falta dena gehitzen diogu'},{metric:'Koste minimoa',text:'gehitzen duzuna baino ez duzu ordaintzen, dena berregin gabe'},{metric:'Egunetan emaitza',text:'ez asteetan — proiektua badago, zabaldu besterik ez dugu egiten'}],maintenance:[{metric:'Lasaitasun osoa',text:'norbait zure webgunea ondo funtzionatzen ari dela ikuskatzen'},{metric:'Surprise-rik gabe',text:'segurtasun-eguneraketak eta babeskopiak barne'},{metric:'39€/hil.-tik',text:'kontratu luzerik gabe — nahi duzunean utzi'}]},advisorByProb:{sinweb:'Web-ik gabeko {biz} batek telefonatu aurretik online bilatzen duten bezeroak galtzen ditu.',clientes:'Bezero gehiago lortzeko, lehenengo gauza aurkitu zaitezaten da — bertan du inbertsioak inpaktu handiena.',reservas:'Eskuzko erreserbek denbora galtzen dute eta akatsak sortzen dituzte. Sistema batek errotik konpontzen du.',manual:'Arazoa lan errepikagarria bada, erantzuna bot edo script bat da — web berri bat ez. Zure denbora lapurtzen duena automatizatzen dugu.',gestion:'Datu zentralizaturik gabe, erabaki onak hartzea zaila da. Panel batek dena aldatzen du.',escalar:'Oraingo sistemak gehiago ematen ez badu, momentu egokia da funtzionatzen duena ukitu gabe zabaltzeko edo migratzeko.',ampliar:'Zerbait funtzionatzen badago jada, zentzuzkoena falta dena gehitzea da — hutsetik hasi eta birritan gastatu beharrean.',mantenimiento:'Norbaitek hilero zure webgunea zaintzeak segurtasun-arazoak, etenak eta datu-galerak ekiditen ditu.'},advisorByBiz:{restaurante:'Jatetxeentzako, Google Maps-eko fitxa bereziki kritikoa da — "nire ondoko jatetxea" milioika bilaketa ditu.',salon:'Online erreserba duten edertasun apaindegiek no-show murrizketa drastikoa ikusten dute gogorarazpen automatikoen bidez.',taller:'Taillerrek asko irabazten dute aurrekontu eta lan-aginte digitalekin — papera bukatzen da eta epeak laburtu egiten dira.',clinica:'Klinikentzako, hitzordu kudeaketa eta pazienteen historia sistema bakarrean eragiketa-aldea markatzen du.'},advisorBySize:{solo:'Langile autonomo gisa, lehentasuna ematen diogu irtenbide azkar, korapilotsua eta lehenengo hiletik etekin argidunarenari.',grande:'20 pertsona baino gehiago taldearekin, sarbide-rol desberdinak eta langileen kudeaketa gehitzea komeni da.'},advisorByWhen:{urgente:'Ahalik eta lasterren behar duzula aipatzen duzu — urgente entregearekin 72 ordutan has gaitezke.'},ui:{analysis:'Zure egoeraren analisia',recommend:'Gomendatzen dizugu:',discount:'abiarazte deskontua −%15 aktibo',noCommit:'konpromisorik gabe — nahi duzunean utzi',desde:'tik',extrasTitle:'Zure kasurako gomendatutako gehigarriak',calcBtn:'Ikus nire emaitza kalkulagailuan →',scheduleBtn:'Deia antolatu',resetBtn:'Testa errepikatu',waPrefix:'Kaixo, webimpulsa.es-eko testa egin dut eta gomendio hau atera zait:',waBiz:'Negozioa',waProb:'Arazoa',waRec:'Gomendioa',waQ:'Hitz egin dezakegu?'}},
-ru:{bizLabels:{restaurante:'ресторан/кафе',salon:'салон или спа',taller:'мастерская',clinica:'клиника',academia:'академия',empresa:'компания',tienda:'магазин',otro:'бизнес'},bizNames:{restaurante:'Ресторан/Кафе',salon:'Салон/Спа',taller:'Мастерская',clinica:'Клиника/Здоровье',empresa:'Компания',tienda:'Магазин',academia:'Академия',otro:'Другой бизнес'},probNames:{sinweb:'Нет сайта',clientes:'Нужно больше клиентов',reservas:'Веду записи вручную',manual:'Слишком много ручной работы',gestion:'Не контролирую данные',escalar:'Хочу масштабироваться',ampliar:'Хочу добавить функции',mantenimiento:'Только поддержка'},benefits:{custom:[{metric:'Экономь 20ч/нед',text:'на ручном управлении с автоматическими потоками'},{metric:'100% централизовано',text:'все данные, доступы и процессы в одном месте'},{metric:'Масштабируется',text:'добавляем модули по мере роста вашей команды'}],reservas:[{metric:'Экономь 10ч/нед',text:'клиенты записываются сами без звонков'},{metric:'−80% потерянных броней',text:'автоподтверждения и напоминания'},{metric:'Доступно 24ч',text:'клиенты записываются в 2 ночи с дивана'}],tienda:[{metric:'Продажи 24ч',text:'без присутствия и ручного управления заказами'},{metric:'+45% охват',text:'клиенты со всей Испании и за её пределами'},{metric:'−90% ошибок',text:'заказы и платежи обрабатываются автоматически'}],landing:[{metric:'+40% обращений',text:'Google находит вас при поиске ваших услуг'},{metric:'Онлайн за 7 дней',text:'профессиональное присутствие, внушающее доверие'},{metric:'Минимальные затраты',text:'самое эффективное решение для начала роста'}],proManual:[{metric:'−70% ручного труда',text:'формы и потоки сами справляются'},{metric:'Всё связано',text:'сайт интегрирован с email, CRM или системой заказов'},{metric:'Полный контроль',text:'видите статус каждого клиента или заявки'}],proDefault:[{metric:'+60% доверие',text:'профессиональный образ, конвертирующий посетителей в клиентов'},{metric:'Видимость в Google',text:'появляться при поиске ваших услуг в вашем городе'},{metric:'Готово за 2-3 нед',text:'полный сайт, адаптированный под ваш бизнес'}],automation:[{metric:'Экономь 5-10ч/нед',text:'на повторяющихся задачах, которые делает бот'},{metric:'Доступен 24ч',text:'бот отвечает, даже когда вы не в сети'},{metric:'Быстрый ROI',text:'инвестиция окупается быстро за счёт устранения ручной работы'}],ampliar:[{metric:'Без старта с нуля',text:'интегрируем недостающее в то, что уже работает'},{metric:'Минимальные затраты',text:'платите только за то, что добавляете, без переделки всего'},{metric:'Результат за дни',text:'не за недели — проект уже есть, мы просто расширяем его'}],maintenance:[{metric:'Полное спокойствие',text:'кто-то следит, что ваш сайт работает корректно'},{metric:'Без сюрпризов',text:'обновления безопасности и резервные копии включены'},{metric:'От 39€/мес',text:'без долгих контрактов — отмените когда захотите'}]},advisorByProb:{sinweb:'{biz} без сайта теряет клиентов, которые ищут онлайн перед звонком.',clientes:'Чтобы получить больше клиентов, первое — чтобы вас находили. Именно здесь инвестиции дают наибольший эффект.',reservas:'Ручные записи отнимают время и создают ошибки. Онлайн-система решает это в корне.',manual:'Если проблема в повторяющейся работе — ответ это бот или скрипт, а не новый сайт. Мы автоматизируем именно то, что крадёт ваше время.',gestion:'Без централизованных данных принимать хорошие решения сложно. Панель управления меняет всё.',escalar:'Если система не справляется, сейчас подходящий момент расширить или мигрировать, не выбрасывая то, что уже работает.',ampliar:'Если что-то уже работает, умнее добавить недостающее — а не начинать с нуля и тратить вдвое.',mantenimiento:'Наличие кого-то, кто ежемесячно следит за сайтом, предотвращает проблемы безопасности, простои и потерю данных.'},advisorByBiz:{restaurante:'Для ресторанов карточка в Google Картах особенно важна — «ресторан рядом со мной» получает миллионы поисков.',salon:'Салоны красоты с онлайн-записью резко сокращают неявки благодаря автонапоминаниям.',taller:'Мастерские много выигрывают от цифровых смет и нарядов — бумага исчезает, сроки сокращаются.',clinica:'Для клиник управление записями и историями пациентов в одной системе — огромная операционная разница.'},advisorBySize:{solo:'Как ИП, мы ставим в приоритет быстрое, простое решение с понятным ROI уже с первого месяца.',grande:'При команде более 20 человек стоит добавить разграничение ролей доступа и управление сотрудниками.'},advisorByWhen:{urgente:'Вы упоминаете, что нужно как можно скорее — при срочной сдаче можем начать в течение 72 часов.'},ui:{analysis:'Анализ вашей ситуации',recommend:'Мы рекомендуем:',discount:'скидка запуска −25% активна',noCommit:'без обязательств — отмените когда захотите',desde:'от',extrasTitle:'Рекомендованные опции для вашего случая',calcBtn:'Посмотреть результат в калькуляторе →',scheduleBtn:'Записаться на звонок',resetBtn:'Пройти ещё раз',waPrefix:'Привет, прошёл тест на webimpulsa.es и получил такую рекомендацию:',waBiz:'Бизнес',waProb:'Проблема',waRec:'Рекомендация',waQ:'Можем поговорить?'}}
+es:{bizLabels:{restaurante:'restaurante/cafetería',salon:'salón o spa',taller:'taller',clinica:'clínica',academia:'academia',empresa:'empresa',tienda:'tienda',otro:'negocio'},bizNames:{restaurante:'Restaurante/Cafetería',salon:'Salón/Spa',taller:'Taller',clinica:'Clínica/Salud',empresa:'Empresa',tienda:'Tienda',academia:'Academia',otro:'Otro negocio'},probNames:{sinweb:'No tengo web',clientes:'Necesito más clientes',reservas:'Gestiono reservas a mano',manual:'Demasiado trabajo manual',gestion:'No controlo mis datos',escalar:'Quiero escalar',ampliar:'Quiero añadir funciones',mantenimiento:'Solo mantenimiento'},benefits:{custom:[{metric:'Ahorra 20h/semana',text:'en gestión manual con flujos automatizados'},{metric:'100% centralizado',text:'todos los datos, accesos y procesos en un solo lugar'},{metric:'Escala contigo',text:'añadimos módulos conforme crece tu equipo'}],reservas:[{metric:'Ahorra 10h/semana',text:'tus clientes reservan solos sin llamarte'},{metric:'−80% reservas perdidas',text:'confirmaciones y recordatorios automáticos'},{metric:'Disponible 24h',text:'clientes reservan a las 2am desde el sofá'}],tienda:[{metric:'Vendes 24h',text:'sin estar presente ni gestionar pedidos a mano'},{metric:'+45% alcance',text:'clientes de toda España y más allá'},{metric:'−90% errores',text:'pedidos y pagos gestionados automáticamente'}],landing:[{metric:'+40% consultas',text:'Google te encuentra cuando buscan tus servicios'},{metric:'Online en 7 días',text:'presencia profesional que genera confianza inmediata'},{metric:'Coste mínimo',text:'la solución más eficaz para empezar a crecer'}],proManual:[{metric:'−70% trabajo manual',text:'los formularios y flujos se encargan solos'},{metric:'Todo conectado',text:'tu web integrada con tu email, CRM o sistema de pedidos'},{metric:'Control total',text:'visualiza el estado de cada cliente o solicitud'}],proDefault:[{metric:'+60% confianza',text:'imagen profesional que convierte visitantes en clientes'},{metric:'Visible en Google',text:'aparecer cuando buscan tus servicios en tu ciudad'},{metric:'Lista en 2-3 semanas',text:'web completa y adaptada a tu negocio'}],automation:[{metric:'Ahorra 5-10h/semana',text:'en tareas repetitivas que el bot hace solo'},{metric:'Disponible 24h',text:'el bot responde aunque no estés conectado'},{metric:'Retorno en semanas',text:'inversión recuperada rápido al eliminar trabajo manual'}],ampliar:[{metric:'Sin empezar de cero',text:'integramos lo que falta sobre lo que ya funciona'},{metric:'Coste mínimo',text:'solo pagas por lo que añades, no por rehacer todo'},{metric:'Resultado en días',text:'no en semanas — el proyecto ya existe, solo lo ampliamos'}],maintenance:[{metric:'Tranquilidad total',text:'alguien vigila que tu web funcione correctamente'},{metric:'Sin sorpresas',text:'actualizaciones de seguridad y backups incluidos'},{metric:'Desde 39€/mes',text:'sin contratos largos — cancela cuando quieras'}]},advisorByProb:{sinweb:'Un {biz} sin web pierde clientes que buscan online antes de llamar.',clientes:'Para conseguir más clientes, lo primero es que te encuentren — ahí es donde más impacto tiene la inversión.',reservas:'Las reservas manuales cuestan tiempo y generan errores. Un sistema en línea lo resuelve de raíz.',manual:'Si el problema es trabajo repetitivo, la respuesta es un bot o script — no una web nueva. Automatizamos exactamente lo que te roba tiempo.',gestion:'Sin datos centralizados, es difícil tomar buenas decisiones. Un panel lo cambia completamente.',escalar:'Si el sistema actual no da más, es el momento justo para ampliar o migrar sin tirar lo que ya funciona.',ampliar:'Si ya tienes algo funcionando, lo inteligente es añadir lo que falta — no empezar de cero y gastar el doble.',mantenimiento:'Tener a alguien que cuide tu web mes a mes evita problemas de seguridad, caídas y pérdida de datos.'},advisorByBiz:{restaurante:'Para restaurantes, la ficha en Google Maps es especialmente crítica — "restaurante cerca de mí" tiene millones de búsquedas.',salon:'Los salones de belleza con reservas online ven una reducción drástica en no-shows gracias a los recordatorios automáticos.',taller:'Los talleres ganan mucho con presupuestos y órdenes de trabajo digitales — se acaba el papel y se acortan los tiempos.',clinica:'Para clínicas, la gestión de citas y el historial de pacientes en un solo sistema marca la diferencia operativa.'},advisorBySize:{solo:'Como autónomo, priorizamos que la solución sea rápida, sin complicaciones y con ROI claro desde el primer mes.',grande:'Con más de 20 personas en el equipo, conviene añadir roles de acceso diferenciados y gestión de empleados.'},advisorByWhen:{urgente:'Mencionas que lo necesitas cuanto antes — con entrega urgente podemos arrancar en 72 horas.'},ui:{analysis:'Análisis de tu situación',recommend:'Te recomendamos:',discount:'descuento −25% activo',noCommit:'sin compromiso — cancela cuando quieras',desde:'desde',extrasTitle:'Extras recomendados para tu caso',calcBtn:'Ver mi resultado en calculadora →',scheduleBtn:'Agendar llamada',resetBtn:'Repetir el test',waPrefix:'Hola, hice el test en creaganaweb.es y me salió esta recomendación:',waBiz:'Negocio',waProb:'Problema',waRec:'Recomendación',waQ:'¿Podemos hablar?'}},
+en:{bizLabels:{restaurante:'restaurant/café',salon:'salon or spa',taller:'workshop',clinica:'clinic',academia:'academy',empresa:'company',tienda:'shop',otro:'business'},bizNames:{restaurante:'Restaurant/Café',salon:'Salon/Spa',taller:'Workshop',clinica:'Clinic/Health',empresa:'Company',tienda:'Shop',academia:'Academy',otro:'Other business'},probNames:{sinweb:'No website',clientes:'Need more customers',reservas:'Managing bookings manually',manual:'Too much manual work',gestion:'Not tracking my data',escalar:'Want to scale',ampliar:'Want to add features',mantenimiento:'Maintenance only'},benefits:{custom:[{metric:'Save 20h/week',text:'on manual management with automated flows'},{metric:'100% centralized',text:'all data, access and processes in one place'},{metric:'Scales with you',text:'we add modules as your team grows'}],reservas:[{metric:'Save 10h/week',text:'customers book on their own without calling you'},{metric:'−80% lost bookings',text:'automatic confirmations and reminders'},{metric:'Available 24h',text:'customers book at 2am from their sofa'}],tienda:[{metric:'Sell 24h',text:'without being present or managing orders manually'},{metric:'+45% reach',text:'customers from all over Spain and beyond'},{metric:'−90% errors',text:'orders and payments managed automatically'}],landing:[{metric:'+40% enquiries',text:'Google finds you when people search for your services'},{metric:'Online in 7 days',text:'professional presence that builds instant trust'},{metric:'Minimal cost',text:'the most effective solution to start growing'}],proManual:[{metric:'−70% manual work',text:'forms and flows handle it automatically'},{metric:'All connected',text:'your site integrated with email, CRM or order system'},{metric:'Full control',text:'view the status of each customer or request'}],proDefault:[{metric:'+60% trust',text:'professional image that turns visitors into customers'},{metric:'Visible on Google',text:'appear when people search for your services in your city'},{metric:'Ready in 2-3 weeks',text:'complete website adapted to your business'}],automation:[{metric:'Save 5-10h/week',text:'on repetitive tasks the bot handles automatically'},{metric:'Available 24h',text:'the bot replies even when you\'re offline'},{metric:'Fast ROI',text:'investment recovered quickly by eliminating manual work'}],ampliar:[{metric:'No starting from scratch',text:'we integrate what\'s missing into what already works'},{metric:'Minimal cost',text:'you only pay for what you add, not to redo everything'},{metric:'Result in days',text:'not weeks — the project already exists, we just extend it'}],maintenance:[{metric:'Total peace of mind',text:'someone watches that your site works correctly'},{metric:'No surprises',text:'security updates and backups included'},{metric:'From €39/mo',text:'no long contracts — cancel whenever you want'}]},advisorByProb:{sinweb:'A {biz} without a website loses customers who search online before calling.',clientes:"To get more customers, the first thing is to be found — that's where investment has the most impact.",reservas:'Manual bookings waste time and create errors. An online system solves it at the root.',manual:'If the problem is repetitive work, the answer is a bot or script — not a new website. We automate exactly what is stealing your time.',gestion:'Without centralised data, making good decisions is hard. A dashboard changes everything.',escalar:"If the current system can't keep up, now is the right moment to extend or migrate without throwing away what already works.",ampliar:"If you already have something working, the smart move is to add what's missing — not start from scratch and spend twice as much.",mantenimiento:'Having someone look after your site month to month prevents security issues, downtime and data loss.'},advisorByBiz:{restaurante:'For restaurants, the Google Maps listing is especially critical — "restaurant near me" gets millions of searches.',salon:'Beauty salons with online booking see a drastic reduction in no-shows thanks to automatic reminders.',taller:'Workshops gain a lot with digital quotes and work orders — paper ends and turnaround times shorten.',clinica:'For clinics, managing appointments and patient history in one system makes a huge operational difference.'},advisorBySize:{solo:"As a sole trader, we prioritise a fast, hassle-free solution with clear ROI from the first month.",grande:"With more than 20 people on the team, it's worth adding differentiated access roles and employee management."},advisorByWhen:{urgente:'You mention needing it as soon as possible — with urgent delivery we can start in 72 hours.'},ui:{analysis:'Situation analysis',recommend:'We recommend:',discount:'launch discount −25% active',noCommit:'no commitment — cancel whenever you want',desde:'from',extrasTitle:'Recommended extras for your case',calcBtn:'See result in calculator →',scheduleBtn:'Schedule a call',resetBtn:'Retake the test',waPrefix:'Hi, I took the test on creaganaweb.es and got this recommendation:',waBiz:'Business',waProb:'Problem',waRec:'Recommendation',waQ:'Can we talk?'}},
+eu:{bizLabels:{restaurante:'jatetxea/kafetegia',salon:'apaindegia edo spa',taller:'tailerra',clinica:'klinika',academia:'akademia',empresa:'enpresa',tienda:'denda',otro:'negozioa'},bizNames:{restaurante:'Jatetxea/Kafetegia',salon:'Apaindegia/Spa',taller:'Tailerra',clinica:'Klinika/Osasuna',empresa:'Enpresa',tienda:'Denda',academia:'Akademia',otro:'Beste negozio bat'},probNames:{sinweb:'Ez dut webgunerik',clientes:'Bezero gehiago behar ditut',reservas:'Erreserbak eskuz kudeatzen ditut',manual:'Lan manual gehiegi dago',gestion:'Ez ditut nire datuak kontrolatzen',escalar:'Hazi nahi dut',ampliar:'Funtzio berriak gehitu nahi ditut',mantenimiento:'Mantentze-lana soilik'},benefits:{custom:[{metric:'Aurreztu 20h/astean',text:'fluxu automatizatuekin kudeaketa manualean'},{metric:'%100 zentralizatuta',text:'datu, sarbide eta prozesu guztiak toki bakarrean'},{metric:'Zurekin hazten da',text:'moduluak gehitzen ditugu zure taldea hazten den heinean'}],reservas:[{metric:'Aurreztu 10h/astean',text:'bezeroek bakarrik erreserba egiten dute deitu gabe'},{metric:'−%80 erreserba galduak',text:'baieztatze eta gogorarazpen automatikoak'},{metric:'24h erabilgarri',text:'bezeroek gaueko 2etan sofatik erreserba egiten dute'}],tienda:[{metric:'24h saltzen duzu',text:'bertan egon gabe eta eskaerak eskuz kudeatu gabe'},{metric:'+%45 irismena',text:'Espainia osoko eta handikagoko bezeroak'},{metric:'−%90 erroreak',text:'eskaerak eta ordainketak automatikoki kudeatuta'}],landing:[{metric:'+%40 kontsultak',text:'Google-k aurkitzen zaitu zerbitzuak bilatzean'},{metric:'Online 7 egunetan',text:'berehala konfiantza sortzen duen presentzia profesionala'},{metric:'Koste txikiena',text:'hazteko hasierako irtenbide eraginkorrenena'}],proManual:[{metric:'−%70 lan manuala',text:'formularioak eta fluxuak bakarrik arduratzen dira'},{metric:'Dena konektatuta',text:'zure weba email, CRM edo eskaera sistemarekin integratuta'},{metric:'Kontrol osoa',text:'bezero edo eskaera bakoitzaren egoera ikusi'}],proDefault:[{metric:'+%60 konfiantza',text:'bisitariak bezero bihurtzen dituen irudi profesionala'},{metric:'Google-n ikusgai',text:'zure hirian zerbitzuak bilatzean agertu'},{metric:'2-3 astetan prest',text:'web osoa zure negozioari egokituta'}],automation:[{metric:'Aurreztu 5-10h/astean',text:'botak bakarrik egiten dituen lan errepikakorretan'},{metric:'24h erabilgarri',text:'botak erantzuten du konektatuta ez bazaude ere'},{metric:'Errentagarritasun azkarra',text:'inbertsioa lan manuala kenduta aste gutxitan berreskuratzen da'}],ampliar:[{metric:'Hutsetik hasi gabe',text:'dagoeneko funtzionatzen duenari falta dena gehitzen diogu'},{metric:'Koste minimoa',text:'gehitzen duzuna baino ez duzu ordaintzen, dena berregin gabe'},{metric:'Egunetan emaitza',text:'ez asteetan — proiektua badago, zabaldu besterik ez dugu egiten'}],maintenance:[{metric:'Lasaitasun osoa',text:'norbait zure webgunea ondo funtzionatzen ari dela ikuskatzen'},{metric:'Surprise-rik gabe',text:'segurtasun-eguneraketak eta babeskopiak barne'},{metric:'39€/hil.-tik',text:'kontratu luzerik gabe — nahi duzunean utzi'}]},advisorByProb:{sinweb:'Web-ik gabeko {biz} batek telefonatu aurretik online bilatzen duten bezeroak galtzen ditu.',clientes:'Bezero gehiago lortzeko, lehenengo gauza aurkitu zaitezaten da — bertan du inbertsioak inpaktu handiena.',reservas:'Eskuzko erreserbek denbora galtzen dute eta akatsak sortzen dituzte. Sistema batek errotik konpontzen du.',manual:'Arazoa lan errepikagarria bada, erantzuna bot edo script bat da — web berri bat ez. Zure denbora lapurtzen duena automatizatzen dugu.',gestion:'Datu zentralizaturik gabe, erabaki onak hartzea zaila da. Panel batek dena aldatzen du.',escalar:'Oraingo sistemak gehiago ematen ez badu, momentu egokia da funtzionatzen duena ukitu gabe zabaltzeko edo migratzeko.',ampliar:'Zerbait funtzionatzen badago jada, zentzuzkoena falta dena gehitzea da — hutsetik hasi eta birritan gastatu beharrean.',mantenimiento:'Norbaitek hilero zure webgunea zaintzeak segurtasun-arazoak, etenak eta datu-galerak ekiditen ditu.'},advisorByBiz:{restaurante:'Jatetxeentzako, Google Maps-eko fitxa bereziki kritikoa da — "nire ondoko jatetxea" milioika bilaketa ditu.',salon:'Online erreserba duten edertasun apaindegiek no-show murrizketa drastikoa ikusten dute gogorarazpen automatikoen bidez.',taller:'Taillerrek asko irabazten dute aurrekontu eta lan-aginte digitalekin — papera bukatzen da eta epeak laburtu egiten dira.',clinica:'Klinikentzako, hitzordu kudeaketa eta pazienteen historia sistema bakarrean eragiketa-aldea markatzen du.'},advisorBySize:{solo:'Langile autonomo gisa, lehentasuna ematen diogu irtenbide azkar, korapilotsua eta lehenengo hiletik etekin argidunarenari.',grande:'20 pertsona baino gehiago taldearekin, sarbide-rol desberdinak eta langileen kudeaketa gehitzea komeni da.'},advisorByWhen:{urgente:'Ahalik eta lasterren behar duzula aipatzen duzu — urgente entregearekin 72 ordutan has gaitezke.'},ui:{analysis:'Zure egoeraren analisia',recommend:'Gomendatzen dizugu:',discount:'abiarazte deskontua −%25 aktibo',noCommit:'konpromisorik gabe — nahi duzunean utzi',desde:'tik',extrasTitle:'Zure kasurako gomendatutako gehigarriak',calcBtn:'Ikus nire emaitza kalkulagailuan →',scheduleBtn:'Deia antolatu',resetBtn:'Testa errepikatu',waPrefix:'Kaixo, creaganaweb.es-eko testa egin dut eta gomendio hau atera zait:',waBiz:'Negozioa',waProb:'Arazoa',waRec:'Gomendioa',waQ:'Hitz egin dezakegu?'}},
+ru:{bizLabels:{restaurante:'ресторан/кафе',salon:'салон или спа',taller:'мастерская',clinica:'клиника',academia:'академия',empresa:'компания',tienda:'магазин',otro:'бизнес'},bizNames:{restaurante:'Ресторан/Кафе',salon:'Салон/Спа',taller:'Мастерская',clinica:'Клиника/Здоровье',empresa:'Компания',tienda:'Магазин',academia:'Академия',otro:'Другой бизнес'},probNames:{sinweb:'Нет сайта',clientes:'Нужно больше клиентов',reservas:'Веду записи вручную',manual:'Слишком много ручной работы',gestion:'Не контролирую данные',escalar:'Хочу масштабироваться',ampliar:'Хочу добавить функции',mantenimiento:'Только поддержка'},benefits:{custom:[{metric:'Экономь 20ч/нед',text:'на ручном управлении с автоматическими потоками'},{metric:'100% централизовано',text:'все данные, доступы и процессы в одном месте'},{metric:'Масштабируется',text:'добавляем модули по мере роста вашей команды'}],reservas:[{metric:'Экономь 10ч/нед',text:'клиенты записываются сами без звонков'},{metric:'−80% потерянных броней',text:'автоподтверждения и напоминания'},{metric:'Доступно 24ч',text:'клиенты записываются в 2 ночи с дивана'}],tienda:[{metric:'Продажи 24ч',text:'без присутствия и ручного управления заказами'},{metric:'+45% охват',text:'клиенты со всей Испании и за её пределами'},{metric:'−90% ошибок',text:'заказы и платежи обрабатываются автоматически'}],landing:[{metric:'+40% обращений',text:'Google находит вас при поиске ваших услуг'},{metric:'Онлайн за 7 дней',text:'профессиональное присутствие, внушающее доверие'},{metric:'Минимальные затраты',text:'самое эффективное решение для начала роста'}],proManual:[{metric:'−70% ручного труда',text:'формы и потоки сами справляются'},{metric:'Всё связано',text:'сайт интегрирован с email, CRM или системой заказов'},{metric:'Полный контроль',text:'видите статус каждого клиента или заявки'}],proDefault:[{metric:'+60% доверие',text:'профессиональный образ, конвертирующий посетителей в клиентов'},{metric:'Видимость в Google',text:'появляться при поиске ваших услуг в вашем городе'},{metric:'Готово за 2-3 нед',text:'полный сайт, адаптированный под ваш бизнес'}],automation:[{metric:'Экономь 5-10ч/нед',text:'на повторяющихся задачах, которые делает бот'},{metric:'Доступен 24ч',text:'бот отвечает, даже когда вы не в сети'},{metric:'Быстрый ROI',text:'инвестиция окупается быстро за счёт устранения ручной работы'}],ampliar:[{metric:'Без старта с нуля',text:'интегрируем недостающее в то, что уже работает'},{metric:'Минимальные затраты',text:'платите только за то, что добавляете, без переделки всего'},{metric:'Результат за дни',text:'не за недели — проект уже есть, мы просто расширяем его'}],maintenance:[{metric:'Полное спокойствие',text:'кто-то следит, что ваш сайт работает корректно'},{metric:'Без сюрпризов',text:'обновления безопасности и резервные копии включены'},{metric:'От 39€/мес',text:'без долгих контрактов — отмените когда захотите'}]},advisorByProb:{sinweb:'{biz} без сайта теряет клиентов, которые ищут онлайн перед звонком.',clientes:'Чтобы получить больше клиентов, первое — чтобы вас находили. Именно здесь инвестиции дают наибольший эффект.',reservas:'Ручные записи отнимают время и создают ошибки. Онлайн-система решает это в корне.',manual:'Если проблема в повторяющейся работе — ответ это бот или скрипт, а не новый сайт. Мы автоматизируем именно то, что крадёт ваше время.',gestion:'Без централизованных данных принимать хорошие решения сложно. Панель управления меняет всё.',escalar:'Если система не справляется, сейчас подходящий момент расширить или мигрировать, не выбрасывая то, что уже работает.',ampliar:'Если что-то уже работает, умнее добавить недостающее — а не начинать с нуля и тратить вдвое.',mantenimiento:'Наличие кого-то, кто ежемесячно следит за сайтом, предотвращает проблемы безопасности, простои и потерю данных.'},advisorByBiz:{restaurante:'Для ресторанов карточка в Google Картах особенно важна — «ресторан рядом со мной» получает миллионы поисков.',salon:'Салоны красоты с онлайн-записью резко сокращают неявки благодаря автонапоминаниям.',taller:'Мастерские много выигрывают от цифровых смет и нарядов — бумага исчезает, сроки сокращаются.',clinica:'Для клиник управление записями и историями пациентов в одной системе — огромная операционная разница.'},advisorBySize:{solo:'Как ИП, мы ставим в приоритет быстрое, простое решение с понятным ROI уже с первого месяца.',grande:'При команде более 20 человек стоит добавить разграничение ролей доступа и управление сотрудниками.'},advisorByWhen:{urgente:'Вы упоминаете, что нужно как можно скорее — при срочной сдаче можем начать в течение 72 часов.'},ui:{analysis:'Анализ вашей ситуации',recommend:'Мы рекомендуем:',discount:'скидка запуска −25% активна',noCommit:'без обязательств — отмените когда захотите',desde:'от',extrasTitle:'Рекомендованные опции для вашего случая',calcBtn:'Посмотреть результат в калькуляторе →',scheduleBtn:'Записаться на звонок',resetBtn:'Пройти ещё раз',waPrefix:'Привет, прошёл тест на creaganaweb.es и получил такую рекомендацию:',waBiz:'Бизнес',waProb:'Проблема',waRec:'Рекомендация',waQ:'Можем поговорить?'}}
 };
 var maint={
 es:{basic:{title:'Mantenimiento Básico — 39€/mes',info:'Actualizaciones de seguridad, corrección de fallos técnicos, hasta 1 hora al mes de cambios de contenido (textos, imágenes, ajustes menores) y backup mensual. Ideal si quieres tranquilidad sin comprometerte a mucho.'},plus:{title:'Mantenimiento Plus — 79€/mes',info:'Todo lo del básico más hasta 3 horas al mes de cambios, prioridad máxima en respuesta (te atiendo antes que a nadie), monitorización 24h de disponibilidad de la web, y backup semanal. Para negocios que no pueden permitirse que su web falle.'}},
@@ -1957,7 +1945,7 @@ window.WI_LANG_HOOKS.push(function(){
     const probNames = QT.probNames || { sinweb:'No tengo web', clientes:'Necesito más clientes', reservas:'Gestiono reservas a mano', manual:'Demasiado trabajo manual', gestion:'No controlo mis datos', escalar:'Quiero escalar' };
     const ui = QT.ui || {};
     const waMsg = encodeURIComponent(
-      `${ui.waPrefix||'Hola, hice el test en webimpulsa.es y me salió esta recomendación:'}\n\n` +
+      `${ui.waPrefix||'Hola, hice el test en creaganaweb.es y me salió esta recomendación:'}\n\n` +
       `${ui.waBiz||'Negocio'}: ${bizNames[biz] || biz}\n${ui.waProb||'Problema'}: ${probNames[prob] || prob}\n` +
       `${ui.waRec||'Recomendación'}: ${project} — ${ui.desde||'desde'} ${PROJECT_PRICES[project]}\n\n${ui.waQ||'¿Podemos hablar?'}`
     );
@@ -2342,7 +2330,7 @@ window.WI_LANG_HOOKS.push(function(){
       } else {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Enviar y recibir propuesta gratuita →';
-        alert('Hubo un problema al enviar el mensaje. Por favor, escríbanos directamente a info@webimpulsa.es o por WhatsApp.');
+        alert('Hubo un problema al enviar el mensaje. Por favor, escríbanos directamente a info@creaganaweb.es o por WhatsApp.');
       }
     } catch {
       submitBtn.disabled = false;
@@ -2450,7 +2438,7 @@ es:{
   'infra.ex.4':'Un administrador ve clientes, tareas, pagos y estado de trabajos desde un panel accesible desde el móvil.',
   'infra.ex.5':'Un dominio, correo profesional y web quedan configurados y conectados desde el principio.',
   'quiz.kicker':'Descubre qué necesitas',
-  'quiz.title':'¿Qué puede hacer Web-Impulsa por tu negocio?',
+  'quiz.title':'¿Qué puede hacer CreaGanaWeb por tu negocio?',
   'quiz.subtitle':'Responde 4 preguntas rápidas y te diremos exactamente qué solución encaja con tu caso.',
   'quiz.q1':'1/4 — ¿Qué tipo de negocio tienes?',
   'quiz.q2':'2/4 — ¿Qué necesitas principalmente?',
@@ -2469,7 +2457,7 @@ es:{
   'quiz.s4.0':'Lo antes posible','quiz.s4.1':'Este mes',
   'quiz.s4.2':'Estoy planificando','quiz.s4.3':'Solo quiero información',
   'port.kicker':'Pruébalo tú mismo',
-  'port.title':'Así es un proyecto real de Web-Impulsa.',
+  'port.title':'Así es un proyecto real de CreaGanaWeb.',
   'port.subtitle':'Esto no es una maqueta: es una web completa y funcional, igual que la que podemos construir para tu negocio. Entra, haz clic donde quieras y prueba a reservar una cita — todo funciona de verdad.',
   'port.hint':'Pulsa el proyecto para ver detalles →',
   'port.viewlive':'Ver web en vivo →','port.similar':'Crear proyecto similar →','port.close':'Cerrar','port.downloadapk':'📲 Descargar app (APK) →',
@@ -2545,7 +2533,7 @@ es:{
   'biz.opt.2':'Taller / Servicio técnico','biz.opt.3':'Clínica / Salud',
   'biz.opt.4':'Academia / Cursos','biz.opt.5':'Empresa / Instalaciones',
   'biz.opt.6':'Tienda / Comercio','biz.opt.7':'Gimnasio / Club','biz.opt.8':'Otro',
-  'footer.copy':'© 2026 Web-Impulsa · webimpulsa.es'
+  'footer.copy':'© 2026 CreaGanaWeb · creaganaweb.es'
 },
 eu:{
   'nav.services':'Zerbitzuak','nav.foryou':'Zuretzat','nav.portfolio':'Portfolioa',
@@ -2606,7 +2594,7 @@ eu:{
   'infra.ex.4':'Administratzaile batek bezeroak, zereginak, ordainketak eta lanen egoera ikusten ditu mobiletik eskuragarri den panel batetik.',
   'infra.ex.5':'Domeinu bat, posta profesionala eta web bat konfiguratuta eta hasieratik konektatuta geratzen dira.',
   'quiz.kicker':'Aurkitu zer behar duzun',
-  'quiz.title':'Zer egin dezake Web-Impulsa-k zure negozioagatik?',
+  'quiz.title':'Zer egin dezake CreaGanaWeb-k zure negozioagatik?',
   'quiz.subtitle':'Erantzun 4 galdera azkar eta esango dizugu zehazki zein irtenbide egokitzen den zure kasura.',
   'quiz.q1':'1/4 — Ze negozio mota duzu?',
   'quiz.q2':'2/4 — Zer behar duzu batez ere?',
@@ -2625,7 +2613,7 @@ eu:{
   'quiz.s4.0':'Ahal bezain laster','quiz.s4.1':'Hilabete honetan',
   'quiz.s4.2':'Planifikatzen ari naiz','quiz.s4.3':'Informazioa nahi dut bakarrik',
   'port.kicker':'Probatu zeuk',
-  'port.title':'Hau da Web-Impulsa-ko benetako proiektu bat.',
+  'port.title':'Hau da CreaGanaWeb-ko benetako proiektu bat.',
   'port.subtitle':'Hau ez da maketa bat: zure negoziorentzat eraiki dezakegun bezalako web osoa eta funtzionala da. Sartu, sakatu nahi duzun tokian eta saiatu hitzordu bat erreserbatzen — dena benetan funtzionatzen du.',
   'port.hint':'Sakatu proiektua xehetasunak ikusteko →',
   'port.viewlive':'Web-a zuzenean ikusi →','port.similar':'Antzeko proiektua sortu →','port.close':'Itxi','port.downloadapk':'📲 App deskargatu (APK) →',
@@ -2638,7 +2626,7 @@ eu:{
   'proc.4h':'Laguntza eta bilakaera','proc.4p':'Zure negozioa hazten da eta zure plataforma ere. Funtzio berriak gehitzen ditugu, funtzionatzen ez duena hobetzen dugu eta zurekin jarraitzen dugu.',
   'calc.kicker':'Prezio gardena','calc.title':'Zenbat balio du zure proiektuak?',
   'calc.subtitle':'Konfiguratu zure proiektua eta lortu berehala prezioen estimazioa. Sorpresarik gabe, letra txikirik gabe.',
-  'calc.launch':'Abian jartzeko % 15eko deskontua aktibo',
+  'calc.launch':'Abian jartzeko % 25eko deskontua aktibo',
   'calc.l1':'1 · Proiektu mota','calc.l2':'2 · Aukerako gehigarriak',
   'calc.l2hint':'(sakatu ℹ zer barne hartzen duen jakiteko)',
   'calc.rush.title':'Entrega urgentea','calc.rush.desc':'2 aste baino gutxiago — zure proiektua lehenetsi egiten dugu besteekiko',
@@ -2653,13 +2641,13 @@ eu:{
   'calc.hosting.no':'Hostingik ez','calc.hosting.only':'Hostinga soilik','calc.hosting.name':'Domeinua + Hostinga','calc.hosting.label':'Hostinga',
   'calc.hosting.btn1':'ℹ Hostinga soilik zer barne hartzen duen','calc.hosting.btn2':'ℹ Domeinua + Hostingak zer barne hartzen duen',
   'calc.sum':'Aurrekontua laburpena','calc.extras':'Hautatutako gehigarriak',
-  'calc.rush.label':'Urgentea +%25','calc.discount':'Abian jartzeko deskontua −%15',
+  'calc.rush.label':'Urgentea +%25','calc.discount':'Abian jartzeko deskontua −%25',
   'calc.total':'Guztira estimatua','calc.maint.label':'Hileko mantentze-lana',
   'calc.note':'* BEZik gabeko estimazioa. Azken proposamena zure proiektu zehatzetara egokitzen da.',
   'calc.lead':'Aurrekontua eskatu doan','modal.title':'Aurrekontua eskatu','modal.sub':'Proposamen pertsonalizatua 48 ordutan, konpromisorik gabe.','modal.name':'Izena *','modal.contact':'Telefonoa edo emaila *','modal.biz':'Negozio mota','modal.opt':'(hautazkoa)','modal.submit':'Eskaera bidali →','modal.footer':'Spam gabe · Konpromisorik gabe · 48 ordutan erantzuna','modal.ok.title':'Eskaera bidalita!','modal.ok.body':'48 ordutan zurekin harremanetan jarriko gara proposamen pertsonalizatuarekin.',
   'flip.fwd':'💰 Aurrekontuaren arabera kalkulatu →','flip.back':'← Konfiguratzailera itzuli',
   'flex.title':'💰 Aurrekontu hau daukat — zer lor dezaket?','flex.badge':'Alderantzizko kalkulagailua','flex.desc':'Zure aurrekontu osoa sartu eta zure kasurako pakete + gehigarri onena erakutsiko dizugu.','flex.budget':'Nire aurrekontua:',
-  'flex.best':'ZURE AURREKONTURAKO AUKERA ONENA','flex.base':'Oinarrizko prezioa:','flex.included':'✅ Zure aurrekontuan sartutako gehigarriak:','flex.near':'➕ Gehi zenitzake (aurrekontua apur bat gainditzen dute):','flex.total':'GUZTIRA ESTIMATUA (dto. −%15rekin)','flex.yourbudget':'Zure aurrekontua:','flex.diff':'Aldea:','flex.btnReq':'📨 Aurrekontu honekin eskatu','flex.btnWA':'WhatsApp bidez eskatu →','flex.favor':'zure alde','flex.above':'gainditzen du','flex.missing':'falta',
+  'flex.best':'ZURE AURREKONTURAKO AUKERA ONENA','flex.base':'Oinarrizko prezioa:','flex.included':'✅ Zure aurrekontuan sartutako gehigarriak:','flex.near':'➕ Gehi zenitzake (aurrekontua apur bat gainditzen dute):','flex.total':'GUZTIRA ESTIMATUA (dto. −%25rekin)','flex.yourbudget':'Zure aurrekontua:','flex.diff':'Aldea:','flex.btnReq':'📨 Aurrekontu honekin eskatu','flex.btnWA':'WhatsApp bidez eskatu →','flex.favor':'zure alde','flex.above':'gainditzen du','flex.missing':'falta',
   'calc.wa':'WhatsApp bidez aurrekontua eskatu →','calc.email':'Formularioz bidali',
   'calc.proj.0':'Landing page','calc.proj.0p':'390€-tik','calc.proj.1':'Web profesionala','calc.proj.1p':'590€-tik',
   'calc.proj.2':'Web + erreserbak','calc.proj.2p':'890€-tik','calc.proj.3':'Lineako denda','calc.proj.3p':'1.290€-tik',
@@ -2699,7 +2687,7 @@ eu:{
   'biz.opt.2':'Tailerra / Zerbitzu teknikoa','biz.opt.3':'Klinika / Osasuna',
   'biz.opt.4':'Akademia / Ikastaroak','biz.opt.5':'Enpresa / Instalazioak',
   'biz.opt.6':'Denda / Merkataritza','biz.opt.7':'Gimnasioa / Kluba','biz.opt.8':'Beste bat',
-  'footer.copy':'© 2026 Web-Impulsa · webimpulsa.es'
+  'footer.copy':'© 2026 CreaGanaWeb · creaganaweb.es'
 },
 en:{
   'nav.services':'Services','nav.foryou':'For you','nav.portfolio':'Portfolio',
@@ -2760,7 +2748,7 @@ en:{
   'infra.ex.4':'An administrator sees customers, tasks, payments and work status from a dashboard accessible from their phone.',
   'infra.ex.5':'A domain, professional email and website are configured and connected from day one.',
   'quiz.kicker':'Discover what you need',
-  'quiz.title':'What can Web-Impulsa do for your business?',
+  'quiz.title':'What can CreaGanaWeb do for your business?',
   'quiz.subtitle':'Answer 4 quick questions and we\'ll tell you exactly which solution fits your case.',
   'quiz.q1':'1/4 — What type of business do you have?',
   'quiz.q2':'2/4 — What do you mainly need?',
@@ -2779,7 +2767,7 @@ en:{
   'quiz.s4.0':'As soon as possible','quiz.s4.1':'This month',
   'quiz.s4.2':'I\'m planning','quiz.s4.3':'I just want information',
   'port.kicker':'Try it yourself',
-  'port.title':'This is a real Web-Impulsa project.',
+  'port.title':'This is a real CreaGanaWeb project.',
   'port.subtitle':"This isn't a mockup — it's a complete, fully working website, just like the one we can build for your business. Go in, click around, try booking an appointment — everything really works.",
   'port.hint':'Click the project to see details →',
   'port.viewlive':'View live website →','port.similar':'Create similar project →','port.close':'Close','port.downloadapk':'📲 Download app (APK) →',
@@ -2853,7 +2841,7 @@ en:{
   'biz.opt.2':'Workshop / Technical service','biz.opt.3':'Clinic / Health',
   'biz.opt.4':'Academy / Courses','biz.opt.5':'Company / Installations',
   'biz.opt.6':'Shop / Commerce','biz.opt.7':'Gym / Club','biz.opt.8':'Other',
-  'footer.copy':'© 2026 Web-Impulsa · webimpulsa.es'
+  'footer.copy':'© 2026 CreaGanaWeb · creaganaweb.es'
 },
 ru:{
   'nav.services':'Услуги','nav.foryou':'Для вас','nav.portfolio':'Портфолио',
@@ -2914,7 +2902,7 @@ ru:{
   'infra.ex.4':'Администратор видит клиентов, задачи, платежи и статус работ с панели, доступной с телефона.',
   'infra.ex.5':'Домен, корпоративная почта и сайт настраиваются и соединяются с первого дня.',
   'quiz.kicker':'Узнайте, что вам нужно',
-  'quiz.title':'Что Web-Impulsa может сделать для вашего бизнеса?',
+  'quiz.title':'Что CreaGanaWeb может сделать для вашего бизнеса?',
   'quiz.subtitle':'Ответьте на 4 быстрых вопроса — и мы скажем, какое решение подходит именно вам.',
   'quiz.q1':'1/4 — Какой у вас бизнес?',
   'quiz.q2':'2/4 — Что вам нужно в первую очередь?',
@@ -2933,7 +2921,7 @@ ru:{
   'quiz.s4.0':'Как можно скорее','quiz.s4.1':'В этом месяце',
   'quiz.s4.2':'Планирую','quiz.s4.3':'Просто хочу информацию',
   'port.kicker':'Попробуй сам',
-  'port.title':'Так выглядит настоящий проект Web-Impulsa.',
+  'port.title':'Так выглядит настоящий проект CreaGanaWeb.',
   'port.subtitle':'Это не макет — полностью рабочий сайт, точно такой же, какой мы можем сделать для вашего бизнеса. Заходи, нажимай где хочешь, попробуй записаться на приём — всё работает по-настоящему.',
   'port.hint':'Нажми на проект, чтобы увидеть детали →',
   'port.viewlive':'Открыть сайт →','port.similar':'Создать похожий проект →','port.close':'Закрыть','port.downloadapk':'📲 Скачать приложение (APK) →',
@@ -3007,7 +2995,7 @@ ru:{
   'biz.opt.2':'Мастерская / Техсервис','biz.opt.3':'Клиника / Здоровье',
   'biz.opt.4':'Академия / Курсы','biz.opt.5':'Компания / Монтаж',
   'biz.opt.6':'Магазин / Торговля','biz.opt.7':'Спортклуб','biz.opt.8':'Другое',
-  'footer.copy':'© 2026 Web-Impulsa · webimpulsa.es'
+  'footer.copy':'© 2026 CreaGanaWeb · creaganaweb.es'
 }
 };
 
@@ -3757,10 +3745,10 @@ setLang(LANG);
   #wi-chat-fab {
     position: fixed; bottom: 24px; right: 24px; z-index: 9990;
     width: 52px; height: 52px; border-radius: 50%;
-    background: var(--wi-primary, #2563eb); color: #fff;
+    background: var(--wi-primary, #5725F4); color: #fff;
     font-size: 22px; cursor: pointer;
     display: none; align-items: center; justify-content: center;
-    box-shadow: 0 4px 16px rgba(37,99,235,.45);
+    box-shadow: 0 4px 16px rgba(87,37,244,.45);
     transition: transform .2s;
   }
   #wi-chat-fab.visible { display: flex; }
@@ -3782,9 +3770,9 @@ setLang(LANG);
   .wi-fab-badge.visible { display: block; }
 
   @keyframes wiFabPulse {
-    0%   { box-shadow: 0 4px 16px rgba(37,99,235,.45), 0 0 0 0 rgba(37,99,235,.5); }
-    70%  { box-shadow: 0 4px 16px rgba(37,99,235,.45), 0 0 0 12px rgba(37,99,235,0); }
-    100% { box-shadow: 0 4px 16px rgba(37,99,235,.45), 0 0 0 0 rgba(37,99,235,0); }
+    0%   { box-shadow: 0 4px 16px rgba(87,37,244,.45), 0 0 0 0 rgba(87,37,244,.5); }
+    70%  { box-shadow: 0 4px 16px rgba(87,37,244,.45), 0 0 0 12px rgba(87,37,244,0); }
+    100% { box-shadow: 0 4px 16px rgba(87,37,244,.45), 0 0 0 0 rgba(87,37,244,0); }
   }
   #wi-chat-fab.pulse { animation: wiFabPulse 1s ease 3; }
 
@@ -3809,7 +3797,7 @@ setLang(LANG);
   .wi-inv-sub { font-size: .78rem; color: #22c55e; font-weight: 600; }
   .wi-inv-btn {
     margin-top: 10px; width: 100%;
-    background: var(--wi-primary, #2563eb); color: #fff;
+    background: var(--wi-primary, #5725F4); color: #fff;
     border: none; border-radius: 8px; padding: 8px 0;
     font-size: .85rem; font-weight: 700; cursor: pointer;
     transition: opacity .15s;
@@ -3828,7 +3816,7 @@ setLang(LANG);
   #wi-chat-panel.open { display: flex; animation: wiSlideUp .3s ease; }
 
   .wi-cp-header {
-    background: var(--wi-primary, #2563eb); color: #fff;
+    background: var(--wi-primary, #5725F4); color: #fff;
     padding: 12px 16px; display: flex; align-items: center; gap: 10px;
     flex-shrink: 0;
   }
@@ -3862,7 +3850,7 @@ setLang(LANG);
     font-size: .78rem; border-radius: 8px; text-align: center; max-width: 95%;
   }
   .wi-msg-visitor {
-    align-self: flex-end; background: var(--wi-primary, #2563eb); color: #fff;
+    align-self: flex-end; background: var(--wi-primary, #5725F4); color: #fff;
     border-bottom-right-radius: 3px;
   }
   .wi-msg-operator {
@@ -3881,7 +3869,7 @@ setLang(LANG);
     resize: none; outline: none; line-height: 1.4; max-height: 80px;
     transition: border-color .15s;
   }
-  .wi-cp-input textarea:focus { border-color: var(--wi-primary, #2563eb); }
+  .wi-cp-input textarea:focus { border-color: var(--wi-primary, #5725F4); }
 
   /* ── code bar ── */
   .wi-cp-codebar {
@@ -3899,7 +3887,7 @@ setLang(LANG);
   .wi-cp-code-btn:hover { background: #e2e8f0; color: #1e293b; }
   .wi-cp-send {
     width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-    background: var(--wi-primary, #2563eb); border: none; color: #fff;
+    background: var(--wi-primary, #5725F4); border: none; color: #fff;
     font-size: 16px; cursor: pointer; display: flex; align-items: center;
     justify-content: center; transition: opacity .15s;
   }
@@ -3939,7 +3927,7 @@ setLang(LANG);
   <div class="wi-cp-header">
     <div class="wi-cp-hav">💬</div>
     <div class="wi-cp-hinfo">
-      <div class="wi-cp-hname">Web-Impulsa · Soporte</div>
+      <div class="wi-cp-hname">CreaGanaWeb · Soporte</div>
       <div class="wi-cp-hstatus" id="wi-cp-status">● En línea</div>
     </div>
     <div class="wi-cp-hbtns">

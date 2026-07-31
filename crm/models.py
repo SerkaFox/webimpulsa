@@ -144,7 +144,7 @@ class ClientAccess(models.Model):
             return True
         return hashlib.sha256(pin.encode()).hexdigest() == self.pin_hash
 
-    def portal_url(self, base_url: str = 'https://webimpulsa.es') -> str:
+    def portal_url(self, base_url: str = 'https://creaganaweb.es') -> str:
         return f'{base_url}/p/{self.token}/'
 
 
