@@ -114,7 +114,7 @@ EMAIL_PORT      = int(os.getenv('BREVO_PORT', 25))
 EMAIL_USE_TLS   = bool(os.getenv('BREVO_HOST', ''))
 EMAIL_HOST_USER = os.getenv('BREVO_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('BREVO_PASS', '')
-DEFAULT_FROM_EMAIL  = 'info@webimpulsa.es'
+DEFAULT_FROM_EMAIL  = 'info@creaganaweb.es'
 
 LOGGING = {
     'version': 1,
