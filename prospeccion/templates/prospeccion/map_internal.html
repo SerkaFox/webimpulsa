@@ -259,6 +259,7 @@
         <select id="cSector">{% for id, label in sectors %}<option value="{{ id }}">{{ label }}</option>{% endfor %}</select>
       </div>
       <div class="coords-hint" id="cCoordsHint"></div>
+      <a id="cGmapsLink" href="#" target="_blank" rel="noopener" class="btn sm ghost" style="display:none;margin:0 0 10px">📷 Ver en Google Maps antes de guardar</a>
       <input type="hidden" id="cLat"><input type="hidden" id="cLng">
       <input type="hidden" id="cPlaceId"><input type="hidden" id="cGmapsUrl">
 
@@ -832,6 +833,12 @@ function openConfirmPanel(opts){
     document.getElementById('cGmapsUrl').value = opts.gmapsUrl || '';
     document.getElementById('cCoordsHint').textContent = 'Ubicación: ' + opts.lat.toFixed(5) + ', ' + opts.lng.toFixed(5);
   }
+
+  var gmapsUrl = document.getElementById('cGmapsUrl').value;
+  var gmapsLink = document.getElementById('cGmapsLink');
+  if(gmapsUrl){ gmapsLink.href = gmapsUrl; gmapsLink.style.display = 'inline-block'; }
+  else { gmapsLink.style.display = 'none'; }
+
   document.getElementById('confirmOverlay').classList.add('show');
 }
 
