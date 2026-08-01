@@ -128,6 +128,19 @@
   .map-legend .legend-ring { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; background: #cbd5e1; box-sizing: border-box; }
   small.hint { color: #8a94a6; display: block; margin-top: 4px; }
 
+  /* Panel de acciones sobre un icono de negocio del mapa base de Google —
+     una ventana google.maps.InfoWindow propia NO convive con la ficha
+     nativa de Google (Google cierra las demás al abrir la suya), así que
+     esto es un simple <div> flotante encima del mapa, ajeno a esa API. */
+  .poi-bar {
+    position: absolute; top: 10px; right: 10px; z-index: 6; background: #fff; border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(12,28,66,.18); padding: 10px 12px; max-width: 240px; font-size: .8rem;
+    display: none;
+  }
+  .poi-bar.show { display: block; }
+  .poi-bar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .poi-bar-close { background: none; border: none; cursor: pointer; color: #8a94a6; font-size: 1rem; line-height: 1; }
+
   /* Widget de control de gasto de Google Places — colapsado por defecto
      (como la leyenda del mapa), para no ocupar media pantalla del sidebar. */
   .puw { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 14px; font-size: .8rem; }
@@ -206,6 +219,13 @@
         <div class="legend-row" data-i18n="map.legend_score">Puntuación digital (0–100)</div>
       </div>
     </details>
+    <div class="poi-bar" id="poiBar">
+      <div class="poi-bar-header">
+        <strong id="poiBarTitle"></strong>
+        <button type="button" class="poi-bar-close" id="poiBarClose">✕</button>
+      </div>
+      <div id="poiBarBody"></div>
+    </div>
   </div>
 
   <div class="sidebar">
@@ -404,7 +424,6 @@ var map = null;
 var markers = [];
 var searchMarkers = [];
 var userLocation = null;
-var poiInfoWindow = null;
 
 function showToast(msg){
   var t = document.getElementById('toast');
@@ -1047,56 +1066,44 @@ function poiGmapsUrl(placeId){
   return 'https://www.google.com/maps/place/?q=place_id:' + encodeURIComponent(placeId);
 }
 
+function closePoiBar(){
+  document.getElementById('poiBar').classList.remove('show');
+}
+document.getElementById('poiBarClose').addEventListener('click', closePoiBar);
+
 function showPoiPopup(placeId, latLng){
   var _t = window.wiMapT || function(k){ return k; };
-  if(poiInfoWindow) poiInfoWindow.close();
   var gmapsUrl = poiGmapsUrl(placeId);
-  poiInfoWindow = new google.maps.InfoWindow({
-    position: latLng,
-    // Desplazado del punto exacto — Google ya abre su propia ficha nativa
-    // (gratis, nombre/dirección) justo encima del punto clicado; este
-    // desplazamiento evita que las dos ventanas queden exactamente
-    // superpuestas.
-    pixelOffset: new google.maps.Size(160, 0),
-    content:
-      '<div style="font-family:inherit;min-width:200px">' +
-      '<div style="font-weight:700;margin-bottom:8px">'+_t('map.poi_title')+'</div>' +
-      '<div style="display:flex;flex-direction:column;gap:6px">' +
-      '<button type="button" class="btn sm" id="poiGetInfoBtn">'+_t('map.poi_get_info')+'</button>' +
-      '<button type="button" class="btn sm green" id="poiAddDirectBtn">'+_t('map.poi_add_direct')+'</button>' +
-      '<a href="'+gmapsUrl+'" target="_blank" rel="noopener" style="font-size:.78rem">📷 '+_t('map.open_in_gmaps')+'</a>' +
-      '</div></div>',
-  });
-  poiInfoWindow.open(map);
-  google.maps.event.addListenerOnce(poiInfoWindow, 'domready', function(){
-    var infoBtn = document.getElementById('poiGetInfoBtn');
-    var addBtn = document.getElementById('poiAddDirectBtn');
-    if(infoBtn) infoBtn.addEventListener('click', function(){ fetchPoiDetails(placeId, latLng); });
-    if(addBtn) addBtn.addEventListener('click', function(){
-      poiInfoWindow.close();
-      openConfirmPanel({fromLink: true, lat: latLng.lat(), lng: latLng.lng(), name: '', gmapsUrl: gmapsUrl});
-    });
+  document.getElementById('poiBarTitle').textContent = _t('map.poi_title');
+  document.getElementById('poiBarBody').innerHTML =
+    '<div style="display:flex;flex-direction:column;gap:6px">' +
+    '<button type="button" class="btn sm" id="poiGetInfoBtn">'+_t('map.poi_get_info')+'</button>' +
+    '<button type="button" class="btn sm green" id="poiAddDirectBtn">'+_t('map.poi_add_direct')+'</button>' +
+    '<a href="'+gmapsUrl+'" target="_blank" rel="noopener" style="font-size:.78rem">📷 '+_t('map.open_in_gmaps')+'</a>' +
+    '</div>';
+  document.getElementById('poiBar').classList.add('show');
+  document.getElementById('poiGetInfoBtn').addEventListener('click', function(){ fetchPoiDetails(placeId, latLng); });
+  document.getElementById('poiAddDirectBtn').addEventListener('click', function(){
+    closePoiBar();
+    openConfirmPanel({fromLink: true, lat: latLng.lat(), lng: latLng.lng(), name: '', gmapsUrl: gmapsUrl});
   });
 }
 
 function fetchPoiDetails(placeId, latLng){
   var _t = window.wiMapT || function(k){ return k; };
-  if(!poiInfoWindow) return;
-  poiInfoWindow.setContent('<div style="font-family:inherit;font-size:.85rem;padding:2px">'+_t('map.poi_querying')+'</div>');
+  var bodyEl = document.getElementById('poiBarBody');
+  bodyEl.innerHTML = '<div style="font-size:.85rem">'+_t('map.poi_querying')+'</div>';
 
   fetch('/panel/prospeccion/mapa/api/place-details/?place_id=' + encodeURIComponent(placeId))
     .then(function(r){ return r.json(); })
     .then(function(data){
-      if(!poiInfoWindow) return;
       if(data.ok === false && data.code === 'google_places_monthly_limit_reached'){
-        poiInfoWindow.setContent(
-          '<div style="font-family:inherit;font-size:.8rem;color:#7f1d1d;max-width:220px">🚫 '+data.message+'</div>'
-        );
+        bodyEl.innerHTML = '<div style="font-size:.8rem;color:#7f1d1d">🚫 '+data.message+'</div>';
         refreshPlacesUsage();
         return;
       }
       if(data.error){
-        poiInfoWindow.setContent('<div style="font-family:inherit;font-size:.8rem;color:#dc2626">'+data.error+'</div>');
+        bodyEl.innerHTML = '<div style="font-size:.8rem;color:#dc2626">'+data.error+'</div>';
         return;
       }
       var p = data.place;
@@ -1105,26 +1112,22 @@ function fetchPoiDetails(placeId, latLng){
       var actionBtn = p.existing_prospect_id
         ? '<a class="btn sm secondary" href="'+p.detail_url+'">📇 '+_t('map.view_card')+'</a>'
         : '<button type="button" class="btn sm" id="poiAddFoundBtn">➕ '+_t('map.add_to_crm')+'</button>';
-      poiInfoWindow.setContent(
-        '<div style="font-family:inherit;min-width:220px">' +
+      bodyEl.innerHTML =
         '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>' +
         '<strong>'+(p.name || _t('map.poi_no_name'))+'</strong><br>' +
         '<div style="color:#5a6d8c;font-size:.8rem;margin:2px 0 8px">'+(p.address||'')+'</div>' +
         '<div style="display:flex;gap:6px;flex-wrap:wrap">' + actionBtn +
         '<a class="btn sm ghost" href="'+gmapsUrl+'" target="_blank" rel="noopener">📷 '+_t('map.open_in_gmaps')+'</a>' +
-        '</div></div>'
-      );
-      google.maps.event.addListenerOnce(poiInfoWindow, 'domready', function(){
-        var addBtn = document.getElementById('poiAddFoundBtn');
-        if(addBtn) addBtn.addEventListener('click', function(){
-          poiInfoWindow.close();
-          openConfirmPanel({fromGoogle: true, place: p});
-        });
+        '</div>';
+      var addBtn = document.getElementById('poiAddFoundBtn');
+      if(addBtn) addBtn.addEventListener('click', function(){
+        closePoiBar();
+        openConfirmPanel({fromGoogle: true, place: p});
       });
       refreshPlacesUsage();
     })
     .catch(function(){
-      if(poiInfoWindow) poiInfoWindow.setContent('<div style="font-family:inherit;font-size:.8rem">'+_t('map.poi_query_failed')+'</div>');
+      bodyEl.innerHTML = '<div style="font-size:.8rem">'+_t('map.poi_query_failed')+'</div>';
     });
 }
 
