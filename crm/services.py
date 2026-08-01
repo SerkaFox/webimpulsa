@@ -615,6 +615,18 @@ TEXT_EDIT_EXTENSIONS = {
 }
 MAX_TEXT_EDIT_BYTES = 2 * 1024 * 1024  # 2 MB — generous for hand-written source files
 
+# Dev-tooling / agent artifacts — never part of the actual deliverable site,
+# irrelevant (or inappropriate) for the client to see. Hidden from both the
+# browse listing and the full-project zip, at any depth.
+HIDDEN_ENTRY_NAMES = {
+    '.git', '.claude', '.codex', 'codex', '__pycache__',
+    'venv', '.venv', 'node_modules', '.idea', '.vscode', '.DS_Store',
+}
+
+
+def _is_hidden(path: Path, root: Path) -> bool:
+    return any(part in HIDDEN_ENTRY_NAMES for part in path.relative_to(root).parts)
+
 
 def _project_root(lead: Lead) -> Path:
     if not lead.project_path:
@@ -634,11 +646,15 @@ def get_project_root(lead: Lead) -> Path:
 
 
 def resolve_project_path(lead: Lead, rel_path: str = '') -> Path:
-    """Resolve rel_path against the lead's project root, rejecting traversal."""
+    """Resolve rel_path against the lead's project root, rejecting traversal
+    and rejecting any hidden dev-tooling segment (.git, .claude, venv...) even
+    if it's requested directly by URL rather than clicked from the listing."""
     root = _project_root(lead)
     candidate = (root / (rel_path or '').lstrip('/')).resolve()
     if candidate != root and root not in candidate.parents:
         raise ProjectFileError('Ruta fuera de la carpeta del proyecto.')
+    if _is_hidden(candidate, root):
+        raise ProjectFileError('Ese archivo no está disponible.')
     return candidate
 
 
@@ -653,6 +669,8 @@ def list_project_directory(lead: Lead, rel_path: str = '') -> dict:
 
     entries = []
     for child in sorted(target.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower())):
+        if child.name in HIDDEN_ENTRY_NAMES:
+            continue
         try:
             stat = child.stat()
         except OSError:
@@ -718,7 +736,7 @@ def zip_project(lead: Lead) -> io.BytesIO:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
         for file_path in root.rglob('*'):
-            if file_path.is_file():
+            if file_path.is_file() and not _is_hidden(file_path, root):
                 zf.write(file_path, arcname=str(file_path.relative_to(root)))
         if lead.project_db_path:
             db_path = Path(lead.project_db_path).resolve()
@@ -737,7 +755,10 @@ def zip_project(lead: Lead) -> io.BytesIO:
 _FS_BROWSE_ROOT = Path('/home/seradmin').resolve()
 
 
-def list_server_directories(rel_path: str = '') -> dict:
+def list_server_directories(rel_path: str = '', include_files: bool = False) -> dict:
+    """Admin-only server browser. By default lists directories only (for
+    picking project_path); with include_files=True also lists files (for
+    picking project_db_path — a specific file, not a folder)."""
     target = (_FS_BROWSE_ROOT / (rel_path or '').lstrip('/')).resolve()
     if target != _FS_BROWSE_ROOT and _FS_BROWSE_ROOT not in target.parents:
         raise ProjectFileError('Ruta fuera del área permitida.')
@@ -746,17 +767,25 @@ def list_server_directories(rel_path: str = '') -> dict:
 
     entries = []
     try:
-        children = sorted(target.iterdir(), key=lambda p: p.name.lower())
+        children = sorted(target.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
     except PermissionError:
         children = []
     for child in children:
-        if not child.is_dir() or child.name.startswith('.'):
+        if child.name.startswith('.') or child.name in HIDDEN_ENTRY_NAMES:
             continue
-        try:
-            next(child.iterdir(), None)  # permission probe, ignore actual contents
-        except PermissionError:
+        is_dir = child.is_dir()
+        if not is_dir and not include_files:
             continue
-        entries.append({'name': child.name, 'rel_path': str(child.relative_to(_FS_BROWSE_ROOT))})
+        if is_dir:
+            try:
+                next(child.iterdir(), None)  # permission probe, ignore actual contents
+            except PermissionError:
+                continue
+        entries.append({
+            'name': child.name,
+            'rel_path': str(child.relative_to(_FS_BROWSE_ROOT)),
+            'is_dir': is_dir,
+        })
 
     rel_norm = str(target.relative_to(_FS_BROWSE_ROOT)) if target != _FS_BROWSE_ROOT else ''
     parent_rel = None

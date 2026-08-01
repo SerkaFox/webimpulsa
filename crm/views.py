@@ -502,12 +502,15 @@ def lead_delete(request, pk):
 
 @_crm_auth
 def browse_fs(request):
-    """GET /wi/crm/browse-fs/?path=... — admin-only server folder picker, used
-    by the project_path field in lead_detail.html so Sergey doesn't have to
-    type a path from memory. Scoped to /home/seradmin (see services.py)."""
+    """GET /wi/crm/browse-fs/?path=...&files=1 — admin-only server folder/file
+    picker, used by the project_path / project_db_path fields in
+    lead_detail.html so Sergey doesn't have to type a path from memory.
+    Scoped to /home/seradmin (see services.py). files=1 also lists files
+    (needed to pick a specific database file, not just a folder)."""
     rel_path = request.GET.get('path', '')
+    include_files = request.GET.get('files') == '1'
     try:
-        data = list_server_directories(rel_path)
+        data = list_server_directories(rel_path, include_files=include_files)
         return JsonResponse({'ok': True, **data})
     except ProjectFileError as exc:
         return JsonResponse({'ok': False, 'error': str(exc)}, status=400)

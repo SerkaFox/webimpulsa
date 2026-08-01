@@ -50,6 +50,12 @@ class ProjectFileServiceTests(TestCase):
         sub = self.project_dir / 'static'
         sub.mkdir()
         (sub / 'style.css').write_text('body { color: red; }')
+        git_dir = self.project_dir / '.git'
+        git_dir.mkdir()
+        (git_dir / 'config').write_text('[core]')
+        claude_dir = self.project_dir / '.claude'
+        claude_dir.mkdir()
+        (claude_dir / 'notes.md').write_text('internal notes')
         self.lead = _make_lead(project_path=str(self.project_dir))
 
     def tearDown(self):
@@ -142,6 +148,28 @@ class ProjectFileServiceTests(TestCase):
         finally:
             shutil.rmtree(db_dir, ignore_errors=True)
 
+    def test_hidden_dirs_excluded_from_listing(self):
+        listing = list_project_directory(self.lead, '')
+        names = {e['name'] for e in listing['entries']}
+        self.assertNotIn('.git', names)
+        self.assertNotIn('.claude', names)
+
+    def test_hidden_dirs_excluded_from_zip(self):
+        buf = zip_project(self.lead)
+        with zipfile.ZipFile(buf) as zf:
+            names = set(zf.namelist())
+        self.assertFalse(any(n.startswith('.git/') for n in names))
+        self.assertFalse(any(n.startswith('.claude/') for n in names))
+        self.assertIn('index.html', names)  # sanity: real files still included
+
+    def test_direct_path_into_hidden_dir_rejected(self):
+        with self.assertRaises(ProjectFileError):
+            resolve_project_path(self.lead, '.git/config')
+
+    def test_cannot_read_hidden_file_via_url_bypass(self):
+        with self.assertRaises(ProjectFileError):
+            read_project_text_file(self.lead, '.claude/notes.md')
+
 
 class PortalFileManagerViewTests(TestCase):
     def setUp(self):
@@ -169,6 +197,13 @@ class PortalFileManagerViewTests(TestCase):
 
     def test_download_rejects_traversal(self):
         resp = self.client.get(f'/p/{self.access.token}/files/download/?path=../../etc/passwd')
+        self.assertEqual(resp.status_code, 404)
+
+    def test_download_rejects_hidden_dir_bypass(self):
+        git_dir = self.project_dir / '.git'
+        git_dir.mkdir()
+        (git_dir / 'config').write_text('[core]')
+        resp = self.client.get(f'/p/{self.access.token}/files/download/?path=.git/config')
         self.assertEqual(resp.status_code, 404)
 
     def test_download_zip(self):
@@ -286,6 +321,32 @@ class ServerFolderPickerTests(TestCase):
         resp = self.client.get('/wi/crm/browse-fs/?path=')
         self.assertEqual(resp.status_code, 200)
         self.assertIn(b'crm_password', resp.content)  # login form, not the JSON listing
+
+    def test_files_hidden_by_default_shown_with_include_files(self):
+        from django.conf import settings
+        marker = Path(settings.BASE_DIR) / '_pf_picker_test_marker.txt'
+        marker.write_text('x')
+        try:
+            rel = str(Path(settings.BASE_DIR).relative_to('/home/seradmin'))
+            without_files = list_server_directories(rel)
+            self.assertNotIn('_pf_picker_test_marker.txt', {e['name'] for e in without_files['entries']})
+
+            with_files = list_server_directories(rel, include_files=True)
+            names = {e['name'] for e in with_files['entries']}
+            self.assertIn('_pf_picker_test_marker.txt', names)
+            entry = next(e for e in with_files['entries'] if e['name'] == '_pf_picker_test_marker.txt')
+            self.assertFalse(entry['is_dir'])
+        finally:
+            marker.unlink(missing_ok=True)
+
+    def test_browse_fs_endpoint_files_param(self):
+        _login_crm(self.client)
+        from django.conf import settings
+        rel = str(Path(settings.BASE_DIR).relative_to('/home/seradmin'))
+        resp = self.client.get(f'/wi/crm/browse-fs/?path={rel}&files=1')
+        data = resp.json()
+        self.assertTrue(data['ok'])
+        self.assertTrue(any(not e['is_dir'] for e in data['entries']))
 
 
 class SqliteBrowserTests(TestCase):

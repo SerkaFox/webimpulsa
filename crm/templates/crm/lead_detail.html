@@ -204,8 +204,11 @@
             </div>
           </div>
           <div>
-            <label data-i18n="crm.project_db_path">Ruta de la base de datos (opcional, si está fuera de la carpeta del proyecto)</label>
-            <input type="text" name="project_db_path" value="{{ lead.project_db_path }}" placeholder="/home/seradmin/cliente-x/db.sqlite3">
+            <label data-i18n="crm.project_db_path">Ruta al archivo de base de datos (SQLite) — actívala para que al cliente le aparezca la pestaña "Base de datos"</label>
+            <div style="display:flex;gap:8px">
+              <input type="text" name="project_db_path" id="projectDbPathInput" value="{{ lead.project_db_path }}" placeholder="/home/seradmin/cliente-x/db.sqlite3" style="flex:1">
+              <button type="button" onclick="pfOpenPicker('projectDbPathInput', true)" style="white-space:nowrap">📁 Elegir…</button>
+            </div>
           </div>
           <button type="submit" class="save-btn" data-i18n="crm.save">Guardar</button>
         </form>
@@ -1487,7 +1490,7 @@ setLang(LANG);
     <div id="pfPickerList" style="overflow-y:auto;flex:1"></div>
     <div style="padding:12px 18px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:8px">
       <button type="button" onclick="pfClosePicker()">Cancelar</button>
-      <button type="button" class="save-btn" onclick="pfUsePickerFolder()">Usar esta carpeta</button>
+      <button type="button" class="save-btn" id="pfUseFolderBtn" onclick="pfUsePickerFolder()">Usar esta carpeta</button>
     </div>
   </div>
 </div>
@@ -1495,13 +1498,17 @@ setLang(LANG);
 <script>
 let pfPickerTargetInput = null;
 let pfPickerCurrentPath = '';
+let pfPickerFileMode = false;
 
-function pfOpenPicker(inputId) {
+function pfOpenPicker(inputId, fileMode) {
   pfPickerTargetInput = inputId;
+  pfPickerFileMode = !!fileMode;
+  document.getElementById('pfUseFolderBtn').style.display = pfPickerFileMode ? 'none' : '';
   document.getElementById('pfPickerOverlay').style.display = 'flex';
   const current = document.getElementById(inputId).value.trim();
-  const startRel = current.startsWith('/home/seradmin/')
-    ? current.replace('/home/seradmin/', '').replace(/\/$/, '')
+  const startAbs = pfPickerFileMode ? current.replace(/\/[^/]*$/, '') : current;
+  const startRel = startAbs.startsWith('/home/seradmin/')
+    ? startAbs.replace('/home/seradmin/', '').replace(/\/$/, '')
     : '';
   pfLoadPicker(startRel);
 }
@@ -1511,7 +1518,8 @@ function pfClosePicker() {
 }
 
 async function pfLoadPicker(relPath) {
-  const res = await fetch('/wi/crm/browse-fs/?path=' + encodeURIComponent(relPath));
+  const filesParam = pfPickerFileMode ? '&files=1' : '';
+  const res = await fetch('/wi/crm/browse-fs/?path=' + encodeURIComponent(relPath) + filesParam);
   const data = await res.json();
   if (!data.ok) { alert(data.error || 'Error al listar la carpeta'); return; }
   pfPickerCurrentPath = data.abs_path;
@@ -1528,14 +1536,19 @@ async function pfLoadPicker(relPath) {
   data.entries.forEach(function(entry) {
     const row = document.createElement('div');
     row.style.cssText = 'padding:10px 16px;cursor:pointer;border-bottom:1px solid #f1f5f9';
-    row.textContent = '📁 ' + entry.name;
-    row.onclick = () => pfLoadPicker(entry.rel_path);
+    if (entry.is_dir) {
+      row.textContent = '📁 ' + entry.name;
+      row.onclick = () => pfLoadPicker(entry.rel_path);
+    } else {
+      row.textContent = '📄 ' + entry.name;
+      row.onclick = () => pfUsePickerFile(entry.name);
+    }
     list.appendChild(row);
   });
   if (!data.entries.length) {
     const empty = document.createElement('div');
     empty.style.cssText = 'padding:16px;color:#94a3b8;font-size:.85rem;text-align:center';
-    empty.textContent = 'Sin subcarpetas aquí';
+    empty.textContent = pfPickerFileMode ? 'Nada aquí' : 'Sin subcarpetas aquí';
     list.appendChild(empty);
   }
 }
@@ -1543,6 +1556,13 @@ async function pfLoadPicker(relPath) {
 function pfUsePickerFolder() {
   if (pfPickerTargetInput && pfPickerCurrentPath) {
     document.getElementById(pfPickerTargetInput).value = pfPickerCurrentPath;
+  }
+  pfClosePicker();
+}
+
+function pfUsePickerFile(fileName) {
+  if (pfPickerTargetInput) {
+    document.getElementById(pfPickerTargetInput).value = pfPickerCurrentPath + '/' + fileName;
   }
   pfClosePicker();
 }
