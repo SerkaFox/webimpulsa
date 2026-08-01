@@ -103,6 +103,11 @@
       <h1>{{ prospect.name }} <span class="badge" style="background:#8a94a6">{{ prospect.get_sales_status_display }}</span></h1>
       <div style="color:#5a6d8c;font-size:.88rem">{{ prospect.get_sector_display }} · {{ prospect.municipality }} {{ prospect.district }}</div>
       <div style="margin-top:8px">Puntuación actual: <strong>{{ prospect.current_score|default:"—" }}</strong>/100</div>
+      {% if prospect.gmaps_url %}
+        <div style="margin-top:8px">
+          <a class="btn sm ghost" href="{{ prospect.gmaps_url }}" target="_blank" rel="noopener">📷 Ver en Google Maps (fotos, menú, reseñas…)</a>
+        </div>
+      {% endif %}
     </div>
 
     <!-- ── Las 3 acciones principales — nunca hace falta abrir nada más ── -->

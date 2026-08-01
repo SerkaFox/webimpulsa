@@ -44,6 +44,7 @@ def _prospect_json(p):
         'email': p.email,
         'website': p.website,
         'whatsapp': p.whatsapp,
+        'gmaps_url': p.gmaps_url,
         'current_score': p.current_score,
         'has_website': p.has_website,
         'has_online_booking': p.has_online_booking,

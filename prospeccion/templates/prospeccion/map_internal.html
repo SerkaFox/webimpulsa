@@ -483,6 +483,7 @@ function reloadMapProspects(){
           '<a href="'+p.detail_url+'">📇 Ver ficha</a>'+
           '<a href="'+p.detail_url+'?start_check=1">🩺 Crear preliminar</a>'+
           '<a href="'+p.detail_url+'#contactForm">👤 Añadir contacto</a>'+
+          (p.gmaps_url ? '<a href="'+p.gmaps_url+'" target="_blank" rel="noopener">📷 Google Maps</a>' : '')+
           '</div></div>'
         });
         marker.addListener('click', function(){ info.open(map, marker); });
@@ -508,12 +509,13 @@ function categoryLabel(sectorId){
 function renderExistingCard(p){
   var scoreTag = p.current_score != null ? '<span class="exists-badge" style="background:'+p.color+'">'+p.current_score+'/100</span>' : '';
   var web = websiteBadge(resolveHasWebsite(p));
+  var gmapsBtn = p.gmaps_url ? '<a class="btn sm ghost" href="'+p.gmaps_url+'" target="_blank" rel="noopener">📷 Ver en Google Maps</a>' : '';
   return '<div class="result-card" data-existing-id="'+p.prospect_id+'">'+
     '<span class="cat">Ya en CreaGanaWeb</span><span class="exists-badge">Ya existe</span>'+scoreTag+
     '<div class="name" style="margin-top:6px">'+p.name+'</div>'+
     '<div class="addr">'+(p.address||'')+' · '+p.sector_label+'</div>'+
     '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span>'+
-    '<div class="actions"><a class="btn sm secondary" href="'+p.detail_url+'">Ver ficha</a></div>'+
+    '<div class="actions"><a class="btn sm secondary" href="'+p.detail_url+'">Ver ficha</a>'+gmapsBtn+'</div>'+
   '</div>';
 }
 
@@ -559,7 +561,9 @@ function plotSearchMarkers(existing, googleResults){
       '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>'+
       '<strong>'+p.name+'</strong><br>Ya en CreaGanaWeb'+
       (p.current_score != null ? ' · puntuación '+p.current_score : '')+'<br>'+
-      '<a href="'+p.detail_url+'">📇 Ver ficha</a></div>'
+      '<a href="'+p.detail_url+'">📇 Ver ficha</a>'+
+      (p.gmaps_url ? ' · <a href="'+p.gmaps_url+'" target="_blank" rel="noopener">📷 Google Maps</a>' : '')+
+      '</div>'
     });
     marker.addListener('click', function(){ info.open(map, marker); });
     searchMarkers.push(marker);
