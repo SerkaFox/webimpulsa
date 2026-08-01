@@ -587,7 +587,7 @@ function reloadMapProspects(){
           '<a href="'+p.detail_url+'">📇 '+_t1('map.view_card')+'</a>'+
           '<a href="'+p.detail_url+'?start_check=1">🩺 '+_t1('map.create_preliminary')+'</a>'+
           '<a href="'+p.detail_url+'#contactForm">👤 '+_t1('map.add_contact')+'</a>'+
-          (p.gmaps_url ? '<a href="'+p.gmaps_url+'" target="_blank" rel="noopener">📷 Google Maps</a>' : '')+
+          (p.gmaps_url ? '<a href="'+p.gmaps_url+'" target="_blank" rel="noopener">📷 '+_t1('map.open_in_gmaps')+'</a>' : '')+
           '</div></div>'
         });
         marker.addListener('click', function(){ info.open(map, marker); });
@@ -669,7 +669,7 @@ function plotSearchMarkers(existing, googleResults){
       '<strong>'+p.name+'</strong><br>'+_t2('map.already_in_crm')+
       (p.current_score != null ? ' · '+_t2('map.score_label')+' '+p.current_score : '')+'<br>'+
       '<a href="'+p.detail_url+'">📇 '+_t2('map.view_card')+'</a>'+
-      (p.gmaps_url ? ' · <a href="'+p.gmaps_url+'" target="_blank" rel="noopener">📷 Google Maps</a>' : '')+
+      (p.gmaps_url ? ' · <a href="'+p.gmaps_url+'" target="_blank" rel="noopener">📷 '+_t2('map.open_in_gmaps')+'</a>' : '')+
       '</div>'
     });
     marker.addListener('click', function(){ info.open(map, marker); });
@@ -856,8 +856,8 @@ function runAreaSearch(){
       lastGoogleResults = data.google || [];
       var html = '';
       if(data.radius_capped){
-        html += '<p style="color:#92400e;font-size:.78rem">Zona muy amplia: se buscó solo hasta '+
-          (data.radius_used/1000).toFixed(1)+' km desde el centro. Acerca el mapa para más precisión.</p>';
+        html += '<p style="color:#92400e;font-size:.78rem">'+
+          _t('map.zone_too_wide').replace('{km}', (data.radius_used/1000).toFixed(1))+'</p>';
       }
       existingResults.forEach(function(p){ html += renderExistingCard(p); });
       lastGoogleResults.forEach(function(r, idx){ html += renderGoogleCard(r, idx); });
@@ -895,6 +895,7 @@ function puwBarClass(percent, blocked){
 }
 
 function refreshPlacesUsage(){
+  var _t = window.wiMapT || function(k){ return k; };
   fetch('/panel/prospeccion/mapa/api/places-usage/')
     .then(function(r){ return r.json(); })
     .then(function(data){
@@ -911,7 +912,8 @@ function refreshPlacesUsage(){
         document.getElementById(prefix+'Fill').className = 'puw-bar-fill ' + cls;
         document.getElementById(prefix+'Nums').textContent = stats.used + ' / ' + stats.limit;
         document.getElementById(prefix+'Sub').textContent =
-          'Restan ' + stats.remaining + ' · OK ' + stats.successful + ' · Errores ' + stats.errors;
+          _t('map.puw_remaining') + ' ' + stats.remaining + ' · ' + _t('map.puw_ok') + ' ' + stats.successful +
+          ' · ' + _t('map.puw_errors') + ' ' + stats.errors;
       }
       paint('puwNearby', nearby);
       paint('puwText', text);
@@ -927,7 +929,7 @@ function refreshPlacesUsage(){
       var combinedLimit = nearby.limit + text.limit + (details ? details.limit : 0);
       document.getElementById('puwSummaryDot').className = 'puw-dot ' + worstCls;
       document.getElementById('puwSummaryText').textContent =
-        data.today_total + ' hoy · ' + data.month_total + ' / ' + combinedLimit + ' este mes';
+        data.today_total + ' ' + _t('map.puw_today').replace(':','') + ' · ' + data.month_total + ' / ' + combinedLimit + ' ' + _t('map.puw_month_label');
 
       var warningsEl = document.getElementById('puwWarnings');
       warningsEl.innerHTML = (data.warnings || []).map(function(w){
@@ -936,20 +938,31 @@ function refreshPlacesUsage(){
       }).join('');
 
       var costEl = document.getElementById('puwCost');
-      costEl.textContent = 'Estimación local de coste: $' + data.estimated_cost_usd.toFixed(2) +
-        ' (a $' + data.price_per_1000_usd + '/1000 tras el límite gratuito). Cifra orientativa — la factura real está en Google Cloud Billing.';
+      costEl.textContent = _t('map.puw_cost_estimate')
+        .replace('{cost}', data.estimated_cost_usd.toFixed(2))
+        .replace('{price}', data.price_per_1000_usd);
     })
     .catch(function(){ /* el widget no es crítico para poder seguir trabajando */ });
 }
 
+function poiModeLabel(_t, code){
+  if(code === 'text') return _t('map.mode_text');
+  if(code === 'nearby') return _t('map.mode_nearby');
+  return _t('map.mode_area');
+}
+
 function renderHistoryTable(data){
+  var _t = window.wiMapT || function(k){ return k; };
+  var dateLocale = LANG === 'ru' ? 'ru-RU' : 'es-ES';
   var rows = data.rows.map(function(row){
-    var when = new Date(row.created_at).toLocaleString('es-ES');
+    var when = new Date(row.created_at).toLocaleString(dateLocale);
     var resultClass = row.success ? 'history-ok' : 'history-error';
-    var resultText = row.success ? 'OK' : ('Error' + (row.error_type ? ' ('+row.error_type+')' : ''));
+    var resultText = row.success
+      ? _t('map.history_result_ok')
+      : (_t('map.history_result_error') + (row.error_type ? ' ('+row.error_type+')' : ''));
     return '<tr>' +
       '<td>'+when+'</td>' +
-      '<td>'+row.mode+'</td>' +
+      '<td>'+poiModeLabel(_t, row.mode)+'</td>' +
       '<td class="'+resultClass+'">'+resultText+'</td>' +
       '<td>'+(row.response_status != null ? row.response_status : '—')+'</td>' +
       '<td>'+(row.result_count != null ? row.result_count : '—')+'</td>' +
@@ -962,23 +975,27 @@ function renderHistoryTable(data){
     return '<tr><td>'+d.date+'</td><td>'+counts+'</td></tr>';
   }).join('');
 
-  return '<h3 style="font-size:.85rem;margin-bottom:6px">Últimas peticiones</h3>' +
+  return '<h3 style="font-size:.85rem;margin-bottom:6px">'+_t('map.history_recent')+'</h3>' +
     '<div style="max-height:320px;overflow-y:auto">' +
-    '<table class="history-table"><thead><tr><th>Fecha</th><th>Modo</th><th>Resultado</th>' +
-    '<th>HTTP</th><th>Encontrados</th><th>Duración</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
-    '<h3 style="font-size:.85rem;margin:14px 0 6px">Por día (mes '+data.billing_month+')</h3>' +
+    '<table class="history-table"><thead><tr><th>'+_t('map.history_col_date')+'</th><th>'+_t('map.history_col_mode')+
+    '</th><th>'+_t('map.history_col_result')+'</th><th>'+_t('map.history_col_http')+'</th><th>'+
+    _t('map.history_col_found')+'</th><th>'+_t('map.history_col_duration')+'</th></tr></thead><tbody>' +
+    rows + '</tbody></table></div>' +
+    '<h3 style="font-size:.85rem;margin:14px 0 6px">'+_t('map.history_by_day').replace('{month}', data.billing_month)+'</h3>' +
     '<div style="max-height:200px;overflow-y:auto">' +
-    '<table class="history-table"><thead><tr><th>Día</th><th>Peticiones por tipo</th></tr></thead><tbody>' +
+    '<table class="history-table"><thead><tr><th>'+_t('map.history_col_day')+'</th><th>'+
+    _t('map.history_col_counts')+'</th></tr></thead><tbody>' +
     dailyRows + '</tbody></table></div>';
 }
 
 document.getElementById('puwHistoryLink').addEventListener('click', function(){
+  var _t = window.wiMapT || function(k){ return k; };
   document.getElementById('historyOverlay').classList.add('show');
-  document.getElementById('historyContent').innerHTML = 'Cargando…';
+  document.getElementById('historyContent').innerHTML = _t('map.loading');
   fetch('/panel/prospeccion/mapa/api/places-usage/history/')
     .then(function(r){ return r.json(); })
     .then(function(data){ document.getElementById('historyContent').innerHTML = renderHistoryTable(data); })
-    .catch(function(){ document.getElementById('historyContent').innerHTML = 'No se pudo cargar el historial.'; });
+    .catch(function(){ document.getElementById('historyContent').innerHTML = _t('map.history_load_failed'); });
 });
 document.getElementById('btnCloseHistory').addEventListener('click', function(){
   document.getElementById('historyOverlay').classList.remove('show');
@@ -1030,17 +1047,18 @@ function poiGmapsUrl(placeId){
 }
 
 function showPoiPopup(placeId, latLng){
+  var _t = window.wiMapT || function(k){ return k; };
   if(poiInfoWindow) poiInfoWindow.close();
   var gmapsUrl = poiGmapsUrl(placeId);
   poiInfoWindow = new google.maps.InfoWindow({
     position: latLng,
     content:
       '<div style="font-family:inherit;min-width:200px">' +
-      '<div style="font-weight:700;margin-bottom:8px">Negocio del mapa</div>' +
+      '<div style="font-weight:700;margin-bottom:8px">'+_t('map.poi_title')+'</div>' +
       '<div style="display:flex;flex-direction:column;gap:6px">' +
-      '<button type="button" class="btn sm" id="poiGetInfoBtn">🔍 Obtener info</button>' +
-      '<button type="button" class="btn sm green" id="poiAddDirectBtn">➕ Añadir directamente</button>' +
-      '<a href="'+gmapsUrl+'" target="_blank" rel="noopener" style="font-size:.78rem">📷 Ver en Google Maps</a>' +
+      '<button type="button" class="btn sm" id="poiGetInfoBtn">'+_t('map.poi_get_info')+'</button>' +
+      '<button type="button" class="btn sm green" id="poiAddDirectBtn">'+_t('map.poi_add_direct')+'</button>' +
+      '<a href="'+gmapsUrl+'" target="_blank" rel="noopener" style="font-size:.78rem">📷 '+_t('map.open_in_gmaps')+'</a>' +
       '</div></div>',
   });
   poiInfoWindow.open(map);
@@ -1056,8 +1074,9 @@ function showPoiPopup(placeId, latLng){
 }
 
 function fetchPoiDetails(placeId, latLng){
+  var _t = window.wiMapT || function(k){ return k; };
   if(!poiInfoWindow) return;
-  poiInfoWindow.setContent('<div style="font-family:inherit;font-size:.85rem;padding:2px">Consultando Google…</div>');
+  poiInfoWindow.setContent('<div style="font-family:inherit;font-size:.85rem;padding:2px">'+_t('map.poi_querying')+'</div>');
 
   fetch('/panel/prospeccion/mapa/api/place-details/?place_id=' + encodeURIComponent(placeId))
     .then(function(r){ return r.json(); })
@@ -1078,15 +1097,15 @@ function fetchPoiDetails(placeId, latLng){
       var web = websiteBadge(resolveHasWebsite(p));
       var gmapsUrl = p.google_maps_url || poiGmapsUrl(placeId);
       var actionBtn = p.existing_prospect_id
-        ? '<a class="btn sm secondary" href="'+p.detail_url+'">📇 Ver ficha</a>'
-        : '<button type="button" class="btn sm" id="poiAddFoundBtn">➕ Añadir a CreaGanaWeb</button>';
+        ? '<a class="btn sm secondary" href="'+p.detail_url+'">📇 '+_t('map.view_card')+'</a>'
+        : '<button type="button" class="btn sm" id="poiAddFoundBtn">➕ '+_t('map.add_to_crm')+'</button>';
       poiInfoWindow.setContent(
         '<div style="font-family:inherit;min-width:220px">' +
         '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>' +
-        '<strong>'+(p.name || 'Sin nombre')+'</strong><br>' +
+        '<strong>'+(p.name || _t('map.poi_no_name'))+'</strong><br>' +
         '<div style="color:#5a6d8c;font-size:.8rem;margin:2px 0 8px">'+(p.address||'')+'</div>' +
         '<div style="display:flex;gap:6px;flex-wrap:wrap">' + actionBtn +
-        '<a class="btn sm ghost" href="'+gmapsUrl+'" target="_blank" rel="noopener">📷 Google Maps</a>' +
+        '<a class="btn sm ghost" href="'+gmapsUrl+'" target="_blank" rel="noopener">📷 '+_t('map.open_in_gmaps')+'</a>' +
         '</div></div>'
       );
       google.maps.event.addListenerOnce(poiInfoWindow, 'domready', function(){
@@ -1099,7 +1118,7 @@ function fetchPoiDetails(placeId, latLng){
       refreshPlacesUsage();
     })
     .catch(function(){
-      if(poiInfoWindow) poiInfoWindow.setContent('<div style="font-family:inherit;font-size:.8rem">No se pudo consultar Google Places.</div>');
+      if(poiInfoWindow) poiInfoWindow.setContent('<div style="font-family:inherit;font-size:.8rem">'+_t('map.poi_query_failed')+'</div>');
     });
 }
 
@@ -1281,6 +1300,7 @@ es: {
   'map.legend_score': 'Puntuación digital (0–100)',
   'map.puw_title': 'Google Places — mes en curso',
   'map.puw_today': 'Hoy:',
+  'map.puw_month_label': 'este mes',
   'map.puw_requests': 'peticiones',
   'map.puw_history': '📜 Historial de peticiones',
   'map.search_title': '🔎 Buscar y añadir un negocio',
@@ -1354,6 +1374,33 @@ es: {
   'map.score_label': 'puntuación',
   'map.create_preliminary': 'Crear preliminar',
   'map.add_contact': 'Añadir contacto',
+  'map.zone_too_wide': 'Zona muy amplia: se buscó solo hasta {km} km desde el centro. Acerca el mapa para más precisión.',
+  'map.puw_remaining': 'Restan',
+  'map.puw_ok': 'OK',
+  'map.puw_errors': 'Errores',
+  'map.puw_cost_estimate': 'Estimación local de coste: ${cost} (a ${price}/1000 tras el límite gratuito). Cifra orientativa — la factura real está en Google Cloud Billing.',
+  'map.history_recent': 'Últimas peticiones',
+  'map.history_by_day': 'Por día (mes {month})',
+  'map.history_col_date': 'Fecha',
+  'map.history_col_mode': 'Modo',
+  'map.history_col_result': 'Resultado',
+  'map.history_col_http': 'HTTP',
+  'map.history_col_found': 'Encontrados',
+  'map.history_col_duration': 'Duración',
+  'map.history_col_day': 'Día',
+  'map.history_col_counts': 'Peticiones por tipo',
+  'map.history_load_failed': 'No se pudo cargar el historial.',
+  'map.history_result_ok': 'OK',
+  'map.history_result_error': 'Error',
+  'map.mode_text': 'Búsqueda por texto',
+  'map.mode_nearby': 'Cerca de mí',
+  'map.mode_area': 'Área del mapa',
+  'map.poi_title': 'Negocio del mapa',
+  'map.poi_get_info': '🔍 Obtener info',
+  'map.poi_add_direct': '➕ Añadir directamente',
+  'map.poi_querying': 'Consultando Google…',
+  'map.poi_no_name': 'Sin nombre',
+  'map.poi_query_failed': 'No se pudo consultar Google Places.',
 },
 ru: {
   'map.page_title': 'Карта проспекции — CreaGanaWeb',
@@ -1371,6 +1418,7 @@ ru: {
   'map.legend_score': 'Цифровой рейтинг (0–100)',
   'map.puw_title': 'Google Places — текущий месяц',
   'map.puw_today': 'Сегодня:',
+  'map.puw_month_label': 'в этом месяце',
   'map.puw_requests': 'запросов',
   'map.puw_history': '📜 История запросов',
   'map.search_title': '🔎 Найти и добавить бизнес',
@@ -1444,6 +1492,33 @@ ru: {
   'map.score_label': 'рейтинг',
   'map.create_preliminary': 'Создать предварительную проверку',
   'map.add_contact': 'Добавить контакт',
+  'map.zone_too_wide': 'Слишком широкая область: поиск ограничен {km} км от центра. Приблизьте карту для точности.',
+  'map.puw_remaining': 'Осталось',
+  'map.puw_ok': 'OK',
+  'map.puw_errors': 'Ошибки',
+  'map.puw_cost_estimate': 'Локальная оценка стоимости: ${cost} (по ${price}/1000 сверх бесплатного лимита). Ориентировочная цифра — точные данные в Google Cloud Billing.',
+  'map.history_recent': 'Последние запросы',
+  'map.history_by_day': 'По дням (месяц {month})',
+  'map.history_col_date': 'Дата',
+  'map.history_col_mode': 'Режим',
+  'map.history_col_result': 'Результат',
+  'map.history_col_http': 'HTTP',
+  'map.history_col_found': 'Найдено',
+  'map.history_col_duration': 'Длительность',
+  'map.history_col_day': 'День',
+  'map.history_col_counts': 'Запросы по типам',
+  'map.history_load_failed': 'Не удалось загрузить историю.',
+  'map.history_result_ok': 'OK',
+  'map.history_result_error': 'Ошибка',
+  'map.mode_text': 'Текстовый поиск',
+  'map.mode_nearby': 'Рядом со мной',
+  'map.mode_area': 'Область карты',
+  'map.poi_title': 'Объект на карте',
+  'map.poi_get_info': '🔍 Получить информацию',
+  'map.poi_add_direct': '➕ Добавить напрямую',
+  'map.poi_querying': 'Запрос к Google…',
+  'map.poi_no_name': 'Без названия',
+  'map.poi_query_failed': 'Не удалось получить данные из Google Places.',
 },
 };
 

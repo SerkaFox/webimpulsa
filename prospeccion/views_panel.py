@@ -385,12 +385,14 @@ def _mode_label(log):
     """Nunca se guarda explícitamente qué botón disparó la búsqueda — se
     infiere para mostrar en el historial sin exponer coordenadas reales:
     texto vs. "cerca de mí" (radio fijo ~1 km) vs. "área del mapa" (radio
-    variable, calculado del viewport)."""
+    variable, calculado del viewport). Devuelve un CÓDIGO estable, no texto
+    humano — la traducción ES/RU la hace el frontend (ver map.mode_* en
+    map_internal.html), este endpoint no sabe en qué idioma está el CRM."""
     if log.request_type.startswith('text_search'):
-        return 'Búsqueda por texto'
+        return 'text'
     if log.radius_m is not None and log.radius_m <= 1200:
-        return 'Cerca de mí'
-    return 'Área del mapa'
+        return 'nearby'
+    return 'area'
 
 
 def _usage_snapshot():

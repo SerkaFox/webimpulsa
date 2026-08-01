@@ -42,6 +42,12 @@ FIELD_MASK = ','.join([
     'places.websiteUri',
     'places.googleMapsUri',
 ])
+# Mismos campos que FIELD_MASK, pero SIN el prefijo "places." — searchText/
+# searchNearby devuelven un array bajo "places", así que el mask referencia
+# cada campo dentro de esa lista; Place Details (un único objeto, no una
+# lista) rechaza ese prefijo con 400 Bad Request porque "places.id" no es
+# una ruta válida para la forma de la respuesta de ESE endpoint.
+FIELD_MASK_SINGLE = FIELD_MASK.replace('places.', '')
 
 REQUEST_TIMEOUT = 8
 
@@ -384,7 +390,7 @@ def get_place_details(place_id):
             f'{PLACE_DETAILS_URL}/{place_id}',
             headers={
                 'X-Goog-Api-Key': settings.GOOGLE_PLACES_API_KEY,
-                'X-Goog-FieldMask': FIELD_MASK,
+                'X-Goog-FieldMask': FIELD_MASK_SINGLE,
             },
             timeout=REQUEST_TIMEOUT,
         )

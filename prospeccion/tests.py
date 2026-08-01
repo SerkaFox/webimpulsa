@@ -1039,7 +1039,7 @@ class PlacesUsageEndpointsTests(BaseTestCase):
         self.assertGreaterEqual(len(data['rows']), 1)
         self.assertNotIn('43.29', r.content.decode())
         self.assertNotIn('lat', data['rows'][0])
-        self.assertIn(data['rows'][0]['mode'], ('Búsqueda por texto', 'Cerca de mí', 'Área del mapa'))
+        self.assertIn(data['rows'][0]['mode'], ('text', 'nearby', 'area'))
 
     def test_warning_notification_created_once_per_threshold_per_month(self):
         month = places.billing_month_for()
@@ -1081,7 +1081,12 @@ class PlaceDetailsTests(TestCase):
             result = places.get_place_details('ChIJpoi1')
         args, kwargs = mocked_get.call_args
         self.assertIn('ChIJpoi1', args[0])
-        self.assertEqual(kwargs['headers']['X-Goog-FieldMask'], places.FIELD_MASK)
+        # OJO: Place Details devuelve un objeto único, no una lista bajo
+        # "places" como searchText/searchNearby — usar el FIELD_MASK con
+        # prefijo "places." aquí (bug real que llegó a producción) da
+        # 400 Bad Request de Google, no un error de nuestro lado.
+        self.assertEqual(kwargs['headers']['X-Goog-FieldMask'], places.FIELD_MASK_SINGLE)
+        self.assertNotIn('places.', kwargs['headers']['X-Goog-FieldMask'])
         self.assertEqual(result['name'], 'Panadería del Icono')
         self.assertEqual(result['category'], 'bar')  # bakery -> bar (mismo mapeo que guess_sector)
         for forbidden_key in ('reviews', 'photos', 'rating', 'regularOpeningHours'):
