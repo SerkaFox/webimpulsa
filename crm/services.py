@@ -726,3 +726,133 @@ def zip_project(lead: Lead) -> io.BytesIO:
                 zf.write(db_path, arcname=f'database/{db_path.name}')
     buf.seek(0)
     return buf
+
+
+# ── Server folder picker (admin-only, CRM side) ───────────────────────────────
+# Lets Sergey navigate the server's filesystem from the CRM instead of typing a
+# path from memory. Scoped to /home/seradmin — every client project observed on
+# this server lives somewhere under there; this is not the same trust boundary
+# as the client-facing file manager above (this is gated by CRM login only).
+
+_FS_BROWSE_ROOT = Path('/home/seradmin').resolve()
+
+
+def list_server_directories(rel_path: str = '') -> dict:
+    target = (_FS_BROWSE_ROOT / (rel_path or '').lstrip('/')).resolve()
+    if target != _FS_BROWSE_ROOT and _FS_BROWSE_ROOT not in target.parents:
+        raise ProjectFileError('Ruta fuera del área permitida.')
+    if not target.is_dir():
+        raise ProjectFileError('Esa ruta no es una carpeta.')
+
+    entries = []
+    try:
+        children = sorted(target.iterdir(), key=lambda p: p.name.lower())
+    except PermissionError:
+        children = []
+    for child in children:
+        if not child.is_dir() or child.name.startswith('.'):
+            continue
+        try:
+            next(child.iterdir(), None)  # permission probe, ignore actual contents
+        except PermissionError:
+            continue
+        entries.append({'name': child.name, 'rel_path': str(child.relative_to(_FS_BROWSE_ROOT))})
+
+    rel_norm = str(target.relative_to(_FS_BROWSE_ROOT)) if target != _FS_BROWSE_ROOT else ''
+    parent_rel = None
+    if target != _FS_BROWSE_ROOT:
+        parent_rel = (str(target.parent.relative_to(_FS_BROWSE_ROOT))
+                      if target.parent != _FS_BROWSE_ROOT else '')
+
+    return {
+        'abs_path': str(target),
+        'rel_path': rel_norm,
+        'parent_rel': parent_rel,
+        'entries': entries,
+    }
+
+
+# ── Backup (shared by the weekly cron command + the CRM "backup now" button) ──
+
+def backup_lead_project(lead: Lead) -> Path:
+    """Tar the lead's live project (+ DB, if configured separately) into
+    media/client_backups/<lead_id>/snapshot_<timestamp>.tar.gz, then prune to
+    the 3 most recent snapshots for that lead. Returns the new snapshot path."""
+    import tarfile
+    from datetime import datetime
+
+    root = _project_root(lead)
+    dest_dir = Path(settings.MEDIA_ROOT) / 'client_backups' / str(lead.pk)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    snapshot_path = dest_dir / f'snapshot_{timestamp}.tar.gz'
+
+    with tarfile.open(snapshot_path, 'w:gz') as tar:
+        tar.add(root, arcname='project')
+        if lead.project_db_path:
+            db_path = Path(lead.project_db_path).resolve()
+            if db_path.is_file() and root not in db_path.parents:
+                tar.add(db_path, arcname=f'database/{db_path.name}')
+
+    snapshots = sorted(dest_dir.glob('snapshot_*.tar.gz'), key=lambda p: p.name)
+    for old in snapshots[:-3]:
+        old.unlink()
+
+    return snapshot_path
+
+
+# ── Read-only SQLite browser (client portal — view/export only, no writes) ────
+
+_SQLITE_ROW_PAGE = 100
+
+
+def _sqlite_db_path(lead: Lead) -> Path:
+    if not lead.project_db_path:
+        raise ProjectFileError('Este proyecto no tiene una base de datos configurada.')
+    path = Path(lead.project_db_path).resolve()
+    if not path.is_file():
+        raise ProjectFileError('El archivo de base de datos no existe en el servidor.')
+    return path
+
+
+def get_sqlite_db_path(lead: Lead) -> Path:
+    """Public wrapper — used by the portal's raw-file-download endpoint."""
+    return _sqlite_db_path(lead)
+
+
+def list_sqlite_tables(lead: Lead) -> list:
+    import sqlite3
+    path = _sqlite_db_path(lead)
+    con = sqlite3.connect(f'file:{path}?mode=ro', uri=True)
+    try:
+        cur = con.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+        )
+        return [row[0] for row in cur.fetchall()]
+    finally:
+        con.close()
+
+
+def read_sqlite_table(lead: Lead, table_name: str, offset: int = 0) -> dict:
+    """Read-only, paginated row browse. table_name is whitelisted against the
+    real table list before ever touching the query, so it can't be used to
+    inject arbitrary SQL even though it comes from a URL param."""
+    import sqlite3
+    path = _sqlite_db_path(lead)
+    tables = list_sqlite_tables(lead)
+    if table_name not in tables:
+        raise ProjectFileError('Esa tabla no existe.')
+
+    con = sqlite3.connect(f'file:{path}?mode=ro', uri=True)
+    try:
+        total = con.execute(f'SELECT COUNT(*) FROM "{table_name}"').fetchone()[0]
+        cur = con.execute(f'SELECT * FROM "{table_name}" LIMIT ? OFFSET ?', (_SQLITE_ROW_PAGE, offset))
+        columns = [d[0] for d in cur.description]
+        rows = cur.fetchall()
+        return {
+            'columns': columns, 'rows': rows, 'total': total,
+            'offset': offset, 'end': offset + len(rows), 'page_size': _SQLITE_ROW_PAGE,
+        }
+    finally:
+        con.close()

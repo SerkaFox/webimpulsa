@@ -1,4 +1,5 @@
 import shutil
+import sqlite3
 import tarfile
 import tempfile
 import zipfile
@@ -11,8 +12,10 @@ from django.utils import timezone
 
 from crm.models import ClientAccess, Lead
 from crm.services import (
-    ProjectFileError, delete_project_path, get_project_root, list_project_directory,
-    read_project_text_file, resolve_project_path, write_project_text_file, zip_project,
+    ProjectFileError, backup_lead_project, delete_project_path, get_project_root,
+    get_sqlite_db_path, list_project_directory, list_server_directories,
+    list_sqlite_tables, read_project_text_file, read_sqlite_table, resolve_project_path,
+    write_project_text_file, zip_project,
 )
 
 
@@ -20,6 +23,13 @@ def _make_lead(**kwargs):
     kwargs.setdefault('name', 'Cliente de prueba')
     kwargs.setdefault('email', 'cliente@example.com')
     return Lead.objects.create(**kwargs)
+
+
+def _login_crm(client):
+    """Bypass the password form — set the session flag _crm_auth checks for."""
+    session = client.session
+    session['wi_crm_authed'] = True
+    session.save()
 
 
 def _make_access(lead, pin_required=False):
@@ -246,4 +256,143 @@ class BackupClientProjectsCommandTests(TestCase):
         with self.settings(MEDIA_ROOT=self.media_root):
             call_command('backup_client_projects', stdout=StringIO(), stderr=StringIO())
         snap_dir = self.media_root / 'client_backups' / str(self.lead.pk)
+        self.assertEqual(len(list(snap_dir.glob('snapshot_*.tar.gz'))), 1)
+
+
+class ServerFolderPickerTests(TestCase):
+    """list_server_directories is scoped to /home/seradmin — can't easily
+    sandbox that root in tests, so we only exercise it against real,
+    always-present paths (the CRM app's own worktree lives under there)."""
+
+    def test_lists_directories_only(self):
+        from django.conf import settings
+        rel = str(Path(settings.BASE_DIR).parent.relative_to('/home/seradmin'))
+        listing = list_server_directories(rel)
+        self.assertIn('entries', listing)
+        for entry in listing['entries']:
+            self.assertNotIn('.', entry['name'][1:])  # sanity: looks like a dir name, not a stray file check
+        names = {e['name'] for e in listing['entries']}
+        self.assertIn(Path(settings.BASE_DIR).name, names)
+
+    def test_root_listing_has_no_parent(self):
+        listing = list_server_directories('')
+        self.assertIsNone(listing['parent_rel'])
+
+    def test_traversal_outside_root_rejected(self):
+        with self.assertRaises(ProjectFileError):
+            list_server_directories('../../etc')
+
+    def test_browse_fs_endpoint_requires_crm_login(self):
+        resp = self.client.get('/wi/crm/browse-fs/?path=')
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn(b'crm_password', resp.content)  # login form, not the JSON listing
+
+
+class SqliteBrowserTests(TestCase):
+    def setUp(self):
+        self.db_dir = Path(tempfile.mkdtemp(prefix='wi_sqlite_test_'))
+        self.db_path = self.db_dir / 'db.sqlite3'
+        con = sqlite3.connect(self.db_path)
+        con.execute('CREATE TABLE clientes (id INTEGER PRIMARY KEY, nombre TEXT)')
+        for i in range(5):
+            con.execute('INSERT INTO clientes (nombre) VALUES (?)', (f'Cliente {i}',))
+        con.commit()
+        con.close()
+        self.lead = _make_lead(project_db_path=str(self.db_path))
+        self.access = _make_access(self.lead)
+
+    def tearDown(self):
+        shutil.rmtree(self.db_dir, ignore_errors=True)
+
+    def test_no_db_path_raises(self):
+        lead = _make_lead(name='Sin BD')
+        with self.assertRaises(ProjectFileError):
+            get_sqlite_db_path(lead)
+
+    def test_list_tables(self):
+        self.assertEqual(list_sqlite_tables(self.lead), ['clientes'])
+
+    def test_read_table_rows(self):
+        data = read_sqlite_table(self.lead, 'clientes')
+        self.assertEqual(data['total'], 5)
+        self.assertEqual(data['columns'], ['id', 'nombre'])
+        self.assertEqual(len(data['rows']), 5)
+
+    def test_read_unknown_table_rejected(self):
+        with self.assertRaises(ProjectFileError):
+            read_sqlite_table(self.lead, 'usuarios_secretos')
+
+    def test_read_table_injection_attempt_rejected(self):
+        with self.assertRaises(ProjectFileError):
+            read_sqlite_table(self.lead, 'clientes"; DROP TABLE clientes;--')
+
+    def test_connection_is_read_only(self):
+        # even if somehow called with a real table name, the connection itself
+        # must refuse writes — belt-and-suspenders on top of the whitelist.
+        import sqlite3 as sq
+        con = sq.connect(f'file:{self.db_path}?mode=ro', uri=True)
+        with self.assertRaises(sq.OperationalError):
+            con.execute("INSERT INTO clientes (nombre) VALUES ('hack')")
+        con.close()
+
+    def test_portal_database_view_lists_tables(self):
+        resp = self.client.get(f'/p/{self.access.token}/database/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'clientes')
+
+    def test_portal_database_table_view(self):
+        resp = self.client.get(f'/p/{self.access.token}/database/table/clientes/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Cliente 0')
+
+    def test_portal_database_table_injection_via_url_rejected(self):
+        resp = self.client.get(f'/p/{self.access.token}/database/table/no_existe/')
+        self.assertEqual(resp.status_code, 200)  # error rendered inline, not a crash
+        self.assertContains(resp, 'no existe')
+
+    def test_portal_database_download(self):
+        resp = self.client.get(f'/p/{self.access.token}/database/download/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'application/x-sqlite3')
+
+
+class BackupNowEndpointTests(TestCase):
+    def setUp(self):
+        self.project_dir = Path(tempfile.mkdtemp(prefix='wi_project_backupnow_test_'))
+        (self.project_dir / 'index.html').write_text('<h1>hola</h1>')
+        self.media_root = Path(tempfile.mkdtemp(prefix='wi_media_backupnow_test_'))
+        self.lead = _make_lead(project_path=str(self.project_dir))
+        _login_crm(self.client)
+
+    def tearDown(self):
+        shutil.rmtree(self.project_dir, ignore_errors=True)
+        shutil.rmtree(self.media_root, ignore_errors=True)
+
+    def test_backup_now_creates_snapshot(self):
+        with self.settings(MEDIA_ROOT=self.media_root):
+            resp = self.client.post(f'/wi/crm/{self.lead.pk}/backup-now/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json()['ok'])
+        snap_dir = self.media_root / 'client_backups' / str(self.lead.pk)
+        self.assertEqual(len(list(snap_dir.glob('snapshot_*.tar.gz'))), 1)
+
+    def test_backup_now_without_project_path_errors(self):
+        lead = _make_lead(name='Sin ruta')
+        with self.settings(MEDIA_ROOT=self.media_root):
+            resp = self.client.post(f'/wi/crm/{lead.pk}/backup-now/')
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(resp.json()['ok'])
+
+    def test_saving_new_project_path_triggers_immediate_backup(self):
+        lead = _make_lead(name='Nuevo cliente')
+        with self.settings(MEDIA_ROOT=self.media_root):
+            resp = self.client.post(f'/wi/crm/{lead.pk}/', {
+                'status': lead.status,
+                'preferred_channel': lead.preferred_channel,
+                'notes': '',
+                'project_path': str(self.project_dir),
+                'project_db_path': '',
+            })
+        self.assertEqual(resp.status_code, 200)
+        snap_dir = self.media_root / 'client_backups' / str(lead.pk)
         self.assertEqual(len(list(snap_dir.glob('snapshot_*.tar.gz'))), 1)

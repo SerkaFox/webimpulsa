@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>{{ table_name }} — Base de datos — CreaGanaWeb</title>
+  <link rel="stylesheet" href="/static/wi/css/brand.css">
+  <link rel="icon" type="image/svg+xml" href="/static/wi/img/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/wi/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="/static/wi/img/apple-icon.png">
+  <meta name="theme-color" content="#075CCF">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--wi-text); background: var(--wi-bg); min-height: 100vh; }
+    .pf-header { background: linear-gradient(135deg, rgba(7,92,207,.94), rgba(7,92,207,.94)); color: #fff; padding: 16px 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; box-shadow: 0 4px 24px rgba(7,92,207,.22); }
+    .pf-header a.back { color: #fff; text-decoration: none; font-weight: 700; font-size: .9rem; opacity: .9; }
+    .pf-header h1 { font-size: 1rem; margin: 0; font-weight: 800; word-break: break-all; }
+    .pf-wrap { max-width: 100%; margin: 0 auto; padding: 20px 16px 60px; overflow-x: auto; }
+    .pf-error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; border-radius: 10px; padding: 14px; margin-bottom: 16px; font-size: .9rem; max-width: 680px; }
+    .pf-meta { font-size: .8rem; color: var(--wi-muted); margin-bottom: 10px; }
+    table.pf-table { border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: var(--wi-shadow); font-size: .8rem; min-width: 100%; }
+    table.pf-table th { background: var(--wi-bg); text-align: left; padding: 8px 12px; font-weight: 700; white-space: nowrap; border-bottom: 1px solid var(--wi-border); }
+    table.pf-table td { padding: 7px 12px; border-bottom: 1px solid var(--wi-line); white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+    .pf-pager { display: flex; gap: 10px; margin-top: 14px; }
+    .pf-pager a { color: var(--wi-primary); text-decoration: none; font-weight: 700; font-size: .85rem; }
+  </style>
+</head>
+<body>
+  <div class="pf-header">
+    <a class="back" href="/p/{{ access.token }}/database/">← Base de datos</a>
+    <h1>🗂 {{ table_name }}</h1>
+  </div>
+  <div class="pf-wrap">
+    {% if error %}
+      <div class="pf-error">{{ error }}</div>
+    {% else %}
+      <div class="pf-meta">{{ data.total }} filas en total · mostrando {{ data.offset|add:1 }}–{{ data.end }}</div>
+      <table class="pf-table">
+        <thead><tr>{% for col in data.columns %}<th>{{ col }}</th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for row in data.rows %}
+          <tr>{% for value in row %}<td title="{{ value }}">{{ value }}</td>{% endfor %}</tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="pf-pager">
+        {% if data.offset > 0 %}
+          <a href="?offset={{ data.offset|add:"-100" }}">← Anteriores</a>
+        {% endif %}
+        {% if data.end < data.total %}
+          <a href="?offset={{ data.end }}">Siguientes →</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</body>
+</html>

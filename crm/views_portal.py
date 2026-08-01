@@ -30,8 +30,9 @@ from .proposal_content import (
 )
 from .services import (
     CLIENT_NEXT_STEP, CLIENT_STAGE_PROGRESS, CLIENT_STATUS_LABEL, PAYMENT_PLAN_CHOICES,
-    ProjectFileError, accept_proposal, delete_project_path, list_project_directory,
-    log_communication, payment_schedule, proposal_to_template_input, read_project_text_file,
+    ProjectFileError, accept_proposal, delete_project_path, get_sqlite_db_path,
+    list_project_directory, list_sqlite_tables, log_communication, payment_schedule,
+    proposal_to_template_input, read_project_text_file, read_sqlite_table,
     record_portal_visit, resolve_project_path, save_material, serialize_chat_message,
     validate_portal_token, write_project_text_file, zip_project,
 )
@@ -1216,3 +1217,69 @@ def portal_files_delete(request, token):
         return JsonResponse({'ok': True})
     except ProjectFileError as exc:
         return JsonResponse({'ok': False, 'error': str(exc)}, status=400)
+
+
+# ── Read-only database viewer (SQLite only, view + export — no writes) ───────
+
+@require_http_methods(['GET'])
+def portal_database(request, token):
+    """GET /p/<token>/database/ — list tables in the client's SQLite database."""
+    access = validate_portal_token(token)
+    if access is None:
+        raise Http404
+    needs_pin = access.pin_required and not _is_pin_verified(request, token)
+    if needs_pin:
+        return redirect(f'/p/{token}/')
+
+    error = None
+    tables = []
+    try:
+        tables = list_sqlite_tables(access.lead)
+    except ProjectFileError as exc:
+        error = str(exc)
+
+    return render(request, 'crm/portal_database.html', {
+        'access': access, 'lead': access.lead, 'tables': tables, 'error': error,
+    })
+
+
+@require_http_methods(['GET'])
+def portal_database_table(request, token, table_name):
+    """GET /p/<token>/database/table/<table_name>/ — paginated read-only rows."""
+    access = validate_portal_token(token)
+    if access is None:
+        raise Http404
+    needs_pin = access.pin_required and not _is_pin_verified(request, token)
+    if needs_pin:
+        return redirect(f'/p/{token}/')
+
+    offset = request.GET.get('offset', '0')
+    offset = int(offset) if offset.isdigit() else 0
+
+    error = None
+    data = None
+    try:
+        data = read_sqlite_table(access.lead, table_name, offset=offset)
+    except ProjectFileError as exc:
+        error = str(exc)
+
+    return render(request, 'crm/portal_database_table.html', {
+        'access': access, 'lead': access.lead, 'table_name': table_name,
+        'data': data, 'error': error,
+    })
+
+
+@require_http_methods(['GET'])
+def portal_database_download(request, token):
+    """GET /p/<token>/database/download/ — export the raw .sqlite file."""
+    access, err = _portal_access_or_403(request, token)
+    if err:
+        raise Http404
+    try:
+        db_path = get_sqlite_db_path(access.lead)
+    except ProjectFileError:
+        raise Http404
+    return FileResponse(
+        open(db_path, 'rb'), as_attachment=True, filename=db_path.name,
+        content_type='application/x-sqlite3',
+    )

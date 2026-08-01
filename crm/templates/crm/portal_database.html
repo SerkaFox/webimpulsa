@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Base de datos — CreaGanaWeb</title>
+  <link rel="stylesheet" href="/static/wi/css/brand.css">
+  <link rel="icon" type="image/svg+xml" href="/static/wi/img/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/wi/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="/static/wi/img/apple-icon.png">
+  <meta name="theme-color" content="#075CCF">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--wi-text); background: var(--wi-bg); min-height: 100vh; }
+    .pf-header { background: linear-gradient(135deg, rgba(7,92,207,.94), rgba(7,92,207,.94)); color: #fff; padding: 16px 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; box-shadow: 0 4px 24px rgba(7,92,207,.22); }
+    .pf-header a.back { color: #fff; text-decoration: none; font-weight: 700; font-size: .9rem; opacity: .9; }
+    .pf-header h1 { font-size: 1rem; margin: 0; font-weight: 800; }
+    .pf-wrap { max-width: 700px; margin: 0 auto; padding: 20px 16px 60px; }
+    .pf-note { font-size: .85rem; color: var(--wi-muted); margin: 0 0 16px; }
+    .pf-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--wi-primary); color: #fff; border: none; border-radius: 8px; padding: 9px 14px; font-size: .85rem; font-weight: 700; cursor: pointer; text-decoration: none; margin-bottom: 16px; }
+    .pf-card { background: var(--wi-card); border: 1px solid var(--wi-border); border-radius: 14px; box-shadow: var(--wi-shadow); overflow: hidden; }
+    .pf-row { display: flex; align-items: center; gap: 10px; padding: 13px 16px; border-bottom: 1px solid var(--wi-line); font-size: .9rem; text-decoration: none; color: var(--wi-text); }
+    .pf-row:last-child { border-bottom: none; }
+    .pf-row:hover { background: var(--wi-line); }
+    .pf-error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; border-radius: 10px; padding: 14px; margin-bottom: 16px; font-size: .9rem; }
+    .pf-empty { padding: 40px 20px; text-align: center; color: var(--wi-muted); font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <div class="pf-header">
+    <a class="back" href="/p/{{ access.token }}/">← Mi área de cliente</a>
+    <h1>🗄️ Base de datos</h1>
+  </div>
+  <div class="pf-wrap">
+    {% if error %}
+      <div class="pf-error">{{ error }}</div>
+    {% else %}
+      <p class="pf-note">Vista de solo lectura de las tablas de tu base de datos. Para modificarla, usa el archivo exportado con tu programa habitual.</p>
+      <a class="pf-btn" href="/p/{{ access.token }}/database/download/">⬇ Descargar archivo .sqlite</a>
+      <div class="pf-card">
+        {% for t in tables %}
+          <a class="pf-row" href="/p/{{ access.token }}/database/table/{{ t }}/">🗂 {{ t }}</a>
+        {% empty %}
+          <div class="pf-empty">No hay tablas en esta base de datos.</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</body>
+</html>

@@ -1216,6 +1216,11 @@ function copyVal(id, btnId) {
           💻 <span data-i18n="cabinet.tab_project_files">Archivos del proyecto</span>
         </a>
         {% endif %}
+        {% if lead.project_db_path %}
+        <a href="/p/{{ access.token }}/database/" class="main-tab-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">
+          🗄️ <span data-i18n="cabinet.tab_database">Base de datos</span>
+        </a>
+        {% endif %}
       </div>
 
       <div id="mpanelChat">
@@ -1844,6 +1849,7 @@ es: {
   'cabinet.tab_chat': 'Chat',
   'cabinet.tab_files': 'Progreso y materiales',
   'cabinet.tab_project_files': 'Archivos del proyecto',
+  'cabinet.tab_database': 'Base de datos',
   'pwa.title': 'Acceso rápido a tu proyecto',
   'pwa.body': 'No es una app ni se descarga nada — es solo un atajo directo a esta página en tu dispositivo, para no tener que buscar el enlace en tu correo cada vez.',
   'pwa.ios_hint': 'Toca <strong>Compartir</strong> ⬆️ y luego <strong>«Añadir a pantalla de inicio»</strong>.',
@@ -2029,6 +2035,7 @@ en: {
   'pwa.title': 'Quick access to your project',
   'cabinet.tab_project_files': 'Project files',
   'pwa.body': "It's not an app and nothing gets downloaded — it's just a direct shortcut to this page on your device, so you don't need to dig up the email link each time.",
+  'cabinet.tab_database': 'Database',
   'pwa.ios_hint': 'Tap <strong>Share</strong> ⬆️ then <strong>«Add to Home Screen»</strong>.',
   'pwa.install_btn': 'Add shortcut',
   'cabinet.estimated': 'estimated',
@@ -2214,6 +2221,7 @@ eu: {
   'cabinet.tab_project_files': 'Proiektuaren fitxategiak',
   'pwa.ios_hint': 'Sakatu <strong>Partekatu</strong> ⬆️ eta gero <strong>«Gehitu hasiera-pantailan»</strong>.',
   'pwa.install_btn': 'Gehitu lasterbidea',
+  'cabinet.tab_database': 'Datu-basea',
   'cabinet.estimated': 'estimatua',
   'cabinet.maint_prefix': 'Mant.',
   'cabinet.next_step_label': 'Hurrengo urratsa:',
@@ -2399,6 +2407,7 @@ ru: {
   'pwa.install_btn': 'Добавить ярлык',
   'cabinet.estimated': 'оценка',
   'cabinet.maint_prefix': 'Обсл.',
+  'cabinet.tab_database': 'База данных',
   'cabinet.next_step_label': 'Следующий шаг:',
   'cabinet.invoice_title': 'Ваш счёт',
   'cabinet.total_label': 'Итого',

@@ -18,6 +18,8 @@ urlpatterns = [
     path('wi/crm/<int:pk>/comm/',      views.lead_log_comm,        name='crm_log_comm'),
     path('wi/crm/<int:pk>/materials/', views.lead_materials,       name='crm_materials'),
     path('wi/crm/<int:pk>/delete/',    views.lead_delete,          name='crm_lead_delete'),
+    path('wi/crm/<int:pk>/backup-now/', views.lead_backup_now,     name='crm_lead_backup_now'),
+    path('wi/crm/browse-fs/',          views.browse_fs,            name='crm_browse_fs'),
 
     # ── Activity endpoints ─────────────────────────────────────────────────
     path('wi/crm/<int:pk>/milestone/',           views.lead_add_milestone,    name='crm_add_milestone'),
@@ -71,4 +73,9 @@ urlpatterns = [
     path('p/<str:token>/files/download-all/', views_portal.portal_files_download_zip, name='crm_portal_files_zip'),
     path('p/<str:token>/files/edit/',         views_portal.portal_files_edit,         name='crm_portal_files_edit'),
     path('p/<str:token>/files/delete/',       views_portal.portal_files_delete,       name='crm_portal_files_delete'),
+
+    # ── Read-only database viewer (SQLite, view + export only) ──────────────
+    path('p/<str:token>/database/',                     views_portal.portal_database,          name='crm_portal_database'),
+    path('p/<str:token>/database/download/',            views_portal.portal_database_download, name='crm_portal_database_download'),
+    path('p/<str:token>/database/table/<str:table_name>/', views_portal.portal_database_table,  name='crm_portal_database_table'),
 ]

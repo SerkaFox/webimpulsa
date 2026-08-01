@@ -16,8 +16,9 @@ from .models import (
     ProjectMaterial, ProjectMilestone, Proposal, WorkLog,
 )
 from .services import (
-    client_presence, generate_client_access, lead_from_payload, log_communication,
-    mark_proposal_sent, create_proposal_from_lead, serialize_chat_message, NEXT_STEPS,
+    ProjectFileError, backup_lead_project, client_presence, generate_client_access,
+    lead_from_payload, list_server_directories, log_communication, mark_proposal_sent,
+    create_proposal_from_lead, serialize_chat_message, NEXT_STEPS,
 )
 from .wa_templates import compose_portal_message, compose_materials_request
 
@@ -346,12 +347,22 @@ def lead_detail(request, pk):
         if new_channel in dict(Lead.CHANNEL_CHOICES):
             lead.preferred_channel = new_channel
         lead.notes = new_notes
+        old_project_path = lead.project_path
+        old_project_db_path = lead.project_db_path
         lead.project_path = request.POST.get('project_path', lead.project_path).strip()
         lead.project_db_path = request.POST.get('project_db_path', lead.project_db_path).strip()
         lead.save(update_fields=[
             'status', 'notes', 'preferred_channel',
             'project_path', 'project_db_path', 'updated_at',
         ])
+        path_changed = (lead.project_path and
+                         (lead.project_path != old_project_path or
+                          lead.project_db_path != old_project_db_path))
+        if path_changed:
+            try:
+                backup_lead_project(lead)
+            except ProjectFileError as exc:
+                logger.warning('Backup inmediato falló para lead #%d: %s', lead.pk, exc)
 
     # Latest active access token
     active_access = lead.access_tokens.filter(is_active=True).order_by('-created_at').first()
@@ -487,6 +498,34 @@ def lead_delete(request, pk):
     lead.delete()
     logger.info('Lead #%d (%s) deleted from CRM by admin', pk, name)
     return JsonResponse({'ok': True, 'redirect': '/wi/crm/'})
+
+
+@_crm_auth
+def browse_fs(request):
+    """GET /wi/crm/browse-fs/?path=... — admin-only server folder picker, used
+    by the project_path field in lead_detail.html so Sergey doesn't have to
+    type a path from memory. Scoped to /home/seradmin (see services.py)."""
+    rel_path = request.GET.get('path', '')
+    try:
+        data = list_server_directories(rel_path)
+        return JsonResponse({'ok': True, **data})
+    except ProjectFileError as exc:
+        return JsonResponse({'ok': False, 'error': str(exc)}, status=400)
+
+
+@_crm_auth
+@csrf_exempt
+@require_POST
+def lead_backup_now(request, pk):
+    """POST /wi/crm/<pk>/backup-now/ — on-demand snapshot, same function the
+    weekly cron uses. Lets Sergey force a fresh backup right after configuring
+    or changing a lead's project_path."""
+    lead = get_object_or_404(Lead, pk=pk)
+    try:
+        snapshot_path = backup_lead_project(lead)
+        return JsonResponse({'ok': True, 'snapshot': snapshot_path.name})
+    except ProjectFileError as exc:
+        return JsonResponse({'ok': False, 'error': str(exc)}, status=400)
 
 
 # ── Activity / dossier AJAX endpoints ─────────────────────────────────────────
