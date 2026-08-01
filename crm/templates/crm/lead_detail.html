@@ -204,7 +204,7 @@
             </div>
           </div>
           <div>
-            <label data-i18n="crm.project_db_path">Ruta al archivo de base de datos (SQLite) — actívala para que al cliente le aparezca la pestaña "Base de datos"</label>
+            <label data-i18n="crm.project_db_path">Ruta al archivo de base de datos (SQLite) — se detecta sola al guardar la carpeta del proyecto; actívala para que al cliente le aparezca la pestaña "Base de datos"</label>
             <div style="display:flex;gap:8px">
               <input type="text" name="project_db_path" id="projectDbPathInput" value="{{ lead.project_db_path }}" placeholder="/home/seradmin/cliente-x/db.sqlite3" style="flex:1">
               <button type="button" onclick="pfOpenPicker('projectDbPathInput', true)" style="white-space:nowrap">📁 Elegir…</button>

@@ -746,6 +746,27 @@ def zip_project(lead: Lead) -> io.BytesIO:
     return buf
 
 
+def find_project_db_file(lead: Lead):
+    """Best-effort auto-detect of a SQLite file inside the project folder, so
+    Sergey doesn't have to separately browse for it after setting project_path.
+    Prefers an exact 'db.sqlite3' match, then the shallowest '*.sqlite3'/'*.db'
+    file found (skipping hidden/dev-tooling dirs). Returns None if nothing
+    looks like a database — most static sites have none, and that's fine."""
+    root = _project_root(lead)
+    candidates = []
+    for pattern in ('*.sqlite3', '*.db'):
+        for path in root.rglob(pattern):
+            if path.is_file() and not _is_hidden(path, root):
+                candidates.append(path)
+    if not candidates:
+        return None
+    exact = next((p for p in candidates if p.name == 'db.sqlite3'), None)
+    if exact:
+        return exact
+    candidates.sort(key=lambda p: len(p.relative_to(root).parts))
+    return candidates[0]
+
+
 # ── Server folder picker (admin-only, CRM side) ───────────────────────────────
 # Lets Sergey navigate the server's filesystem from the CRM instead of typing a
 # path from memory. Scoped to /home/seradmin — every client project observed on

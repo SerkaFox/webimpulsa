@@ -16,9 +16,9 @@ from .models import (
     ProjectMaterial, ProjectMilestone, Proposal, WorkLog,
 )
 from .services import (
-    ProjectFileError, backup_lead_project, client_presence, generate_client_access,
-    lead_from_payload, list_server_directories, log_communication, mark_proposal_sent,
-    create_proposal_from_lead, serialize_chat_message, NEXT_STEPS,
+    ProjectFileError, backup_lead_project, client_presence, find_project_db_file,
+    generate_client_access, lead_from_payload, list_server_directories, log_communication,
+    mark_proposal_sent, create_proposal_from_lead, serialize_chat_message, NEXT_STEPS,
 )
 from .wa_templates import compose_portal_message, compose_materials_request
 
@@ -351,6 +351,18 @@ def lead_detail(request, pk):
         old_project_db_path = lead.project_db_path
         lead.project_path = request.POST.get('project_path', lead.project_path).strip()
         lead.project_db_path = request.POST.get('project_db_path', lead.project_db_path).strip()
+
+        # Auto-detect the DB file when project_path is newly set/changed and no
+        # DB path was given by hand — otherwise the client's "Base de datos"
+        # tab silently never appears just because this second field was skipped.
+        if lead.project_path and not lead.project_db_path and lead.project_path != old_project_path:
+            try:
+                detected = find_project_db_file(lead)
+                if detected:
+                    lead.project_db_path = str(detected)
+            except ProjectFileError:
+                pass
+
         lead.save(update_fields=[
             'status', 'notes', 'preferred_channel',
             'project_path', 'project_db_path', 'updated_at',

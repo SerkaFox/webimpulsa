@@ -12,8 +12,8 @@ from django.utils import timezone
 
 from crm.models import ClientAccess, Lead
 from crm.services import (
-    ProjectFileError, backup_lead_project, delete_project_path, get_project_root,
-    get_sqlite_db_path, list_project_directory, list_server_directories,
+    ProjectFileError, backup_lead_project, delete_project_path, find_project_db_file,
+    get_project_root, get_sqlite_db_path, list_project_directory, list_server_directories,
     list_sqlite_tables, read_project_text_file, read_sqlite_table, resolve_project_path,
     write_project_text_file, zip_project,
 )
@@ -457,3 +457,78 @@ class BackupNowEndpointTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         snap_dir = self.media_root / 'client_backups' / str(lead.pk)
         self.assertEqual(len(list(snap_dir.glob('snapshot_*.tar.gz'))), 1)
+
+
+class AutoDetectDbPathTests(TestCase):
+    def setUp(self):
+        self.project_dir = Path(tempfile.mkdtemp(prefix='wi_project_autodb_test_'))
+        (self.project_dir / 'index.html').write_text('<h1>hola</h1>')
+        self.media_root = Path(tempfile.mkdtemp(prefix='wi_media_autodb_test_'))
+        _login_crm(self.client)
+
+    def tearDown(self):
+        shutil.rmtree(self.project_dir, ignore_errors=True)
+        shutil.rmtree(self.media_root, ignore_errors=True)
+
+    def _save_lead(self, lead, project_path, project_db_path=''):
+        return self.client.post(f'/wi/crm/{lead.pk}/', {
+            'status': lead.status,
+            'preferred_channel': lead.preferred_channel,
+            'notes': '',
+            'project_path': project_path,
+            'project_db_path': project_db_path,
+        })
+
+    def test_no_db_file_leaves_path_empty(self):
+        lead = _make_lead(name='Sitio estático')
+        with self.settings(MEDIA_ROOT=self.media_root):
+            self._save_lead(lead, str(self.project_dir))
+        lead.refresh_from_db()
+        self.assertEqual(lead.project_db_path, '')
+
+    def test_finds_db_sqlite3_by_exact_name(self):
+        (self.project_dir / 'db.sqlite3').write_bytes(b'fake')
+        lead = _make_lead(name='Con BD')
+        with self.settings(MEDIA_ROOT=self.media_root):
+            self._save_lead(lead, str(self.project_dir))
+        lead.refresh_from_db()
+        self.assertEqual(lead.project_db_path, str(self.project_dir / 'db.sqlite3'))
+
+    def test_prefers_db_sqlite3_over_other_matches(self):
+        (self.project_dir / 'old_backup.db').write_bytes(b'fake')
+        (self.project_dir / 'db.sqlite3').write_bytes(b'fake')
+        lead = _make_lead(name='Con varias BD')
+        with self.settings(MEDIA_ROOT=self.media_root):
+            self._save_lead(lead, str(self.project_dir))
+        lead.refresh_from_db()
+        self.assertEqual(lead.project_db_path, str(self.project_dir / 'db.sqlite3'))
+
+    def test_does_not_overwrite_manually_set_path(self):
+        (self.project_dir / 'db.sqlite3').write_bytes(b'fake')
+        custom_dir = Path(tempfile.mkdtemp(prefix='wi_custom_db_test_'))
+        custom_db = custom_dir / 'custom.sqlite3'
+        custom_db.write_bytes(b'fake')
+        try:
+            lead = _make_lead(name='Ruta manual')
+            with self.settings(MEDIA_ROOT=self.media_root):
+                self._save_lead(lead, str(self.project_dir), str(custom_db))
+            lead.refresh_from_db()
+            self.assertEqual(lead.project_db_path, str(custom_db))
+        finally:
+            shutil.rmtree(custom_dir, ignore_errors=True)
+
+    def test_ignores_db_file_inside_hidden_dir(self):
+        git_dir = self.project_dir / '.git'
+        git_dir.mkdir()
+        (git_dir / 'gc.db').write_bytes(b'fake')  # some git internals use .db-like files
+        lead = _make_lead(name='Solo BD oculta')
+        with self.settings(MEDIA_ROOT=self.media_root):
+            self._save_lead(lead, str(self.project_dir))
+        lead.refresh_from_db()
+        self.assertEqual(lead.project_db_path, '')
+
+    def test_find_project_db_file_service_directly(self):
+        (self.project_dir / 'app.db').write_bytes(b'fake')
+        lead = _make_lead(name='Directo', project_path=str(self.project_dir))
+        found = find_project_db_file(lead)
+        self.assertEqual(found, self.project_dir / 'app.db')
