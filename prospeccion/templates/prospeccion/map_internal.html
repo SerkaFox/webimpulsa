@@ -128,8 +128,23 @@
   .map-legend .legend-ring { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; background: #cbd5e1; box-sizing: border-box; }
   small.hint { color: #8a94a6; display: block; margin-top: 4px; }
 
-  /* Widget de control de gasto de Google Places */
-  .puw { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; margin-bottom: 14px; font-size: .8rem; }
+  /* Widget de control de gasto de Google Places — colapsado por defecto
+     (como la leyenda del mapa), para no ocupar media pantalla del sidebar. */
+  .puw { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 14px; font-size: .8rem; }
+  .puw-summary {
+    cursor: pointer; list-style: none; padding: 10px 12px; display: flex; align-items: center; gap: 6px;
+    font-size: .78rem; color: #334155;
+  }
+  .puw-summary::-webkit-details-marker { display: none; }
+  .puw-summary::after { content: "▾"; margin-left: auto; color: #8a94a6; font-size: .7rem; }
+  .puw[open] .puw-summary::after { content: "▴"; }
+  .puw-summary strong { color: #0c1c42; }
+  .puw-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: #16a34a; }
+  .puw-dot.warn { background: #eab308; }
+  .puw-dot.orange { background: #f97316; }
+  .puw-dot.danger { background: #dc2626; }
+  .puw-dot.blocked { background: #111827; }
+  .puw-body { padding: 0 12px 12px; border-top: 1px solid #f1f5f9; padding-top: 10px; }
   .puw-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
   .puw-header strong { font-size: .82rem; }
   .puw-header span { color: #8a94a6; font-size: .72rem; }
@@ -194,23 +209,30 @@
   </div>
 
   <div class="sidebar">
-    <div class="puw" id="placesUsageWidget">
-      <div class="puw-header"><strong data-i18n="map.puw_title">Google Places — mes en curso</strong><span id="puwMonth"></span></div>
-      <div class="puw-row" data-type="nearby_search_enterprise">
-        <div class="puw-row-top"><span>Nearby Enterprise</span><span id="puwNearbyNums">—</span></div>
-        <div class="puw-bar"><div class="puw-bar-fill" id="puwNearbyFill"></div></div>
-        <div class="puw-sub" id="puwNearbySub"></div>
+    <details class="puw" id="placesUsageWidget">
+      <summary class="puw-summary">
+        <span class="puw-dot" id="puwSummaryDot"></span>
+        <span>📊 Google Places</span>
+        <strong id="puwSummaryText">—</strong>
+      </summary>
+      <div class="puw-body">
+        <div class="puw-header"><strong data-i18n="map.puw_title">Google Places — mes en curso</strong><span id="puwMonth"></span></div>
+        <div class="puw-row" data-type="nearby_search_enterprise">
+          <div class="puw-row-top"><span>Nearby Enterprise</span><span id="puwNearbyNums">—</span></div>
+          <div class="puw-bar"><div class="puw-bar-fill" id="puwNearbyFill"></div></div>
+          <div class="puw-sub" id="puwNearbySub"></div>
+        </div>
+        <div class="puw-row" data-type="text_search_enterprise">
+          <div class="puw-row-top"><span>Text Enterprise</span><span id="puwTextNums">—</span></div>
+          <div class="puw-bar"><div class="puw-bar-fill" id="puwTextFill"></div></div>
+          <div class="puw-sub" id="puwTextSub"></div>
+        </div>
+        <div class="puw-today"><span data-i18n="map.puw_today">Hoy:</span> <strong id="puwToday">—</strong> <span data-i18n="map.puw_requests">peticiones</span></div>
+        <div id="puwWarnings"></div>
+        <div class="puw-cost" id="puwCost"></div>
+        <a class="puw-history-link" id="puwHistoryLink" data-i18n="map.puw_history">📜 Historial de peticiones</a>
       </div>
-      <div class="puw-row" data-type="text_search_enterprise">
-        <div class="puw-row-top"><span>Text Enterprise</span><span id="puwTextNums">—</span></div>
-        <div class="puw-bar"><div class="puw-bar-fill" id="puwTextFill"></div></div>
-        <div class="puw-sub" id="puwTextSub"></div>
-      </div>
-      <div class="puw-today"><span data-i18n="map.puw_today">Hoy:</span> <strong id="puwToday">—</strong> <span data-i18n="map.puw_requests">peticiones</span></div>
-      <div id="puwWarnings"></div>
-      <div class="puw-cost" id="puwCost"></div>
-      <a class="puw-history-link" id="puwHistoryLink" data-i18n="map.puw_history">📜 Historial de peticiones</a>
-    </div>
+    </details>
 
     <h2 data-i18n="map.search_title">🔎 Buscar y añadir un negocio</h2>
     <div class="search-box">
@@ -876,6 +898,15 @@ function refreshPlacesUsage(){
       }
       paint('puwNearby', nearby);
       paint('puwText', text);
+
+      // Índice compacto del <summary> (colapsado por defecto): lo ya hecho
+      // hoy + el peor de los dos SKU como "X / límite", con el mismo color
+      // que su barra — para ver de un vistazo sin tener que desplegar.
+      var worst = nearby.percent >= text.percent ? nearby : text;
+      var worstCls = puwBarClass(worst.percent, worst.blocked);
+      document.getElementById('puwSummaryDot').className = 'puw-dot ' + worstCls;
+      document.getElementById('puwSummaryText').textContent =
+        data.today_total + ' hoy · ' + (nearby.used + text.used) + ' / ' + (nearby.limit + text.limit) + ' este mes';
 
       var warningsEl = document.getElementById('puwWarnings');
       warningsEl.innerHTML = (data.warnings || []).map(function(w){
