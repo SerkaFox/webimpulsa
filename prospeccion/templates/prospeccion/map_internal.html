@@ -339,6 +339,16 @@ window.wiInitMap = function(){
   reloadMapProspects();
 };
 
+// has_website solo se rellena de verdad tras un chequeo confirmado. Antes de
+// eso (o para un resultado de Google recién buscado, que nunca tiene
+// has_website) usamos el campo "website" que ya nos da la propia ficha de
+// Google — el mismo dato que ya autorellenamos al dar de alta — en vez de
+// enseñar "sin datos" a algo que Google ya nos ha dicho que no tiene web.
+function resolveHasWebsite(obj){
+  if(obj.has_website === true || obj.has_website === false) return obj.has_website;
+  return !!(obj.website && obj.website.trim());
+}
+
 // El anillo del marcador señala si el negocio tiene web (rojo = oportunidad
 // de venta clara, verde = ya cubierto, gris = todavía no lo sabemos) — el
 // relleno sigue siendo solo la etapa comercial (SALES_STATUS_COLORS), nunca
@@ -416,7 +426,7 @@ function renderProspectList(prospects){
   var el = document.getElementById('prospectList');
   el.innerHTML = prospects.slice(0, 100).map(function(p){
     var score = p.current_score != null ? p.current_score : '—';
-    var web = websiteBadge(p.has_website);
+    var web = websiteBadge(resolveHasWebsite(p));
     return '<a class="card-list-item" style="display:block;color:inherit;text-decoration:none" href="'+p.detail_url+'">'+
       '<span class="score-pill">'+score+'</span>'+
       '<div class="name">'+p.name+'</div>'+
@@ -435,11 +445,11 @@ function reloadMapProspects(){
       var withCoords = data.prospects.filter(function(p){ return p.lat != null && p.lng != null; });
       withCoords.forEach(function(p){
         var marker = new google.maps.Marker({
-          position: {lat: p.lat, lng: p.lng}, map: map, icon: markerIcon(p.color, 13, p.has_website), title: p.name,
+          position: {lat: p.lat, lng: p.lng}, map: map, icon: markerIcon(p.color, 13, resolveHasWebsite(p)), title: p.name,
           label: scoreLabel(p.current_score) || undefined,
         });
         var score = p.current_score != null ? p.current_score : '—';
-        var web = websiteBadge(p.has_website);
+        var web = websiteBadge(resolveHasWebsite(p));
         var info = new google.maps.InfoWindow({content:
           '<div style="font-family:inherit">'+
           '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>'+
@@ -473,7 +483,7 @@ function categoryLabel(sectorId){
 
 function renderExistingCard(p){
   var scoreTag = p.current_score != null ? '<span class="exists-badge" style="background:'+p.color+'">'+p.current_score+'/100</span>' : '';
-  var web = websiteBadge(p.has_website);
+  var web = websiteBadge(resolveHasWebsite(p));
   return '<div class="result-card" data-existing-id="'+p.prospect_id+'">'+
     '<span class="cat">Ya en CreaGanaWeb</span><span class="exists-badge">Ya existe</span>'+scoreTag+
     '<div class="name" style="margin-top:6px">'+p.name+'</div>'+
@@ -514,10 +524,10 @@ function plotSearchMarkers(existing, googleResults){
     var pos = {lat: p.lat, lng: p.lng};
     latLngBounds.extend(pos);
     var marker = new window.google.maps.Marker({
-      position: pos, map: map, icon: markerIcon(p.color || '#8a94a6', 13, p.has_website), title: p.name,
+      position: pos, map: map, icon: markerIcon(p.color || '#8a94a6', 13, resolveHasWebsite(p)), title: p.name,
       label: scoreLabel(p.current_score) || undefined,
     });
-    var web = websiteBadge(p.has_website);
+    var web = websiteBadge(resolveHasWebsite(p));
     var info = new window.google.maps.InfoWindow({content:
       '<div style="font-family:inherit">'+
       '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>'+
@@ -535,7 +545,7 @@ function plotSearchMarkers(existing, googleResults){
     var pos = {lat: r.lat, lng: r.lng};
     latLngBounds.extend(pos);
     var marker = new window.google.maps.Marker({
-      position: pos, map: map, icon: markerIcon('#7c3aed', 11), title: r.name,
+      position: pos, map: map, icon: markerIcon('#7c3aed', 11, resolveHasWebsite(r)), title: r.name,
     });
     marker.addListener('click', function(){ openConfirmPanel({fromGoogle: true, place: r}); });
     searchMarkers.push(marker);
