@@ -91,6 +91,7 @@
     <a class="back" href="/p/{{ access.token }}/">← Mi área de cliente</a>
     <h1>💻 Archivos del proyecto</h1>
   </div>
+  {% include "crm/portal_subnav.html" with active_tab="files" %}
 
   <div class="pf-wrap">
     {% if error %}

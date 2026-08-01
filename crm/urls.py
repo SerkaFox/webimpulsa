@@ -19,6 +19,7 @@ urlpatterns = [
     path('wi/crm/<int:pk>/materials/', views.lead_materials,       name='crm_materials'),
     path('wi/crm/<int:pk>/delete/',    views.lead_delete,          name='crm_lead_delete'),
     path('wi/crm/<int:pk>/backup-now/', views.lead_backup_now,     name='crm_lead_backup_now'),
+    path('wi/crm/<int:pk>/backups/<str:filename>/', views.lead_backup_download, name='crm_lead_backup_download'),
     path('wi/crm/browse-fs/',          views.browse_fs,            name='crm_browse_fs'),
 
     # ── Activity endpoints ─────────────────────────────────────────────────

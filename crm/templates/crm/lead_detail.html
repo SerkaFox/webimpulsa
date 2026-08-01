@@ -214,6 +214,21 @@
         </form>
         {% if lead.project_path %}
         <button type="button" onclick="pfBackupNow({{ lead.pk }})" id="backupNowBtn" style="margin-top:8px">💾 Hacer backup ahora</button>
+        <div style="margin-top:10px;font-size:.85rem">
+          {% if backups %}
+            <div style="font-weight:700;margin-bottom:4px">Backups guardados (los 3 más recientes):</div>
+            <ul style="margin:0;padding-left:18px">
+              {% for b in backups %}
+              <li>
+                <a href="/wi/crm/{{ lead.pk }}/backups/{{ b.name }}/">{{ b.name }}</a>
+                — {{ b.size|filesizeformat }} — {{ b.mtime|date:"d/m/Y H:i" }}
+              </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <span style="color:#94a3b8">Todavía no hay ningún backup guardado para este proyecto.</span>
+          {% endif %}
+        </div>
         {% endif %}
 
         {% if next_step %}
@@ -1577,6 +1592,8 @@ async function pfBackupNow(leadPk) {
     const data = await res.json();
     if (data.ok) {
       btn.textContent = '✅ Backup listo (' + data.snapshot + ')';
+      setTimeout(() => location.reload(), 900);  // refresh so the new snapshot shows in the list below
+      return;
     } else {
       btn.textContent = original;
       alert(data.error || 'Error al hacer el backup');

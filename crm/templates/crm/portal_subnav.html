@@ -1,0 +1,22 @@
+<style>
+  .pf-subnav {
+    display: flex; gap: 8px; padding: 10px 16px; flex-wrap: wrap;
+    background: var(--wi-primary, #075CCF);
+  }
+  .pf-subnav a {
+    color: #fff; text-decoration: none; font-size: .82rem; font-weight: 700;
+    padding: 7px 12px; border-radius: 8px; background: rgba(255,255,255,.16);
+    white-space: nowrap;
+  }
+  .pf-subnav a.active { background: #fff; color: var(--wi-primary, #075CCF); }
+  .pf-subnav a:hover:not(.active) { background: rgba(255,255,255,.32); }
+</style>
+<div class="pf-subnav">
+  <a href="/p/{{ access.token }}/" {% if active_tab == 'chat' %}class="active"{% endif %}>💬 Chat / Progreso</a>
+  {% if lead.project_path %}
+  <a href="/p/{{ access.token }}/files/" {% if active_tab == 'files' %}class="active"{% endif %}>💻 Archivos del proyecto</a>
+  {% endif %}
+  {% if lead.project_db_path %}
+  <a href="/p/{{ access.token }}/database/" {% if active_tab == 'database' %}class="active"{% endif %}>🗄️ Base de datos</a>
+  {% endif %}
+</div>

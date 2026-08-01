@@ -17,8 +17,9 @@ from .models import (
 )
 from .services import (
     ProjectFileError, backup_lead_project, client_presence, find_project_db_file,
-    generate_client_access, lead_from_payload, list_server_directories, log_communication,
-    mark_proposal_sent, create_proposal_from_lead, serialize_chat_message, NEXT_STEPS,
+    generate_client_access, get_lead_backup_path, lead_from_payload, list_lead_backups,
+    list_server_directories, log_communication, mark_proposal_sent, create_proposal_from_lead,
+    serialize_chat_message, NEXT_STEPS,
 )
 from .wa_templates import compose_portal_message, compose_materials_request
 
@@ -352,10 +353,11 @@ def lead_detail(request, pk):
         lead.project_path = request.POST.get('project_path', lead.project_path).strip()
         lead.project_db_path = request.POST.get('project_db_path', lead.project_db_path).strip()
 
-        # Auto-detect the DB file when project_path is newly set/changed and no
-        # DB path was given by hand — otherwise the client's "Base de datos"
-        # tab silently never appears just because this second field was skipped.
-        if lead.project_path and not lead.project_db_path and lead.project_path != old_project_path:
+        # Auto-detect the DB file whenever there's a project_path but no DB
+        # path yet — not gated on "did project_path just change", since a lead
+        # saved before this auto-detect existed would otherwise stay stuck
+        # empty forever (re-saving the same path isn't a "change").
+        if lead.project_path and not lead.project_db_path:
             try:
                 detected = find_project_db_file(lead)
                 if detected:
@@ -420,6 +422,7 @@ def lead_detail(request, pk):
         'payment_methods':    PaymentRecord.METHOD_CHOICES,
         'payment_statuses':   PaymentRecord.STATUS_CHOICES,
         'evidence_categories': EvidenceFile.CATEGORY_CHOICES,
+        'backups':            list_lead_backups(lead) if lead.project_path else [],
     })
 
 
@@ -541,6 +544,18 @@ def lead_backup_now(request, pk):
         return JsonResponse({'ok': True, 'snapshot': snapshot_path.name})
     except ProjectFileError as exc:
         return JsonResponse({'ok': False, 'error': str(exc)}, status=400)
+
+
+@_crm_auth
+def lead_backup_download(request, pk, filename):
+    """GET /wi/crm/<pk>/backups/<filename>/ — download a snapshot tar.gz."""
+    lead = get_object_or_404(Lead, pk=pk)
+    try:
+        path = get_lead_backup_path(lead, filename)
+    except ProjectFileError:
+        raise Http404
+    return FileResponse(open(path, 'rb'), as_attachment=True, filename=path.name,
+                        content_type='application/gzip')
 
 
 # ── Activity / dossier AJAX endpoints ─────────────────────────────────────────

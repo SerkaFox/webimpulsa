@@ -13,8 +13,9 @@ from django.utils import timezone
 from crm.models import ClientAccess, Lead
 from crm.services import (
     ProjectFileError, backup_lead_project, delete_project_path, find_project_db_file,
-    get_project_root, get_sqlite_db_path, list_project_directory, list_server_directories,
-    list_sqlite_tables, read_project_text_file, read_sqlite_table, resolve_project_path,
+    get_lead_backup_path, get_project_root, get_sqlite_db_path, list_lead_backups,
+    list_project_directory, list_server_directories, list_sqlite_tables,
+    read_project_text_file, read_sqlite_table, resolve_project_path,
     write_project_text_file, zip_project,
 )
 
@@ -532,3 +533,102 @@ class AutoDetectDbPathTests(TestCase):
         lead = _make_lead(name='Directo', project_path=str(self.project_dir))
         found = find_project_db_file(lead)
         self.assertEqual(found, self.project_dir / 'app.db')
+
+    def test_resaving_unchanged_project_path_still_detects_db(self):
+        """Regression: a lead whose project_path was saved before auto-detect
+        existed must not stay stuck with an empty project_db_path forever —
+        re-saving the SAME path (not just a changed one) must still trigger
+        detection if project_db_path is currently empty."""
+        (self.project_dir / 'db.sqlite3').write_bytes(b'fake')
+        lead = _make_lead(name='Ya tenía ruta', project_path=str(self.project_dir))
+        with self.settings(MEDIA_ROOT=self.media_root):
+            self._save_lead(lead, str(self.project_dir))  # same path, no "change"
+        lead.refresh_from_db()
+        self.assertEqual(lead.project_db_path, str(self.project_dir / 'db.sqlite3'))
+
+
+class LeadBackupListingTests(TestCase):
+    def setUp(self):
+        self.project_dir = Path(tempfile.mkdtemp(prefix='wi_project_backuplist_test_'))
+        (self.project_dir / 'index.html').write_text('<h1>hola</h1>')
+        self.media_root = Path(tempfile.mkdtemp(prefix='wi_media_backuplist_test_'))
+        self.lead = _make_lead(project_path=str(self.project_dir))
+        _login_crm(self.client)
+
+    def tearDown(self):
+        shutil.rmtree(self.project_dir, ignore_errors=True)
+        shutil.rmtree(self.media_root, ignore_errors=True)
+
+    def test_list_lead_backups_empty_when_none_taken(self):
+        with self.settings(MEDIA_ROOT=self.media_root):
+            self.assertEqual(list_lead_backups(self.lead), [])
+
+    def test_list_lead_backups_after_backup(self):
+        with self.settings(MEDIA_ROOT=self.media_root):
+            backup_lead_project(self.lead)
+            backups = list_lead_backups(self.lead)
+        self.assertEqual(len(backups), 1)
+        self.assertTrue(backups[0]['name'].startswith('snapshot_'))
+        self.assertGreater(backups[0]['size'], 0)
+
+    def test_lead_detail_page_shows_backup_list(self):
+        with self.settings(MEDIA_ROOT=self.media_root):
+            backup_lead_project(self.lead)
+            resp = self.client.get(f'/wi/crm/{self.lead.pk}/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'snapshot_')
+
+    def test_download_backup(self):
+        with self.settings(MEDIA_ROOT=self.media_root):
+            snapshot_path = backup_lead_project(self.lead)
+            resp = self.client.get(f'/wi/crm/{self.lead.pk}/backups/{snapshot_path.name}/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'application/gzip')
+
+    def test_download_rejects_traversal_via_filename(self):
+        with self.settings(MEDIA_ROOT=self.media_root):
+            backup_lead_project(self.lead)
+            resp = self.client.get(f'/wi/crm/{self.lead.pk}/backups/../../../etc/passwd/')
+        self.assertIn(resp.status_code, (404, 400))
+
+    def test_download_rejects_nonexistent_filename(self):
+        with self.assertRaises(ProjectFileError):
+            get_lead_backup_path(self.lead, 'snapshot_20200101_000000.tar.gz')
+
+    def test_download_requires_crm_login(self):
+        self.client.session.flush()
+        with self.settings(MEDIA_ROOT=self.media_root):
+            snapshot_path = backup_lead_project(self.lead)
+            resp = self.client.get(f'/wi/crm/{self.lead.pk}/backups/{snapshot_path.name}/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn(b'crm_password', resp.content)
+
+
+class PortalSubnavTests(TestCase):
+    def setUp(self):
+        self.project_dir = Path(tempfile.mkdtemp(prefix='wi_project_subnav_test_'))
+        (self.project_dir / 'index.html').write_text('<h1>hola</h1>')
+        self.db_path = self.project_dir / 'db.sqlite3'
+        con = sqlite3.connect(self.db_path)
+        con.execute('CREATE TABLE t (id INTEGER PRIMARY KEY)')
+        con.commit()
+        con.close()
+        self.lead = _make_lead(project_path=str(self.project_dir), project_db_path=str(self.db_path))
+        self.access = _make_access(self.lead)
+
+    def tearDown(self):
+        shutil.rmtree(self.project_dir, ignore_errors=True)
+
+    def test_files_page_links_to_database_and_chat(self):
+        resp = self.client.get(f'/p/{self.access.token}/files/')
+        self.assertContains(resp, f'/p/{self.access.token}/database/')
+        self.assertContains(resp, f'/p/{self.access.token}/')
+
+    def test_database_page_links_to_files_and_chat(self):
+        resp = self.client.get(f'/p/{self.access.token}/database/')
+        self.assertContains(resp, f'/p/{self.access.token}/files/')
+
+    def test_database_table_page_links_to_files_and_chat(self):
+        resp = self.client.get(f'/p/{self.access.token}/database/table/t/')
+        self.assertContains(resp, f'/p/{self.access.token}/files/')
+        self.assertContains(resp, f'/p/{self.access.token}/database/')

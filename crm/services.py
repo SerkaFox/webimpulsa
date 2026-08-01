@@ -15,7 +15,7 @@ import random
 import secrets
 import shutil
 import zipfile
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from django.conf import settings
@@ -829,7 +829,6 @@ def backup_lead_project(lead: Lead) -> Path:
     media/client_backups/<lead_id>/snapshot_<timestamp>.tar.gz, then prune to
     the 3 most recent snapshots for that lead. Returns the new snapshot path."""
     import tarfile
-    from datetime import datetime
 
     root = _project_root(lead)
     dest_dir = Path(settings.MEDIA_ROOT) / 'client_backups' / str(lead.pk)
@@ -850,6 +849,32 @@ def backup_lead_project(lead: Lead) -> Path:
         old.unlink()
 
     return snapshot_path
+
+
+def list_lead_backups(lead: Lead) -> list:
+    """Snapshots on disk for this lead, newest first — lets Sergey actually
+    see/download what "Hacer backup ahora" produced, instead of it just
+    happening invisibly on the server."""
+    dest_dir = Path(settings.MEDIA_ROOT) / 'client_backups' / str(lead.pk)
+    if not dest_dir.is_dir():
+        return []
+    snapshots = sorted(dest_dir.glob('snapshot_*.tar.gz'), key=lambda p: p.name, reverse=True)
+    return [
+        {'name': p.name, 'size': p.stat().st_size, 'mtime': datetime.fromtimestamp(p.stat().st_mtime)}
+        for p in snapshots
+    ]
+
+
+def get_lead_backup_path(lead: Lead, filename: str) -> Path:
+    """Resolve a snapshot filename for download — only ever matches a real
+    file already listed by list_lead_backups (no path traversal surface,
+    since it's checked against the actual directory listing, not built from
+    the filename directly)."""
+    dest_dir = Path(settings.MEDIA_ROOT) / 'client_backups' / str(lead.pk)
+    candidate = dest_dir / filename
+    if candidate.parent != dest_dir or not candidate.is_file() or not filename.startswith('snapshot_'):
+        raise ProjectFileError('Ese backup no existe.')
+    return candidate
 
 
 # ── Read-only SQLite browser (client portal — view/export only, no writes) ────
