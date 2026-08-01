@@ -74,6 +74,8 @@ urlpatterns = [
     path('p/<str:token>/files/download-all/', views_portal.portal_files_download_zip, name='crm_portal_files_zip'),
     path('p/<str:token>/files/edit/',         views_portal.portal_files_edit,         name='crm_portal_files_edit'),
     path('p/<str:token>/files/delete/',       views_portal.portal_files_delete,       name='crm_portal_files_delete'),
+    path('p/<str:token>/files/upload/',       views_portal.portal_files_upload,       name='crm_portal_files_upload'),
+    path('p/<str:token>/files/mkdir/',        views_portal.portal_files_mkdir,        name='crm_portal_files_mkdir'),
 
     # ── Read-only database viewer (SQLite, view + export only) ──────────────
     path('p/<str:token>/database/',                     views_portal.portal_database,          name='crm_portal_database'),

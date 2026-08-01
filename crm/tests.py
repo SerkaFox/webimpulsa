@@ -12,10 +12,10 @@ from django.utils import timezone
 
 from crm.models import ClientAccess, Lead
 from crm.services import (
-    ProjectFileError, backup_lead_project, delete_project_path, find_project_db_file,
-    get_lead_backup_path, get_project_root, get_sqlite_db_path, list_lead_backups,
-    list_project_directory, list_server_directories, list_sqlite_tables,
-    read_project_text_file, read_sqlite_table, resolve_project_path,
+    ProjectFileError, backup_lead_project, create_project_folder, delete_project_path,
+    find_project_db_file, get_lead_backup_path, get_project_root, get_sqlite_db_path,
+    list_lead_backups, list_project_directory, list_server_directories, list_sqlite_tables,
+    read_project_text_file, read_sqlite_table, resolve_project_path, upload_project_file,
     write_project_text_file, zip_project,
 )
 
@@ -658,3 +658,110 @@ class PortalEmbeddedTabsTests(TestCase):
 
         resp = self.client.get(f'/p/{self.access.token}/database/')
         self.assertNotContains(resp, 'Mi área de cliente')
+
+
+class ProjectUploadAndMkdirTests(TestCase):
+    def setUp(self):
+        self.project_dir = Path(tempfile.mkdtemp(prefix='wi_project_upload_test_'))
+        (self.project_dir / 'index.html').write_text('<h1>hola</h1>')
+        self.lead = _make_lead(project_path=str(self.project_dir))
+        self.access = _make_access(self.lead)
+
+    def tearDown(self):
+        shutil.rmtree(self.project_dir, ignore_errors=True)
+
+    def _upload(self, content=b'fakejpegbytes', name='foto.jpg', rel_dir=''):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        f = SimpleUploadedFile(name, content, content_type='image/jpeg')
+        return upload_project_file(self.lead, rel_dir, f)
+
+    def test_upload_saves_file_in_project_root(self):
+        path = self._upload()
+        self.assertEqual(path, self.project_dir / 'foto.jpg')
+        self.assertEqual(path.read_bytes(), b'fakejpegbytes')
+
+    def test_upload_into_subdirectory(self):
+        (self.project_dir / 'images').mkdir()
+        path = self._upload(rel_dir='images')
+        self.assertEqual(path, self.project_dir / 'images' / 'foto.jpg')
+
+    def test_upload_rejects_executable_extension(self):
+        with self.assertRaises(ProjectFileError):
+            self._upload(name='shell.php', content=b'<?php system($_GET["c"]); ?>')
+
+    def test_upload_rejects_traversal_via_directory(self):
+        with self.assertRaises(ProjectFileError):
+            self._upload(rel_dir='../../etc')
+
+    def test_upload_sanitizes_path_in_filename(self):
+        path = self._upload(name='../../evil.jpg')
+        # basename() strips the traversal — file lands inside the project, not outside it
+        self.assertEqual(path.parent, self.project_dir)
+        self.assertTrue(path.name.endswith('evil.jpg'))
+
+    def test_upload_into_hidden_dir_rejected(self):
+        (self.project_dir / '.git').mkdir()
+        with self.assertRaises(ProjectFileError):
+            self._upload(rel_dir='.git')
+
+    def test_create_folder(self):
+        new_dir = create_project_folder(self.lead, '', 'images')
+        self.assertTrue(new_dir.is_dir())
+        self.assertEqual(new_dir, self.project_dir / 'images')
+
+    def test_create_folder_rejects_duplicate(self):
+        create_project_folder(self.lead, '', 'images')
+        with self.assertRaises(ProjectFileError):
+            create_project_folder(self.lead, '', 'images')
+
+    def test_create_folder_rejects_slash_in_name(self):
+        with self.assertRaises(ProjectFileError):
+            create_project_folder(self.lead, '', 'a/b')
+
+    def test_create_folder_rejects_traversal(self):
+        with self.assertRaises(ProjectFileError):
+            create_project_folder(self.lead, '../../tmp', 'x')
+
+
+class PortalUploadMkdirViewTests(TestCase):
+    def setUp(self):
+        self.project_dir = Path(tempfile.mkdtemp(prefix='wi_project_upload_view_test_'))
+        (self.project_dir / 'index.html').write_text('<h1>hola</h1>')
+        self.lead = _make_lead(project_path=str(self.project_dir))
+        self.access = _make_access(self.lead)
+
+    def tearDown(self):
+        shutil.rmtree(self.project_dir, ignore_errors=True)
+
+    def test_upload_view_happy_path(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        f = SimpleUploadedFile('foto.jpg', b'fakejpeg', content_type='image/jpeg')
+        resp = self.client.post(f'/p/{self.access.token}/files/upload/', {'path': '', 'files': [f]})
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data['ok'])
+        self.assertIn('foto.jpg', data['saved'])
+        self.assertTrue((self.project_dir / 'foto.jpg').exists())
+
+    def test_upload_view_rejects_bad_extension(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        f = SimpleUploadedFile('shell.php', b'<?php ?>', content_type='application/x-php')
+        resp = self.client.post(f'/p/{self.access.token}/files/upload/', {'path': '', 'files': [f]})
+        data = resp.json()
+        self.assertEqual(len(data['errors']), 1)
+        self.assertFalse((self.project_dir / 'shell.php').exists())
+
+    def test_upload_view_requires_valid_token(self):
+        resp = self.client.post('/p/not-a-real-token/files/upload/', {'path': ''})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_mkdir_view_happy_path(self):
+        resp = self.client.post(f'/p/{self.access.token}/files/mkdir/', {'path': '', 'name': 'fotos'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json()['ok'])
+        self.assertTrue((self.project_dir / 'fotos').is_dir())
+
+    def test_mkdir_view_rejects_traversal(self):
+        resp = self.client.post(f'/p/{self.access.token}/files/mkdir/', {'path': '../../tmp', 'name': 'x'})
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(resp.json()['ok'])

@@ -98,7 +98,12 @@
             / {{ listing.rel_path }}
           {% endif %}
         </div>
-        <a class="pf-btn secondary" href="/p/{{ access.token }}/files/download-all/">⬇ Descargar todo (.zip)</a>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="pf-btn secondary" onclick="pfNewFolder()">📁 Nueva carpeta</button>
+          <button type="button" class="pf-btn secondary" onclick="document.getElementById('pfUploadInput').click()">⬆ Subir archivos</button>
+          <a class="pf-btn secondary" href="/p/{{ access.token }}/files/download-all/">⬇ Descargar todo (.zip)</a>
+        </div>
+        <input type="file" id="pfUploadInput" multiple style="display:none" onchange="pfUpload(this.files)">
       </div>
 
       <div class="pf-card">
@@ -154,6 +159,7 @@
 
 <script>
 const PF_TOKEN = "{{ access.token }}";
+const PF_CURRENT_DIR = "{{ listing.rel_path|default:''|escapejs }}";
 let pfCurrentPath = null;
 
 function pfToast(msg) {
@@ -189,6 +195,35 @@ async function pfSaveEdit() {
   const data = await res.json();
   if (data.ok) { pfToast('Guardado'); pfCloseEditor(); }
   else { pfToast(data.error || 'Error al guardar'); }
+}
+
+async function pfNewFolder() {
+  const name = prompt('Nombre de la nueva carpeta:');
+  if (!name) return;
+  const body = new URLSearchParams({ path: PF_CURRENT_DIR, name });
+  const res = await fetch(`/p/${PF_TOKEN}/files/mkdir/`, {
+    method: 'POST', body,
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  });
+  const data = await res.json();
+  if (data.ok) { location.reload(); }
+  else { pfToast(data.error || 'Error al crear la carpeta'); }
+}
+
+async function pfUpload(fileList) {
+  if (!fileList || !fileList.length) return;
+  const form = new FormData();
+  form.append('path', PF_CURRENT_DIR);
+  for (const f of fileList) form.append('files', f);
+  pfToast('Subiendo…');
+  const res = await fetch(`/p/${PF_TOKEN}/files/upload/`, { method: 'POST', body: form });
+  const data = await res.json();
+  if (data.errors && data.errors.length) {
+    pfToast(data.errors.map(e => `${e.name}: ${e.error}`).join(' · '));
+  }
+  if (data.saved && data.saved.length) {
+    location.reload();
+  }
 }
 
 async function pfDelete(relPath, isDir) {

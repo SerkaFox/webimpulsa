@@ -31,11 +31,11 @@ from .proposal_content import (
 )
 from .services import (
     CLIENT_NEXT_STEP, CLIENT_STAGE_PROGRESS, CLIENT_STATUS_LABEL, PAYMENT_PLAN_CHOICES,
-    ProjectFileError, accept_proposal, delete_project_path, get_sqlite_db_path,
-    list_project_directory, list_sqlite_tables, log_communication, payment_schedule,
-    proposal_to_template_input, read_project_text_file, read_sqlite_table,
+    ProjectFileError, accept_proposal, create_project_folder, delete_project_path,
+    get_sqlite_db_path, list_project_directory, list_sqlite_tables, log_communication,
+    payment_schedule, proposal_to_template_input, read_project_text_file, read_sqlite_table,
     record_portal_visit, resolve_project_path, save_material, serialize_chat_message,
-    validate_portal_token, write_project_text_file, zip_project,
+    upload_project_file, validate_portal_token, write_project_text_file, zip_project,
 )
 
 _WI_TG_TOKEN   = os.getenv('WI_TG_TOKEN', '')
@@ -1216,6 +1216,48 @@ def portal_files_delete(request, token):
     rel_path = request.POST.get('path', '')
     try:
         delete_project_path(access.lead, rel_path)
+        return JsonResponse({'ok': True})
+    except ProjectFileError as exc:
+        return JsonResponse({'ok': False, 'error': str(exc)}, status=400)
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def portal_files_upload(request, token):
+    """POST /p/<token>/files/upload/ — upload one or more files directly into
+    the live project folder (form field 'path' = target dir, 'files' = files)."""
+    access, err = _portal_access_or_403(request, token)
+    if err:
+        return err
+
+    rel_dir = request.POST.get('path', '')
+    files = request.FILES.getlist('files')
+    if not files:
+        return JsonResponse({'ok': False, 'error': 'No se recibieron archivos'}, status=400)
+
+    saved, errors = [], []
+    for f in files:
+        try:
+            path = upload_project_file(access.lead, rel_dir, f)
+            saved.append(path.name)
+        except ProjectFileError as exc:
+            errors.append({'name': f.name, 'error': str(exc)})
+
+    return JsonResponse({'ok': True, 'saved': saved, 'errors': errors})
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def portal_files_mkdir(request, token):
+    """POST /p/<token>/files/mkdir/ — create a new subfolder (form fields
+    'path' = parent dir, 'name' = new folder name)."""
+    access, err = _portal_access_or_403(request, token)
+    if err:
+        return err
+    rel_dir = request.POST.get('path', '')
+    name = request.POST.get('name', '')
+    try:
+        create_project_folder(access.lead, rel_dir, name)
         return JsonResponse({'ok': True})
     except ProjectFileError as exc:
         return JsonResponse({'ok': False, 'error': str(exc)}, status=400)

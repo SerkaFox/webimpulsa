@@ -729,6 +729,57 @@ def delete_project_path(lead: Lead, rel_path: str) -> None:
         path.unlink()
 
 
+def create_project_folder(lead: Lead, rel_dir: str, folder_name: str) -> Path:
+    """Create a new subfolder inside rel_dir (both resolved/validated the same
+    way as everything else in this module — traversal-safe, hidden-dir-safe)."""
+    folder_name = folder_name.strip()
+    if not folder_name or '/' in folder_name or '\\' in folder_name or folder_name in ('.', '..'):
+        raise ProjectFileError('Nombre de carpeta no válido.')
+    parent = resolve_project_path(lead, rel_dir)
+    if not parent.is_dir():
+        raise ProjectFileError('La carpeta de destino no existe.')
+    new_dir = parent / folder_name
+    if _is_hidden(new_dir, _project_root(lead)):
+        raise ProjectFileError('Ese nombre no está permitido.')
+    if new_dir.exists():
+        raise ProjectFileError('Ya existe una carpeta o archivo con ese nombre.')
+    new_dir.mkdir()
+    return new_dir
+
+
+# Extensions a client is allowed to UPLOAD straight into the live project.
+# Deliberately excludes anything executable (py, php, sh, cgi...) even though
+# editing an *existing* file of those types is already permitted elsewhere —
+# uploading a brand-new arbitrarily-named script is the classic webshell
+# vector on a served docroot, and there's no legitimate "client drops a photo"
+# use case that needs it.
+UPLOAD_ALLOWED_EXTENSIONS = _ALLOWED_EXTENSIONS
+
+
+def upload_project_file(lead: Lead, rel_dir: str, uploaded_file) -> Path:
+    """Save an uploaded file into rel_dir inside the live project folder."""
+    parent = resolve_project_path(lead, rel_dir)
+    if not parent.is_dir():
+        raise ProjectFileError('La carpeta de destino no existe.')
+
+    original_name = uploaded_file.name or 'archivo'
+    safe_name = os.path.basename(original_name).replace('/', '_').replace('\\', '_')
+    ext = safe_name.rsplit('.', 1)[-1].lower() if '.' in safe_name else ''
+    if ext not in UPLOAD_ALLOWED_EXTENSIONS:
+        raise ProjectFileError(f'Tipo de archivo no permitido: .{ext}')
+    if uploaded_file.size > MAX_UPLOAD_BYTES:
+        raise ProjectFileError(f'El archivo supera el límite de {MAX_UPLOAD_BYTES // 1024 // 1024} MB')
+
+    target = parent / safe_name
+    if _is_hidden(target, _project_root(lead)):
+        raise ProjectFileError('Ese nombre no está permitido.')
+
+    with open(target, 'wb') as f:
+        for chunk in uploaded_file.chunks():
+            f.write(chunk)
+    return target
+
+
 def zip_project(lead: Lead) -> io.BytesIO:
     """Zip the entire live project folder (and project_db_path, if set and
     outside project_path) into an in-memory buffer for full-project download."""
