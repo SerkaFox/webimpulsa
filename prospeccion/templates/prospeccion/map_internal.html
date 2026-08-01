@@ -106,6 +106,27 @@
   .card-list-item .name { font-weight: 700; }
   .score-pill { float: right; font-weight: 800; color: #2563eb; }
   .badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: .68rem; font-weight: 700; color: #fff; margin-top: 4px; }
+
+  /* Insignia "¿tiene web?" — lo primero que Tania necesita ver: es la
+     oportunidad de venta más clara. Independiente del color de etapa. */
+  .web-badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .68rem; font-weight: 700; margin: 0 6px 4px 0; }
+  .web-badge.opp  { background: #fee2e2; color: #b91c1c; }
+  .web-badge.have { background: #dcfce7; color: #15803d; }
+  .web-badge.unk  { background: #f1f5f9; color: #64748b; }
+
+  /* Leyenda flotante del mapa */
+  .map-legend {
+    position: absolute; left: 10px; bottom: 10px; z-index: 5; background: rgba(255,255,255,.96);
+    border-radius: 10px; box-shadow: 0 2px 12px rgba(12,28,66,.18); font-size: .74rem; max-width: 240px;
+  }
+  .map-legend summary { cursor: pointer; font-weight: 700; padding: 8px 10px; list-style: none; }
+  .map-legend summary::-webkit-details-marker { display: none; }
+  .map-legend summary::before { content: "ℹ️ Leyenda "; }
+  .map-legend .legend-body { padding: 0 10px 10px; max-height: 40vh; overflow-y: auto; }
+  .map-legend h4 { font-size: .68rem; text-transform: uppercase; letter-spacing: .03em; color: #8a94a6; margin: 8px 0 4px; }
+  .map-legend .legend-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .map-legend .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(12,28,66,.15); }
+  .map-legend .legend-ring { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; background: #cbd5e1; box-sizing: border-box; }
   small.hint { color: #8a94a6; display: block; margin-top: 4px; }
 </style>
 </head>
@@ -123,6 +144,19 @@
     {% if not google_maps_js_api_key %}
       <div class="map-msg">El mapa no está disponible: falta configurar <code>GOOGLE_MAPS_JS_API_KEY</code> en el servidor. La búsqueda y el alta de empresas funcionan igualmente.</div>
     {% endif %}
+    <details class="map-legend" id="mapLegend">
+      <summary></summary>
+      <div class="legend-body">
+        <h4>¿Tiene web?</h4>
+        <div class="legend-row"><span class="legend-ring" style="border:3px solid #dc2626"></span> Sin web — oportunidad</div>
+        <div class="legend-row"><span class="legend-ring" style="border:2px solid #16a34a"></span> Ya tiene web</div>
+        <div class="legend-row"><span class="legend-ring" style="border:2px dashed #94a3b8"></span> Sin datos todavía</div>
+        <h4>Etapa (color del círculo)</h4>
+        <div id="legendStages"></div>
+        <h4>Número en el círculo</h4>
+        <div class="legend-row">Puntuación digital (0–100)</div>
+      </div>
+    </details>
   </div>
 
   <div class="sidebar">
@@ -264,6 +298,13 @@ var STATUS_COLORS = window.WI_MAPA.statusColors;
 var STATUS_LABELS = window.WI_MAPA.statusLabels;
 var DEFAULT_CENTER = {lat: 43.2627, lng: -2.9253}; // Barakaldo/Bilbao
 
+(function renderLegendStages(){
+  var el = document.getElementById('legendStages');
+  el.innerHTML = Object.keys(STATUS_COLORS).map(function(id){
+    return '<div class="legend-row"><span class="legend-dot" style="background:'+STATUS_COLORS[id]+'"></span>'+(STATUS_LABELS[id] || id)+'</div>';
+  }).join('');
+})();
+
 var map = null;
 var markers = [];
 var searchMarkers = [];
@@ -296,10 +337,27 @@ window.wiInitMap = function(){
   reloadMapProspects();
 };
 
-function markerIcon(color, scale){
+// El anillo del marcador señala si el negocio tiene web (rojo = oportunidad
+// de venta clara, verde = ya cubierto, gris = todavía no lo sabemos) — el
+// relleno sigue siendo solo la etapa comercial (SALES_STATUS_COLORS), nunca
+// se mezclan para no perder ninguna de las dos lecturas.
+function websiteRing(hasWebsite){
+  if(hasWebsite === true) return {color: '#16a34a', weight: 2};
+  if(hasWebsite === false) return {color: '#dc2626', weight: 3.5};
+  return {color: '#94a3b8', weight: 2};
+}
+
+function websiteBadge(hasWebsite){
+  if(hasWebsite === true) return {cls: 'have', icon: '✅', label: 'Ya tiene web'};
+  if(hasWebsite === false) return {cls: 'opp', icon: '🌐', label: 'Sin web — oportunidad de venta'};
+  return {cls: 'unk', icon: '❔', label: 'Sin datos de web todavía'};
+}
+
+function markerIcon(color, scale, hasWebsite){
+  var ring = websiteRing(hasWebsite);
   return {
     path: google.maps.SymbolPath.CIRCLE,
-    fillColor: color, fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2, scale: scale || 8,
+    fillColor: color, fillOpacity: 1, strokeColor: ring.color, strokeWeight: ring.weight, scale: scale || 8,
   };
 }
 
@@ -356,10 +414,12 @@ function renderProspectList(prospects){
   var el = document.getElementById('prospectList');
   el.innerHTML = prospects.slice(0, 100).map(function(p){
     var score = p.current_score != null ? p.current_score : '—';
+    var web = websiteBadge(p.has_website);
     return '<a class="card-list-item" style="display:block;color:inherit;text-decoration:none" href="'+p.detail_url+'">'+
       '<span class="score-pill">'+score+'</span>'+
       '<div class="name">'+p.name+'</div>'+
       '<div style="color:#8a94a6">'+p.municipality+' '+p.district+'</div>'+
+      '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>'+
       '<span class="badge" style="background:'+p.color+'">'+ (STATUS_LABELS[p.sales_status] || p.sales_status) +'</span>'+
       '</a>';
   }).join('');
@@ -373,12 +433,15 @@ function reloadMapProspects(){
       var withCoords = data.prospects.filter(function(p){ return p.lat != null && p.lng != null; });
       withCoords.forEach(function(p){
         var marker = new google.maps.Marker({
-          position: {lat: p.lat, lng: p.lng}, map: map, icon: markerIcon(p.color, 13), title: p.name,
+          position: {lat: p.lat, lng: p.lng}, map: map, icon: markerIcon(p.color, 13, p.has_website), title: p.name,
           label: scoreLabel(p.current_score) || undefined,
         });
         var score = p.current_score != null ? p.current_score : '—';
+        var web = websiteBadge(p.has_website);
         var info = new google.maps.InfoWindow({content:
-          '<div style="font-family:inherit"><strong>'+p.name+'</strong><br>'+
+          '<div style="font-family:inherit">'+
+          '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>'+
+          '<strong>'+p.name+'</strong><br>'+
           (STATUS_LABELS[p.sales_status] || p.sales_status)+' · puntuación '+score+'<br>'+
           '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:.85rem">'+
           '<a href="'+p.detail_url+'">📇 Ver ficha</a>'+
@@ -408,10 +471,12 @@ function categoryLabel(sectorId){
 
 function renderExistingCard(p){
   var scoreTag = p.current_score != null ? '<span class="exists-badge" style="background:'+p.color+'">'+p.current_score+'/100</span>' : '';
+  var web = websiteBadge(p.has_website);
   return '<div class="result-card" data-existing-id="'+p.prospect_id+'">'+
     '<span class="cat">Ya en CreaGanaWeb</span><span class="exists-badge">Ya existe</span>'+scoreTag+
     '<div class="name" style="margin-top:6px">'+p.name+'</div>'+
     '<div class="addr">'+(p.address||'')+' · '+p.sector_label+'</div>'+
+    '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span>'+
     '<div class="actions"><a class="btn sm secondary" href="'+p.detail_url+'">Ver ficha</a></div>'+
   '</div>';
 }
@@ -447,11 +512,14 @@ function plotSearchMarkers(existing, googleResults){
     var pos = {lat: p.lat, lng: p.lng};
     latLngBounds.extend(pos);
     var marker = new window.google.maps.Marker({
-      position: pos, map: map, icon: markerIcon(p.color || '#8a94a6', 13), title: p.name,
+      position: pos, map: map, icon: markerIcon(p.color || '#8a94a6', 13, p.has_website), title: p.name,
       label: scoreLabel(p.current_score) || undefined,
     });
+    var web = websiteBadge(p.has_website);
     var info = new window.google.maps.InfoWindow({content:
-      '<div style="font-family:inherit"><strong>'+p.name+'</strong><br>Ya en CreaGanaWeb'+
+      '<div style="font-family:inherit">'+
+      '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>'+
+      '<strong>'+p.name+'</strong><br>Ya en CreaGanaWeb'+
       (p.current_score != null ? ' · puntuación '+p.current_score : '')+'<br>'+
       '<a href="'+p.detail_url+'">📇 Ver ficha</a></div>'
     });
