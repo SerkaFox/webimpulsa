@@ -148,7 +148,7 @@
       <summary></summary>
       <div class="legend-body">
         <h4>¿Tiene web?</h4>
-        <div class="legend-row"><span class="legend-ring" style="border:3px solid #dc2626"></span> Sin web — oportunidad</div>
+        <div class="legend-row"><span class="legend-ring" style="background:radial-gradient(circle,#dc2626 40%,rgba(220,38,38,.28) 41%)"></span> Sin web — oportunidad (con halo rojo)</div>
         <div class="legend-row"><span class="legend-ring" style="border:2px solid #16a34a"></span> Ya tiene web</div>
         <div class="legend-row"><span class="legend-ring" style="border:2px dashed #94a3b8"></span> Sin datos todavía</div>
         <h4>Etapa (color del círculo)</h4>
@@ -373,6 +373,24 @@ function markerIcon(color, scale, hasWebsite){
   };
 }
 
+// El anillo del marcador apenas se nota entre tanto marcador pequeño en el
+// mapa — para la señal que más importa (sin web = oportunidad) añadimos
+// además un halo rojo translúcido debajo del marcador, mucho más visible de
+// un vistazo. Solo se dibuja para hasWebsite===false (nunca para
+// "tiene web" ni "sin datos", para no ensuciar el mapa con algo que no es
+// una oportunidad clara). Se añade al mismo array que el marcador real para
+// que clearMarkers()/clearSearchMarkers() lo borre también.
+function addOpportunityHalo(pos, hasWebsite, targetArray){
+  if(hasWebsite !== false) return;
+  targetArray.push(new google.maps.Marker({
+    position: pos, map: map, clickable: false, zIndex: 1,
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      fillColor: '#dc2626', fillOpacity: .28, strokeWeight: 0, scale: 22,
+    },
+  }));
+}
+
 // Marker.label solo admite un color de texto, así que el número de la
 // puntuación se pone siempre en blanco — el círculo (scale más grande que el
 // del marcador manual) hace de fondo con contraste suficiente en todos los
@@ -444,12 +462,15 @@ function reloadMapProspects(){
       clearMarkers();
       var withCoords = data.prospects.filter(function(p){ return p.lat != null && p.lng != null; });
       withCoords.forEach(function(p){
+        var pos = {lat: p.lat, lng: p.lng};
+        var hasWeb = resolveHasWebsite(p);
+        addOpportunityHalo(pos, hasWeb, markers);
         var marker = new google.maps.Marker({
-          position: {lat: p.lat, lng: p.lng}, map: map, icon: markerIcon(p.color, 13, resolveHasWebsite(p)), title: p.name,
+          position: pos, map: map, icon: markerIcon(p.color, 13, hasWeb), title: p.name, zIndex: 10,
           label: scoreLabel(p.current_score) || undefined,
         });
         var score = p.current_score != null ? p.current_score : '—';
-        var web = websiteBadge(resolveHasWebsite(p));
+        var web = websiteBadge(hasWeb);
         var info = new google.maps.InfoWindow({content:
           '<div style="font-family:inherit">'+
           '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>'+
@@ -523,11 +544,13 @@ function plotSearchMarkers(existing, googleResults){
     any = true;
     var pos = {lat: p.lat, lng: p.lng};
     latLngBounds.extend(pos);
+    var hasWeb = resolveHasWebsite(p);
+    addOpportunityHalo(pos, hasWeb, searchMarkers);
     var marker = new window.google.maps.Marker({
-      position: pos, map: map, icon: markerIcon(p.color || '#8a94a6', 13, resolveHasWebsite(p)), title: p.name,
+      position: pos, map: map, icon: markerIcon(p.color || '#8a94a6', 13, hasWeb), title: p.name, zIndex: 10,
       label: scoreLabel(p.current_score) || undefined,
     });
-    var web = websiteBadge(resolveHasWebsite(p));
+    var web = websiteBadge(hasWeb);
     var info = new window.google.maps.InfoWindow({content:
       '<div style="font-family:inherit">'+
       '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>'+
@@ -544,8 +567,10 @@ function plotSearchMarkers(existing, googleResults){
     any = true;
     var pos = {lat: r.lat, lng: r.lng};
     latLngBounds.extend(pos);
+    var hasWeb = resolveHasWebsite(r);
+    addOpportunityHalo(pos, hasWeb, searchMarkers);
     var marker = new window.google.maps.Marker({
-      position: pos, map: map, icon: markerIcon('#7c3aed', 11, resolveHasWebsite(r)), title: r.name,
+      position: pos, map: map, icon: markerIcon('#7c3aed', 11, hasWeb), title: r.name, zIndex: 10,
     });
     marker.addListener('click', function(){ openConfirmPanel({fromGoogle: true, place: r}); });
     searchMarkers.push(marker);
