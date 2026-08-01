@@ -44,3 +44,70 @@
   border-radius: 10px;
   padding: 8px 14px;
 }
+
+/* ── Utilidades compartidas por las páginas internas de prospección
+   (dashboard, ficha de prospecto) para que compartan un mismo aspecto
+   "bonito, con fondo y tarjetas" sin repetir el CSS en cada plantilla. ── */
+
+.wi-topbar {
+  background: var(--wi-navy);
+  color: #fff;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: .92rem;
+}
+.wi-topbar a { color: #cfe0ff; text-decoration: none; }
+.wi-topbar a:hover { text-decoration: underline; }
+.wi-topbar strong { font-size: .98rem; }
+
+.wi-lang-switcher { display: flex; gap: .3rem; align-items: center; margin-left: auto; }
+.wi-lang-btn {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.35);
+  border-radius: 6px;
+  padding: .18rem .45rem;
+  font-size: .72rem;
+  font-weight: 800;
+  cursor: pointer;
+  color: #fff;
+  font-family: inherit;
+}
+.wi-lang-btn.active { background: #fff; color: var(--wi-navy); }
+
+/* Fondo de página: imagen de marca de fondo, atenuada, detrás de las
+   tarjetas — para que se vea "bonito" sin restar legibilidad al texto. */
+.wi-page-bg {
+  min-height: 100vh;
+  background: var(--wi-bg);
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
+}
+.wi-page-bg-overlay {
+  min-height: calc(100vh - 46px);
+  background: linear-gradient(180deg, rgba(244,248,253,.25), rgba(244,248,253,.55) 260px, rgba(244,248,253,.92) 420px, var(--wi-bg) 620px);
+}
+
+.wi-card {
+  background: var(--wi-card);
+  border: 1px solid var(--wi-border);
+  border-radius: 14px;
+  box-shadow: var(--wi-shadow);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+
+/* Caja "ⓘ" de explicación en lenguaje sencillo bajo un campo técnico —
+   pensada para Tania, que no viene de un perfil técnico. */
+.wi-explain {
+  background: rgba(7,92,207,.06);
+  border-left: 3px solid var(--wi-blue);
+  border-radius: 0 8px 8px 0;
+  padding: 8px 12px;
+  font-size: .8rem;
+  color: var(--wi-muted);
+  margin: 6px 0 12px;
+}

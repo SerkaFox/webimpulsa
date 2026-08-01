@@ -86,7 +86,7 @@ def dashboard(request):
     sector_counter = Counter()
     district_counter = Counter()
     for p in BusinessProspect.objects.exclude(current_score__isnull=True):
-        sector_counter[p.get_sector_display()] += 1
+        sector_counter[p.sector] += 1
         if p.district:
             district_counter[p.district] += 1
         latest_audit = p.audits.filter(stage=ChequeoAudit.STAGE_CONFIRMADO).order_by('-created_at').first()
@@ -96,6 +96,12 @@ def dashboard(request):
                 if q:
                     problem_counter[q['text_by_sector'].get(latest_audit.sector, q['text_by_sector']['_default'])] += 1
 
+    sector_labels = dict(SECTOR_CHOICES)
+    top_sectors = [
+        {'code': code, 'label': sector_labels.get(code, code), 'count': count}
+        for code, count in sector_counter.most_common(5)
+    ]
+
     return render(request, 'prospeccion/dashboard.html', {
         'total': BusinessProspect.objects.count(),
         'funnel': funnel,
@@ -103,7 +109,7 @@ def dashboard(request):
         'won': won,
         'lost': lost,
         'top_problems': problem_counter.most_common(5),
-        'top_sectors': sector_counter.most_common(5),
+        'top_sectors': top_sectors,
         'top_districts': district_counter.most_common(5),
     })
 
@@ -588,6 +594,7 @@ def prospect_detail(request, pk):
         'is_public': is_public,
         'publication_reason': publication_reason,
         'prelim_draft_json': json.dumps(request.session.get(_prelim_draft_key(pk), {})),
+        'status_color': SALES_STATUS_COLORS.get(prospect.sales_status, '#8a94a6'),
     })
 
 

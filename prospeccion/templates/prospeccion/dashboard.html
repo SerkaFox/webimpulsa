@@ -4,63 +4,145 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Prospección — CreaGanaWeb</title>
+<link rel="stylesheet" href="/static/wi/css/brand.css">
 <style>
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; color: #0c1c42; }
-  .top-bar { background: #1e293b; color: #fff; padding: 14px 20px; display: flex; align-items: center; gap: 14px; }
-  .top-bar a { color: #93c5fd; text-decoration: none; font-weight: 700; }
-  .wrap { max-width: 900px; margin: 0 auto; padding: 24px 20px; }
-  h1 { font-size: 1.3rem; }
-  .funnel { display: grid; gap: 8px; margin-top: 18px; }
-  .stage { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #e2e8f0;
-    border-radius: 10px; padding: 10px 14px; }
+  body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; color: var(--wi-text); }
+  .wi-page-bg {
+    background-image: url('/static/wi/img/backgrounds/09-analytics-growth.webp');
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 28px 20px 48px; }
+  h1 { font-size: 1.35rem; margin: 0 0 4px; }
+  .total { color: var(--wi-muted); margin-bottom: 16px; font-size: .92rem; }
+  .funnel { display: grid; gap: 8px; }
+  .stage { display: flex; align-items: center; gap: 10px; padding: 10px 4px; }
   .stage .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
   .stage .label { flex: 1; font-weight: 700; font-size: .9rem; }
-  .stage .count { font-weight: 900; font-size: 1.1rem; }
-  .total { color: #5a6d8c; margin-top: 4px; font-size: .9rem; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+  .stage .count { font-weight: 900; font-size: 1.1rem; color: var(--wi-blue); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
   @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
-  .box { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; }
-  .box h3 { font-size: .85rem; margin: 0 0 8px; }
+  .box h3 { font-size: .85rem; margin: 0 0 8px; color: var(--wi-muted); text-transform: uppercase; letter-spacing: .03em; }
   .box ol { margin: 0 0 0 18px; font-size: .85rem; }
   .box li { margin-bottom: 4px; }
-  .kpi { font-size: 1.6rem; font-weight: 900; }
+  .kpi { font-size: 1.7rem; font-weight: 900; color: var(--wi-accent); }
+  .kpi-detail { color: var(--wi-muted); font-size: .85rem; }
 </style>
 </head>
 <body>
-  <div class="top-bar"><strong>📊 Prospección</strong><a href="/panel/prospeccion/mapa/">Mapa →</a><a href="/wi/crm/">🗂 CRM</a></div>
-  <div class="wrap">
-    <h1>Embudo de prospección</h1>
-    <div class="total">{{ total }} empresas en total</div>
-    <div class="funnel">
-      {% for stage in funnel %}
-        <div class="stage">
-          <span class="dot" style="background:{{ stage.color }}"></span>
-          <span class="label">{{ stage.label }}</span>
-          <span class="count">{{ stage.count }}</span>
-        </div>
-      {% endfor %}
+<div class="wi-page-bg">
+  <div class="wi-page-bg-overlay">
+    <div class="wi-topbar">
+      <strong data-i18n="dash.title">📊 Embudo de prospección</strong>
+      <a href="/panel/prospeccion/mapa/" data-i18n="dash.map_link">Mapa →</a>
+      <a href="/wi/crm/">🗂 CRM</a>
+      <a href="https://creaganaweb.es/" data-i18n="dash.site_link">🌐 Ir a la web</a>
+      <div class="wi-lang-switcher">
+        <button type="button" class="wi-lang-btn" data-lang="es">ES</button>
+        <button type="button" class="wi-lang-btn" data-lang="ru">RU</button>
+      </div>
     </div>
 
-    {% if conversion_rate is not None %}
-      <p style="margin-top:14px">Tasa de conversión (ganados / decididos): <span class="kpi">{{ conversion_rate }}%</span>
-        <span style="color:#5a6d8c;font-size:.85rem">({{ won }} ganados, {{ lost }} perdidos)</span></p>
-    {% endif %}
+    <div class="wrap">
+      <h1 data-i18n="dash.heading">Embudo de prospección</h1>
+      <div class="total"><span id="totalCount">{{ total }}</span> <span data-i18n="dash.total_label">empresas en total</span></div>
 
-    <div class="grid2">
-      <div class="box">
-        <h3>Problemas más frecuentes</h3>
-        <ol>{% for text, count in top_problems %}<li>{{ text }} <strong>({{ count }})</strong></li>{% empty %}<li style="color:#8a94a6">Sin datos todavía</li>{% endfor %}</ol>
+      <div class="wi-explain" data-i18n="dash.explain">
+        Aquí ves cuántas empresas tienes en cada etapa del proceso: desde que las
+        encuentras hasta que se convierten en clientas (o deciden que no). El color
+        de cada etapa es el mismo que verás como color del punto en el mapa.
       </div>
-      <div class="box">
-        <h3>Sectores más prospectados</h3>
-        <ol>{% for label, count in top_sectors %}<li>{{ label }} <strong>({{ count }})</strong></li>{% empty %}<li style="color:#8a94a6">Sin datos todavía</li>{% endfor %}</ol>
+
+      <div class="wi-card">
+        <div class="funnel" id="funnelList">
+          {% for stage in funnel %}
+            <div class="stage" data-status-id="{{ stage.id }}">
+              <span class="dot" style="background:{{ stage.color }}"></span>
+              <span class="label" data-es="{{ stage.label }}">{{ stage.label }}</span>
+              <span class="count">{{ stage.count }}</span>
+            </div>
+          {% endfor %}
+        </div>
+
+        {% if conversion_rate is not None %}
+          <p style="margin-top:14px;margin-bottom:0">
+            <span data-i18n="dash.conversion_label">Tasa de conversión (ganados / decididos):</span>
+            <span class="kpi">{{ conversion_rate }}%</span>
+            <span class="kpi-detail">(<span id="wonCount">{{ won }}</span> <span data-i18n="dash.won_word">ganados</span>, <span id="lostCount">{{ lost }}</span> <span data-i18n="dash.lost_word">perdidos</span>)</span>
+          </p>
+        {% endif %}
       </div>
-      <div class="box">
-        <h3>Distritos más prospectados</h3>
-        <ol>{% for label, count in top_districts %}<li>{{ label }} <strong>({{ count }})</strong></li>{% empty %}<li style="color:#8a94a6">Sin datos todavía</li>{% endfor %}</ol>
+
+      <div class="grid2">
+        <div class="box wi-card">
+          <h3 data-i18n="dash.problems_title">Problemas más frecuentes</h3>
+          <ol>{% for text, count in top_problems %}<li>{{ text }} <strong>({{ count }})</strong></li>{% empty %}<li style="color:var(--wi-muted)" data-i18n="dash.no_data">Sin datos todavía</li>{% endfor %}</ol>
+        </div>
+        <div class="box wi-card">
+          <h3 data-i18n="dash.sectors_title">Sectores más prospectados</h3>
+          <ol>{% for s in top_sectors %}<li data-sector-code="{{ s.code }}" data-es="{{ s.label }}">{{ s.label }} <strong>({{ s.count }})</strong></li>{% empty %}<li style="color:var(--wi-muted)" data-i18n="dash.no_data">Sin datos todavía</li>{% endfor %}</ol>
+        </div>
+        <div class="box wi-card">
+          <h3 data-i18n="dash.districts_title">Distritos más prospectados</h3>
+          <ol>{% for label, count in top_districts %}<li>{{ label }} <strong>({{ count }})</strong></li>{% empty %}<li style="color:var(--wi-muted)" data-i18n="dash.no_data">Sin datos todavía</li>{% endfor %}</ol>
+        </div>
       </div>
     </div>
   </div>
+</div>
+
+<script src="/static/wi/js/prospeccion-i18n.js"></script>
+<script>
+var T = {
+  es: {
+    page_title: 'Prospección — CreaGanaWeb',
+    'dash.title': '📊 Embudo de prospección',
+    'dash.map_link': 'Mapa →',
+    'dash.site_link': '🌐 Ir a la web',
+    'dash.heading': 'Embudo de prospección',
+    'dash.total_label': 'empresas en total',
+    'dash.explain': 'Aquí ves cuántas empresas tienes en cada etapa del proceso: desde que las encuentras hasta que se convierten en clientas (o deciden que no). El color de cada etapa es el mismo que verás como color del punto en el mapa.',
+    'dash.conversion_label': 'Tasa de conversión (ganados / decididos):',
+    'dash.won_word': 'ganados',
+    'dash.lost_word': 'perdidos',
+    'dash.problems_title': 'Problemas más frecuentes',
+    'dash.sectors_title': 'Sectores más prospectados',
+    'dash.districts_title': 'Distritos más prospectados',
+    'dash.no_data': 'Sin datos todavía',
+  },
+  ru: {
+    page_title: 'Проспекция — CreaGanaWeb',
+    'dash.title': '📊 Воронка проспекции',
+    'dash.map_link': 'Карта →',
+    'dash.site_link': '🌐 На сайт',
+    'dash.heading': 'Воронка проспекции',
+    'dash.total_label': 'компаний всего',
+    'dash.explain': 'Здесь видно, сколько компаний находится на каждом этапе — от момента, когда вы их нашли, до того, как они станут клиентками (или откажутся). Цвет этапа совпадает с цветом точки на карте.',
+    'dash.conversion_label': 'Конверсия (клиентов / решённых):',
+    'dash.won_word': 'стали клиентами',
+    'dash.lost_word': 'отказались',
+    'dash.problems_title': 'Частые проблемы',
+    'dash.sectors_title': 'Популярные сферы',
+    'dash.districts_title': 'Популярные районы',
+    'dash.no_data': 'Пока нет данных',
+  },
+};
+
+function applyDashLang(lang){
+  wiApplyI18n(T, lang);
+  document.querySelectorAll('#funnelList .stage').forEach(function(el){
+    var code = el.getAttribute('data-status-id');
+    var labelEl = el.querySelector('.label');
+    labelEl.textContent = wiCodeLabel('salesStatus', code, lang);
+  });
+  document.querySelectorAll('[data-sector-code]').forEach(function(el){
+    var code = el.getAttribute('data-sector-code');
+    var label = wiCodeLabel('sector', code, lang);
+    var countEl = el.querySelector('strong');
+    el.textContent = label + ' ';
+    if(countEl) el.appendChild(countEl);
+  });
+}
+wiWireLangSwitcher(applyDashLang);
+</script>
 </body>
 </html>

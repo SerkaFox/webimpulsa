@@ -4,33 +4,34 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{ prospect.name }} — Prospección</title>
+<link rel="stylesheet" href="/static/wi/css/brand.css">
 <style>
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; color: #0c1c42; }
-  .top-bar { background: #1e293b; color: #fff; padding: 14px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-  .top-bar a { color: #93c5fd; text-decoration: none; font-weight: 700; }
-  .wrap { max-width: 820px; margin: 0 auto; padding: 24px 16px; }
-  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; color: var(--wi-text); }
+  .wi-page-bg { background-image: url('/static/wi/img/backgrounds/05-crm-customers.webp'); }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 24px 16px 48px; }
+  .card { background: var(--wi-card); border: 1px solid var(--wi-border); border-radius: 14px; padding: 16px 18px;
+    margin-bottom: 16px; box-shadow: var(--wi-shadow); }
   h1 { font-size: 1.3rem; margin: 0 0 4px; }
   h2 { font-size: .95rem; margin: 0 0 10px; }
   h3 { font-size: .85rem; margin: 0 0 6px; }
   .badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: .72rem; font-weight: 700; color: #fff; }
   .pub-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .78rem; font-weight: 700; }
-  .pub-badge.yes { background: rgba(0,158,115,.12); color: #009e73; }
-  .pub-badge.no { background: rgba(90,109,140,.12); color: #5a6d8c; }
+  .pub-badge.yes { background: rgba(14,138,60,.12); color: var(--wi-accent); }
+  .pub-badge.no { background: rgba(90,109,140,.12); color: var(--wi-muted); }
   .field { margin-bottom: 10px; }
-  .field label { display: block; font-size: .78rem; color: #5a6d8c; margin-bottom: 3px; }
+  .field label { display: block; font-size: .78rem; color: var(--wi-muted); margin-bottom: 3px; }
   select, input[type=text], input[type=url], textarea {
-    width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 7px 9px; font-size: .85rem;
+    width: 100%; border: 1.5px solid var(--wi-border); border-radius: 8px; padding: 7px 9px; font-size: .85rem;
     font-family: inherit;
   }
-  .btn { background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 9px 14px;
+  .btn { background: var(--wi-blue); color: #fff; border: none; border-radius: 8px; padding: 9px 14px;
     font-size: .85rem; font-weight: 700; cursor: pointer; }
   .btn.sm { padding: 5px 10px; font-size: .78rem; }
-  .btn.outline { background: #fff; color: #2563eb; border: 1.5px solid #2563eb; }
+  .btn.outline { background: #fff; color: var(--wi-blue); border: 1.5px solid var(--wi-blue); }
   .btn.ghost { background: #f1f5f9; color: #334155; }
   .btn.danger { background: #fff; color: #dc2626; border: 1.5px solid #fca5a5; }
-  .btn.green { background: #009e73; }
+  .btn.green { background: var(--wi-accent); }
   .btn:disabled { opacity: .5; cursor: not-allowed; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; }
   .row > * { flex: 1; min-width: 160px; }
@@ -38,7 +39,7 @@
   td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
   .link-box { background: #eff6ff; border: 1px dashed #93c5fd; border-radius: 8px; padding: 8px 10px;
     font-size: .82rem; word-break: break-all; }
-  .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #0c1c42; color: #fff;
+  .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--wi-navy); color: #fff;
     padding: 8px 14px; border-radius: 999px; font-size: .82rem; opacity: 0; transition: opacity .25s; pointer-events: none;
     z-index: 50; max-width: 90vw; }
   .toast.show { opacity: 1; }
@@ -50,36 +51,37 @@
      "su" sección. */
   #prelimDetails .section-body { font-size: 1rem; }
   #prelimDetails h2, #prelimDetails summary { font-size: 1.1rem; }
-  .q-item { border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 16px 18px; margin-bottom: 16px; }
+  .q-item { border: 1.5px solid var(--wi-border); border-radius: 14px; padding: 16px 18px; margin-bottom: 16px; }
   .q-item .q-text { font-weight: 700; font-size: 1.08rem; line-height: 1.4; margin-bottom: 12px; }
   .q-opts { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
   .q-opts label { display: inline-flex; align-items: center; gap: 6px; font-size: .98rem; background: #f8fafc;
-    border: 2px solid #e2e8f0; border-radius: 999px; padding: 9px 16px; cursor: pointer; }
+    border: 2px solid var(--wi-border); border-radius: 999px; padding: 9px 16px; cursor: pointer; }
   .q-opts input { margin: 0; width: 16px; height: 16px; }
-  .q-opts label.checked { border-color: #009e73; background: rgba(0,158,115,.1); color: #00714f; font-weight: 700; }
+  .q-opts label.checked { border-color: var(--wi-accent); background: rgba(14,138,60,.1); color: #00714f; font-weight: 700; }
   .q-extra { display: flex; gap: 8px; flex-wrap: wrap; }
   .q-extra input { font-size: .88rem; padding: 8px 10px; }
-  .prelim-summary { display: flex; gap: 22px; flex-wrap: wrap; font-size: .95rem; color: #5a6d8c; margin-bottom: 16px; }
-  .prelim-summary strong { color: #0c1c42; }
+  .prelim-summary { display: flex; gap: 22px; flex-wrap: wrap; font-size: .95rem; color: var(--wi-muted); margin-bottom: 16px; }
+  .prelim-summary strong { color: var(--wi-text); }
+  .prelim-summary .muted-version { font-size: .78rem; opacity: .7; }
   #prelimDetails .field label { font-size: .92rem; margin-bottom: 6px; }
   #prelimDetails select { font-size: 1rem; padding: 10px 12px; }
   #prelimDetails .btn { font-size: 1rem; padding: 12px 18px; }
   #prelimDetails small { font-size: .88rem !important; }
 
-  /* Contactos */
   /* Fotos */
   .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
   .photo-item { position: relative; border-radius: 10px; overflow: hidden; aspect-ratio: 1/1; background: #f1f5f9; }
   .photo-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .photo-item .btnDeletePhoto { position: absolute; top: 4px; right: 4px; padding: 3px 7px; font-size: .7rem; }
 
-  .contact-row { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+  .contact-row { border: 1px solid var(--wi-border); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
   .contact-row .name-line { font-weight: 700; font-size: .9rem; display: flex; align-items: center; gap: 6px; }
-  .contact-row .meta-line { color: #5a6d8c; font-size: .78rem; margin: 2px 0 8px; }
+  .contact-row .meta-line { color: var(--wi-muted); font-size: .78rem; margin: 2px 0 8px; }
   .consent-line { display: flex; align-items: center; gap: 8px; font-size: .78rem; margin-bottom: 4px; flex-wrap: wrap; }
   .consent-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .consent-dot.on { background: #009e73; }
+  .consent-dot.on { background: var(--wi-accent); }
   .consent-dot.off { background: #cbd5e1; }
+  .consent-actor-note { color: var(--wi-muted); font-size: .74rem; }
   .primary-tag { background: #fef3c7; color: #92400e; font-size: .68rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; }
 
   /* Acciones principales */
@@ -87,61 +89,80 @@
   .primary-actions .btn { flex: 1; min-width: 150px; padding: 14px 10px; font-size: .9rem; }
 
   /* Secciones secundarias plegables */
-  details.section-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; }
+  details.section-card { background: var(--wi-card); border: 1px solid var(--wi-border); border-radius: 14px;
+    margin-bottom: 12px; box-shadow: var(--wi-shadow); }
   details.section-card summary { padding: 14px 16px; font-size: .95rem; font-weight: 700; cursor: pointer; list-style: none; }
   details.section-card summary::-webkit-details-marker { display: none; }
-  details.section-card summary::before { content: '▸ '; color: #8a94a6; }
+  details.section-card summary::before { content: '▸ '; color: var(--wi-muted); }
   details.section-card[open] summary::before { content: '▾ '; }
   details.section-card .section-body { padding: 0 16px 16px; }
 </style>
 </head>
 <body>
-  <div class="top-bar"><strong>🏢 {{ prospect.name }}</strong><a href="/panel/prospeccion/mapa/">← Mapa</a></div>
+<div class="wi-page-bg">
+<div class="wi-page-bg-overlay">
+  <div class="wi-topbar">
+    <strong>🏢 {{ prospect.name }}</strong>
+    <a href="/panel/prospeccion/mapa/" data-i18n="detail.back_map">← Mapa</a>
+    <a href="https://creaganaweb.es/" data-i18n="detail.site_link">🌐 Ir a la web</a>
+    <div class="wi-lang-switcher">
+      <button type="button" class="wi-lang-btn" data-lang="es">ES</button>
+      <button type="button" class="wi-lang-btn" data-lang="ru">RU</button>
+    </div>
+  </div>
   <div class="wrap">
 
     <div class="card">
-      <h1>{{ prospect.name }} <span class="badge" style="background:#8a94a6">{{ prospect.get_sales_status_display }}</span></h1>
-      <div style="color:#5a6d8c;font-size:.88rem">{{ prospect.get_sector_display }} · {{ prospect.municipality }} {{ prospect.district }}</div>
-      <div style="margin-top:8px">Puntuación actual: <strong>{{ prospect.current_score|default:"—" }}</strong>/100</div>
+      <h1>{{ prospect.name }} <span class="badge" id="statusBadge" data-status-id="{{ prospect.sales_status }}" style="background:{{ status_color }}">{{ prospect.get_sales_status_display }}</span></h1>
+      <div style="color:var(--wi-muted);font-size:.88rem"><span id="sectorLabel" data-sector-code="{{ prospect.sector }}">{{ prospect.get_sector_display }}</span> · {{ prospect.municipality }} {{ prospect.district }}</div>
+      <div style="margin-top:8px"><span data-i18n="detail.score_label">Puntuación actual:</span> <strong>{{ prospect.current_score|default:"—" }}</strong>/100</div>
+      <div class="wi-explain" data-i18n="detail.score_explain">
+        Es una nota de 0 a 100 que resume qué tan bien está preparado el negocio en internet
+        (web, WhatsApp, reservas online…) — cuanto más alta, menos trabajo de mejora necesita.
+      </div>
       {% if prospect.gmaps_url %}
         <div style="margin-top:8px">
-          <a class="btn sm ghost" href="{{ prospect.gmaps_url }}" target="_blank" rel="noopener">📷 Ver en Google Maps (fotos, menú, reseñas…)</a>
+          <a class="btn sm ghost" href="{{ prospect.gmaps_url }}" target="_blank" rel="noopener" data-i18n="detail.view_gmaps">📷 Ver en Google Maps (fotos, menú, reseñas…)</a>
         </div>
       {% endif %}
     </div>
 
     <!-- ── Las 3 acciones principales — nunca hace falta abrir nada más ── -->
     <div class="primary-actions">
-      <button type="button" class="btn" id="btnGoChequeo">🩺 Hacer chequeo</button>
-      <button type="button" class="btn" id="btnGoContacto">👤 Añadir contacto</button>
-      <button type="button" class="btn green" id="btnPrepararPropuesta">📋 Preparar propuesta</button>
+      <button type="button" class="btn" id="btnGoChequeo" data-i18n="detail.btn_chequeo">🩺 Hacer chequeo</button>
+      <button type="button" class="btn" id="btnGoContacto" data-i18n="detail.btn_contacto">👤 Añadir contacto</button>
+      <button type="button" class="btn green" id="btnPrepararPropuesta" data-i18n="detail.btn_propuesta">📋 Preparar propuesta</button>
     </div>
 
     <details class="section-card" id="statusDetails">
-      <summary>Estado y responsable</summary>
+      <summary data-i18n="detail.status_section_title">Estado y responsable</summary>
       <div class="section-body">
+      <div class="wi-explain" data-i18n="detail.status_explain">
+        La «etapa» es en qué punto del proceso de venta está esta empresa (descubierta, contactada,
+        auditada, ganada…) — el color del punto en el mapa es siempre el mismo que el de esta etiqueta.
+      </div>
       <form id="updateForm">
         <div class="row">
           <div class="field">
-            <label>Etapa</label>
-            <select name="sales_status">
+            <label data-i18n="detail.label_stage">Etapa</label>
+            <select name="sales_status" id="statusSelect">
               {% for id, label in sales_statuses %}
-                <option value="{{ id }}" {% if id == prospect.sales_status %}selected{% endif %}>{{ label }}</option>
+                <option value="{{ id }}" data-code="{{ id }}" {% if id == prospect.sales_status %}selected{% endif %}>{{ label }}</option>
               {% endfor %}
             </select>
           </div>
           <div class="field">
-            <label>Prioridad</label>
+            <label data-i18n="detail.label_priority">Prioridad</label>
             <select name="priority">
-              <option value="low" {% if prospect.priority == 'low' %}selected{% endif %}>Baja</option>
-              <option value="normal" {% if prospect.priority == 'normal' %}selected{% endif %}>Normal</option>
-              <option value="high" {% if prospect.priority == 'high' %}selected{% endif %}>Alta</option>
+              <option value="low" data-i18n="detail.priority_low" {% if prospect.priority == 'low' %}selected{% endif %}>Baja</option>
+              <option value="normal" data-i18n="detail.priority_normal" {% if prospect.priority == 'normal' %}selected{% endif %}>Normal</option>
+              <option value="high" data-i18n="detail.priority_high" {% if prospect.priority == 'high' %}selected{% endif %}>Alta</option>
             </select>
           </div>
           <div class="field">
-            <label>Responsable</label>
+            <label data-i18n="detail.label_responsible">Responsable</label>
             <select name="assigned_to_id">
-              <option value="">Sin asignar</option>
+              <option value="" data-i18n="detail.unassigned">Sin asignar</option>
               {% for s in staff %}
                 <option value="{{ s.id }}" {% if prospect.assigned_to_id == s.id %}selected{% endif %}>{{ s.name }}</option>
               {% endfor %}
@@ -149,43 +170,43 @@
           </div>
         </div>
         <div class="field">
-          <label>Notas del equipo</label>
+          <label data-i18n="detail.label_notes">Notas del equipo</label>
           <textarea name="staff_notes" rows="3">{{ prospect.staff_notes }}</textarea>
         </div>
-        <button type="submit" class="btn">Guardar</button>
+        <button type="submit" class="btn" data-i18n="detail.btn_save">Guardar</button>
       </form>
       </div>
     </details>
 
     <!-- ── Auditoría preliminar ─────────────────────────────────────── -->
     <details class="section-card" id="prelimDetails">
-      <summary>Auditoría preliminar</summary>
+      <summary data-i18n="detail.prelim_section_title">Auditoría preliminar</summary>
       <div class="section-body">
       <div class="prelim-summary">
-        <span>Último <strong>preliminar</strong>:
-          {% if latest_preliminar %}{{ latest_preliminar.created_at|date:"d/m/Y H:i" }} — {{ latest_preliminar.score }}/100 ({{ latest_preliminar.questionnaire_version }}){% else %}—{% endif %}
+        <span><span data-i18n="detail.prelim_last_preliminar">Último preliminar:</span>
+          {% if latest_preliminar %}{{ latest_preliminar.created_at|date:"d/m/Y H:i" }} — {{ latest_preliminar.score }}/100 <span class="muted-version">({{ latest_preliminar.questionnaire_version }})</span>{% else %}—{% endif %}
         </span>
-        <span>Último <strong>confirmado</strong>:
-          {% if latest_confirmado %}{{ latest_confirmado.created_at|date:"d/m/Y H:i" }} — {{ latest_confirmado.score }}/100 ({{ latest_confirmado.questionnaire_version }}){% else %}—{% endif %}
+        <span><span data-i18n="detail.prelim_last_confirmado">Último confirmado:</span>
+          {% if latest_confirmado %}{{ latest_confirmado.created_at|date:"d/m/Y H:i" }} — {{ latest_confirmado.score }}/100 <span class="muted-version">({{ latest_confirmado.questionnaire_version }})</span>{% else %}—{% endif %}
         </span>
       </div>
 
       <div class="field">
-        <label>Plantilla sectorial</label>
+        <label data-i18n="detail.label_sector_template">Sector del negocio</label>
         <select id="prelimSector">
           {% for id, label in sectors %}
-            <option value="{{ id }}" {% if id == prospect.sector %}selected{% endif %}>{{ label }}</option>
+            <option value="{{ id }}" data-code="{{ id }}" {% if id == prospect.sector %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
       </div>
 
-      <div id="prelimQuestions">Cargando preguntas…</div>
+      <div id="prelimQuestions" data-i18n="detail.prelim_loading">Cargando preguntas…</div>
 
       <div class="row">
-        <button type="button" class="btn outline" id="btnPrelimDraft">💾 Guardar borrador</button>
-        <button type="button" class="btn green" id="btnPrelimComplete">✔ Calcular y completar auditoría</button>
+        <button type="button" class="btn outline" id="btnPrelimDraft" data-i18n="detail.btn_prelim_draft">💾 Guardar borrador</button>
+        <button type="button" class="btn green" id="btnPrelimComplete" data-i18n="detail.btn_prelim_complete">✔ Calcular y completar auditoría</button>
       </div>
-      <small style="color:#8a94a6;display:block;margin-top:6px">
+      <small style="color:var(--wi-muted);display:block;margin-top:6px" data-i18n="detail.prelim_draft_note">
         El borrador se guarda solo en este navegador/sesión (no es visible para otro compañero ni desde
         otro dispositivo) hasta que pulses «Calcular y completar auditoría», que sí queda guardado para
         siempre.
@@ -194,91 +215,98 @@
     </details>
 
     <details class="section-card">
-      <summary>Enlace personal del chequeo</summary>
+      <summary data-i18n="detail.link_section_title">Enlace personal del chequeo</summary>
       <div class="section-body">
-      <p style="font-size:.85rem;color:#5a6d8c">Compártelo con la empresa para que confirme/corrija el chequeo ya pre-rellenado.</p>
+      <p style="font-size:.85rem;color:var(--wi-muted)" data-i18n="detail.link_explain">Compártelo con la empresa para que confirme/corrija el chequeo ya pre-rellenado.</p>
       <div class="link-box" id="personalLink">{{ personal_url }}</div>
       <div class="row" style="margin-top:8px">
-        <button class="btn outline" id="btnCopyLink">📋 Copiar enlace</button>
-        <a class="btn green" style="text-decoration:none;text-align:center" id="btnWhatsappLink" href="#" target="_blank" rel="noopener">💬 Enviar por WhatsApp</a>
-        {% if audits %}<a class="btn ghost" style="text-decoration:none;text-align:center" href="/panel/prospeccion/{{ prospect.pk }}/pdf/" target="_blank">📄 Abrir resultado (PDF)</a>{% endif %}
+        <button class="btn outline" id="btnCopyLink" data-i18n="detail.btn_copy_link">📋 Copiar enlace</button>
+        <a class="btn green" style="text-decoration:none;text-align:center" id="btnWhatsappLink" href="#" target="_blank" rel="noopener" data-i18n="detail.btn_whatsapp_link">💬 Enviar por WhatsApp</a>
+        {% if audits %}<a class="btn ghost" style="text-decoration:none;text-align:center" href="/panel/prospeccion/{{ prospect.pk }}/pdf/" target="_blank" data-i18n="detail.btn_pdf">📄 Abrir resultado (PDF)</a>{% endif %}
       </div>
       </div>
     </details>
 
     <details class="section-card" id="crmDetails">
-      <summary>CRM</summary>
+      <summary data-i18n="detail.crm_section_title">CRM</summary>
       <div class="section-body">
       {% if prospect.converted_client_id %}
-        <p style="font-size:.85rem">Ya convertido en cliente: <a href="/wi/crm/{{ prospect.converted_client_id }}/">ver ficha en el CRM →</a></p>
-        <button class="btn" id="btnDraftProposal">Crear borrador de presupuesto</button>
+        <p style="font-size:.85rem"><span data-i18n="detail.crm_already_converted">Ya convertido en cliente:</span> <a href="/wi/crm/{{ prospect.converted_client_id }}/" data-i18n="detail.crm_view_lead">ver ficha en el CRM →</a></p>
+        <button class="btn" id="btnDraftProposal" data-i18n="detail.btn_draft_proposal">Crear borrador de presupuesto</button>
       {% else %}
-        <p style="font-size:.85rem;color:#5a6d8c">Todavía no está en el CRM. Al convertir se usará como contacto: {{ prospect.whatsapp|default:prospect.phone|default:prospect.email|default:"—" }}</p>
-        <button class="btn" id="btnConvert">Convertir en cliente</button>
-        <button class="btn" id="btnDraftProposal" style="margin-left:6px">Convertir y crear presupuesto</button>
+        <p style="font-size:.85rem;color:var(--wi-muted)"><span data-i18n="detail.crm_not_converted">Todavía no está en el CRM. Al convertir se usará como contacto:</span> {{ prospect.whatsapp|default:prospect.phone|default:prospect.email|default:"—" }}</p>
+        <button class="btn" id="btnConvert" data-i18n="detail.btn_convert">Convertir en cliente</button>
+        <button class="btn" id="btnDraftProposal" style="margin-left:6px" data-i18n="detail.btn_convert_and_draft">Convertir y crear presupuesto</button>
       {% endif %}
       </div>
     </details>
 
     <!-- ── Contactos (CRUD completo) ────────────────────────────────── -->
     <details class="section-card" id="contactosDetails">
-      <summary>Contactos</summary>
+      <summary data-i18n="detail.contacts_section_title">Contactos</summary>
       <div class="section-body">
+      <div class="wi-explain" data-i18n="detail.contacts_explain">
+        Dos consentimientos distintos, cada uno se pide y se revoca por separado: «Recibir informe» es
+        para poder enviarle el resultado del chequeo, y «Contacto comercial» es para poder escribirle
+        ofreciendo el servicio.
+      </div>
       <div id="contactsList">
         {% for c in contacts %}
           <div class="contact-row" data-contact-id="{{ c.id }}">
-            <div class="name-line">{{ c.name|default:"(sin nombre)" }} {% if c.is_primary %}<span class="primary-tag">principal</span>{% endif %}</div>
-            <div class="meta-line">{{ c.get_role_display }} · {{ c.phone }} {% if c.whatsapp %}· WhatsApp {{ c.whatsapp }}{% endif %} {% if c.email %}· {{ c.email }}{% endif %}</div>
+            <div class="name-line">{{ c.name|default:"" }}<span data-i18n="detail.no_name" {% if c.name %}hidden{% endif %}>(sin nombre)</span> {% if c.is_primary %}<span class="primary-tag" data-i18n="detail.primary_tag">principal</span>{% endif %}</div>
+            <div class="meta-line"><span data-role-code="{{ c.role }}">{{ c.get_role_display }}</span> · {{ c.phone }} {% if c.whatsapp %}· WhatsApp {{ c.whatsapp }}{% endif %} {% if c.email %}· {{ c.email }}{% endif %}</div>
             <div class="consent-line"><span class="consent-dot {% if c.consent_receive_report %}on{% else %}off{% endif %}"></span>
-              Recibir informe {% if c.consent_receive_report %}concedido ({{ c.consent_receive_report_method }}, {{ c.consent_receive_report_version }}, registrado por {{ c.consent_receive_report_actor|default:"—" }}){% elif c.consent_receive_report_revoked_at %}revocado{% else %}sin registrar{% endif %}
-              <button class="btn sm outline" data-consent-type="report" data-consent-action="{% if c.consent_receive_report %}revoke{% else %}grant{% endif %}">{% if c.consent_receive_report %}Revocar{% else %}Conceder{% endif %}</button>
+              <span data-i18n="detail.consent_report_label">Recibir informe</span>:
+              {% if c.consent_receive_report %}<span data-i18n="detail.consent_granted">Concedido</span>{% if c.consent_receive_report_actor %} <span class="consent-actor-note">({{ c.consent_receive_report_actor }})</span>{% endif %}{% elif c.consent_receive_report_revoked_at %}<span data-i18n="detail.consent_revoked">Revocado</span>{% else %}<span data-i18n="detail.consent_none">Sin registrar</span>{% endif %}
+              <button class="btn sm outline" data-consent-type="report" data-consent-action="{% if c.consent_receive_report %}revoke{% else %}grant{% endif %}" data-i18n="{% if c.consent_receive_report %}detail.btn_revoke{% else %}detail.btn_grant{% endif %}">{% if c.consent_receive_report %}Revocar{% else %}Conceder{% endif %}</button>
             </div>
             <div class="consent-line"><span class="consent-dot {% if c.consent_commercial_contact %}on{% else %}off{% endif %}"></span>
-              Contacto comercial {% if c.consent_commercial_contact %}concedido ({{ c.consent_commercial_contact_method }}, {{ c.consent_commercial_contact_version }}, registrado por {{ c.consent_commercial_contact_actor|default:"—" }}){% elif c.consent_commercial_contact_revoked_at %}revocado{% else %}sin registrar{% endif %}
-              <button class="btn sm outline" data-consent-type="commercial" data-consent-action="{% if c.consent_commercial_contact %}revoke{% else %}grant{% endif %}">{% if c.consent_commercial_contact %}Revocar{% else %}Conceder{% endif %}</button>
+              <span data-i18n="detail.consent_commercial_label">Contacto comercial</span>:
+              {% if c.consent_commercial_contact %}<span data-i18n="detail.consent_granted">Concedido</span>{% if c.consent_commercial_contact_actor %} <span class="consent-actor-note">({{ c.consent_commercial_contact_actor }})</span>{% endif %}{% elif c.consent_commercial_contact_revoked_at %}<span data-i18n="detail.consent_revoked">Revocado</span>{% else %}<span data-i18n="detail.consent_none">Sin registrar</span>{% endif %}
+              <button class="btn sm outline" data-consent-type="commercial" data-consent-action="{% if c.consent_commercial_contact %}revoke{% else %}grant{% endif %}" data-i18n="{% if c.consent_commercial_contact %}detail.btn_revoke{% else %}detail.btn_grant{% endif %}">{% if c.consent_commercial_contact %}Revocar{% else %}Conceder{% endif %}</button>
             </div>
             <div class="field" style="margin-top:4px">
-              <label style="font-size:.72rem">¿Quién registra este consentimiento? (tu nombre)</label>
-              <input type="text" class="consentActorInput" placeholder="Tu nombre" style="max-width:220px">
+              <label style="font-size:.72rem" data-i18n="detail.consent_actor_label">¿Quién registra este consentimiento? (tu nombre)</label>
+              <input type="text" class="consentActorInput" placeholder="Tu nombre" data-i18n-placeholder="detail.consent_actor_placeholder" style="max-width:220px">
             </div>
             <div class="row" style="margin-top:6px">
-              <button class="btn sm ghost btnEditContact">✎ Editar</button>
-              <button class="btn sm danger btnDeleteContact">🗑 Eliminar</button>
+              <button class="btn sm ghost btnEditContact" data-i18n="detail.btn_edit">✎ Editar</button>
+              <button class="btn sm danger btnDeleteContact" data-i18n="detail.btn_delete">🗑 Eliminar</button>
             </div>
           </div>
         {% empty %}
-          <p style="color:#8a94a6;font-size:.85rem">Sin contactos registrados todavía.</p>
+          <p style="color:var(--wi-muted);font-size:.85rem" data-i18n="detail.no_contacts">Sin contactos registrados todavía.</p>
         {% endfor %}
       </div>
 
-      <h3 style="margin-top:14px">Añadir contacto</h3>
+      <h3 style="margin-top:14px" data-i18n="detail.add_contact_title">Añadir contacto</h3>
       <form id="contactForm">
         <input type="hidden" name="contact_id" value="">
         <div class="row">
-          <div class="field"><label>Nombre</label><input type="text" name="name"></div>
-          <div class="field"><label>Rol</label>
-            <select name="role">{% for id, label in role_choices %}<option value="{{ id }}">{{ label }}</option>{% endfor %}</select>
+          <div class="field"><label data-i18n="detail.label_name">Nombre</label><input type="text" name="name"></div>
+          <div class="field"><label data-i18n="detail.label_role">Rol</label>
+            <select name="role">{% for id, label in role_choices %}<option value="{{ id }}" data-code="{{ id }}">{{ label }}</option>{% endfor %}</select>
           </div>
         </div>
         <div class="row">
-          <div class="field"><label>Teléfono</label><input type="text" name="phone"></div>
+          <div class="field"><label data-i18n="detail.label_phone">Teléfono</label><input type="text" name="phone"></div>
           <div class="field"><label>WhatsApp</label><input type="text" name="whatsapp"></div>
           <div class="field"><label>Email</label><input type="text" name="email"></div>
         </div>
         <div class="row">
-          <div class="field"><label>Canal preferido</label>
-            <select name="preferred_channel">{% for id, label in channel_choices %}<option value="{{ id }}">{{ label }}</option>{% endfor %}</select>
+          <div class="field"><label data-i18n="detail.label_channel">Canal preferido</label>
+            <select name="preferred_channel">{% for id, label in channel_choices %}<option value="{{ id }}" data-code="{{ id }}">{{ label }}</option>{% endfor %}</select>
           </div>
           <div class="field" style="display:flex;align-items:flex-end;gap:6px">
             <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;margin:0">
-              <input type="checkbox" name="is_primary" style="width:auto"> Es el contacto principal
+              <input type="checkbox" name="is_primary" style="width:auto"> <span data-i18n="detail.label_is_primary">Es el contacto principal</span>
             </label>
           </div>
         </div>
-        <div class="field"><label>Notas</label><textarea name="notes" rows="2"></textarea></div>
+        <div class="field"><label data-i18n="detail.label_contact_notes">Notas</label><textarea name="notes" rows="2"></textarea></div>
         <div class="row">
-          <button type="submit" class="btn" id="btnSaveContact">Guardar contacto</button>
-          <button type="button" class="btn ghost" id="btnCancelEditContact" hidden>Cancelar edición</button>
+          <button type="submit" class="btn" id="btnSaveContact" data-i18n="detail.btn_save_contact">Guardar contacto</button>
+          <button type="button" class="btn ghost" id="btnCancelEditContact" hidden data-i18n="detail.btn_cancel_edit">Cancelar edición</button>
         </div>
       </form>
       </div>
@@ -287,9 +315,9 @@
     <!-- ── Fotos in situ (complementan la única foto que suele haber en la
          ficha de Google) ──────────────────────────────────────────── -->
     <details class="section-card" id="photosDetails">
-      <summary>Fotos ({{ photos|length }})</summary>
+      <summary><span data-i18n="detail.photos_section_title">Fotos</span> ({{ photos|length }})</summary>
       <div class="section-body">
-      <p style="font-size:.85rem;color:#5a6d8c;margin-bottom:10px">
+      <p style="font-size:.85rem;color:var(--wi-muted);margin-bottom:10px" data-i18n="detail.photos_explain">
         Haz fotos frescas del negocio desde varios ángulos (fachada, interior, detalles) — no se publican
         en ningún sitio automáticamente, son referencia interna del equipo.
       </p>
@@ -300,79 +328,83 @@
             <button type="button" class="btn sm danger btnDeletePhoto">🗑</button>
           </div>
         {% empty %}
-          <p style="color:#8a94a6;font-size:.85rem;grid-column:1/-1">Todavía no hay fotos de este negocio.</p>
+          <p style="color:var(--wi-muted);font-size:.85rem;grid-column:1/-1" data-i18n="detail.no_photos">Todavía no hay fotos de este negocio.</p>
         {% endfor %}
       </div>
       <form id="photoForm" style="margin-top:12px">
         <div class="field">
-          <label>Añadir fotos (puedes elegir varias a la vez, o hacerlas directamente con la cámara del móvil)</label>
+          <label data-i18n="detail.label_add_photos">Añadir fotos (puedes elegir varias a la vez, o hacerlas directamente con la cámara del móvil)</label>
           <input type="file" name="photos" id="photoInput" accept="image/*" capture="environment" multiple>
         </div>
-        <button type="submit" class="btn" id="btnUploadPhotos">📸 Subir fotos</button>
+        <button type="submit" class="btn" id="btnUploadPhotos" data-i18n="detail.btn_upload_photos">📸 Subir fotos</button>
       </form>
       </div>
     </details>
 
     <!-- ── Consentimientos (publicación) ───────────────────────────── -->
     <details class="section-card">
-      <summary>Consentimientos de publicación
-        <span class="pub-badge {% if is_public %}yes{% else %}no{% endif %}" style="margin-left:8px;font-size:.68rem">{% if is_public %}✓ Visible{% else %}✕ No publicable{% endif %}</span>
+      <summary><span data-i18n="detail.publication_section_title">Consentimientos de publicación</span>
+        <span class="pub-badge {% if is_public %}yes{% else %}no{% endif %}" data-i18n="{% if is_public %}detail.pub_visible{% else %}detail.pub_not_visible{% endif %}" style="margin-left:8px;font-size:.68rem">{% if is_public %}✓ Visible{% else %}✕ No publicable{% endif %}</span>
       </summary>
       <div class="section-body">
       <p style="margin-bottom:10px">
-        <span class="pub-badge {% if is_public %}yes{% else %}no{% endif %}">{% if is_public %}✓ Visible en mapa público{% else %}✕ No publicable{% endif %}</span>
-        <span style="font-size:.82rem;color:#5a6d8c;display:block;margin-top:4px" id="publicationReason">{{ publication_reason }}</span>
+        <span class="pub-badge {% if is_public %}yes{% else %}no{% endif %}" data-i18n="{% if is_public %}detail.pub_visible_full{% else %}detail.pub_not_visible{% endif %}">{% if is_public %}✓ Visible en mapa público{% else %}✕ No publicable{% endif %}</span>
+        <span style="font-size:.82rem;color:var(--wi-muted);display:block;margin-top:4px" id="publicationReason">{{ publication_reason }}</span>
       </p>
 
       <div class="field">
-        <label>Consentimiento de publicación de la empresa</label>
-        <p style="font-size:.76rem;color:#5a6d8c;margin:0 0 6px">
+        <label data-i18n="detail.pub_consent_label">Consentimiento de publicación de la empresa</label>
+        <p style="font-size:.76rem;color:var(--wi-muted);margin:0 0 6px" data-i18n="detail.pub_consent_explain">
           Normalmente se marca solo — hay una casilla (marcada por defecto) al final del chequeo
           personal que la propia empresa puede desmarcar. Este botón es solo para forzarlo a mano si
           hace falta. Es la única condición para aparecer en el mapa público, no hay un segundo paso.
         </p>
         {% if prospect.publish_consent %}
-          <button type="button" class="btn sm outline" id="btnPublishConsent" data-action="revoke">Revocar consentimiento</button>
+          <button type="button" class="btn sm outline" id="btnPublishConsent" data-action="revoke" data-i18n="detail.btn_revoke_pub_consent">Revocar consentimiento</button>
         {% else %}
-          <button type="button" class="btn sm" id="btnPublishConsent" data-action="grant">Registrar consentimiento</button>
+          <button type="button" class="btn sm" id="btnPublishConsent" data-action="grant" data-i18n="detail.btn_grant_pub_consent">Registrar consentimiento</button>
         {% endif %}
       </div>
       </div>
     </details>
 
     <details class="section-card">
-      <summary>Historial de chequeos ({{ audits|length }})</summary>
+      <summary><span data-i18n="detail.history_section_title">Historial de chequeos</span> ({{ audits|length }})</summary>
       <div class="section-body">
       {% if audits %}
       <table>
-        <tr><th>Fecha</th><th>Modo</th><th>Etapa</th><th>Puntuación</th></tr>
+        <tr><th data-i18n="detail.th_date">Fecha</th><th data-i18n="detail.th_mode">Modo</th><th data-i18n="detail.th_stage">Etapa</th><th data-i18n="detail.th_score">Puntuación</th></tr>
         {% for a in audits %}
-          <tr><td>{{ a.created_at|date:"d/m/Y H:i" }}</td><td>{{ a.get_mode_display }}</td><td>{{ a.get_stage_display }}</td><td>{{ a.score }}/100</td></tr>
+          <tr><td>{{ a.created_at|date:"d/m/Y H:i" }}</td><td data-mode-code="{{ a.mode }}">{{ a.get_mode_display }}</td><td data-stage-code="{{ a.stage }}">{{ a.get_stage_display }}</td><td>{{ a.score }}/100</td></tr>
         {% endfor %}
       </table>
-      {% else %}<p style="color:#8a94a6;font-size:.85rem">Todavía no se ha hecho ningún chequeo para esta empresa.</p>{% endif %}
+      {% else %}<p style="color:var(--wi-muted);font-size:.85rem" data-i18n="detail.no_audits">Todavía no se ha hecho ningún chequeo para esta empresa.</p>{% endif %}
       </div>
     </details>
 
     <details class="section-card">
-      <summary style="color:#dc2626">Zona de peligro</summary>
+      <summary style="color:#dc2626" data-i18n="detail.danger_title">Zona de peligro</summary>
       <div class="section-body">
-      <p style="font-size:.85rem;color:#5a6d8c;margin-bottom:10px">
-        Elimina esta ficha de prospección de forma permanente: historial de chequeos, contactos y fotos
-        se borran con ella.
+      <p style="font-size:.85rem;color:var(--wi-muted);margin-bottom:10px">
+        <span data-i18n="detail.danger_explain">Elimina esta ficha de prospección de forma permanente: historial de chequeos, contactos y fotos
+        se borran con ella.</span>
         {% if prospect.converted_client_id %}
-          <strong>Esta empresa ya está convertida en cliente</strong> — su ficha en el CRM
-          (<a href="/wi/crm/{{ prospect.converted_client_id }}/">ver ficha</a>) no se borrará, pero perderá
-          el enlace a este historial de prospección.
+          <strong data-i18n="detail.danger_converted_warning">Esta empresa ya está convertida en cliente</strong> —
+          <span data-i18n="detail.danger_converted_link">su ficha en el CRM</span>
+          (<a href="/wi/crm/{{ prospect.converted_client_id }}/" data-i18n="detail.view_record">ver ficha</a>)
+          <span data-i18n="detail.danger_converted_note">no se borrará, pero perderá el enlace a este historial de prospección.</span>
         {% endif %}
       </p>
-      <button type="button" class="btn danger" id="btnDeleteProspect">🗑 Eliminar esta empresa</button>
+      <button type="button" class="btn danger" id="btnDeleteProspect" data-i18n="detail.btn_delete_prospect">🗑 Eliminar esta empresa</button>
       </div>
     </details>
 
   </div>
+</div>
+</div>
   <div class="toast" id="toast"></div>
 
+<script src="/static/wi/js/prospeccion-i18n.js"></script>
 <script>
 var PK = {{ prospect.pk }};
 var BASE = '/panel/prospeccion/' + PK + '/';
@@ -429,14 +461,14 @@ document.getElementById('updateForm').addEventListener('submit', function(ev){
   postJson(BASE + 'update/', {
     sales_status: fd.get('sales_status'), priority: fd.get('priority'),
     assigned_to_id: fd.get('assigned_to_id') || null, staff_notes: fd.get('staff_notes'),
-  }).then(function(res){ showToast(res.data.error || 'Guardado'); });
+  }).then(function(res){ showToast(res.data.error || t('detail.toast_saved')); });
 });
 
 /* ---- Enlace personal ---- */
 document.getElementById('btnCopyLink').addEventListener('click', function(){
   var text = document.getElementById('personalLink').textContent.trim();
   if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text);
-  showToast('Enlace copiado');
+  showToast(t('detail.toast_link_copied'));
 });
 (function(){
   var link = document.getElementById('personalLink').textContent.trim();
@@ -496,7 +528,7 @@ function loadPrelimQuestions(sector){
         });
       });
     })
-    .catch(function(){ showToast('No se pudieron cargar las preguntas'); });
+    .catch(function(){ showToast(t('detail.toast_questions_error')); });
 }
 
 function collectPrelimAnswers(){
@@ -525,15 +557,15 @@ loadPrelimQuestions(prelimSectorSelect.value);
 document.getElementById('btnPrelimDraft').addEventListener('click', function(){
   var answers = collectPrelimAnswers();
   postJson(BASE + 'preliminar/draft/', {sector: prelimSectorSelect.value, answers: answers})
-    .then(function(res){ showToast('Borrador guardado ('+(res.data.count||0)+' respuestas)'); });
+    .then(function(res){ showToast(t('detail.toast_draft_saved').replace('{count}', res.data.count||0)); });
 });
 document.getElementById('btnPrelimComplete').addEventListener('click', function(){
   var answers = collectPrelimAnswers();
-  if(!Object.keys(answers).length){ showToast('Responde al menos una pregunta'); return; }
+  if(!Object.keys(answers).length){ showToast(t('detail.toast_answer_one')); return; }
   postJson(BASE + 'preliminar/complete/', {sector: prelimSectorSelect.value, answers: answers})
     .then(function(res){
       if(res.data.error){ showToast(res.data.error); return; }
-      showToast('Auditoría preliminar creada: '+res.data.score+'/100');
+      showToast(t('detail.toast_audit_created').replace('{score}', res.data.score));
       setTimeout(function(){ window.location.reload(); }, 900);
     });
 });
@@ -545,7 +577,7 @@ var btnCancelEdit = document.getElementById('btnCancelEditContact');
 function resetContactForm(){
   contactForm.reset();
   contactForm.contact_id.value = '';
-  document.getElementById('btnSaveContact').textContent = 'Guardar contacto';
+  document.getElementById('btnSaveContact').textContent = t('detail.btn_save_contact');
   btnCancelEdit.hidden = true;
 }
 btnCancelEdit.addEventListener('click', resetContactForm);
@@ -562,7 +594,7 @@ contactForm.addEventListener('submit', function(ev){
   var url = contactId ? (BASE + 'contacts/' + contactId + '/update/') : (BASE + 'contacts/');
   postJson(url, body).then(function(res){
     if(res.data.error){ showToast(res.data.error); return; }
-    showToast(contactId ? 'Contacto actualizado' : 'Contacto añadido');
+    showToast(contactId ? t('detail.toast_contact_updated') : t('detail.toast_contact_added'));
     setTimeout(function(){ window.location.reload(); }, 700);
   });
 });
@@ -571,8 +603,8 @@ document.querySelectorAll('.btnDeleteContact').forEach(function(btn){
   btn.addEventListener('click', function(){
     var row = btn.closest('.contact-row');
     var cid = row.getAttribute('data-contact-id');
-    if(!confirm('¿Eliminar este contacto?')) return;
-    postJson(BASE + 'contacts/' + cid + '/delete/').then(function(){ row.remove(); showToast('Contacto eliminado'); });
+    if(!confirm(t('detail.confirm_delete_contact'))) return;
+    postJson(BASE + 'contacts/' + cid + '/delete/').then(function(){ row.remove(); showToast(t('detail.toast_contact_deleted')); });
   });
 });
 
@@ -581,10 +613,10 @@ document.querySelectorAll('.btnEditContact').forEach(function(btn){
     var row = btn.closest('.contact-row');
     var cid = row.getAttribute('data-contact-id');
     contactForm.contact_id.value = cid;
-    document.getElementById('btnSaveContact').textContent = 'Guardar cambios';
+    document.getElementById('btnSaveContact').textContent = t('detail.btn_save_contact_changes');
     btnCancelEdit.hidden = false;
     contactForm.scrollIntoView({behavior:'smooth', block:'center'});
-    showToast('Edita los campos y pulsa "Guardar cambios" — los valores actuales no se han precargado, corrígelos si hace falta.');
+    showToast(t('detail.toast_edit_hint'));
   });
 });
 
@@ -595,7 +627,7 @@ document.querySelectorAll('[data-consent-type]').forEach(function(btn){
     var action = btn.getAttribute('data-consent-action');
     var actorInput = row.querySelector('.consentActorInput');
     if(action === 'grant' && actorInput && !actorInput.value.trim()){
-      showToast('Indica quién registra este consentimiento');
+      showToast(t('detail.toast_actor_required'));
       return;
     }
     postJson(BASE + 'contacts/' + cid + '/consent/', {
@@ -605,7 +637,7 @@ document.querySelectorAll('[data-consent-type]').forEach(function(btn){
       actor: actorInput ? actorInput.value.trim() : '',
     }).then(function(res){
       if(res.data.error){ showToast(res.data.error); return; }
-      showToast('Consentimiento actualizado');
+      showToast(t('detail.toast_consent_updated'));
       setTimeout(function(){ window.location.reload(); }, 500);
     });
   });
@@ -615,7 +647,7 @@ document.querySelectorAll('[data-consent-type]').forEach(function(btn){
 document.getElementById('photoForm').addEventListener('submit', function(ev){
   ev.preventDefault();
   var input = document.getElementById('photoInput');
-  if(!input.files.length){ showToast('Elige al menos una foto'); return; }
+  if(!input.files.length){ showToast(t('detail.toast_choose_photo')); return; }
   var fd = new FormData();
   for(var i = 0; i < input.files.length; i++) fd.append('photos', input.files[i]);
   fetch(BASE + 'photos/', {method: 'POST', body: fd})
@@ -624,19 +656,19 @@ document.getElementById('photoForm').addEventListener('submit', function(ev){
       if(data.error){ showToast(data.error); return; }
       if(data.errors && data.errors.length) showToast(data.errors.join(' · '));
       if(data.photos && data.photos.length){
-        showToast(data.photos.length + ' foto(s) subida(s)');
+        showToast(t('detail.toast_photos_uploaded').replace('{count}', data.photos.length));
         setTimeout(function(){ window.location.reload(); }, 700);
       }
     })
-    .catch(function(){ showToast('No se pudieron subir las fotos'); });
+    .catch(function(){ showToast(t('detail.toast_photos_error')); });
 });
 
 document.querySelectorAll('.btnDeletePhoto').forEach(function(btn){
   btn.addEventListener('click', function(){
     var item = btn.closest('.photo-item');
     var pid = item.getAttribute('data-photo-id');
-    if(!confirm('¿Eliminar esta foto?')) return;
-    postJson(BASE + 'photos/' + pid + '/delete/').then(function(){ item.remove(); showToast('Foto eliminada'); });
+    if(!confirm(t('detail.confirm_delete_photo'))) return;
+    postJson(BASE + 'photos/' + pid + '/delete/').then(function(){ item.remove(); showToast(t('detail.toast_photo_deleted')); });
   });
 });
 
@@ -652,13 +684,276 @@ btnPublishConsent.addEventListener('click', function(){
 
 /* ---- Zona de peligro ---- */
 document.getElementById('btnDeleteProspect').addEventListener('click', function(){
-  if(!confirm('¿Eliminar "{{ prospect.name|escapejs }}" de forma permanente? Esto no se puede deshacer.')) return;
+  if(!confirm(t('detail.confirm_delete_prospect').replace('{name}', '{{ prospect.name|escapejs }}'))) return;
   postJson(BASE + 'delete/').then(function(res){
     if(res.data.error){ showToast(res.data.error); return; }
-    showToast('Empresa eliminada');
+    showToast(t('detail.toast_prospect_deleted'));
     setTimeout(function(){ window.location.href = '/panel/prospeccion/mapa/'; }, 600);
   });
 });
+
+/* ---- i18n RU/ES ---- */
+var T = {
+  es: {
+    page_title: '{{ prospect.name|escapejs }} — Prospección',
+    'detail.back_map': '← Mapa',
+    'detail.site_link': '🌐 Ir a la web',
+    'detail.score_label': 'Puntuación actual:',
+    'detail.score_explain': 'Es una nota de 0 a 100 que resume qué tan bien está preparado el negocio en internet (web, WhatsApp, reservas online…) — cuanto más alta, menos trabajo de mejora necesita.',
+    'detail.view_gmaps': '📷 Ver en Google Maps (fotos, menú, reseñas…)',
+    'detail.btn_chequeo': '🩺 Hacer chequeo',
+    'detail.btn_contacto': '👤 Añadir contacto',
+    'detail.btn_propuesta': '📋 Preparar propuesta',
+    'detail.status_section_title': 'Estado y responsable',
+    'detail.status_explain': 'La «etapa» es en qué punto del proceso de venta está esta empresa (descubierta, contactada, auditada, ganada…) — el color del punto en el mapa es siempre el mismo que el de esta etiqueta.',
+    'detail.label_stage': 'Etapa',
+    'detail.label_priority': 'Prioridad',
+    'detail.priority_low': 'Baja',
+    'detail.priority_normal': 'Normal',
+    'detail.priority_high': 'Alta',
+    'detail.label_responsible': 'Responsable',
+    'detail.unassigned': 'Sin asignar',
+    'detail.label_notes': 'Notas del equipo',
+    'detail.btn_save': 'Guardar',
+    'detail.prelim_section_title': 'Auditoría preliminar',
+    'detail.prelim_last_preliminar': 'Último preliminar:',
+    'detail.prelim_last_confirmado': 'Último confirmado:',
+    'detail.label_sector_template': 'Sector del negocio',
+    'detail.prelim_loading': 'Cargando preguntas…',
+    'detail.btn_prelim_draft': '💾 Guardar borrador',
+    'detail.btn_prelim_complete': '✔ Calcular y completar auditoría',
+    'detail.prelim_draft_note': 'El borrador se guarda solo en este navegador/sesión (no es visible para otro compañero ni desde otro dispositivo) hasta que pulses «Calcular y completar auditoría», que sí queda guardado para siempre.',
+    'detail.link_section_title': 'Enlace personal del chequeo',
+    'detail.link_explain': 'Compártelo con la empresa para que confirme/corrija el chequeo ya pre-rellenado.',
+    'detail.btn_copy_link': '📋 Copiar enlace',
+    'detail.btn_whatsapp_link': '💬 Enviar por WhatsApp',
+    'detail.btn_pdf': '📄 Abrir resultado (PDF)',
+    'detail.crm_section_title': 'CRM',
+    'detail.crm_already_converted': 'Ya convertido en cliente:',
+    'detail.crm_view_lead': 'ver ficha en el CRM →',
+    'detail.btn_draft_proposal': 'Crear borrador de presupuesto',
+    'detail.crm_not_converted': 'Todavía no está en el CRM. Al convertir se usará como contacto:',
+    'detail.btn_convert': 'Convertir en cliente',
+    'detail.btn_convert_and_draft': 'Convertir y crear presupuesto',
+    'detail.contacts_section_title': 'Contactos',
+    'detail.contacts_explain': 'Dos consentimientos distintos, cada uno se pide y se revoca por separado: «Recibir informe» es para poder enviarle el resultado del chequeo, y «Contacto comercial» es para poder escribirle ofreciendo el servicio.',
+    'detail.no_name': '(sin nombre)',
+    'detail.primary_tag': 'principal',
+    'detail.consent_report_label': 'Recibir informe',
+    'detail.consent_commercial_label': 'Contacto comercial',
+    'detail.consent_granted': 'Concedido',
+    'detail.consent_revoked': 'Revocado',
+    'detail.consent_none': 'Sin registrar',
+    'detail.btn_grant': 'Conceder',
+    'detail.btn_revoke': 'Revocar',
+    'detail.consent_actor_label': '¿Quién registra este consentimiento? (tu nombre)',
+    'detail.consent_actor_placeholder': 'Tu nombre',
+    'detail.btn_edit': '✎ Editar',
+    'detail.btn_delete': '🗑 Eliminar',
+    'detail.no_contacts': 'Sin contactos registrados todavía.',
+    'detail.add_contact_title': 'Añadir contacto',
+    'detail.label_name': 'Nombre',
+    'detail.label_role': 'Rol',
+    'detail.label_phone': 'Teléfono',
+    'detail.label_channel': 'Canal preferido',
+    'detail.label_is_primary': 'Es el contacto principal',
+    'detail.label_contact_notes': 'Notas',
+    'detail.btn_save_contact': 'Guardar contacto',
+    'detail.btn_save_contact_changes': 'Guardar cambios',
+    'detail.btn_cancel_edit': 'Cancelar edición',
+    'detail.photos_section_title': 'Fotos',
+    'detail.photos_explain': 'Haz fotos frescas del negocio desde varios ángulos (fachada, interior, detalles) — no se publican en ningún sitio automáticamente, son referencia interna del equipo.',
+    'detail.no_photos': 'Todavía no hay fotos de este negocio.',
+    'detail.label_add_photos': 'Añadir fotos (puedes elegir varias a la vez, o hacerlas directamente con la cámara del móvil)',
+    'detail.btn_upload_photos': '📸 Subir fotos',
+    'detail.publication_section_title': 'Consentimientos de publicación',
+    'detail.pub_visible': '✓ Visible',
+    'detail.pub_not_visible': '✕ No publicable',
+    'detail.pub_visible_full': '✓ Visible en mapa público',
+    'detail.pub_consent_label': 'Consentimiento de publicación de la empresa',
+    'detail.pub_consent_explain': 'Normalmente se marca solo — hay una casilla (marcada por defecto) al final del chequeo personal que la propia empresa puede desmarcar. Este botón es solo para forzarlo a mano si hace falta. Es la única condición para aparecer en el mapa público, no hay un segundo paso.',
+    'detail.btn_revoke_pub_consent': 'Revocar consentimiento',
+    'detail.btn_grant_pub_consent': 'Registrar consentimiento',
+    'detail.history_section_title': 'Historial de chequeos',
+    'detail.no_audits': 'Todavía no se ha hecho ningún chequeo para esta empresa.',
+    'detail.th_date': 'Fecha',
+    'detail.th_mode': 'Modo',
+    'detail.th_stage': 'Etapa',
+    'detail.th_score': 'Puntuación',
+    'detail.danger_title': 'Zona de peligro',
+    'detail.danger_explain': 'Elimina esta ficha de prospección de forma permanente: historial de chequeos, contactos y fotos se borran con ella.',
+    'detail.danger_converted_warning': 'Esta empresa ya está convertida en cliente',
+    'detail.danger_converted_link': 'su ficha en el CRM',
+    'detail.view_record': 'ver ficha',
+    'detail.danger_converted_note': 'no se borrará, pero perderá el enlace a este historial de prospección.',
+    'detail.btn_delete_prospect': '🗑 Eliminar esta empresa',
+    'detail.toast_saved': 'Guardado',
+    'detail.toast_link_copied': 'Enlace copiado',
+    'detail.toast_questions_error': 'No se pudieron cargar las preguntas',
+    'detail.toast_draft_saved': 'Borrador guardado ({count} respuestas)',
+    'detail.toast_answer_one': 'Responde al menos una pregunta',
+    'detail.toast_audit_created': 'Auditoría preliminar creada: {score}/100',
+    'detail.confirm_delete_contact': '¿Eliminar este contacto?',
+    'detail.toast_contact_deleted': 'Contacto eliminado',
+    'detail.toast_edit_hint': 'Edita los campos y pulsa "Guardar cambios" — los valores actuales no se han precargado, corrígelos si hace falta.',
+    'detail.toast_actor_required': 'Indica quién registra este consentimiento',
+    'detail.toast_consent_updated': 'Consentimiento actualizado',
+    'detail.toast_contact_updated': 'Contacto actualizado',
+    'detail.toast_contact_added': 'Contacto añadido',
+    'detail.toast_choose_photo': 'Elige al menos una foto',
+    'detail.toast_photos_uploaded': '{count} foto(s) subida(s)',
+    'detail.toast_photos_error': 'No se pudieron subir las fotos',
+    'detail.confirm_delete_photo': '¿Eliminar esta foto?',
+    'detail.toast_photo_deleted': 'Foto eliminada',
+    'detail.confirm_delete_prospect': '¿Eliminar "{name}" de forma permanente? Esto no se puede deshacer.',
+    'detail.toast_prospect_deleted': 'Empresa eliminada',
+  },
+  ru: {
+    page_title: '{{ prospect.name|escapejs }} — Проспекция',
+    'detail.back_map': '← Карта',
+    'detail.site_link': '🌐 На сайт',
+    'detail.score_label': 'Текущая оценка:',
+    'detail.score_explain': 'Число от 0 до 100 — насколько хорошо бизнес представлен в интернете (сайт, WhatsApp, онлайн-запись…). Чем выше, тем меньше нужно улучшать.',
+    'detail.view_gmaps': '📷 Открыть в Google Maps (фото, меню, отзывы…)',
+    'detail.btn_chequeo': '🩺 Сделать проверку',
+    'detail.btn_contacto': '👤 Добавить контакт',
+    'detail.btn_propuesta': '📋 Подготовить предложение',
+    'detail.status_section_title': 'Статус и ответственный',
+    'detail.status_explain': '«Этап» — это на каком шаге процесса продажи находится компания (найдена, на связи, проверена, стала клиентом…). Цвет этой метки всегда совпадает с цветом точки на карте.',
+    'detail.label_stage': 'Этап',
+    'detail.label_priority': 'Приоритет',
+    'detail.priority_low': 'Низкий',
+    'detail.priority_normal': 'Обычный',
+    'detail.priority_high': 'Высокий',
+    'detail.label_responsible': 'Ответственный',
+    'detail.unassigned': 'Не назначен',
+    'detail.label_notes': 'Заметки команды',
+    'detail.btn_save': 'Сохранить',
+    'detail.prelim_section_title': 'Предварительная проверка',
+    'detail.prelim_last_preliminar': 'Последняя предварительная:',
+    'detail.prelim_last_confirmado': 'Последняя подтверждённая:',
+    'detail.label_sector_template': 'Сфера бизнеса',
+    'detail.prelim_loading': 'Загрузка вопросов…',
+    'detail.btn_prelim_draft': '💾 Сохранить черновик',
+    'detail.btn_prelim_complete': '✔ Рассчитать и завершить проверку',
+    'detail.prelim_draft_note': 'Черновик сохраняется только в этом браузере/сессии (не виден коллегам и с другого устройства), пока вы не нажмёте «Рассчитать и завершить проверку» — это уже сохраняется навсегда.',
+    'detail.link_section_title': 'Персональная ссылка на проверку',
+    'detail.link_explain': 'Отправьте её компании, чтобы она подтвердила/поправила уже предзаполненную проверку.',
+    'detail.btn_copy_link': '📋 Скопировать ссылку',
+    'detail.btn_whatsapp_link': '💬 Отправить в WhatsApp',
+    'detail.btn_pdf': '📄 Открыть результат (PDF)',
+    'detail.crm_section_title': 'CRM',
+    'detail.crm_already_converted': 'Уже стала клиентом:',
+    'detail.crm_view_lead': 'открыть карточку в CRM →',
+    'detail.btn_draft_proposal': 'Создать черновик сметы',
+    'detail.crm_not_converted': 'Пока не в CRM. При переводе в клиенты будет использован контакт:',
+    'detail.btn_convert': 'Сделать клиентом',
+    'detail.btn_convert_and_draft': 'Сделать клиентом и создать смету',
+    'detail.contacts_section_title': 'Контакты',
+    'detail.contacts_explain': 'Два разных согласия, каждое запрашивается и отзывается отдельно: «Получать отчёт» — чтобы можно было отправить результат проверки, «Коммерческий контакт» — чтобы можно было написать с предложением услуги.',
+    'detail.no_name': '(без имени)',
+    'detail.primary_tag': 'основной',
+    'detail.consent_report_label': 'Получать отчёт',
+    'detail.consent_commercial_label': 'Коммерческий контакт',
+    'detail.consent_granted': 'Разрешено',
+    'detail.consent_revoked': 'Отозвано',
+    'detail.consent_none': 'Не зарегистрировано',
+    'detail.btn_grant': 'Разрешить',
+    'detail.btn_revoke': 'Отозвать',
+    'detail.consent_actor_label': 'Кто регистрирует это согласие? (ваше имя)',
+    'detail.consent_actor_placeholder': 'Ваше имя',
+    'detail.btn_edit': '✎ Изменить',
+    'detail.btn_delete': '🗑 Удалить',
+    'detail.no_contacts': 'Контактов пока нет.',
+    'detail.add_contact_title': 'Добавить контакт',
+    'detail.label_name': 'Имя',
+    'detail.label_role': 'Роль',
+    'detail.label_phone': 'Телефон',
+    'detail.label_channel': 'Предпочитаемый канал',
+    'detail.label_is_primary': 'Это основной контакт',
+    'detail.label_contact_notes': 'Заметки',
+    'detail.btn_save_contact': 'Сохранить контакт',
+    'detail.btn_save_contact_changes': 'Сохранить изменения',
+    'detail.btn_cancel_edit': 'Отменить редактирование',
+    'detail.photos_section_title': 'Фото',
+    'detail.photos_explain': 'Сделайте свежие фото бизнеса с разных ракурсов (фасад, интерьер, детали) — они нигде не публикуются автоматически, это внутренняя справка команды.',
+    'detail.no_photos': 'Фото этого бизнеса пока нет.',
+    'detail.label_add_photos': 'Добавить фото (можно выбрать сразу несколько или снять прямо камерой телефона)',
+    'detail.btn_upload_photos': '📸 Загрузить фото',
+    'detail.publication_section_title': 'Согласия на публикацию',
+    'detail.pub_visible': '✓ Видно',
+    'detail.pub_not_visible': '✕ Не публикуется',
+    'detail.pub_visible_full': '✓ Видно на публичной карте',
+    'detail.pub_consent_label': 'Согласие компании на публикацию',
+    'detail.pub_consent_explain': 'Обычно ставится само — в конце персональной проверки есть галочка (по умолчанию отмечена), которую сама компания может снять. Эта кнопка — только чтобы поставить/снять вручную при необходимости. Это единственное условие для появления на публичной карте, второго шага нет.',
+    'detail.btn_revoke_pub_consent': 'Отозвать согласие',
+    'detail.btn_grant_pub_consent': 'Зарегистрировать согласие',
+    'detail.history_section_title': 'История проверок',
+    'detail.no_audits': 'Проверок для этой компании ещё не было.',
+    'detail.th_date': 'Дата',
+    'detail.th_mode': 'Режим',
+    'detail.th_stage': 'Этап',
+    'detail.th_score': 'Оценка',
+    'detail.danger_title': 'Опасная зона',
+    'detail.danger_explain': 'Удаляет эту карточку проспекции навсегда: история проверок, контакты и фото удаляются вместе с ней.',
+    'detail.danger_converted_warning': 'Эта компания уже стала клиентом',
+    'detail.danger_converted_link': 'её карточка в CRM',
+    'detail.view_record': 'открыть карточку',
+    'detail.danger_converted_note': 'не удалится, но потеряет ссылку на эту историю проспекции.',
+    'detail.btn_delete_prospect': '🗑 Удалить эту компанию',
+    'detail.toast_saved': 'Сохранено',
+    'detail.toast_link_copied': 'Ссылка скопирована',
+    'detail.toast_questions_error': 'Не удалось загрузить вопросы',
+    'detail.toast_draft_saved': 'Черновик сохранён ({count} ответов)',
+    'detail.toast_answer_one': 'Ответьте хотя бы на один вопрос',
+    'detail.toast_audit_created': 'Предварительная проверка создана: {score}/100',
+    'detail.confirm_delete_contact': 'Удалить этот контакт?',
+    'detail.toast_contact_deleted': 'Контакт удалён',
+    'detail.toast_edit_hint': 'Отредактируйте поля и нажмите «Сохранить изменения» — текущие значения не подставлены автоматически, впишите их заново, если нужно.',
+    'detail.toast_actor_required': 'Укажите, кто регистрирует это согласие',
+    'detail.toast_consent_updated': 'Согласие обновлено',
+    'detail.toast_contact_updated': 'Контакт обновлён',
+    'detail.toast_contact_added': 'Контакт добавлен',
+    'detail.toast_choose_photo': 'Выберите хотя бы одно фото',
+    'detail.toast_photos_uploaded': 'Загружено фото: {count}',
+    'detail.toast_photos_error': 'Не удалось загрузить фото',
+    'detail.confirm_delete_photo': 'Удалить это фото?',
+    'detail.toast_photo_deleted': 'Фото удалено',
+    'detail.confirm_delete_prospect': 'Удалить «{name}» навсегда? Это нельзя отменить.',
+    'detail.toast_prospect_deleted': 'Компания удалена',
+  },
+};
+
+var t = function(k){ return k; };
+
+function applyDetailLang(lang){
+  t = wiApplyI18n(T, lang);
+  document.querySelectorAll('[data-status-id]').forEach(function(el){
+    el.textContent = wiCodeLabel('salesStatus', el.getAttribute('data-status-id'), lang);
+  });
+  document.querySelectorAll('[data-sector-code]').forEach(function(el){
+    el.textContent = wiCodeLabel('sector', el.getAttribute('data-sector-code'), lang);
+  });
+  document.querySelectorAll('[data-role-code]').forEach(function(el){
+    el.textContent = wiCodeLabel('contactRole', el.getAttribute('data-role-code'), lang);
+  });
+  document.querySelectorAll('[data-mode-code]').forEach(function(el){
+    el.textContent = wiCodeLabel('auditMode', el.getAttribute('data-mode-code'), lang);
+  });
+  document.querySelectorAll('[data-stage-code]').forEach(function(el){
+    el.textContent = wiCodeLabel('auditStage', el.getAttribute('data-stage-code'), lang);
+  });
+  document.querySelectorAll('#statusSelect option[data-code], #prelimSector option[data-code]').forEach(function(el){
+    el.textContent = wiCodeLabel(el.parentElement.id === 'statusSelect' ? 'salesStatus' : 'sector', el.getAttribute('data-code'), lang);
+  });
+  document.querySelectorAll('select[name="role"] option[data-code]').forEach(function(el){
+    el.textContent = wiCodeLabel('contactRole', el.getAttribute('data-code'), lang);
+  });
+  document.querySelectorAll('select[name="preferred_channel"] option[data-code]').forEach(function(el){
+    el.textContent = wiCodeLabel('channel', el.getAttribute('data-code'), lang);
+  });
+}
+wiWireLangSwitcher(applyDetailLang);
 
 </script>
 </body>
