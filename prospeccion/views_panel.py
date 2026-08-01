@@ -340,10 +340,45 @@ def places_nearby(request):
     })
 
 
-# Se muestran siempre estas dos filas en el widget/estadísticas aunque el mes
-# todavía no tenga ninguna llamada — son las únicas dos que produce este CRM
-# hoy (Place Details lo usa el proyecto `anna`, no este).
-_PRIMARY_REQUEST_TYPES = ('nearby_search_enterprise', 'text_search_enterprise')
+@_crm_auth
+@require_GET
+def place_details_view(request):
+    """Ficha de un icono de negocio del mapa BASE de Google (no uno de
+    nuestros marcadores) — botón "🔍 Obtener info" del popup que se muestra
+    al hacer clic. A diferencia de "Añadir directamente" (que no llama a
+    Google en absoluto), esto SÍ gasta una unidad de cuota — solo cuando el
+    equipo decide activamente que necesita ver si el negocio ya tiene web
+    antes de actuar."""
+    place_id = (request.GET.get('place_id') or '').strip()
+    if not place_id:
+        return JsonResponse({'error': 'Falta place_id'}, status=400)
+
+    try:
+        result = places.get_place_details(place_id)
+    except places.PlacesQuotaExceeded as e:
+        return _places_quota_response(e)
+    except places.PlacesConfigError as e:
+        return JsonResponse({'error': str(e)})
+    except Exception:
+        logger.exception('Error obteniendo ficha de Google Places: place_id=%r', place_id)
+        return JsonResponse({'error': 'No se pudo consultar Google Places en este momento'})
+
+    dup = None
+    if result['lat'] is not None and result['lng'] is not None:
+        dup = find_duplicate(
+            result['name'], result['phone'], '', result['website'], result['lat'], result['lng'],
+            google_place_id=result['place_id'],
+        )
+    result['existing_prospect_id'] = dup.pk if dup else None
+    result['detail_url'] = f'/panel/prospeccion/{dup.pk}/' if dup else None
+    return JsonResponse({'place': result})
+
+
+# Se muestran siempre estas filas en el widget/estadísticas aunque el mes
+# todavía no tenga ninguna llamada — son los tres tipos que puede producir
+# este CRM (place_details_enterprise, desde el botón "Obtener info" del
+# popup de iconos del mapa base).
+_PRIMARY_REQUEST_TYPES = ('nearby_search_enterprise', 'text_search_enterprise', 'place_details_enterprise')
 
 
 def _mode_label(log):

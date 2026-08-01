@@ -26,6 +26,7 @@ from .models import PlacesApiLimitNotification, PlacesApiMonthlyCounter, PlacesA
 
 TEXT_SEARCH_URL = 'https://places.googleapis.com/v1/places:searchText'
 NEARBY_SEARCH_URL = 'https://places.googleapis.com/v1/places:searchNearby'
+PLACE_DETAILS_URL = 'https://places.googleapis.com/v1/places'
 
 # Solo lo que el equipo necesita ver y confirmar antes de crear un prospect.
 # Nunca reviews, photos, rating, ni regularOpeningHours.
@@ -360,6 +361,69 @@ def search_nearby(lat, lng, radius_m=1000):
         coordinates_hash=coordinates_hash, radius_m=radius,
     )
     return results
+
+
+def get_place_details(place_id):
+    """Ficha de UN lugar concreto por su place_id — se usa cuando el equipo
+    hace clic en un icono de negocio del mapa base de Google (no uno de
+    nuestros propios marcadores) y pulsa "Obtener info". Deliberadamente
+    separado de "Añadir directamente" (que no llama a Google en absoluto):
+    esta llamada solo se hace cuando el equipo decide activamente que
+    necesita saber más (p. ej. si el negocio ya tiene web) antes de actuar.
+    Mismo field mask mínimo y mismo control de cuota que search_text/
+    search_nearby, bajo su propio tipo/SKU: place_details_enterprise."""
+    if not settings.GOOGLE_PLACES_API_KEY:
+        raise PlacesConfigError('GOOGLE_PLACES_API_KEY no configurado')
+
+    request_type = request_type_for('place_details')
+    billing_month, _used = _reserve_call(request_type)
+
+    start = time.perf_counter()
+    try:
+        resp = requests.get(
+            f'{PLACE_DETAILS_URL}/{place_id}',
+            headers={
+                'X-Goog-Api-Key': settings.GOOGLE_PLACES_API_KEY,
+                'X-Goog-FieldMask': FIELD_MASK,
+            },
+            timeout=REQUEST_TIMEOUT,
+        )
+        resp.raise_for_status()
+        result = _map_place_details(resp.json())
+    except Exception as exc:
+        duration_ms = int((time.perf_counter() - start) * 1000)
+        status = getattr(getattr(exc, 'response', None), 'status_code', None)
+        _finalize_call(request_type, billing_month, success=False)
+        _log_request(
+            request_type=request_type, billing_month=billing_month, endpoint='places/{place_id}',
+            success=False, response_status=status, error_type=type(exc).__name__, duration_ms=duration_ms,
+        )
+        raise
+
+    duration_ms = int((time.perf_counter() - start) * 1000)
+    _finalize_call(request_type, billing_month, success=True)
+    _log_request(
+        request_type=request_type, billing_month=billing_month, endpoint='places/{place_id}',
+        success=True, response_status=resp.status_code, result_count=1, duration_ms=duration_ms,
+    )
+    return result
+
+
+def _map_place_details(place):
+    loc = place.get('location') or {}
+    types = place.get('types') or []
+    return {
+        'place_id': place.get('id', ''),
+        'name': (place.get('displayName') or {}).get('text', ''),
+        'address': place.get('formattedAddress', ''),
+        'lat': loc.get('latitude'),
+        'lng': loc.get('longitude'),
+        'category': guess_sector(types),
+        'category_raw': place.get('primaryType', ''),
+        'phone': place.get('nationalPhoneNumber') or place.get('internationalPhoneNumber') or '',
+        'website': place.get('websiteUri', ''),
+        'google_maps_url': place.get('googleMapsUri', ''),
+    }
 
 
 _COORD_RE = re.compile(r'@(-?\d+\.\d+),(-?\d+\.\d+)')

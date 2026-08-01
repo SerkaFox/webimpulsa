@@ -1054,6 +1054,90 @@ class PlacesUsageEndpointsTests(BaseTestCase):
         self.assertEqual(notifs.filter(threshold=70).count(), 1)  # nunca duplicado
 
 
+def _fake_place_details_response(place=None):
+    fake_response = mock.Mock()
+    fake_response.raise_for_status = mock.Mock()
+    fake_response.status_code = 200
+    fake_response.json.return_value = place or {
+        'id': 'ChIJpoi1', 'displayName': {'text': 'Panadería del Icono'},
+        'formattedAddress': 'Plaza Mayor 1, Barakaldo',
+        'location': {'latitude': 43.29, 'longitude': -2.99},
+        'types': ['bakery'], 'primaryType': 'bakery',
+        'nationalPhoneNumber': '944 111 111', 'websiteUri': '',
+        'googleMapsUri': 'https://maps.google.com/?cid=1',
+    }
+    return fake_response
+
+
+class PlaceDetailsTests(TestCase):
+    """Botón "Obtener info" del popup de un icono del mapa BASE de Google
+    (no uno de nuestros marcadores) — usa Place Details, un tercer tipo de
+    request/SKU separado de search_text/search_nearby, con su propio
+    contador y límite (GOOGLE_PLACES_PLACE_DETAILS_ENTERPRISE_MONTHLY_LIMIT)."""
+
+    @override_settings(GOOGLE_PLACES_API_KEY='fake-key-for-tests')
+    def test_get_place_details_uses_minimal_field_mask_and_get_method(self):
+        with mock.patch('prospeccion.places.requests.get', return_value=_fake_place_details_response()) as mocked_get:
+            result = places.get_place_details('ChIJpoi1')
+        args, kwargs = mocked_get.call_args
+        self.assertIn('ChIJpoi1', args[0])
+        self.assertEqual(kwargs['headers']['X-Goog-FieldMask'], places.FIELD_MASK)
+        self.assertEqual(result['name'], 'Panadería del Icono')
+        self.assertEqual(result['category'], 'bar')  # bakery -> bar (mismo mapeo que guess_sector)
+        for forbidden_key in ('reviews', 'photos', 'rating', 'regularOpeningHours'):
+            self.assertNotIn(forbidden_key, result)
+
+    @override_settings(GOOGLE_PLACES_API_KEY='fake-key-for-tests', GOOGLE_PLACES_PLACE_DETAILS_ENTERPRISE_MONTHLY_LIMIT=1)
+    def test_place_details_has_its_own_independent_counter(self):
+        with mock.patch('prospeccion.places.requests.get', return_value=_fake_place_details_response()) as mocked_get:
+            places.get_place_details('ChIJpoi1')  # consume el único cupo de place_details
+            with self.assertRaises(places.PlacesQuotaExceeded) as ctx:
+                places.get_place_details('ChIJpoi2')
+        self.assertEqual(mocked_get.call_count, 1)  # la 2ª ni siquiera llamó a Google
+        self.assertEqual(ctx.exception.request_type, 'place_details_enterprise')
+        # no afecta a los contadores de search_text/search_nearby
+        month = places.billing_month_for()
+        self.assertFalse(
+            PlacesApiMonthlyCounter.objects.filter(billing_month=month, request_type='nearby_search_enterprise').exists()
+        )
+
+
+class PlaceDetailsViewTests(BaseTestCase):
+    def test_place_details_view_requires_place_id(self):
+        c = self.login()
+        r = c.get('/panel/prospeccion/mapa/api/place-details/')
+        self.assertEqual(r.status_code, 400)
+
+    def test_place_details_view_requires_crm_login(self):
+        r = Client().get('/panel/prospeccion/mapa/api/place-details/', {'place_id': 'ChIJpoi1'})
+        self.assertNotEqual(r.get('Content-Type'), 'application/json')
+
+    def test_place_details_view_returns_place_and_flags_existing_prospect(self):
+        BusinessProspect.objects.create(
+            name='Panadería del Icono', sector='bar', lat=43.29, lng=-2.99, google_place_id='ChIJpoi1',
+        )
+        c = self.login()
+        with mock.patch('prospeccion.places.requests.get', return_value=_fake_place_details_response()):
+            r = c.get('/panel/prospeccion/mapa/api/place-details/', {'place_id': 'ChIJpoi1'})
+        self.assertEqual(r.status_code, 200)
+        data = json.loads(r.content)
+        self.assertEqual(data['place']['name'], 'Panadería del Icono')
+        self.assertIsNotNone(data['place']['existing_prospect_id'])
+        self.assertIn('/panel/prospeccion/', data['place']['detail_url'])
+
+    def test_place_details_view_returns_429_when_blocked(self):
+        c = self.login()
+        exc = places.PlacesQuotaExceeded(
+            request_type='place_details_enterprise', used=900, limit=900, billing_month='2026-08',
+        )
+        with mock.patch('prospeccion.views_panel.places.get_place_details', side_effect=exc):
+            r = c.get('/panel/prospeccion/mapa/api/place-details/', {'place_id': 'ChIJpoi1'})
+        self.assertEqual(r.status_code, 429)
+        data = json.loads(r.content)
+        self.assertEqual(data['code'], 'google_places_monthly_limit_reached')
+        self.assertEqual(data['request_type'], 'place_details_enterprise')
+
+
 class AddFromPlaceTests(BaseTestCase):
     def test_create_from_confirmed_place_stores_only_whitelisted_fields(self):
         c = self.login()

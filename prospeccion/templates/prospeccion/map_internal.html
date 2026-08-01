@@ -227,6 +227,11 @@
           <div class="puw-bar"><div class="puw-bar-fill" id="puwTextFill"></div></div>
           <div class="puw-sub" id="puwTextSub"></div>
         </div>
+        <div class="puw-row" data-type="place_details_enterprise">
+          <div class="puw-row-top"><span>Place Details Enterprise</span><span id="puwDetailsNums">—</span></div>
+          <div class="puw-bar"><div class="puw-bar-fill" id="puwDetailsFill"></div></div>
+          <div class="puw-sub" id="puwDetailsSub"></div>
+        </div>
         <div class="puw-today"><span data-i18n="map.puw_today">Hoy:</span> <strong id="puwToday">—</strong> <span data-i18n="map.puw_requests">peticiones</span></div>
         <div id="puwWarnings"></div>
         <div class="puw-cost" id="puwCost"></div>
@@ -399,6 +404,7 @@ var map = null;
 var markers = [];
 var searchMarkers = [];
 var userLocation = null;
+var poiInfoWindow = null;
 
 function showToast(msg){
   var t = document.getElementById('toast');
@@ -421,8 +427,18 @@ window.wiInitMap = function(){
   });
   map.addListener('idle', reloadMapProspects);
   map.addListener('click', function(ev){
-    if(!manualModeActive) return;
-    placeManualMarker(ev.latLng.lat(), ev.latLng.lng());
+    if(manualModeActive){
+      placeManualMarker(ev.latLng.lat(), ev.latLng.lng());
+      return;
+    }
+    // Icono de negocio del mapa BASE de Google (no un marcador nuestro) —
+    // se corta el popup nativo de Google y se muestra el nuestro, con dos
+    // acciones: una que gasta cuota (Obtener info) y otra que no (Añadir
+    // directamente), ver showPoiPopup().
+    if(ev.placeId){
+      ev.stop();
+      showPoiPopup(ev.placeId, ev.latLng);
+    }
   });
   reloadMapProspects();
 };
@@ -887,6 +903,7 @@ function refreshPlacesUsage(){
 
       var nearby = data.by_type.nearby_search_enterprise;
       var text = data.by_type.text_search_enterprise;
+      var details = data.by_type.place_details_enterprise;
 
       function paint(prefix, stats){
         var cls = puwBarClass(stats.percent, stats.blocked);
@@ -898,15 +915,19 @@ function refreshPlacesUsage(){
       }
       paint('puwNearby', nearby);
       paint('puwText', text);
+      if(details) paint('puwDetails', details);
 
-      // Índice compacto del <summary> (colapsado por defecto): lo ya hecho
-      // hoy + el peor de los dos SKU como "X / límite", con el mismo color
-      // que su barra — para ver de un vistazo sin tener que desplegar.
-      var worst = nearby.percent >= text.percent ? nearby : text;
+      // Índice compacto del <summary> (colapsado por defecto): data.month_
+      // total ya incluye TODO lo del mes (los 3 tipos + lo histórico
+      // "legacy_unknown" migrado del contador anterior) — igual que
+      // today_total, para que ambas cifras midan lo mismo y no confundan
+      // (antes solo sumaba nearby+text, sin lo histórico del propio día).
+      var worst = [nearby, text, details].filter(Boolean).reduce(function(a,b){ return b.percent > a.percent ? b : a; });
       var worstCls = puwBarClass(worst.percent, worst.blocked);
+      var combinedLimit = nearby.limit + text.limit + (details ? details.limit : 0);
       document.getElementById('puwSummaryDot').className = 'puw-dot ' + worstCls;
       document.getElementById('puwSummaryText').textContent =
-        data.today_total + ' hoy · ' + (nearby.used + text.used) + ' / ' + (nearby.limit + text.limit) + ' este mes';
+        data.today_total + ' hoy · ' + data.month_total + ' / ' + combinedLimit + ' este mes';
 
       var warningsEl = document.getElementById('puwWarnings');
       warningsEl.innerHTML = (data.warnings || []).map(function(w){
@@ -994,6 +1015,92 @@ function placeManualMarker(lat, lng){
     document.getElementById('cCoordsHint').textContent = 'Ubicación: ' + pos.lat().toFixed(5) + ', ' + pos.lng().toFixed(5);
   });
   openConfirmPanel({fromManual: true, lat: lat, lng: lng});
+}
+
+/* ---- Icono de negocio del mapa BASE de Google (no un marcador nuestro) ----
+   Dos acciones deliberadamente separadas:
+   - "Obtener info": SÍ gasta una unidad de cuota (Place Details) — para
+     cuando el equipo encontró el negocio mirando el mapa y necesita saber
+     si ya tiene web antes de decidir qué ofrecerle.
+   - "Añadir directamente": NO llama a Google en absoluto — para cuando es
+     el propio cliente quien señala su negocio y dice "no tengo web", y no
+     hace falta gastar cuota para confirmar algo que ya te están diciendo. */
+function poiGmapsUrl(placeId){
+  return 'https://www.google.com/maps/place/?q=place_id:' + encodeURIComponent(placeId);
+}
+
+function showPoiPopup(placeId, latLng){
+  if(poiInfoWindow) poiInfoWindow.close();
+  var gmapsUrl = poiGmapsUrl(placeId);
+  poiInfoWindow = new google.maps.InfoWindow({
+    position: latLng,
+    content:
+      '<div style="font-family:inherit;min-width:200px">' +
+      '<div style="font-weight:700;margin-bottom:8px">Negocio del mapa</div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px">' +
+      '<button type="button" class="btn sm" id="poiGetInfoBtn">🔍 Obtener info</button>' +
+      '<button type="button" class="btn sm green" id="poiAddDirectBtn">➕ Añadir directamente</button>' +
+      '<a href="'+gmapsUrl+'" target="_blank" rel="noopener" style="font-size:.78rem">📷 Ver en Google Maps</a>' +
+      '</div></div>',
+  });
+  poiInfoWindow.open(map);
+  google.maps.event.addListenerOnce(poiInfoWindow, 'domready', function(){
+    var infoBtn = document.getElementById('poiGetInfoBtn');
+    var addBtn = document.getElementById('poiAddDirectBtn');
+    if(infoBtn) infoBtn.addEventListener('click', function(){ fetchPoiDetails(placeId, latLng); });
+    if(addBtn) addBtn.addEventListener('click', function(){
+      poiInfoWindow.close();
+      openConfirmPanel({fromLink: true, lat: latLng.lat(), lng: latLng.lng(), name: '', gmapsUrl: gmapsUrl});
+    });
+  });
+}
+
+function fetchPoiDetails(placeId, latLng){
+  if(!poiInfoWindow) return;
+  poiInfoWindow.setContent('<div style="font-family:inherit;font-size:.85rem;padding:2px">Consultando Google…</div>');
+
+  fetch('/panel/prospeccion/mapa/api/place-details/?place_id=' + encodeURIComponent(placeId))
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(!poiInfoWindow) return;
+      if(data.ok === false && data.code === 'google_places_monthly_limit_reached'){
+        poiInfoWindow.setContent(
+          '<div style="font-family:inherit;font-size:.8rem;color:#7f1d1d;max-width:220px">🚫 '+data.message+'</div>'
+        );
+        refreshPlacesUsage();
+        return;
+      }
+      if(data.error){
+        poiInfoWindow.setContent('<div style="font-family:inherit;font-size:.8rem;color:#dc2626">'+data.error+'</div>');
+        return;
+      }
+      var p = data.place;
+      var web = websiteBadge(resolveHasWebsite(p));
+      var gmapsUrl = p.google_maps_url || poiGmapsUrl(placeId);
+      var actionBtn = p.existing_prospect_id
+        ? '<a class="btn sm secondary" href="'+p.detail_url+'">📇 Ver ficha</a>'
+        : '<button type="button" class="btn sm" id="poiAddFoundBtn">➕ Añadir a CreaGanaWeb</button>';
+      poiInfoWindow.setContent(
+        '<div style="font-family:inherit;min-width:220px">' +
+        '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>' +
+        '<strong>'+(p.name || 'Sin nombre')+'</strong><br>' +
+        '<div style="color:#5a6d8c;font-size:.8rem;margin:2px 0 8px">'+(p.address||'')+'</div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap">' + actionBtn +
+        '<a class="btn sm ghost" href="'+gmapsUrl+'" target="_blank" rel="noopener">📷 Google Maps</a>' +
+        '</div></div>'
+      );
+      google.maps.event.addListenerOnce(poiInfoWindow, 'domready', function(){
+        var addBtn = document.getElementById('poiAddFoundBtn');
+        if(addBtn) addBtn.addEventListener('click', function(){
+          poiInfoWindow.close();
+          openConfirmPanel({fromGoogle: true, place: p});
+        });
+      });
+      refreshPlacesUsage();
+    })
+    .catch(function(){
+      if(poiInfoWindow) poiInfoWindow.setContent('<div style="font-family:inherit;font-size:.8rem">No se pudo consultar Google Places.</div>');
+    });
 }
 
 /* ---- Usar mi ubicación ---- */

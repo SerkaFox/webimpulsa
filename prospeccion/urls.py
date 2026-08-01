@@ -29,6 +29,7 @@ urlpatterns = [
     path('panel/prospeccion/mapa/api/import-csv/', views_panel.import_csv_view, name='prospeccion_import_csv'),
     path('panel/prospeccion/mapa/api/search/', views_panel.places_search, name='prospeccion_places_search'),
     path('panel/prospeccion/mapa/api/nearby/', views_panel.places_nearby, name='prospeccion_places_nearby'),
+    path('panel/prospeccion/mapa/api/place-details/', views_panel.place_details_view, name='prospeccion_place_details'),
     path('panel/prospeccion/mapa/api/places-usage/', views_panel.places_usage_stats, name='prospeccion_places_usage'),
     path('panel/prospeccion/mapa/api/places-usage/history/', views_panel.places_usage_history,
          name='prospeccion_places_usage_history'),
