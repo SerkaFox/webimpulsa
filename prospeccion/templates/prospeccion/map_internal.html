@@ -4,11 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mapa de prospección — CreaGanaWeb</title>
+<link rel="stylesheet" href="/static/wi/css/brand.css">
 <style>
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; font-family: 'Segoe UI', Arial, sans-serif; color: #0c1c42; }
+  html, body { margin: 0; height: 100%; font-family: 'Segoe UI', Arial, sans-serif; color: var(--wi-navy); }
   .top-bar {
-    background: #1e293b; color: #fff; padding: 10px 16px; display: flex; align-items: center;
+    background: var(--wi-navy); color: #fff; padding: 10px 16px; display: flex; align-items: center;
     gap: 14px; flex-wrap: wrap; font-size: .88rem;
   }
   .top-bar a { color: #93c5fd; text-decoration: none; font-weight: 700; }
@@ -45,13 +46,13 @@
   }
   .checks label { display: flex; align-items: center; gap: 6px; font-size: .82rem; margin-bottom: 4px; }
 
-  .btn { background: #2563eb; color: #fff; border: none; border-radius: 10px; padding: 12px 14px;
+  .btn { background: var(--wi-blue); color: #fff; border: none; border-radius: 10px; padding: 12px 14px;
     font-size: .92rem; font-weight: 700; cursor: pointer; width: 100%; }
   .btn.sm { padding: 7px 11px; font-size: .8rem; width: auto; border-radius: 8px; }
   .btn:hover { background: #1746a8; }
-  .btn.secondary { background: #fff; color: #2563eb; border: 1.5px solid #2563eb; }
+  .btn.secondary { background: #fff; color: var(--wi-blue); border: 1.5px solid var(--wi-blue); }
   .btn.ghost { background: #f1f5f9; color: #334155; }
-  .btn.green { background: #009e73; }
+  .btn.green { background: var(--wi-accent); }
   .btn:disabled { opacity: .5; cursor: not-allowed; }
 
   .search-box { display: flex; gap: 8px; margin-bottom: 6px; }
@@ -64,7 +65,7 @@
   }
   .result-card .name { font-weight: 700; font-size: .92rem; }
   .result-card .addr { color: #5a6d8c; font-size: .78rem; margin: 2px 0 8px; }
-  .result-card .cat { display: inline-block; font-size: .68rem; font-weight: 700; color: #2563eb;
+  .result-card .cat { display: inline-block; font-size: .68rem; font-weight: 700; color: var(--wi-blue);
     background: rgba(37,99,235,.08); border-radius: 999px; padding: 2px 8px; margin-right: 6px; }
   .result-card .exists-badge { display: inline-block; font-size: .68rem; font-weight: 700; color: #92400e;
     background: #fef3c7; border-radius: 999px; padding: 2px 8px; }
@@ -98,11 +99,11 @@
   .confirm-panel .row2 { display: flex; gap: 10px; }
   .confirm-panel .row2 > * { flex: 1; }
   .confirm-panel details { margin: 10px 0; }
-  .confirm-panel summary { font-size: .82rem; color: #2563eb; cursor: pointer; font-weight: 600; }
+  .confirm-panel summary { font-size: .82rem; color: var(--wi-blue); cursor: pointer; font-weight: 600; }
   .confirm-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
   .coords-hint { font-size: .76rem; color: #8a94a6; margin: 2px 0 10px; }
 
-  .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #0c1c42; color: #fff;
+  .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--wi-navy); color: #fff;
     padding: 8px 14px; border-radius: 999px; font-size: .82rem; opacity: 0; transition: opacity .25s;
     pointer-events: none; z-index: 200; max-width: 90vw; text-align: center; }
   .toast.show { opacity: 1; }
@@ -110,7 +111,7 @@
   details.filters-block summary { cursor: pointer; font-size: .85rem; font-weight: 700; color: #334155; padding: 4px 0; }
   .card-list-item { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 8px; font-size: .82rem; }
   .card-list-item .name { font-weight: 700; }
-  .score-pill { float: right; font-weight: 800; color: #2563eb; }
+  .score-pill { float: right; font-weight: 800; color: var(--wi-blue); }
   .badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: .68rem; font-weight: 700; color: #fff; margin-top: 4px; }
 
   /* Insignia "¿tiene web?" — lo primero que Tania necesita ver: es la
@@ -157,7 +158,7 @@
   .puw-summary::-webkit-details-marker { display: none; }
   .puw-summary::after { content: "▾"; margin-left: auto; color: #8a94a6; font-size: .7rem; }
   .puw[open] .puw-summary::after { content: "▴"; }
-  .puw-summary strong { color: #0c1c42; }
+  .puw-summary strong { color: var(--wi-navy); }
   .puw-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: #16a34a; }
   .puw-dot.warn { background: #eab308; }
   .puw-dot.orange { background: #f97316; }
@@ -181,7 +182,7 @@
   .puw-warning { background: #fef3c7; border: 1.5px solid #f59e0b; border-radius: 8px; padding: 6px 8px; font-size: .72rem; color: #92400e; margin-top: 6px; }
   .puw-warning.blocked { background: #fee2e2; border-color: #dc2626; color: #7f1d1d; }
   .puw-cost { font-size: .68rem; color: #8a94a6; margin-top: 6px; }
-  .puw-history-link { display: inline-block; margin-top: 8px; font-size: .76rem; color: #2563eb; cursor: pointer; }
+  .puw-history-link { display: inline-block; margin-top: 8px; font-size: .76rem; color: var(--wi-blue); cursor: pointer; }
 
   /* Modal de historial */
   .history-table { width: 100%; border-collapse: collapse; font-size: .74rem; }
@@ -1046,7 +1047,7 @@ function placeManualMarker(lat, lng){
   if(manualMarker) manualMarker.setMap(null);
   manualMarker = new google.maps.Marker({
     position: {lat: lat, lng: lng}, map: map, draggable: true,
-    icon: markerIcon('#2563eb'),
+    icon: markerIcon('#075CCF'),
   });
   manualModeActive = false;
   document.getElementById('manualBanner').style.display = 'none';
@@ -1564,7 +1565,7 @@ function setMapLang(lang) {
   localStorage.setItem('wi_crm_lang', lang);
   document.querySelectorAll('.map-lang-btn').forEach(function(b) {
     b.style.background = b.dataset.lang === lang ? '#fff' : 'rgba(255,255,255,.1)';
-    b.style.color = b.dataset.lang === lang ? '#1e293b' : '#fff';
+    b.style.color = b.dataset.lang === lang ? '#081747' : '#fff';
   });
   applyMapTranslations();
 }
