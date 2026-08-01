@@ -19,14 +19,14 @@ class Lead(models.Model):
     ST_PERDIDO          = 'perdido'
 
     STATUS_CHOICES = [
-        (ST_NUEVO,       'Nuevo'),
-        (ST_CONTACTADO,  'Contactado'),
-        (ST_PROPUESTA,   'Propuesta enviada'),
-        (ST_NEGOCIACION, 'Negociación'),
-        (ST_ACEPTADO,    'Aceptado'),
-        (ST_EN_TRABAJO,  'En trabajo'),
-        (ST_FINALIZADO,  'Finalizado'),
-        (ST_PERDIDO,     'Perdido'),
+        (ST_NUEVO,       'Новый'),
+        (ST_CONTACTADO,  'На связи'),
+        (ST_PROPUESTA,   'Предложение отправлено'),
+        (ST_NEGOCIACION, 'Переговоры'),
+        (ST_ACEPTADO,    'Принято'),
+        (ST_EN_TRABAJO,  'В работе'),
+        (ST_FINALIZADO,  'Завершено'),
+        (ST_PERDIDO,     'Потеряно'),
     ]
 
     # ── sources ───────────────────────────────────────────────────────────────
@@ -38,12 +38,12 @@ class Lead(models.Model):
     SRC_MAPA_DIGITAL = 'mapa_digital'
 
     SOURCE_CHOICES = [
-        (SRC_CALCULATOR,   'Calculadora'),
-        (SRC_CONTACT,      'Formulario de contacto'),
-        (SRC_CHAT,         'Chat en vivo'),
+        (SRC_CALCULATOR,   'Калькулятор'),
+        (SRC_CONTACT,      'Форма контакта'),
+        (SRC_CHAT,         'Онлайн-чат'),
         (SRC_WHATSAPP,     'WhatsApp'),
-        (SRC_MANUAL,       'Manual'),
-        (SRC_MAPA_DIGITAL, 'Mapa Digital'),
+        (SRC_MANUAL,       'Вручную'),
+        (SRC_MAPA_DIGITAL, 'Карта Digital'),
     ]
 
     # ── preferred channel ─────────────────────────────────────────────────────
@@ -181,21 +181,21 @@ class CommunicationLog(models.Model):
     ST_FAILED    = 'failed'
 
     DIRECTION_CHOICES = [
-        (DIR_OUTBOUND, 'Saliente'),
-        (DIR_INBOUND,  'Entrante'),
+        (DIR_OUTBOUND, 'Исходящее'),
+        (DIR_INBOUND,  'Входящее'),
     ]
     CHANNEL_CHOICES = [
         (CH_WHATSAPP, 'WhatsApp'),
         (CH_EMAIL,    'Email'),
-        (CH_PORTAL,   'Portal'),
-        (CH_MANUAL,   'Manual'),
+        (CH_PORTAL,   'Портал'),
+        (CH_MANUAL,   'Вручную'),
     ]
     STATUS_CHOICES = [
-        (ST_PENDING,   'Pendiente'),
-        (ST_SENT,      'Enviado'),
-        (ST_DELIVERED, 'Entregado'),
-        (ST_READ,      'Leído'),
-        (ST_FAILED,    'Fallido'),
+        (ST_PENDING,   'Ожидает'),
+        (ST_SENT,      'Отправлено'),
+        (ST_DELIVERED, 'Доставлено'),
+        (ST_READ,      'Прочитано'),
+        (ST_FAILED,    'Ошибка'),
     ]
 
     lead          = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='comm_log')
@@ -251,18 +251,18 @@ class ProjectMaterial(models.Model):
     SRC_MANUAL    = 'manual'
 
     TYPE_CHOICES = [
-        (TYPE_PHOTO,    'Foto'),
-        (TYPE_VIDEO,    'Video'),
-        (TYPE_LOGO,     'Logo / imagen corporativa'),
-        (TYPE_TEXT,     'Texto / contenido'),
-        (TYPE_DOCUMENT, 'Documento'),
-        (TYPE_OTHER,    'Otro'),
+        (TYPE_PHOTO,    'Фото'),
+        (TYPE_VIDEO,    'Видео'),
+        (TYPE_LOGO,     'Логотип / фирменный стиль'),
+        (TYPE_TEXT,     'Текст / контент'),
+        (TYPE_DOCUMENT, 'Документ'),
+        (TYPE_OTHER,    'Другое'),
     ]
     SOURCE_CHOICES = [
-        (SRC_PORTAL,   'Portal cliente'),
+        (SRC_PORTAL,   'Портал клиента'),
         (SRC_WHATSAPP, 'WhatsApp'),
         (SRC_EMAIL,    'Email'),
-        (SRC_MANUAL,   'Subida manualmente'),
+        (SRC_MANUAL,   'Загружено вручную'),
     ]
 
     # Image extensions
@@ -329,12 +329,12 @@ class Proposal(models.Model):
     ST_EXPIRED  = 'expired'
 
     STATUS_CHOICES = [
-        (ST_DRAFT,    'Borrador'),
-        (ST_SENT,     'Enviada'),
-        (ST_VIEWED,   'Vista'),
-        (ST_ACCEPTED, 'Aceptada'),
-        (ST_REJECTED, 'Rechazada'),
-        (ST_EXPIRED,  'Expirada'),
+        (ST_DRAFT,    'Черновик'),
+        (ST_SENT,     'Отправлено'),
+        (ST_VIEWED,   'Просмотрено'),
+        (ST_ACCEPTED, 'Принято'),
+        (ST_REJECTED, 'Отклонено'),
+        (ST_EXPIRED,  'Истекло'),
     ]
 
     # Identity
@@ -509,10 +509,10 @@ class ProjectMilestone(models.Model):
     ST_BLOCKED     = 'blocked'
 
     STATUS_CHOICES = [
-        (ST_PENDING,     'Pendiente'),
-        (ST_IN_PROGRESS, 'En progreso'),
-        (ST_DONE,        'Completado'),
-        (ST_BLOCKED,     'Bloqueado'),
+        (ST_PENDING,     'Ожидает'),
+        (ST_IN_PROGRESS, 'В процессе'),
+        (ST_DONE,        'Готово'),
+        (ST_BLOCKED,     'Заблокировано'),
     ]
 
     lead           = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='milestones')
@@ -544,13 +544,13 @@ class WorkLog(models.Model):
     CAT_OTHER       = 'other'
 
     CATEGORY_CHOICES = [
-        (CAT_DESIGN,      'Diseño'),
-        (CAT_DEVELOPMENT, 'Desarrollo'),
-        (CAT_CONTENT,     'Contenido'),
-        (CAT_MEETING,     'Reunión'),
-        (CAT_REVISION,    'Revisión'),
-        (CAT_DELIVERY,    'Entrega'),
-        (CAT_OTHER,       'Otro'),
+        (CAT_DESIGN,      'Дизайн'),
+        (CAT_DEVELOPMENT, 'Разработка'),
+        (CAT_CONTENT,     'Контент'),
+        (CAT_MEETING,     'Встреча'),
+        (CAT_REVISION,    'Правки'),
+        (CAT_DELIVERY,    'Сдача'),
+        (CAT_OTHER,       'Другое'),
     ]
 
     lead            = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='work_logs')
@@ -585,18 +585,18 @@ class PaymentRecord(models.Model):
     ST_REFUNDED = 'refunded'
 
     METHOD_CHOICES = [
-        (MT_BANK_TRANSFER, 'Transferencia bancaria'),
+        (MT_BANK_TRANSFER, 'Банковский перевод'),
         (MT_BIZUM,         'Bizum'),
         (MT_PAYPAL,        'PayPal'),
-        (MT_CASH,          'Efectivo'),
+        (MT_CASH,          'Наличные'),
         (MT_STRIPE,        'Stripe'),
-        (MT_OTHER,         'Otro'),
+        (MT_OTHER,         'Другое'),
     ]
     STATUS_CHOICES = [
-        (ST_PENDING,  'Pendiente'),
-        (ST_RECEIVED, 'Recibido'),
-        (ST_PARTIAL,  'Parcial'),
-        (ST_REFUNDED, 'Devuelto'),
+        (ST_PENDING,  'Ожидает'),
+        (ST_RECEIVED, 'Получено'),
+        (ST_PARTIAL,  'Частично'),
+        (ST_REFUNDED, 'Возвращено'),
     ]
 
     lead         = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='payments')
@@ -628,12 +628,12 @@ class EvidenceFile(models.Model):
     CAT_OTHER      = 'other'
 
     CATEGORY_CHOICES = [
-        (CAT_SCREENSHOT, 'Captura de pantalla'),
-        (CAT_INVOICE,    'Factura'),
-        (CAT_APPROVAL,   'Aprobación del cliente'),
-        (CAT_CONTRACT,   'Contrato'),
-        (CAT_DELIVERY,   'Entregable'),
-        (CAT_OTHER,      'Otro'),
+        (CAT_SCREENSHOT, 'Скриншот'),
+        (CAT_INVOICE,    'Счёт'),
+        (CAT_APPROVAL,   'Одобрение клиента'),
+        (CAT_CONTRACT,   'Договор'),
+        (CAT_DELIVERY,   'Сдача проекта'),
+        (CAT_OTHER,      'Другое'),
     ]
 
     lead       = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='evidence')

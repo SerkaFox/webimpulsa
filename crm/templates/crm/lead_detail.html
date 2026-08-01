@@ -117,6 +117,7 @@
 
 <div class="top-bar">
   <a href="/wi/crm/" class="back" data-i18n="crm.back">← Volver</a>
+  <a href="https://creaganaweb.es/" class="back" data-i18n="crm.back_to_site">🌐 На сайт</a>
   <h1>Lead #{{ lead.pk }} — {{ lead.name }}</h1>
   <span class="badge" data-i18n="status.{{ lead.status }}" {% for v, l in statuses %}{% if v == lead.status %}style="background:{{ status_css|get:v }}"{% endif %}{% endfor %}>
     {{ lead.get_status_display }}
@@ -200,23 +201,23 @@
             <label data-i18n="crm.project_path">Ruta del proyecto en el servidor</label>
             <div style="display:flex;gap:8px">
               <input type="text" name="project_path" id="projectPathInput" value="{{ lead.project_path }}" placeholder="/home/seradmin/cliente-x" style="flex:1">
-              <button type="button" onclick="pfOpenPicker('projectPathInput')" style="white-space:nowrap">📁 Elegir…</button>
+              <button type="button" onclick="pfOpenPicker('projectPathInput')" style="white-space:nowrap" data-i18n="crm.choose_folder">📁 Elegir…</button>
             </div>
           </div>
           <div>
             <label data-i18n="crm.project_db_path">Ruta al archivo de base de datos (SQLite) — se detecta sola al guardar la carpeta del proyecto; actívala para que al cliente le aparezca la pestaña "Base de datos"</label>
             <div style="display:flex;gap:8px">
               <input type="text" name="project_db_path" id="projectDbPathInput" value="{{ lead.project_db_path }}" placeholder="/home/seradmin/cliente-x/db.sqlite3" style="flex:1">
-              <button type="button" onclick="pfOpenPicker('projectDbPathInput', true)" style="white-space:nowrap">📁 Elegir…</button>
+              <button type="button" onclick="pfOpenPicker('projectDbPathInput', true)" style="white-space:nowrap" data-i18n="crm.choose_folder">📁 Elegir…</button>
             </div>
           </div>
           <button type="submit" class="save-btn" data-i18n="crm.save">Guardar</button>
         </form>
         {% if lead.project_path %}
-        <button type="button" onclick="pfBackupNow({{ lead.pk }})" id="backupNowBtn" style="margin-top:8px">💾 Hacer backup ahora</button>
+        <button type="button" onclick="pfBackupNow({{ lead.pk }})" id="backupNowBtn" style="margin-top:8px" data-i18n="crm.backup_now">💾 Hacer backup ahora</button>
         <div style="margin-top:10px;font-size:.85rem">
           {% if backups %}
-            <div style="font-weight:700;margin-bottom:4px">Backups guardados (los 3 más recientes):</div>
+            <div style="font-weight:700;margin-bottom:4px" data-i18n="crm.backups_saved">Backups guardados (los 3 más recientes):</div>
             <ul style="margin:0;padding-left:18px">
               {% for b in backups %}
               <li>
@@ -226,7 +227,7 @@
               {% endfor %}
             </ul>
           {% else %}
-            <span style="color:#94a3b8">Todavía no hay ningún backup guardado para este proyecto.</span>
+            <span style="color:#94a3b8" data-i18n="crm.no_backups">Todavía no hay ningún backup guardado para este proyecto.</span>
           {% endif %}
         </div>
         {% endif %}
@@ -1121,6 +1122,7 @@
 var T = {
 es: {
   'crm.back': '← Volver',
+  'crm.back_to_site': '🌐 Ir a la web',
   'crm.delete_lead': '🗑️ Eliminar',
   'crm.confirm_delete_lead': '¿Seguro que quieres eliminar el lead "{name}"?\n\nSe borrará todo lo relacionado: propuestas, archivos, pagos, chat y accesos al portal. Esta acción no se puede deshacer.',
   'crm.client': 'Cliente',
@@ -1284,10 +1286,28 @@ es: {
   'extra.correo-con-tu-dominio': 'Correo con tu dominio', 'extra.galeria-de-instagram': 'Galería de Instagram',
   'extra.zona-privada-para-clientes': 'Zona privada para clientes', 'extra.documentos-automaticos-pdf': 'Documentos automáticos PDF',
   'extra.datos-en-excel-sheets': 'Datos en Excel / Sheets', 'extra.panel-para-tu-equipo': 'Panel para tu equipo',
-  'extra.app-para-movil': 'App para móvil'
+  'extra.app-para-movil': 'App para móvil',
+  'crm.project_path': 'Ruta del proyecto en el servidor',
+  'crm.project_db_path': 'Ruta al archivo de base de datos (SQLite) — se detecta sola al guardar la carpeta del proyecto; actívala para que al cliente le aparezca la pestaña "Base de datos"',
+  'crm.choose_folder': '📁 Elegir…',
+  'crm.backup_now': '💾 Hacer backup ahora',
+  'crm.backups_saved': 'Backups guardados (los 3 más recientes):',
+  'crm.no_backups': 'Todavía no hay ningún backup guardado para este proyecto.',
+  'crm.picker_cancel': 'Cancelar',
+  'crm.picker_use_folder': 'Usar esta carpeta',
+  'crm.picker_nothing_here': 'Nada aquí',
+  'crm.picker_no_subfolders': 'Sin subcarpetas aquí',
+  'crm.picker_list_error': 'Error al listar la carpeta',
+  'crm.backup_in_progress': '⏳ Haciendo backup…',
+  'crm.backup_ready': '✅ Backup listo ({name})',
+  'crm.backup_error': 'Error al hacer el backup',
+  'cabinet.total_label': 'Total',
+  'cabinet.paid_label': 'Pagado',
+  'cabinet.pending_label': 'Pendiente',
 },
 ru: {
   'crm.back': '← Назад',
+  'crm.back_to_site': '🌐 На сайт',
   'crm.delete_lead': '🗑️ Удалить',
   'crm.confirm_delete_lead': 'Точно удалить лид "{name}"?\n\nУдалится всё связанное: предложения, файлы, платежи, чат и доступы к порталу. Действие необратимо.',
   'crm.client': 'Клиент',
@@ -1451,14 +1471,31 @@ ru: {
   'extra.correo-con-tu-dominio': 'Почта с вашим доменом', 'extra.galeria-de-instagram': 'Галерея Instagram',
   'extra.zona-privada-para-clientes': 'Личный кабинет клиентов', 'extra.documentos-automaticos-pdf': 'Автоматические документы PDF',
   'extra.datos-en-excel-sheets': 'Данные в Excel / Sheets', 'extra.panel-para-tu-equipo': 'Панель для команды',
-  'extra.app-para-movil': 'Мобильное приложение'
+  'extra.app-para-movil': 'Мобильное приложение',
+  'crm.project_path': 'Путь к проекту на сервере',
+  'crm.project_db_path': 'Путь к файлу базы данных (SQLite) — определяется автоматически при сохранении папки проекта; включает вкладку «База данных» у клиента',
+  'crm.choose_folder': '📁 Выбрать…',
+  'crm.backup_now': '💾 Сделать бэкап сейчас',
+  'crm.backups_saved': 'Сохранённые бэкапы (последние 3):',
+  'crm.no_backups': 'Для этого проекта пока нет сохранённых бэкапов.',
+  'crm.picker_cancel': 'Отмена',
+  'crm.picker_use_folder': 'Использовать эту папку',
+  'crm.picker_nothing_here': 'Здесь ничего нет',
+  'crm.picker_no_subfolders': 'Нет вложенных папок',
+  'crm.picker_list_error': 'Ошибка при загрузке папки',
+  'crm.backup_in_progress': '⏳ Делаем бэкап…',
+  'crm.backup_ready': '✅ Бэкап готов ({name})',
+  'crm.backup_error': 'Ошибка при создании бэкапа',
+  'cabinet.total_label': 'Итого',
+  'cabinet.paid_label': 'Оплачено',
+  'cabinet.pending_label': 'Ожидает',
 }
 };
 
-var LANG = localStorage.getItem('wi_crm_lang') || 'es';
+var LANG = localStorage.getItem('wi_crm_lang') || 'ru';
 
 function t(key) {
-  var cur = T[LANG], fb = T.es;
+  var cur = T[LANG], fb = T.ru;
   var v = (cur && cur[key] !== undefined) ? cur[key] : (fb && fb[key]);
   return v !== undefined ? v : key;
 }
@@ -1504,8 +1541,8 @@ setLang(LANG);
     </div>
     <div id="pfPickerList" style="overflow-y:auto;flex:1"></div>
     <div style="padding:12px 18px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:8px">
-      <button type="button" onclick="pfClosePicker()">Cancelar</button>
-      <button type="button" class="save-btn" id="pfUseFolderBtn" onclick="pfUsePickerFolder()">Usar esta carpeta</button>
+      <button type="button" onclick="pfClosePicker()" data-i18n="crm.picker_cancel">Cancelar</button>
+      <button type="button" class="save-btn" id="pfUseFolderBtn" onclick="pfUsePickerFolder()" data-i18n="crm.picker_use_folder">Usar esta carpeta</button>
     </div>
   </div>
 </div>
@@ -1533,10 +1570,11 @@ function pfClosePicker() {
 }
 
 async function pfLoadPicker(relPath) {
+  const _t = window.wiT || function(k){return k;};
   const filesParam = pfPickerFileMode ? '&files=1' : '';
   const res = await fetch('/wi/crm/browse-fs/?path=' + encodeURIComponent(relPath) + filesParam);
   const data = await res.json();
-  if (!data.ok) { alert(data.error || 'Error al listar la carpeta'); return; }
+  if (!data.ok) { alert(data.error || _t('crm.picker_list_error')); return; }
   pfPickerCurrentPath = data.abs_path;
   document.getElementById('pfPickerPath').textContent = data.abs_path;
   const list = document.getElementById('pfPickerList');
@@ -1563,7 +1601,7 @@ async function pfLoadPicker(relPath) {
   if (!data.entries.length) {
     const empty = document.createElement('div');
     empty.style.cssText = 'padding:16px;color:#94a3b8;font-size:.85rem;text-align:center';
-    empty.textContent = pfPickerFileMode ? 'Nada aquí' : 'Sin subcarpetas aquí';
+    empty.textContent = pfPickerFileMode ? _t('crm.picker_nothing_here') : _t('crm.picker_no_subfolders');
     list.appendChild(empty);
   }
 }
@@ -1583,24 +1621,25 @@ function pfUsePickerFile(fileName) {
 }
 
 async function pfBackupNow(leadPk) {
+  const _t = window.wiT || function(k){return k;};
   const btn = document.getElementById('backupNowBtn');
   const original = btn.textContent;
-  btn.textContent = '⏳ Haciendo backup…';
+  btn.textContent = _t('crm.backup_in_progress');
   btn.disabled = true;
   try {
     const res = await fetch('/wi/crm/' + leadPk + '/backup-now/', { method: 'POST' });
     const data = await res.json();
     if (data.ok) {
-      btn.textContent = '✅ Backup listo (' + data.snapshot + ')';
+      btn.textContent = _t('crm.backup_ready').replace('{name}', data.snapshot);
       setTimeout(() => location.reload(), 900);  // refresh so the new snapshot shows in the list below
       return;
     } else {
       btn.textContent = original;
-      alert(data.error || 'Error al hacer el backup');
+      alert(data.error || _t('crm.backup_error'));
     }
   } catch (e) {
     btn.textContent = original;
-    alert('Error al hacer el backup');
+    alert(_t('crm.backup_error'));
   } finally {
     btn.disabled = false;
     setTimeout(() => { btn.textContent = original; }, 4000);

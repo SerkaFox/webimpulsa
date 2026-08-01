@@ -539,15 +539,16 @@ function reloadMapProspects(){
         });
         var score = p.current_score != null ? p.current_score : '—';
         var web = websiteBadge(hasWeb);
+        var _t1 = window.wiMapT || function(k){ return k; };
         var info = new google.maps.InfoWindow({content:
           '<div style="font-family:inherit">'+
           '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>'+
           '<strong>'+p.name+'</strong><br>'+
-          (STATUS_LABELS[p.sales_status] || p.sales_status)+' · puntuación '+score+'<br>'+
+          (STATUS_LABELS[p.sales_status] || p.sales_status)+' · '+_t1('map.score_label')+' '+score+'<br>'+
           '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:.85rem">'+
-          '<a href="'+p.detail_url+'">📇 Ver ficha</a>'+
-          '<a href="'+p.detail_url+'?start_check=1">🩺 Crear preliminar</a>'+
-          '<a href="'+p.detail_url+'#contactForm">👤 Añadir contacto</a>'+
+          '<a href="'+p.detail_url+'">📇 '+_t1('map.view_card')+'</a>'+
+          '<a href="'+p.detail_url+'?start_check=1">🩺 '+_t1('map.create_preliminary')+'</a>'+
+          '<a href="'+p.detail_url+'#contactForm">👤 '+_t1('map.add_contact')+'</a>'+
           (p.gmaps_url ? '<a href="'+p.gmaps_url+'" target="_blank" rel="noopener">📷 Google Maps</a>' : '')+
           '</div></div>'
         });
@@ -623,12 +624,13 @@ function plotSearchMarkers(existing, googleResults){
       label: scoreLabel(p.current_score) || undefined,
     });
     var web = websiteBadge(hasWeb);
+    var _t2 = window.wiMapT || function(k){ return k; };
     var info = new window.google.maps.InfoWindow({content:
       '<div style="font-family:inherit">'+
       '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>'+
-      '<strong>'+p.name+'</strong><br>Ya en CreaGanaWeb'+
-      (p.current_score != null ? ' · puntuación '+p.current_score : '')+'<br>'+
-      '<a href="'+p.detail_url+'">📇 Ver ficha</a>'+
+      '<strong>'+p.name+'</strong><br>'+_t2('map.already_in_crm')+
+      (p.current_score != null ? ' · '+_t2('map.score_label')+' '+p.current_score : '')+'<br>'+
+      '<a href="'+p.detail_url+'">📇 '+_t2('map.view_card')+'</a>'+
       (p.gmaps_url ? ' · <a href="'+p.gmaps_url+'" target="_blank" rel="noopener">📷 Google Maps</a>' : '')+
       '</div>'
     });
@@ -671,9 +673,10 @@ function handleBlockedResponse(data, resultsEl){
 var searchInFlight = false;
 
 function runSearch(){
+  var _t = window.wiMapT || function(k){ return k; };
   if(searchInFlight) return;
   var q = document.getElementById('searchInput').value.trim();
-  if(!q){ showToast('Escribe algo para buscar'); return; }
+  if(!q){ showToast(_t('map.type_to_search')); return; }
   var params = new URLSearchParams({q: q});
   var bias = userLocation || (map ? {lat: map.getCenter().lat(), lng: map.getCenter().lng()} : null);
   if(bias){ params.set('lat', bias.lat); params.set('lng', bias.lng); }
@@ -682,7 +685,7 @@ function runSearch(){
   var resultsEl = document.getElementById('searchResults');
   searchInFlight = true;
   btn.disabled = true;
-  resultsEl.innerHTML = '<p style="color:#8a94a6;font-size:.85rem">Buscando…</p>';
+  resultsEl.innerHTML = '<p style="color:#8a94a6;font-size:.85rem">'+_t('map.searching')+'</p>';
 
   fetch('/panel/prospeccion/mapa/api/search/?' + params.toString())
     .then(function(r){ return r.json(); })
@@ -699,7 +702,7 @@ function runSearch(){
       if(data.google_error){
         html += '<p style="color:#dc2626;font-size:.8rem">'+data.google_error+'</p>';
       }
-      if(!html){ html = '<p style="color:#8a94a6;font-size:.85rem">Sin resultados. Prueba "+ Añadir lugar manualmente".</p>'; }
+      if(!html){ html = '<p style="color:#8a94a6;font-size:.85rem">'+_t('map.no_results')+'</p>'; }
       resultsEl.innerHTML = html;
       resultsEl.querySelectorAll('[data-google-idx]').forEach(function(elBtn){
         elBtn.addEventListener('click', function(){
@@ -712,7 +715,7 @@ function runSearch(){
     .catch(function(){
       searchInFlight = false;
       btn.disabled = false;
-      resultsEl.innerHTML = ''; clearSearchMarkers(); showToast('No se pudo buscar en este momento');
+      resultsEl.innerHTML = ''; clearSearchMarkers(); showToast(_t('map.search_failed'));
     });
 }
 
@@ -724,18 +727,19 @@ document.getElementById('searchInput').addEventListener('keydown', function(ev){
 /* ---- "Estoy aquí" — negocios en 1 km alrededor de la geolocalización real
    del dispositivo (tablet en la calle), sin escribir ningún texto ---- */
 function runNearbySearch(){
-  if(!navigator.geolocation){ showToast('Este dispositivo no permite compartir ubicación'); return; }
+  var _t = window.wiMapT || function(k){ return k; };
+  if(!navigator.geolocation){ showToast(_t('map.no_geolocation')); return; }
   var btn = document.getElementById('btnHereNow');
   if(btn.disabled) return;
   var resultsEl = document.getElementById('searchResults');
   btn.disabled = true;
-  resultsEl.innerHTML = '<p style="color:#8a94a6;font-size:.85rem">Localizando…</p>';
+  resultsEl.innerHTML = '<p style="color:#8a94a6;font-size:.85rem">'+_t('map.locating')+'</p>';
 
   navigator.geolocation.getCurrentPosition(function(pos){
     var here = {lat: pos.coords.latitude, lng: pos.coords.longitude};
     userLocation = here;
     if(map){ map.setCenter(here); map.setZoom(16); }
-    resultsEl.innerHTML = '<p style="color:#8a94a6;font-size:.85rem">Buscando negocios en 1 km…</p>';
+    resultsEl.innerHTML = '<p style="color:#8a94a6;font-size:.85rem">'+_t('map.searching_1km')+'</p>';
 
     var params = new URLSearchParams({lat: here.lat, lng: here.lng, radius: 1000});
     fetch('/panel/prospeccion/mapa/api/nearby/?' + params.toString())
@@ -752,7 +756,7 @@ function runNearbySearch(){
         if(data.google_error){
           html += '<p style="color:#dc2626;font-size:.8rem">'+data.google_error+'</p>';
         }
-        if(!html){ html = '<p style="color:#8a94a6;font-size:.85rem">Nada en un radio de 1 km.</p>'; }
+        if(!html){ html = '<p style="color:#8a94a6;font-size:.85rem">'+_t('map.nothing_1km')+'</p>'; }
         resultsEl.innerHTML = html;
         resultsEl.querySelectorAll('[data-google-idx]').forEach(function(elBtn){
           elBtn.addEventListener('click', function(){
@@ -764,12 +768,12 @@ function runNearbySearch(){
       })
       .catch(function(){
         btn.disabled = false;
-        resultsEl.innerHTML = ''; clearSearchMarkers(); showToast('No se pudo buscar en este momento');
+        resultsEl.innerHTML = ''; clearSearchMarkers(); showToast(_t('map.search_failed'));
       });
   }, function(){
     btn.disabled = false;
     resultsEl.innerHTML = '';
-    showToast('No se pudo obtener tu ubicación — revisa el permiso de localización');
+    showToast(_t('map.location_failed'));
   }, {enableHighAccuracy: true, timeout: 12000, maximumAge: 0});
 }
 
@@ -788,11 +792,12 @@ function haversineMeters(lat1, lng1, lat2, lng2){
    geolocalización del dispositivo. Útil para revisar una zona sin moverte
    físicamente hasta ella. ---- */
 function runAreaSearch(){
-  if(!map){ showToast('El mapa no está listo todavía'); return; }
+  var _t = window.wiMapT || function(k){ return k; };
+  if(!map){ showToast(_t('map.map_not_ready')); return; }
   var btn = document.getElementById('btnSearchArea');
   if(btn.disabled) return;
   var bounds = map.getBounds();
-  if(!bounds){ showToast('Espera a que el mapa termine de cargar'); return; }
+  if(!bounds){ showToast(_t('map.wait_map_load')); return; }
 
   var center = bounds.getCenter();
   var ne = bounds.getNorthEast();
@@ -800,7 +805,7 @@ function runAreaSearch(){
 
   var resultsEl = document.getElementById('searchResults');
   btn.disabled = true;
-  resultsEl.innerHTML = '<p style="color:#8a94a6;font-size:.85rem">Buscando en la zona visible…</p>';
+  resultsEl.innerHTML = '<p style="color:#8a94a6;font-size:.85rem">'+_t('map.searching_area')+'</p>';
 
   var params = new URLSearchParams({lat: center.lat(), lng: center.lng(), radius: radius});
   fetch('/panel/prospeccion/mapa/api/nearby/?' + params.toString())
@@ -822,7 +827,7 @@ function runAreaSearch(){
         html += '<p style="color:#dc2626;font-size:.8rem">'+data.google_error+'</p>';
       }
       if(!existingResults.length && !lastGoogleResults.length){
-        html += '<p style="color:#8a94a6;font-size:.85rem">Nada en la zona visible.</p>';
+        html += '<p style="color:#8a94a6;font-size:.85rem">'+_t('map.nothing_area')+'</p>';
       }
       resultsEl.innerHTML = html;
       resultsEl.querySelectorAll('[data-google-idx]').forEach(function(elBtn){
@@ -835,7 +840,7 @@ function runAreaSearch(){
     })
     .catch(function(){
       btn.disabled = false;
-      resultsEl.innerHTML = ''; clearSearchMarkers(); showToast('No se pudo buscar en este momento');
+      resultsEl.innerHTML = ''; clearSearchMarkers(); showToast(_t('map.search_failed'));
     });
 }
 
@@ -1098,7 +1103,7 @@ document.getElementById('btnSaveAndCheck').addEventListener('click', function(){
 document.getElementById('csvForm').addEventListener('submit', function(ev){
   ev.preventDefault();
   var file = document.getElementById('csvFile').files[0];
-  if(!file){ showToast('Elige un fichero CSV'); return; }
+  if(!file){ showToast((window.wiMapT||function(k){return k;})('map.choose_csv')); return; }
   var fd = new FormData();
   fd.append('file', file);
   fetch('/panel/prospeccion/mapa/api/import-csv/', {method:'POST', body: fd})
@@ -1208,6 +1213,9 @@ es: {
   'map.searching_area': 'Buscando en la zona visible…',
   'map.nothing_area': 'Nada en la zona visible.',
   'map.choose_csv': 'Elige un fichero CSV',
+  'map.score_label': 'puntuación',
+  'map.create_preliminary': 'Crear preliminar',
+  'map.add_contact': 'Añadir contacto',
 },
 ru: {
   'map.page_title': 'Карта проспекции — CreaGanaWeb',
@@ -1295,6 +1303,9 @@ ru: {
   'map.searching_area': 'Поиск в видимой зоне…',
   'map.nothing_area': 'Ничего не найдено в видимой зоне.',
   'map.choose_csv': 'Выберите файл CSV',
+  'map.score_label': 'рейтинг',
+  'map.create_preliminary': 'Создать предварительную проверку',
+  'map.add_contact': 'Добавить контакт',
 },
 };
 

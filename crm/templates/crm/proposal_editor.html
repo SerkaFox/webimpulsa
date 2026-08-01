@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{{ proposal.number }} — Propuesta CRM</title>
+  <title>{{ proposal.number }} — Предложение CRM</title>
   <link rel="stylesheet" href="/static/wi/css/proposal-print.css">
   <style>
     *, *::before, *::after { box-sizing: border-box; }
@@ -80,13 +80,13 @@
 <body>
 
 <div class="top-bar">
-  <a href="/wi/crm/{{ lead.pk }}/">← Lead #{{ lead.pk }}</a>
+  <a href="/wi/crm/{{ lead.pk }}/">← Лид #{{ lead.pk }}</a>
   <div class="top-bar-title">{{ proposal.number }} — {{ lead.name }}</div>
   <span class="schip {% if proposal.status == 'sent' %}sent{% elif proposal.status == 'accepted' %}accepted{% elif proposal.status == 'viewed' %}viewed{% endif %}">
     {{ proposal.get_status_display }}
   </span>
   <a href="/wi/crm/proposal/{{ proposal.pk }}/print/" target="_blank"
-     class="btn btn-o" style="padding:5px 10px;font-size:.77rem">🖨 Ver/PDF</a>
+     class="btn btn-o" style="padding:5px 10px;font-size:.77rem">🖨 Смотреть/PDF</a>
 </div>
 
 <div class="shell">
@@ -95,147 +95,147 @@
 <div class="ep">
 
   <div class="fsec">
-    <h3>Cliente</h3>
+    <h3>Клиент</h3>
     <div class="fg">
-      <div class="fg-full"><label class="fl">Nombre</label>
+      <div class="fg-full"><label class="fl">Имя</label>
         <input class="fi" id="fClientName"></div>
       <div><label class="fl">Email</label><input class="fi" id="fClientEmail"></div>
-      <div><label class="fl">Teléfono</label><input class="fi" id="fClientPhone"></div>
-      <div><label class="fl">Tipo de negocio</label><input class="fi" id="fClientBiz"></div>
+      <div><label class="fl">Телефон</label><input class="fi" id="fClientPhone"></div>
+      <div><label class="fl">Тип бизнеса</label><input class="fi" id="fClientBiz"></div>
       <div><label class="fl">NIF/CIF/DNI</label><input class="fi" id="fClientNif"></div>
-      <div><label class="fl">Dirección</label><input class="fi" id="fClientAddress"></div>
-      <div><label class="fl">Ciudad/Provincia</label><input class="fi" id="fClientCity"></div>
+      <div><label class="fl">Адрес</label><input class="fi" id="fClientAddress"></div>
+      <div><label class="fl">Город/Провинция</label><input class="fi" id="fClientCity"></div>
     </div>
   </div>
 
   <div class="fsec">
-    <h3>Proyecto</h3>
+    <h3>Проект</h3>
     <div class="fg">
-      <div class="fg-full"><label class="fl">Nombre del proyecto</label>
+      <div class="fg-full"><label class="fl">Название проекта</label>
         <input class="fi" id="fProjectName"></div>
-      <div class="fg-full"><label class="fl">Objetivo principal</label>
+      <div class="fg-full"><label class="fl">Основная цель</label>
         <textarea class="fta" id="fGoal" rows="2"></textarea></div>
-      <div class="fg-full"><label class="fl">Descripción del negocio</label>
+      <div class="fg-full"><label class="fl">Описание бизнеса</label>
         <textarea class="fta" id="fBizDesc" rows="2"></textarea></div>
-      <div class="fg-full"><label class="fl">Funcionalidades indicadas</label>
+      <div class="fg-full"><label class="fl">Указанный функционал</label>
         <textarea class="fta" id="fFeatures" rows="2"></textarea></div>
     </div>
   </div>
 
   <div class="fsec">
-    <h3>Presupuesto</h3>
+    <h3>Бюджет</h3>
     <div class="fg">
-      <div><label class="fl">Tipo de proyecto</label><input class="fi" id="fPackage"></div>
-      <div><label class="fl">Precio base (€)</label>
+      <div><label class="fl">Тип проекта</label><input class="fi" id="fPackage"></div>
+      <div><label class="fl">Базовая цена (€)</label>
         <input class="fi" type="number" id="fBasePrice" min="0"></div>
-      <div><label class="fl">Descuento %</label>
+      <div><label class="fl">Скидка %</label>
         <input class="fi" type="number" id="fDiscount" min="0" max="100"></div>
-      <div><label class="fl">Urgente +25%</label>
+      <div><label class="fl">Срочно +25%</label>
         <select class="fsel" id="fRush">
-          <option value="0">No</option><option value="1">Sí</option>
+          <option value="0">Нет</option><option value="1">Да</option>
         </select></div>
       <div class="fg-full">
-        <label class="fl">Precio final CON IVA (€) — opcional</label>
-        <input class="fi" type="number" id="fFinalPrice" min="0" placeholder="Ej: 600 — el precio base se calcula solo">
+        <label class="fl">Итоговая цена С НДС (€) — необязательно</label>
+        <input class="fi" type="number" id="fFinalPrice" min="0" placeholder="Напр.: 600 — базовая цена рассчитается сама">
       </div>
     </div>
-    <label class="fl" style="margin-top:10px">Extras</label>
+    <label class="fl" style="margin-top:10px">Допы</label>
     <div id="extrasContainer"></div>
     <button type="button" class="btn btn-o"
             style="font-size:.75rem;padding:4px 10px;margin-top:5px"
-            onclick="addExtra()">+ Añadir extra</button>
+            onclick="addExtra()">+ Добавить доп</button>
     <div class="fg" style="margin-top:10px">
-      <div><label class="fl">Mantenimiento</label><input class="fi" id="fMaintName"></div>
-      <div><label class="fl">Precio/mes €</label>
+      <div><label class="fl">Обслуживание</label><input class="fi" id="fMaintName"></div>
+      <div><label class="fl">Цена/мес €</label>
         <input class="fi" type="number" id="fMaintPrice" min="0"></div>
     </div>
     <div class="fg" style="margin-top:10px">
-      <div><label class="fl">Bolsa de horas</label><input class="fi" id="fHoursName"></div>
-      <div><label class="fl">Precio/mes €</label>
+      <div><label class="fl">Пакет часов</label><input class="fi" id="fHoursName"></div>
+      <div><label class="fl">Цена/мес €</label>
         <input class="fi" type="number" id="fHoursPrice" min="0"></div>
-      <div><label class="fl">Dominio + Hosting €/mes</label>
+      <div><label class="fl">Домен + хостинг €/мес</label>
         <input class="fi" type="number" id="fHostingPrice" min="0"></div>
     </div>
   </div>
 
   <div class="fsec">
-    <h3>Plazos y pago</h3>
+    <h3>Сроки и оплата</h3>
     <div class="fg">
-      <div class="fg-full"><label class="fl">Plazo estimado</label>
+      <div class="fg-full"><label class="fl">Ориентировочный срок</label>
         <input class="fi" id="fTimeline"></div>
-      <div><label class="fl">Fecha estimada inicio</label>
+      <div><label class="fl">Ориентировочная дата начала</label>
         <input class="fi" type="date" id="fStartDate"></div>
-      <div><label class="fl">Validez (días)</label>
+      <div><label class="fl">Срок действия (дней)</label>
         <input class="fi" type="number" id="fValidDays" min="1"></div>
-      <div class="fg-full"><label class="fl">Forma de pago</label>
+      <div class="fg-full"><label class="fl">Способ оплаты</label>
         <select class="fsel" id="fPayment" onchange="toggleCustomPay()">
-          <option value="50-50">50% inicio + 50% entrega</option>
-          <option value="3-way">3 pagos (33% cada uno)</option>
-          <option value="full">Pago único</option>
-          <option value="custom">Personalizado</option>
+          <option value="50-50">50% старт + 50% сдача</option>
+          <option value="3-way">3 платежа (по 33%)</option>
+          <option value="full">Единый платёж</option>
+          <option value="custom">Индивидуально</option>
         </select></div>
       <div class="fg-full" id="customPayRow" style="display:none">
-        <label class="fl">Condiciones personalizadas</label>
+        <label class="fl">Индивидуальные условия</label>
         <textarea class="fta" id="fCustomPay" rows="2"></textarea></div>
     </div>
   </div>
 
   <div class="fsec">
-    <h3>Alcance y contenido</h3>
-    <label class="fl">Alcance (una línea por punto)</label>
+    <h3>Объём и содержание</h3>
+    <label class="fl">Объём работ (одна строка на пункт)</label>
     <textarea class="fta" id="fScope" rows="6" style="margin-bottom:8px"></textarea>
-    <label class="fl">Fuera de alcance (una línea)</label>
+    <label class="fl">Вне объёма работ (одна строка)</label>
     <textarea class="fta" id="fOutOfScope" rows="5" style="margin-bottom:8px"></textarea>
-    <label class="fl">Fases</label>
+    <label class="fl">Этапы</label>
     <textarea class="fta" id="fPhases" rows="4" style="margin-bottom:8px"></textarea>
-    <label class="fl">Condiciones</label>
+    <label class="fl">Условия</label>
     <textarea class="fta" id="fConditions" rows="6"></textarea>
   </div>
 
   <div class="fsec">
-    <h3>Notas adicionales</h3>
+    <h3>Дополнительные заметки</h3>
     <textarea class="fta" id="fNotes" rows="3"></textarea>
   </div>
 
   <div class="fsec">
-    <h3>Datos de CreaGanaWeb</h3>
+    <h3>Данные CreaGanaWeb</h3>
     <div class="fg">
-      <div><label class="fl">Nombre comercial</label><input class="fi" id="fCoTrade"></div>
-      <div><label class="fl">Razón social</label><input class="fi" id="fCoLegal"></div>
+      <div><label class="fl">Торговое название</label><input class="fi" id="fCoTrade"></div>
+      <div><label class="fl">Юридическое название</label><input class="fi" id="fCoLegal"></div>
       <div><label class="fl">NIF/CIF</label><input class="fi" id="fCoNif"></div>
       <div><label class="fl">Email</label><input class="fi" id="fCoEmail"></div>
-      <div><label class="fl">Teléfono</label><input class="fi" id="fCoPhone"></div>
-      <div><label class="fl">Web</label><input class="fi" id="fCoWeb"></div>
-      <div class="fg-full"><label class="fl">Dirección fiscal</label>
+      <div><label class="fl">Телефон</label><input class="fi" id="fCoPhone"></div>
+      <div><label class="fl">Сайт</label><input class="fi" id="fCoWeb"></div>
+      <div class="fg-full"><label class="fl">Юридический адрес</label>
         <input class="fi" id="fCoAddress"></div>
     </div>
   </div>
 
   {% if wa_msg %}
   <div class="fsec">
-    <h3>Mensaje WhatsApp</h3>
+    <h3>Сообщение WhatsApp</h3>
     <div class="wa-box" id="waBox"></div>
     <button class="btn btn-o" style="width:100%;margin-top:8px;font-size:.79rem"
-            onclick="copyWaMsg()">📋 Copiar mensaje WA</button>
+            onclick="copyWaMsg()">📋 Копировать сообщение WA</button>
   </div>
   {% endif %}
 
   <div class="abar">
     <div class="smsg" id="smsg"></div>
     <div class="brow">
-      <button class="btn btn-p" onclick="saveDraft()">💾 Guardar borrador</button>
+      <button class="btn btn-p" onclick="saveDraft()">💾 Сохранить черновик</button>
       <button class="btn btn-g" id="btnSend"
               {% if proposal.status == 'accepted' %}disabled{% endif %}
               onclick="sendProposal()">
-        {% if proposal.status in 'sent,viewed,accepted' %}✅ Enviada{% else %}📤 Marcar enviada{% endif %}
+        {% if proposal.status in 'sent,viewed,accepted' %}✅ Отправлено{% else %}📤 Отметить отправленным{% endif %}
       </button>
     </div>
     <div class="brow">
-      <a class="btn btn-o" href="/wi/crm/proposal/{{ proposal.pk }}/print/" target="_blank">🖨 Imprimir/PDF</a>
-      <button class="btn btn-o" onclick="exportWord()">📄 Exportar Word</button>
+      <a class="btn btn-o" href="/wi/crm/proposal/{{ proposal.pk }}/print/" target="_blank">🖨 Печать/PDF</a>
+      <button class="btn btn-o" onclick="exportWord()">📄 Экспорт Word</button>
     </div>
     {% if portal_url %}
-    <button class="btn btn-v" onclick="copyWaMsg()">💬 Copiar mensaje WhatsApp</button>
+    <button class="btn btn-v" onclick="copyWaMsg()">💬 Копировать сообщение WhatsApp</button>
     {% endif %}
   </div>
 
@@ -243,7 +243,7 @@
 
 <!-- ── PREVIEW ───────────────────────────────────────────────────────────── -->
 <div class="pp">
-  <div class="plabel">Vista previa A4 en vivo</div>
+  <div class="plabel">Живой предпросмотр A4</div>
   <div class="ptotals" id="ptotals"></div>
   <div id="previewContainer"></div>
 </div>
@@ -387,7 +387,7 @@ function _addExtraRow(name, price) {
   var r = document.createElement('div');
   r.className = 'extra-row';
   r.innerHTML =
-    '<input class="fi" placeholder="Nombre del extra" value="' + _esc(name||'') + '"' +
+    '<input class="fi" placeholder="Название допа" value="' + _esc(name||'') + '"' +
     ' oninput="_debounce(refreshPreview,350)()">' +
     '<input class="fi ep-price" type="number" min="0" placeholder="€" value="' + (price||0) + '"' +
     ' oninput="_debounce(refreshPreview,350)()">' +
@@ -478,9 +478,9 @@ function refreshPreview() {
   data.conditions = _lines(document.getElementById('fConditions').value);
   document.getElementById('previewContainer').innerHTML = WIProposalTemplate.renderProposal(data);
   document.getElementById('ptotals').innerHTML =
-    'Base: <strong>' + WIProposalTemplate.eur(data.pricing.taxableBase) + '</strong> &nbsp;' +
-    'IVA 21%: <strong>' + WIProposalTemplate.eur(data.pricing.vat) + '</strong> &nbsp;' +
-    'Total: <strong style="color:#075CCF">' + WIProposalTemplate.eur(data.pricing.totalWithVat) + '</strong>';
+    'База: <strong>' + WIProposalTemplate.eur(data.pricing.taxableBase) + '</strong> &nbsp;' +
+    'НДС 21%: <strong>' + WIProposalTemplate.eur(data.pricing.vat) + '</strong> &nbsp;' +
+    'Итого: <strong style="color:#075CCF">' + WIProposalTemplate.eur(data.pricing.totalWithVat) + '</strong>';
 }
 
 window.toggleCustomPay = function() {
@@ -535,7 +535,7 @@ window.saveDraft = function() {
     },
   };
 
-  _setMsg('Guardando…', '#64748b');
+  _setMsg('Сохранение…', '#64748b');
   return fetch('/wi/crm/proposal/' + PID + '/save/', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -543,16 +543,16 @@ window.saveDraft = function() {
   })
   .then(function(r){ return r.json(); })
   .then(function(d) {
-    if (d.ok) { _setMsg('✓ Guardado', '#16a34a'); setTimeout(function(){ _setMsg('',''); }, 2500); }
-    else       { _setMsg('Error: ' + (d.error||'?'), '#dc2626'); }
+    if (d.ok) { _setMsg('✓ Сохранено', '#16a34a'); setTimeout(function(){ _setMsg('',''); }, 2500); }
+    else       { _setMsg('Ошибка: ' + (d.error||'?'), '#dc2626'); }
     return d;
   })
-  .catch(function(){ _setMsg('Error de red', '#dc2626'); });
+  .catch(function(){ _setMsg('Ошибка сети', '#dc2626'); });
 };
 
 // ── Send proposal ─────────────────────────────────────────────────────────────
 window.sendProposal = function() {
-  if (!confirm('¿Marcar esta propuesta como enviada al cliente?')) return;
+  if (!confirm('Отметить это предложение как отправленное клиенту?')) return;
   saveDraft().then(function() {
     fetch('/wi/crm/proposal/' + PID + '/send/', {
       method: 'POST',
@@ -560,7 +560,7 @@ window.sendProposal = function() {
     .then(function(r){ return r.json(); })
     .then(function(d) {
       if (d.ok && d.redirect) location.href = d.redirect;
-      else alert('Error: ' + (d.error||'desconocido'));
+      else alert('Ошибка: ' + (d.error||'неизвестна'));
     });
   });
 };
@@ -568,7 +568,7 @@ window.sendProposal = function() {
 // ── Export Word ───────────────────────────────────────────────────────────────
 window.exportWord = function() {
   var html = document.getElementById('previewContainer').innerHTML;
-  if (!html) { alert('Vista previa vacía, espera un momento.'); return; }
+  if (!html) { alert('Предпросмотр пуст, подождите немного.'); return; }
   var css = '';
   try {
     Array.from(document.styleSheets).forEach(function(s) {
@@ -586,9 +586,9 @@ window.exportWord = function() {
 
 // ── Copy WA ───────────────────────────────────────────────────────────────────
 window.copyWaMsg = function() {
-  if (!_waMsg) { alert('Genera el enlace del cliente en el lead primero.'); return; }
+  if (!_waMsg) { alert('Сначала создайте ссылку клиента в карточке лида.'); return; }
   _copy(_waMsg);
-  _setMsg('✓ Mensaje WA copiado', '#16a34a');
+  _setMsg('✓ Сообщение WA скопировано', '#16a34a');
   setTimeout(function(){ _setMsg('', ''); }, 2000);
 };
 

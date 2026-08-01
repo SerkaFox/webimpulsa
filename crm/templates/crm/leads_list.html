@@ -50,8 +50,9 @@
 
 <div class="top-bar">
   <h1>🗂 CreaGanaWeb CRM</h1>
-  <a href="/panel/prospeccion/mapa/">📍 Mapa de prospección</a>
-  <span class="sub">{{ total }} lead{% if total != 1 %}s{% endif %} {% if status_filter %}· filtro: {{ status_filter }}{% endif %}{% if search %}· búsqueda: "{{ search }}"{% endif %}</span>
+  <a href="/panel/prospeccion/mapa/">📍 Карта проспекции</a>
+  <a href="https://creaganaweb.es/">🌐 На сайт</a>
+  <span class="sub">{{ total }} лид{% if total != 1 %}ов{% endif %} {% if status_filter %}· фильтр: {{ status_filter }}{% endif %}{% if search %}· поиск: "{{ search }}"{% endif %}</span>
 </div>
 
 <div class="main">
@@ -59,15 +60,15 @@
   <div class="toolbar">
     <form method="get" action="">
       {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
-      <input type="text" name="q" value="{{ search }}" placeholder="Buscar por nombre, email, teléfono...">
-      <button type="submit">Buscar</button>
-      {% if search or status_filter %}<a href="/wi/crm/" class="clear">✕ Limpiar filtros</a>{% endif %}
+      <input type="text" name="q" value="{{ search }}" placeholder="Поиск по имени, email, телефону...">
+      <button type="submit">Найти</button>
+      {% if search or status_filter %}<a href="/wi/crm/" class="clear">✕ Сбросить фильтры</a>{% endif %}
     </form>
   </div>
 
   <div class="status-tabs">
     <a href="/wi/crm/{% if search %}?q={{ search }}{% endif %}" class="status-tab {% if not status_filter %}active{% endif %}">
-      Todos
+      Все
     </a>
     {% for val, label in statuses %}
     <a href="/wi/crm/?status={{ val }}{% if search %}&q={{ search }}{% endif %}"
@@ -82,13 +83,13 @@
     <thead>
       <tr>
         <th>#</th>
-        <th>Fecha</th>
-        <th>Nombre</th>
-        <th>Contacto</th>
-        <th>Negocio</th>
-        <th>Paquete</th>
-        <th>Precio est.</th>
-        <th>Estado</th>
+        <th>Дата</th>
+        <th>Имя</th>
+        <th>Контакт</th>
+        <th>Бизнес</th>
+        <th>Пакет</th>
+        <th>Цена (оцен.)</th>
+        <th>Статус</th>
       </tr>
     </thead>
     <tbody>
@@ -114,7 +115,7 @@
     </tbody>
   </table>
   {% else %}
-  <div class="empty">No hay leads{% if status_filter %} con estado "{{ status_filter }}"{% endif %}{% if search %} para "{{ search }}"{% endif %}.</div>
+  <div class="empty">Нет лидов{% if status_filter %} со статусом "{{ status_filter }}"{% endif %}{% if search %} по запросу "{{ search }}"{% endif %}.</div>
   {% endif %}
 
 </div>

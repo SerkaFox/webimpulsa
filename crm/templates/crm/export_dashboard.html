@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Exportar CRM — CreaGanaWeb</title>
+<title>Экспорт CRM — CreaGanaWeb</title>
 <link rel="stylesheet" href="/static/wi/css/brand.css">
 <style>
 *,*::before,*::after{box-sizing:border-box}
@@ -78,30 +78,31 @@ tr:hover td{background:#fafbff}
 
 <div class="top-bar no-print">
   <a href="/wi/crm/" class="back">← CRM</a>
-  <h1>Exportar actividad CRM — CreaGanaWeb</h1>
-  <button class="btn btn-outline" onclick="window.print()">🖨 Imprimir</button>
+  <a href="https://creaganaweb.es/" class="back">🌐 На сайт</a>
+  <h1>Экспорт активности CRM — CreaGanaWeb</h1>
+  <button class="btn btn-outline" onclick="window.print()">🖨 Печать</button>
 </div>
 
 <div class="main">
 
   <div class="disclaimer">
-    <strong>Nota:</strong> Este informe es un documento de actividad interna.
-    No constituye certificado oficial ni documento contable con validez fiscal.
-    Generado el {{ generated_at|date:"d/m/Y H:i" }}.
+    <strong>Примечание:</strong> Этот отчёт — документ внутренней активности.
+    Он не является официальным сертификатом или бухгалтерским документом с юридической силой.
+    Сформировано {{ generated_at|date:"d/m/Y H:i" }}.
   </div>
 
   <!-- Filter form -->
   <form method="get" action="/wi/crm/export/" class="filter-bar no-print">
     <div>
-      <label>Desde</label>
+      <label>С</label>
       <input type="date" name="from" value="{{ date_from }}">
     </div>
     <div>
-      <label>Hasta</label>
+      <label>По</label>
       <input type="date" name="to" value="{{ date_to }}">
     </div>
-    <button type="submit" class="btn btn-primary">Filtrar</button>
-    <a href="/wi/crm/export/" class="btn btn-outline">Limpiar filtro</a>
+    <button type="submit" class="btn btn-primary">Фильтровать</button>
+    <a href="/wi/crm/export/" class="btn btn-outline">Сбросить фильтр</a>
     <a href="/wi/crm/export/?from={{ date_from }}&to={{ date_to }}&format=csv" class="btn btn-green">⬇ CSV</a>
   </form>
 
@@ -109,15 +110,15 @@ tr:hover td{background:#fafbff}
   <div class="stats-row">
     <div class="stat-card">
       <div class="val">{{ leads|length }}</div>
-      <div class="lbl">Total leads</div>
+      <div class="lbl">Всего лидов</div>
     </div>
     <div class="stat-card">
       <div class="val">{{ accepted_count }}</div>
-      <div class="lbl">Proyectos aceptados</div>
+      <div class="lbl">Принятых проектов</div>
     </div>
     <div class="stat-card">
       <div class="val" style="color:#16a34a">{{ total_income }}€</div>
-      <div class="lbl">Ingresos registrados</div>
+      <div class="lbl">Зарегистрировано доходов</div>
     </div>
     <div class="stat-card">
       <div class="val">
@@ -125,16 +126,16 @@ tr:hover td{background:#fafbff}
         {{ accepted_count }}
         {% else %}0{% endif %}
       </div>
-      <div class="lbl">Convertidos</div>
+      <div class="lbl">Конвертировано</div>
     </div>
   </div>
 
   <!-- Leads table -->
   <div class="card">
     <div class="card-header">
-      <h2>Leads{% if date_from or date_to %} (filtrado){% endif %}</h2>
+      <h2>Лиды{% if date_from or date_to %} (с фильтром){% endif %}</h2>
       <div class="card-actions no-print">
-        <a href="/wi/crm/export/?from={{ date_from }}&to={{ date_to }}&format=csv" class="btn btn-green">⬇ Exportar CSV</a>
+        <a href="/wi/crm/export/?from={{ date_from }}&to={{ date_to }}&format=csv" class="btn btn-green">⬇ Экспорт CSV</a>
       </div>
     </div>
     <div style="overflow-x:auto">
@@ -142,16 +143,16 @@ tr:hover td{background:#fafbff}
         <thead>
           <tr>
             <th>#</th>
-            <th>Fecha</th>
-            <th>Cliente</th>
-            <th>Email / Teléfono</th>
-            <th>Paquete</th>
-            <th>Estado</th>
-            <th>Fuente</th>
-            <th>Propuesta</th>
-            <th>Precio</th>
-            <th>Ingresos</th>
-            <th class="no-print">Acciones</th>
+            <th>Дата</th>
+            <th>Клиент</th>
+            <th>Email / Телефон</th>
+            <th>Пакет</th>
+            <th>Статус</th>
+            <th>Источник</th>
+            <th>Предложение</th>
+            <th>Цена</th>
+            <th>Доходы</th>
+            <th class="no-print">Действия</th>
           </tr>
         </thead>
         <tbody>
@@ -194,7 +195,7 @@ tr:hover td{background:#fafbff}
               {% endwith %}
             </td>
             <td class="no-print">
-              <a href="/wi/crm/{{ lead.pk }}/" style="font-size:.75rem;margin-right:4px">ver</a>
+              <a href="/wi/crm/{{ lead.pk }}/" style="font-size:.75rem;margin-right:4px">открыть</a>
               <a href="/wi/crm/{{ lead.pk }}/dossier/" style="font-size:.75rem;color:#7c3aed">ZIP</a>
             </td>
           </tr>
@@ -202,7 +203,7 @@ tr:hover td{background:#fafbff}
           {% endwith %}
           {% empty %}
           <tr>
-            <td colspan="11" style="text-align:center;color:#94a3b8;padding:24px">Sin leads en el período seleccionado.</td>
+            <td colspan="11" style="text-align:center;color:#94a3b8;padding:24px">Нет лидов за выбранный период.</td>
           </tr>
           {% endfor %}
         </tbody>

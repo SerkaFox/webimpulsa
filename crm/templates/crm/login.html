@@ -33,11 +33,11 @@
 <body>
   <div class="box">
     <h1>CreaGanaWeb CRM</h1>
-    <p class="sub">Introduce la contraseña de acceso</p>
-    {% if error %}<p class="error">Contraseña incorrecta</p>{% endif %}
+    <p class="sub">Введите пароль для входа</p>
+    {% if error %}<p class="error">Неверный пароль</p>{% endif %}
     <form method="post">
-      <input type="password" name="crm_password" placeholder="Contraseña" autofocus required>
-      <button type="submit">Entrar</button>
+      <input type="password" name="crm_password" placeholder="Пароль" autofocus required>
+      <button type="submit">Войти</button>
     </form>
   </div>
 </body>
