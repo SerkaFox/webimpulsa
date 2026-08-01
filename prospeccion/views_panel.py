@@ -266,12 +266,20 @@ def places_search(request):
     return JsonResponse({'existing': existing, 'google': google_results, 'google_error': google_error})
 
 
+# Tope alto para "Buscar en esta zona" (radio calculado desde el viewport
+# visible del mapa, puede ser bastante mayor que el 1 km de "Estoy aquí"
+# cuando la vista está alejada) — evita gastar cuota en un radio de
+# provincia entera si alguien hace zoom out del todo.
+_NEARBY_MAX_RADIUS_M = 15000
+
+
 @_crm_auth
 @require_GET
 def places_nearby(request):
-    """Botón "Estoy aquí": qué negocios hay en un radio (por defecto 1 km)
-    alrededor de la geolocalización real del dispositivo — sin escribir
-    ningún texto, a diferencia de places_search. Misma lógica de "ya
+    """Negocios en un radio alrededor de un punto, sin escribir ningún texto
+    (a diferencia de places_search). Lo usan dos botones: "Estoy aquí"
+    (geolocalización real, radio fijo de 1 km) y "Buscar en esta zona"
+    (centro + radio del viewport visible del mapa). Misma lógica de "ya
     existente vs. nuevo de Google" que la búsqueda por texto."""
     try:
         lat = float(request.GET['lat'])
@@ -280,9 +288,11 @@ def places_nearby(request):
         return JsonResponse({'error': 'Faltan coordenadas (lat/lng)'}, status=400)
 
     try:
-        radius_m = min(max(int(request.GET.get('radius', 1000)), 100), 5000)
+        radius_requested = int(request.GET.get('radius', 1000))
     except ValueError:
-        radius_m = 1000
+        radius_requested = 1000
+    radius_m = min(max(radius_requested, 100), _NEARBY_MAX_RADIUS_M)
+    radius_capped = radius_requested > _NEARBY_MAX_RADIUS_M
 
     existing = [_existing_match_json(p) for p in find_nearby_prospects(lat, lng, radius_m=radius_m)]
 
@@ -307,7 +317,10 @@ def places_nearby(request):
         logger.exception('Error buscando cerca en Google Places: lat=%r lng=%r', lat, lng)
         google_error = 'No se pudo consultar Google Places en este momento'
 
-    return JsonResponse({'existing': existing, 'google': google_results, 'google_error': google_error})
+    return JsonResponse({
+        'existing': existing, 'google': google_results, 'google_error': google_error,
+        'radius_used': radius_m, 'radius_capped': radius_capped,
+    })
 
 
 @_crm_auth

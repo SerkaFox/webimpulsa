@@ -167,7 +167,10 @@
     </div>
     <p class="search-hint">Primero se muestra lo que ya está en CreaGanaWeb, después resultados de Google cerca de la zona visible del mapa.</p>
 
-    <button class="btn green" id="btnHereNow" style="margin-bottom:10px">🎯 Estoy aquí — ver negocios en 1 km</button>
+    <div class="row2" style="display:flex;gap:8px;margin-bottom:10px">
+      <button class="btn green" id="btnHereNow" style="flex:1">🎯 Estoy aquí (1 km)</button>
+      <button class="btn secondary" id="btnSearchArea" style="flex:1">🗺️ Buscar en esta zona</button>
+    </div>
 
     <div id="searchResults"></div>
 
@@ -668,6 +671,69 @@ function runNearbySearch(){
 }
 
 document.getElementById('btnHereNow').addEventListener('click', runNearbySearch);
+
+function haversineMeters(lat1, lng1, lat2, lng2){
+  var R = 6371000, toRad = function(d){ return d * Math.PI / 180; };
+  var dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+  var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2) * Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/* ---- "Buscar en esta zona" — mismo endpoint que "Estoy aquí", pero el
+   centro y el radio salen del viewport visible del mapa (bounds), no de la
+   geolocalización del dispositivo. Útil para revisar una zona sin moverte
+   físicamente hasta ella. ---- */
+function runAreaSearch(){
+  if(!map){ showToast('El mapa no está listo todavía'); return; }
+  var bounds = map.getBounds();
+  if(!bounds){ showToast('Espera a que el mapa termine de cargar'); return; }
+
+  var center = bounds.getCenter();
+  var ne = bounds.getNorthEast();
+  var radius = Math.round(haversineMeters(center.lat(), center.lng(), ne.lat(), ne.lng()));
+
+  var btn = document.getElementById('btnSearchArea');
+  var resultsEl = document.getElementById('searchResults');
+  btn.disabled = true;
+  resultsEl.innerHTML = '<p style="color:#8a94a6;font-size:.85rem">Buscando en la zona visible…</p>';
+
+  var params = new URLSearchParams({lat: center.lat(), lng: center.lng(), radius: radius});
+  fetch('/panel/prospeccion/mapa/api/nearby/?' + params.toString())
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      btn.disabled = false;
+      if(data.error){ resultsEl.innerHTML = ''; clearSearchMarkers(); showToast(data.error); return; }
+      var existingResults = data.existing || [];
+      lastGoogleResults = data.google || [];
+      var html = '';
+      if(data.radius_capped){
+        html += '<p style="color:#92400e;font-size:.78rem">Zona muy amplia: se buscó solo hasta '+
+          (data.radius_used/1000).toFixed(1)+' km desde el centro. Acerca el mapa para más precisión.</p>';
+      }
+      existingResults.forEach(function(p){ html += renderExistingCard(p); });
+      lastGoogleResults.forEach(function(r, idx){ html += renderGoogleCard(r, idx); });
+      if(data.google_error){
+        html += '<p style="color:#dc2626;font-size:.8rem">'+data.google_error+'</p>';
+      }
+      if(!existingResults.length && !lastGoogleResults.length){
+        html += '<p style="color:#8a94a6;font-size:.85rem">Nada en la zona visible.</p>';
+      }
+      resultsEl.innerHTML = html;
+      resultsEl.querySelectorAll('[data-google-idx]').forEach(function(elBtn){
+        elBtn.addEventListener('click', function(){
+          openConfirmPanel({fromGoogle: true, place: lastGoogleResults[parseInt(elBtn.getAttribute('data-google-idx'), 10)]});
+        });
+      });
+      plotSearchMarkers(existingResults, lastGoogleResults);
+    })
+    .catch(function(){
+      btn.disabled = false;
+      resultsEl.innerHTML = ''; clearSearchMarkers(); showToast('No se pudo buscar en este momento');
+    });
+}
+
+document.getElementById('btnSearchArea').addEventListener('click', runAreaSearch);
 
 /* ---- Modo manual: el clic normal en el mapa NUNCA crea nada ---- */
 var manualModeActive = false;
