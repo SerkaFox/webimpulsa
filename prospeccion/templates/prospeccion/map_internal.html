@@ -432,11 +432,12 @@ window.wiInitMap = function(){
       return;
     }
     // Icono de negocio del mapa BASE de Google (no un marcador nuestro) —
-    // se corta el popup nativo de Google y se muestra el nuestro, con dos
-    // acciones: una que gasta cuota (Obtener info) y otra que no (Añadir
-    // directamente), ver showPoiPopup().
+    // NO se corta (sin ev.stop()) el popup nativo de Google, que ya
+    // muestra nombre/dirección gratis (sin gastar Places API, viene con
+    // el propio tile del mapa); el nuestro se añade AL LADO, con dos
+    // acciones propias: una que gasta cuota (Obtener info) y otra que no
+    // (Añadir directamente), ver showPoiPopup().
     if(ev.placeId){
-      ev.stop();
       showPoiPopup(ev.placeId, ev.latLng);
     }
   });
@@ -1052,6 +1053,11 @@ function showPoiPopup(placeId, latLng){
   var gmapsUrl = poiGmapsUrl(placeId);
   poiInfoWindow = new google.maps.InfoWindow({
     position: latLng,
+    // Desplazado del punto exacto — Google ya abre su propia ficha nativa
+    // (gratis, nombre/dirección) justo encima del punto clicado; este
+    // desplazamiento evita que las dos ventanas queden exactamente
+    // superpuestas.
+    pixelOffset: new google.maps.Size(160, 0),
     content:
       '<div style="font-family:inherit;min-width:200px">' +
       '<div style="font-weight:700;margin-bottom:8px">'+_t('map.poi_title')+'</div>' +
