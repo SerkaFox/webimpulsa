@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Archivos del proyecto — CreaGanaWeb</title>
+  <link rel="stylesheet" href="/static/wi/css/brand.css">
+  <link rel="icon" type="image/svg+xml" href="/static/wi/img/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/wi/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="/static/wi/img/apple-icon.png">
+  <meta name="theme-color" content="#075CCF">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      color: var(--wi-text);
+      background: var(--wi-bg);
+      min-height: 100vh;
+    }
+    .pf-header {
+      background: linear-gradient(135deg, rgba(7,92,207,.94), rgba(7,92,207,.94));
+      color: #fff; padding: 16px 20px;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      box-shadow: 0 4px 24px rgba(7,92,207,.22);
+    }
+    .pf-header a.back { color: #fff; text-decoration: none; font-weight: 700; font-size: .9rem; opacity: .9; }
+    .pf-header a.back:hover { opacity: 1; }
+    .pf-header h1 { font-size: 1rem; margin: 0; font-weight: 800; }
+    .pf-wrap { max-width: 900px; margin: 0 auto; padding: 20px 16px 60px; }
+    .pf-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .pf-breadcrumb { font-size: .85rem; color: var(--wi-muted); word-break: break-all; }
+    .pf-breadcrumb a { color: var(--wi-primary); text-decoration: none; font-weight: 600; }
+    .pf-breadcrumb a:hover { text-decoration: underline; }
+    .pf-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--wi-primary); color: #fff; border: none; border-radius: 8px;
+      padding: 9px 14px; font-size: .85rem; font-weight: 700; cursor: pointer; text-decoration: none;
+    }
+    .pf-btn.secondary { background: #fff; color: var(--wi-primary); border: 1px solid var(--wi-border); }
+    .pf-btn.danger { background: #dc2626; }
+    .pf-card { background: var(--wi-card); border: 1px solid var(--wi-border); border-radius: 14px; box-shadow: var(--wi-shadow); overflow: hidden; }
+    .pf-row {
+      display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+      border-bottom: 1px solid var(--wi-line); font-size: .9rem;
+    }
+    .pf-row:last-child { border-bottom: none; }
+    .pf-row .icon { font-size: 1.1rem; width: 22px; text-align: center; flex-shrink: 0; }
+    .pf-row .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pf-row .name a { color: var(--wi-text); text-decoration: none; font-weight: 600; }
+    .pf-row .name a:hover { color: var(--wi-primary); }
+    .pf-row .meta { font-size: .75rem; color: var(--wi-muted); flex-shrink: 0; width: 90px; text-align: right; }
+    .pf-row .actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .pf-row .actions button, .pf-row .actions a {
+      background: none; border: none; cursor: pointer; font-size: 1rem; padding: 4px 6px;
+      border-radius: 6px; text-decoration: none; color: var(--wi-muted);
+    }
+    .pf-row .actions button:hover, .pf-row .actions a:hover { background: var(--wi-line); color: var(--wi-primary); }
+    .pf-empty { padding: 40px 20px; text-align: center; color: var(--wi-muted); font-size: .9rem; }
+    .pf-error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; border-radius: 10px; padding: 14px; margin-bottom: 16px; font-size: .9rem; }
+    .pf-editor-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(8,23,71,.55); z-index: 50;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .pf-editor-overlay.open { display: flex; }
+    .pf-editor {
+      background: #fff; border-radius: 14px; width: 100%; max-width: 800px; max-height: 86vh;
+      display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--wi-shadow-hover);
+    }
+    .pf-editor-head { padding: 14px 18px; border-bottom: 1px solid var(--wi-line); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .pf-editor-head strong { font-size: .9rem; word-break: break-all; }
+    .pf-editor textarea {
+      flex: 1; border: none; outline: none; padding: 16px 18px; font-family: 'SF Mono', Consolas, monospace;
+      font-size: .82rem; line-height: 1.5; resize: none; min-height: 300px;
+    }
+    .pf-editor-foot { padding: 12px 18px; border-top: 1px solid var(--wi-line); display: flex; justify-content: flex-end; gap: 8px; }
+    .pf-close-x { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--wi-muted); }
+    .pf-toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: #081747; color: #fff; padding: 10px 18px; border-radius: 999px;
+      font-size: .85rem; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .25s;
+      z-index: 60;
+    }
+    .pf-toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+  <div class="pf-header">
+    <a class="back" href="/p/{{ access.token }}/">← Mi área de cliente</a>
+    <h1>💻 Archivos del proyecto</h1>
+  </div>
+
+  <div class="pf-wrap">
+    {% if error %}
+      <div class="pf-error">{{ error }}</div>
+    {% else %}
+      <div class="pf-toolbar">
+        <div class="pf-breadcrumb">
+          <a href="/p/{{ access.token }}/files/">proyecto</a>
+          {% if listing.rel_path %}
+            / {{ listing.rel_path }}
+          {% endif %}
+        </div>
+        <a class="pf-btn secondary" href="/p/{{ access.token }}/files/download-all/">⬇ Descargar todo (.zip)</a>
+      </div>
+
+      <div class="pf-card">
+        {% if listing.parent_rel is not None %}
+          <div class="pf-row">
+            <span class="icon">📁</span>
+            <span class="name"><a href="/p/{{ access.token }}/files/?path={{ listing.parent_rel|urlencode }}">.. (subir)</a></span>
+          </div>
+        {% endif %}
+        {% for entry in listing.entries %}
+          <div class="pf-row" data-path="{{ entry.rel_path }}">
+            <span class="icon">{% if entry.is_dir %}📁{% else %}📄{% endif %}</span>
+            <span class="name">
+              {% if entry.is_dir %}
+                <a href="/p/{{ access.token }}/files/?path={{ entry.rel_path|urlencode }}">{{ entry.name }}</a>
+              {% else %}
+                {{ entry.name }}
+              {% endif %}
+            </span>
+            {% if not entry.is_dir %}<span class="meta">{{ entry.size|filesizeformat }}</span>{% endif %}
+            <span class="actions">
+              {% if not entry.is_dir %}
+                <a href="/p/{{ access.token }}/files/download/?path={{ entry.rel_path|urlencode }}" title="Descargar">⬇</a>
+              {% endif %}
+              {% if entry.editable %}
+                <button type="button" title="Editar" onclick="pfEdit('{{ entry.rel_path|escapejs }}')">✏️</button>
+              {% endif %}
+              <button type="button" title="Eliminar" onclick="pfDelete('{{ entry.rel_path|escapejs }}', {{ entry.is_dir|yesno:'true,false' }})">🗑</button>
+            </span>
+          </div>
+        {% empty %}
+          <div class="pf-empty">Esta carpeta está vacía.</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="pf-editor-overlay" id="pfEditorOverlay">
+    <div class="pf-editor">
+      <div class="pf-editor-head">
+        <strong id="pfEditorPath"></strong>
+        <button type="button" class="pf-close-x" onclick="pfCloseEditor()">✕</button>
+      </div>
+      <textarea id="pfEditorContent" spellcheck="false"></textarea>
+      <div class="pf-editor-foot">
+        <button type="button" class="pf-btn secondary" onclick="pfCloseEditor()">Cancelar</button>
+        <button type="button" class="pf-btn" onclick="pfSaveEdit()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="pf-toast" id="pfToast"></div>
+
+<script>
+const PF_TOKEN = "{{ access.token }}";
+let pfCurrentPath = null;
+
+function pfToast(msg) {
+  const t = document.getElementById('pfToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+async function pfEdit(relPath) {
+  pfCurrentPath = relPath;
+  const res = await fetch(`/p/${PF_TOKEN}/files/edit/?path=${encodeURIComponent(relPath)}`);
+  const data = await res.json();
+  if (!data.ok) { pfToast(data.error || 'Error al abrir el archivo'); return; }
+  document.getElementById('pfEditorPath').textContent = relPath;
+  document.getElementById('pfEditorContent').value = data.content;
+  document.getElementById('pfEditorOverlay').classList.add('open');
+}
+
+function pfCloseEditor() {
+  document.getElementById('pfEditorOverlay').classList.remove('open');
+  pfCurrentPath = null;
+}
+
+async function pfSaveEdit() {
+  if (!pfCurrentPath) return;
+  const content = document.getElementById('pfEditorContent').value;
+  const body = new URLSearchParams({ path: pfCurrentPath, content });
+  const res = await fetch(`/p/${PF_TOKEN}/files/edit/?path=${encodeURIComponent(pfCurrentPath)}`, {
+    method: 'POST', body,
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  });
+  const data = await res.json();
+  if (data.ok) { pfToast('Guardado'); pfCloseEditor(); }
+  else { pfToast(data.error || 'Error al guardar'); }
+}
+
+async function pfDelete(relPath, isDir) {
+  const label = isDir ? 'esta carpeta y TODO su contenido' : 'este archivo';
+  if (!confirm(`¿Seguro que quieres eliminar ${label}?\n\n${relPath}\n\nEsta acción no se puede deshacer.`)) return;
+  const body = new URLSearchParams({ path: relPath });
+  const res = await fetch(`/p/${PF_TOKEN}/files/delete/`, {
+    method: 'POST', body,
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  });
+  const data = await res.json();
+  if (data.ok) {
+    document.querySelector(`.pf-row[data-path="${CSS.escape(relPath)}"]`)?.remove();
+    pfToast('Eliminado');
+  } else {
+    pfToast(data.error || 'Error al eliminar');
+  }
+}
+</script>
+
+</body>
+</html>

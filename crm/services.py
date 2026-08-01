@@ -7,13 +7,18 @@ Designed for extension:
   extranjeria_export(queryset)  → Extranjería CSV/XML export
 """
 import hashlib
+import io
 import logging
 import math
 import os
 import random
 import secrets
+import shutil
+import zipfile
 from datetime import timedelta
+from pathlib import Path
 
+from django.conf import settings
 from django.utils import timezone
 
 from .models import ClientAccess, CommunicationLog, Lead, ProjectMaterial
@@ -586,3 +591,138 @@ CLIENT_STAGE_PROGRESS = {
     Lead.ST_EN_TRABAJO:   75,
     Lead.ST_FINALIZADO:   100,
 }
+
+
+# ── Client project file manager ───────────────────────────────────────────────
+# Operates directly on the client's LIVE deployed project (Lead.project_path),
+# by explicit choice — no snapshot indirection. The one non-negotiable guard is
+# path traversal: every resolved path must stay inside project_path, and must
+# never resolve into this CRM app's own codebase (a misconfigured project_path
+# pointing at ourselves would otherwise let a client edit/delete our own app).
+
+class ProjectFileError(Exception):
+    pass
+
+
+_OWN_BASE_DIR = Path(settings.BASE_DIR).resolve()
+
+# Files small/simple enough to view and save as plain text in the browser.
+# Anything else (images, archives, binaries, databases...) is download/delete
+# only — editing them as text would corrupt them.
+TEXT_EDIT_EXTENSIONS = {
+    'html', 'htm', 'css', 'js', 'mjs', 'json', 'txt', 'md', 'py', 'xml',
+    'yml', 'yaml', 'ini', 'cfg', 'conf', 'env', 'sh', 'csv', 'svg',
+}
+MAX_TEXT_EDIT_BYTES = 2 * 1024 * 1024  # 2 MB — generous for hand-written source files
+
+
+def _project_root(lead: Lead) -> Path:
+    if not lead.project_path:
+        raise ProjectFileError('Este proyecto no tiene una carpeta configurada todavía.')
+    root = Path(lead.project_path).resolve()
+    if not root.is_dir():
+        raise ProjectFileError('La carpeta del proyecto no existe en el servidor.')
+    if root == _OWN_BASE_DIR or _OWN_BASE_DIR in root.parents or root in _OWN_BASE_DIR.parents:
+        raise ProjectFileError('Ruta de proyecto no válida.')
+    return root
+
+
+def get_project_root(lead: Lead) -> Path:
+    """Public wrapper around the same root-validation used by the file manager —
+    used by the rolling-backup command so it shares the exact same safety checks."""
+    return _project_root(lead)
+
+
+def resolve_project_path(lead: Lead, rel_path: str = '') -> Path:
+    """Resolve rel_path against the lead's project root, rejecting traversal."""
+    root = _project_root(lead)
+    candidate = (root / (rel_path or '').lstrip('/')).resolve()
+    if candidate != root and root not in candidate.parents:
+        raise ProjectFileError('Ruta fuera de la carpeta del proyecto.')
+    return candidate
+
+
+def list_project_directory(lead: Lead, rel_path: str = '') -> dict:
+    """Return {'root': bool-ish info, 'parent': str|None, 'entries': [...]}."""
+    root = _project_root(lead)
+    target = resolve_project_path(lead, rel_path)
+    if not target.exists():
+        raise ProjectFileError('Esa ruta ya no existe.')
+    if not target.is_dir():
+        raise ProjectFileError('Esa ruta no es una carpeta.')
+
+    entries = []
+    for child in sorted(target.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower())):
+        try:
+            stat = child.stat()
+        except OSError:
+            continue
+        child_rel = str(child.relative_to(root))
+        ext = child.name.rsplit('.', 1)[-1].lower() if '.' in child.name else ''
+        entries.append({
+            'name': child.name,
+            'rel_path': child_rel,
+            'is_dir': child.is_dir(),
+            'size': stat.st_size,
+            'mtime': timezone.datetime.fromtimestamp(stat.st_mtime, tz=timezone.get_current_timezone()),
+            'editable': (not child.is_dir()) and ext in TEXT_EDIT_EXTENSIONS and stat.st_size <= MAX_TEXT_EDIT_BYTES,
+        })
+
+    rel_norm = str(target.relative_to(root)) if target != root else ''
+    parent_rel = None
+    if target != root:
+        parent_rel = str(target.parent.relative_to(root)) if target.parent != root else ''
+
+    return {'rel_path': rel_norm, 'parent_rel': parent_rel, 'entries': entries}
+
+
+def read_project_text_file(lead: Lead, rel_path: str) -> str:
+    path = resolve_project_path(lead, rel_path)
+    if not path.is_file():
+        raise ProjectFileError('Ese archivo no existe.')
+    ext = path.name.rsplit('.', 1)[-1].lower() if '.' in path.name else ''
+    if ext not in TEXT_EDIT_EXTENSIONS:
+        raise ProjectFileError('Este tipo de archivo no se puede editar como texto.')
+    if path.stat().st_size > MAX_TEXT_EDIT_BYTES:
+        raise ProjectFileError('El archivo es demasiado grande para editar aquí.')
+    return path.read_text(encoding='utf-8', errors='replace')
+
+
+def write_project_text_file(lead: Lead, rel_path: str, content: str) -> None:
+    path = resolve_project_path(lead, rel_path)
+    if path.is_dir():
+        raise ProjectFileError('Ese nombre corresponde a una carpeta.')
+    ext = path.name.rsplit('.', 1)[-1].lower() if '.' in path.name else ''
+    if ext not in TEXT_EDIT_EXTENSIONS:
+        raise ProjectFileError('Este tipo de archivo no se puede editar como texto.')
+    path.write_text(content, encoding='utf-8')
+
+
+def delete_project_path(lead: Lead, rel_path: str) -> None:
+    root = _project_root(lead)
+    path = resolve_project_path(lead, rel_path)
+    if path == root:
+        raise ProjectFileError('No se puede eliminar la carpeta raíz del proyecto.')
+    if not path.exists():
+        raise ProjectFileError('Esa ruta ya no existe.')
+    if path.is_dir():
+        shutil.rmtree(path)
+    else:
+        path.unlink()
+
+
+def zip_project(lead: Lead) -> io.BytesIO:
+    """Zip the entire live project folder (and project_db_path, if set and
+    outside project_path) into an in-memory buffer for full-project download."""
+    root = _project_root(lead)
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for file_path in root.rglob('*'):
+            if file_path.is_file():
+                zf.write(file_path, arcname=str(file_path.relative_to(root)))
+        if lead.project_db_path:
+            db_path = Path(lead.project_db_path).resolve()
+            if db_path.is_file() and root not in db_path.parents:
+                zf.write(db_path, arcname=f'database/{db_path.name}')
+    buf.seek(0)
+    return buf

@@ -196,6 +196,14 @@
             <label data-i18n="crm.internal_notes">Notas internas</label>
             <textarea name="notes">{{ lead.notes }}</textarea>
           </div>
+          <div>
+            <label data-i18n="crm.project_path">Ruta del proyecto en el servidor</label>
+            <input type="text" name="project_path" value="{{ lead.project_path }}" placeholder="/home/seradmin/cliente-x">
+          </div>
+          <div>
+            <label data-i18n="crm.project_db_path">Ruta de la base de datos (opcional, si está fuera de la carpeta del proyecto)</label>
+            <input type="text" name="project_db_path" value="{{ lead.project_db_path }}" placeholder="/home/seradmin/cliente-x/db.sqlite3">
+          </div>
           <button type="submit" class="save-btn" data-i18n="crm.save">Guardar</button>
         </form>
 

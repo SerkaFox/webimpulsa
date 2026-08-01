@@ -346,7 +346,12 @@ def lead_detail(request, pk):
         if new_channel in dict(Lead.CHANNEL_CHOICES):
             lead.preferred_channel = new_channel
         lead.notes = new_notes
-        lead.save(update_fields=['status', 'notes', 'preferred_channel', 'updated_at'])
+        lead.project_path = request.POST.get('project_path', lead.project_path).strip()
+        lead.project_db_path = request.POST.get('project_db_path', lead.project_db_path).strip()
+        lead.save(update_fields=[
+            'status', 'notes', 'preferred_channel',
+            'project_path', 'project_db_path', 'updated_at',
+        ])
 
     # Latest active access token
     active_access = lead.access_tokens.filter(is_active=True).order_by('-created_at').first()

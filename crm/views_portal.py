@@ -30,8 +30,10 @@ from .proposal_content import (
 )
 from .services import (
     CLIENT_NEXT_STEP, CLIENT_STAGE_PROGRESS, CLIENT_STATUS_LABEL, PAYMENT_PLAN_CHOICES,
-    accept_proposal, log_communication, payment_schedule, proposal_to_template_input,
-    record_portal_visit, save_material, serialize_chat_message, validate_portal_token,
+    ProjectFileError, accept_proposal, delete_project_path, list_project_directory,
+    log_communication, payment_schedule, proposal_to_template_input, read_project_text_file,
+    record_portal_visit, resolve_project_path, save_material, serialize_chat_message,
+    validate_portal_token, write_project_text_file, zip_project,
 )
 
 _WI_TG_TOKEN   = os.getenv('WI_TG_TOKEN', '')
@@ -1098,3 +1100,119 @@ def portal_client_paid(request, token):
     )
 
     return redirect(f'/p/{token}/pay/?paid=1')
+
+
+# ── Project file manager (full handover — operates on the LIVE project) ──────
+# Gives the client full browse/download/edit/delete access to their own
+# delivered project (Lead.project_path), so the agency can hand over a
+# complete, self-hostable copy and close out the contract. See
+# crm/services.py for the path-safety boundary (traversal protection).
+
+def _portal_access_or_403(request, token):
+    """Shared guard for the file-manager endpoints. Returns (access, None) or
+    (None, JsonResponse-error) to keep each view a one-liner."""
+    access = validate_portal_token(token)
+    if access is None:
+        return None, JsonResponse({'ok': False, 'error': 'Token inválido o expirado'}, status=403)
+    if access.pin_required and not _is_pin_verified(request, token):
+        return None, JsonResponse({'ok': False, 'error': 'PIN no verificado'}, status=403)
+    return access, None
+
+
+@require_http_methods(['GET'])
+def portal_files(request, token):
+    """GET /p/<token>/files/ — browse the client's live project folder."""
+    access = validate_portal_token(token)
+    if access is None:
+        raise Http404
+    needs_pin = access.pin_required and not _is_pin_verified(request, token)
+    if needs_pin:
+        return redirect(f'/p/{token}/')
+
+    lead = access.lead
+    rel_path = request.GET.get('path', '')
+    error = None
+    listing = None
+    try:
+        listing = list_project_directory(lead, rel_path)
+    except ProjectFileError as exc:
+        error = str(exc)
+
+    return render(request, 'crm/portal_files.html', {
+        'access': access,
+        'lead': lead,
+        'listing': listing,
+        'error': error,
+    })
+
+
+@require_http_methods(['GET'])
+def portal_files_download(request, token):
+    """GET /p/<token>/files/download/?path=... — download a single file."""
+    access, err = _portal_access_or_403(request, token)
+    if err:
+        raise Http404
+    rel_path = request.GET.get('path', '')
+    try:
+        path = resolve_project_path(access.lead, rel_path)
+    except ProjectFileError:
+        raise Http404
+    if not path.is_file():
+        raise Http404
+    mime_type, _ = mimetypes.guess_type(path.name)
+    return FileResponse(
+        open(path, 'rb'),
+        content_type=mime_type or 'application/octet-stream',
+        as_attachment=True,
+        filename=path.name,
+    )
+
+
+@require_http_methods(['GET'])
+def portal_files_download_zip(request, token):
+    """GET /p/<token>/files/download-all/ — download the whole project as a zip."""
+    access, err = _portal_access_or_403(request, token)
+    if err:
+        raise Http404
+    try:
+        buf = zip_project(access.lead)
+    except ProjectFileError as exc:
+        return HttpResponse(str(exc), status=400)
+    safe_name = ''.join(c if c.isalnum() or c in '-_' else '_' for c in (access.lead.name or 'proyecto'))
+    return FileResponse(
+        buf, as_attachment=True, filename=f'proyecto_{safe_name}.zip',
+        content_type='application/zip',
+    )
+
+
+@require_http_methods(['GET', 'POST'])
+def portal_files_edit(request, token):
+    """GET /p/<token>/files/edit/?path=...  — return current content for editing.
+    POST (same query param + 'content' body field) — save edited content."""
+    access, err = _portal_access_or_403(request, token)
+    if err:
+        return err
+    rel_path = request.GET.get('path', '') or request.POST.get('path', '')
+    try:
+        if request.method == 'POST':
+            write_project_text_file(access.lead, rel_path, request.POST.get('content', ''))
+            return JsonResponse({'ok': True})
+        content = read_project_text_file(access.lead, rel_path)
+        return JsonResponse({'ok': True, 'content': content, 'path': rel_path})
+    except ProjectFileError as exc:
+        return JsonResponse({'ok': False, 'error': str(exc)}, status=400)
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def portal_files_delete(request, token):
+    """POST /p/<token>/files/delete/ — delete a file or folder (form field 'path')."""
+    access, err = _portal_access_or_403(request, token)
+    if err:
+        return err
+    rel_path = request.POST.get('path', '')
+    try:
+        delete_project_path(access.lead, rel_path)
+        return JsonResponse({'ok': True})
+    except ProjectFileError as exc:
+        return JsonResponse({'ok': False, 'error': str(exc)}, status=400)

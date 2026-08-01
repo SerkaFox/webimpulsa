@@ -91,6 +91,17 @@ class Lead(models.Model):
     # detect "Tatiana currently has this lead open" and skip WA/TG duplicate pings.
     admin_chat_seen_at = models.DateTimeField(null=True, blank=True)
 
+    # ── delivered project handover (client file manager + backups) ────────────
+    # Absolute path to the client's live deployed project root on this server.
+    # Set by hand per lead — every client's site lives in a differently-shaped
+    # folder (static HTML, a whole separate Django app...), there's no way to
+    # derive this automatically. Client file manager operates directly on this
+    # path (live files), so keep it scoped to exactly that client's own folder.
+    project_path    = models.CharField(max_length=500, blank=True)
+    # Optional: path to a separate database file (e.g. a sqlite3 file) if it
+    # isn't already inside project_path — used by the snapshot backup command.
+    project_db_path = models.CharField(max_length=500, blank=True)
+
     class Meta:
         ordering = ['-created_at']
 

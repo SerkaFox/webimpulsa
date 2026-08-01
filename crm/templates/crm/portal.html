@@ -1211,6 +1211,11 @@ function copyVal(id, btnId) {
         <button id="mtabFiles" class="main-tab-btn" onclick="showMainTab('files')">
           📁 <span data-i18n="cabinet.tab_files">Progreso y materiales</span>
         </button>
+        {% if lead.project_path %}
+        <a href="/p/{{ access.token }}/files/" class="main-tab-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">
+          💻 <span data-i18n="cabinet.tab_project_files">Archivos del proyecto</span>
+        </a>
+        {% endif %}
       </div>
 
       <div id="mpanelChat">
@@ -1838,6 +1843,7 @@ es: {
   'cabinet.progress_label': 'Progreso del proyecto',
   'cabinet.tab_chat': 'Chat',
   'cabinet.tab_files': 'Progreso y materiales',
+  'cabinet.tab_project_files': 'Archivos del proyecto',
   'pwa.title': 'Acceso rápido a tu proyecto',
   'pwa.body': 'No es una app ni se descarga nada — es solo un atajo directo a esta página en tu dispositivo, para no tener que buscar el enlace en tu correo cada vez.',
   'pwa.ios_hint': 'Toca <strong>Compartir</strong> ⬆️ y luego <strong>«Añadir a pantalla de inicio»</strong>.',
@@ -2021,6 +2027,7 @@ en: {
   'cabinet.tab_chat': 'Chat',
   'cabinet.tab_files': 'Progress and materials',
   'pwa.title': 'Quick access to your project',
+  'cabinet.tab_project_files': 'Project files',
   'pwa.body': "It's not an app and nothing gets downloaded — it's just a direct shortcut to this page on your device, so you don't need to dig up the email link each time.",
   'pwa.ios_hint': 'Tap <strong>Share</strong> ⬆️ then <strong>«Add to Home Screen»</strong>.',
   'pwa.install_btn': 'Add shortcut',
@@ -2204,6 +2211,7 @@ eu: {
   'cabinet.tab_files': 'Aurrerapena eta materialak',
   'pwa.title': 'Sarbide azkarra zure proiektura',
   'pwa.body': 'Ez da aplikazio bat eta ez da ezer deskargatzen — zure gailuko esteka zuzena besterik ez da, posta elektronikoan esteka bilatu behar ez izateko.',
+  'cabinet.tab_project_files': 'Proiektuaren fitxategiak',
   'pwa.ios_hint': 'Sakatu <strong>Partekatu</strong> ⬆️ eta gero <strong>«Gehitu hasiera-pantailan»</strong>.',
   'pwa.install_btn': 'Gehitu lasterbidea',
   'cabinet.estimated': 'estimatua',
@@ -2387,6 +2395,7 @@ ru: {
   'pwa.title': 'Быстрый доступ к проекту',
   'pwa.body': 'Это не приложение, ничего скачивать не нужно — просто ярлык на эту страницу на вашем устройстве, чтобы не искать ссылку в почте каждый раз.',
   'pwa.ios_hint': 'Нажмите <strong>«Поделиться»</strong> ⬆️, затем <strong>«На экран «Домой»»</strong>.',
+  'cabinet.tab_project_files': 'Файлы проекта',
   'pwa.install_btn': 'Добавить ярлык',
   'cabinet.estimated': 'оценка',
   'cabinet.maint_prefix': 'Обсл.',

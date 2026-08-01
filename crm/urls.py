@@ -64,4 +64,11 @@ urlpatterns = [
     path('p/<str:token>/pay/stripe/',         views_portal.portal_pay_stripe_start,   name='crm_portal_pay_stripe_start'),
     path('p/<str:token>/pay/stripe/success/', views_portal.portal_pay_stripe_success, name='crm_portal_pay_stripe_success'),
     path('wi/crm/payment/<int:pk>/confirm/',  views.payment_confirm,                 name='crm_payment_confirm'),
+
+    # ── Project file manager (full handover, live project files) ───────────
+    path('p/<str:token>/files/',              views_portal.portal_files,              name='crm_portal_files'),
+    path('p/<str:token>/files/download/',     views_portal.portal_files_download,     name='crm_portal_files_download'),
+    path('p/<str:token>/files/download-all/', views_portal.portal_files_download_zip, name='crm_portal_files_zip'),
+    path('p/<str:token>/files/edit/',         views_portal.portal_files_edit,         name='crm_portal_files_edit'),
+    path('p/<str:token>/files/delete/',       views_portal.portal_files_delete,       name='crm_portal_files_delete'),
 ]
