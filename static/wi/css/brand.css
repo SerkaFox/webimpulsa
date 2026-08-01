@@ -1,27 +1,28 @@
 /* CreaGanaWeb — shared brand tokens.
    One source of truth for color across the site, replacing the old per-page
-   :root blocks (which had drifted into two competing "brand blues"). */
+   :root blocks (which had drifted into two competing "brand blues"). Palette
+   matches the approved logo (blue monitor / green plant / gold coins). */
 :root {
   --wi-navy:     #081747;
-  --wi-violet:   #5725F4;
-  --wi-magenta:  #B52BC3;
-  --wi-coral:    #FF6657;
-  --wi-gradient: linear-gradient(90deg, #5725F4, #B52BC3, #FF6657);
+  --wi-blue:     #075CCF;
+  --wi-gold:     #E0A526;
+  --wi-brand-green: #0E8A3C;
+  --wi-gradient: linear-gradient(90deg, #075CCF, #E0A526, #0E8A3C);
 
-  --wi-primary: #5725F4;
-  --wi-primary-2: #B52BC3;
-  --wi-accent:  #FF6657;
+  --wi-primary: #075CCF;
+  --wi-primary-2: #E0A526;
+  --wi-accent:  #0E8A3C;
   --wi-text:    #081747;
   --wi-muted:   #5a6d8c;
   --wi-green:   #009e73;
 
-  --wi-bg:      #f6f5fb;
+  --wi-bg:      #f4f8fd;
   --wi-surface: #ffffff;
   --wi-card:    #ffffff;
   --wi-border:  rgba(8,23,71,.12);
   --wi-line:    rgba(8,23,71,.08);
-  --wi-shadow:       0 2px 20px rgba(87,37,244,.10);
-  --wi-shadow-hover: 0 8px 40px rgba(87,37,244,.20);
+  --wi-shadow:       0 2px 20px rgba(7,92,207,.10);
+  --wi-shadow-hover: 0 8px 40px rgba(7,92,207,.20);
 }
 
 .wi-gradient-text {
@@ -33,9 +34,9 @@
 
 .wi-gradient-bg { background: var(--wi-gradient); }
 
-/* Small light card behind the logo when it sits on a dark surface — the new
-   logo's wordmark is navy, so it disappears on dark backgrounds unlike the
-   old flat-blue one (which could just be CSS-inverted). */
+/* Small light card behind the logo when it sits on a dark surface — the logo
+   has no light/mono variant, so on a dark footer it needs a light backing
+   instead of relying on a CSS color trick. */
 .wi-logo-card {
   display: inline-flex;
   align-items: center;

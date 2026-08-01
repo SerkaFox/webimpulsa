@@ -199,7 +199,7 @@ def _send_acceptance_emails(proposal, access, pdf_bytes=None) -> None:
           </tr>
           <tr>
             <td style="padding:3px 0;color:#5a6d8c;font-size:13px">Total (IVA incl.)</td>
-            <td style="padding:3px 0;font-weight:800;font-size:15px;color:#5725F4">{proposal.total_with_iva}€</td>
+            <td style="padding:3px 0;font-weight:800;font-size:15px;color:#075CCF">{proposal.total_with_iva}€</td>
           </tr>
           <tr>
             <td style="padding:3px 0;color:#5a6d8c;font-size:13px">Firmado por</td>
@@ -221,7 +221,7 @@ def _send_acceptance_emails(proposal, access, pdf_bytes=None) -> None:
       ver el progreso del proyecto, enviar archivos (logo, fotos, textos) y escribirnos directamente.
     </p>
     <a href="{cabinet_url}"
-       style="display:block;background:#5725F4;color:#fff;text-decoration:none;
+       style="display:block;background:#075CCF;color:#fff;text-decoration:none;
               text-align:center;padding:14px 24px;border-radius:8px;
               font-size:15px;font-weight:800;letter-spacing:.01em">
       Entrar a mi área de cliente →
@@ -236,15 +236,15 @@ def _send_acceptance_emails(proposal, access, pdf_bytes=None) -> None:
     <p style="font-size:12px;font-weight:700;color:#081747;margin:0 0 8px">¿Qué pasa ahora?</p>
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr><td style="padding:4px 0;font-size:13px;color:#334155">
-        <span style="color:#5725F4;font-weight:700">1.</span>&nbsp;
+        <span style="color:#075CCF;font-weight:700">1.</span>&nbsp;
         Te contactamos en menos de 24h para coordinar el inicio
       </td></tr>
       <tr><td style="padding:4px 0;font-size:13px;color:#334155">
-        <span style="color:#5725F4;font-weight:700">2.</span>&nbsp;
+        <span style="color:#075CCF;font-weight:700">2.</span>&nbsp;
         Pago del 50% inicial para arrancar el proyecto
       </td></tr>
       <tr><td style="padding:4px 0;font-size:13px;color:#334155">
-        <span style="color:#5725F4;font-weight:700">3.</span>&nbsp;
+        <span style="color:#075CCF;font-weight:700">3.</span>&nbsp;
         ¡Empezamos! Seguimiento en tu área de cliente
       </td></tr>
     </table>
@@ -256,14 +256,14 @@ def _send_acceptance_emails(proposal, access, pdf_bytes=None) -> None:
       <td>
         <p style="margin:0 0 2px;font-size:13px;font-weight:700;color:#081747">Equipo CreaGanaWeb</p>
         <p style="margin:0;font-size:12px;color:#5a6d8c">
-          <a href="mailto:info@creaganaweb.es" style="color:#5725F4;text-decoration:none">info@creaganaweb.es</a>
+          <a href="mailto:info@creaganaweb.es" style="color:#075CCF;text-decoration:none">info@creaganaweb.es</a>
           &nbsp;·&nbsp;
-          <a href="https://wa.me/34613708322" style="color:#5725F4;text-decoration:none">+34 613 708 322</a>
+          <a href="https://wa.me/34613708322" style="color:#075CCF;text-decoration:none">+34 613 708 322</a>
         </p>
       </td>
       <td align="right">
         <a href="{cabinet_url}"
-           style="display:inline-block;background:#edf4ff;color:#5725F4;font-size:11px;
+           style="display:inline-block;background:#edf4ff;color:#075CCF;font-size:11px;
                   font-weight:700;padding:6px 14px;border-radius:20px;text-decoration:none">
           Mi área →
         </a>
@@ -699,7 +699,7 @@ def portal_manifest(request, token):
         'scope': f'/p/{token}/',
         'display': 'standalone',
         'background_color': '#eef3ff',
-        'theme_color': '#5725F4',
+        'theme_color': '#075CCF',
         'icons': [
             {'src': icon, 'sizes': '180x180', 'type': 'image/png'},
             {'src': icon, 'sizes': '192x192', 'type': 'image/png', 'purpose': 'any'},

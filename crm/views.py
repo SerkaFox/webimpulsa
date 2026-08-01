@@ -156,10 +156,10 @@ def _send_lead_emails(lead) -> None:
 
   <!-- Logo bar -->
   <tr>
-    <td style="padding:20px 32px 16px;border-bottom:3px solid #5725F4">
+    <td style="padding:20px 32px 16px;border-bottom:3px solid #075CCF">
       <table width="100%" cellpadding="0" cellspacing="0"><tr>
         <td><img src="https://creaganaweb.es/static/wi/img/logo.webp" alt="CreaGanaWeb" height="36" style="display:block"></td>
-        <td align="right" style="font-size:12px;color:#5a6d8c"><a href="https://creaganaweb.es" style="color:#5725F4;text-decoration:none;font-weight:600">creaganaweb.es</a></td>
+        <td align="right" style="font-size:12px;color:#5a6d8c"><a href="https://creaganaweb.es" style="color:#075CCF;text-decoration:none;font-weight:600">creaganaweb.es</a></td>
       </tr></table>
     </td>
   </tr>
@@ -176,7 +176,7 @@ def _send_lead_emails(lead) -> None:
   <!-- CTA portal -->
   <tr><td style="padding:0 32px 20px">
     <a href="{portal_url}"
-       style="display:block;background:#5725F4;color:#ffffff;text-decoration:none;
+       style="display:block;background:#075CCF;color:#ffffff;text-decoration:none;
               text-align:center;padding:14px 24px;border-radius:8px;
               font-size:15px;font-weight:800;letter-spacing:.01em">
       Ver y aceptar propuesta online →
@@ -217,9 +217,9 @@ def _send_lead_emails(lead) -> None:
   <!-- Summary box -->
   <tr><td style="padding:0 32px 26px">
     <table width="100%" cellpadding="0" cellspacing="0"
-           style="background:#f5f9ff;border-left:4px solid #5725F4;border-radius:0 8px 8px 0;padding:16px 18px">
+           style="background:#f5f9ff;border-left:4px solid #075CCF;border-radius:0 8px 8px 0;padding:16px 18px">
       <tr><td>
-        <p style="font-size:10px;font-weight:700;color:#5725F4;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">Tu proyecto</p>
+        <p style="font-size:10px;font-weight:700;color:#075CCF;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">Tu proyecto</p>
         <table width="100%" cellpadding="0" cellspacing="0" style="color:#081747">
           <tr>
             <td style="padding:4px 0;color:#5a6d8c;font-size:13px;width:44%">Paquete</td>
@@ -227,7 +227,7 @@ def _send_lead_emails(lead) -> None:
           </tr>
           <tr>
             <td style="padding:2px 0;color:#5a6d8c;font-size:13px">Presupuesto</td>
-            <td style="padding:2px 0;font-weight:700;font-size:15px;color:#5725F4">{price_s} + IVA</td>
+            <td style="padding:2px 0;font-weight:700;font-size:15px;color:#075CCF">{price_s} + IVA</td>
           </tr>
           {biz_row}
         </table>
@@ -241,13 +241,13 @@ def _send_lead_emails(lead) -> None:
       <td>
         <p style="margin:0 0 2px;font-size:13px;font-weight:700;color:#081747">Equipo CreaGanaWeb</p>
         <p style="margin:0;font-size:12px;color:#5a6d8c">
-          <a href="mailto:info@creaganaweb.es" style="color:#5725F4;text-decoration:none">info@creaganaweb.es</a>
+          <a href="mailto:info@creaganaweb.es" style="color:#075CCF;text-decoration:none">info@creaganaweb.es</a>
           &nbsp;·&nbsp;
-          <a href="https://wa.me/34613708322" style="color:#5725F4;text-decoration:none">+34 613 708 322</a>
+          <a href="https://wa.me/34613708322" style="color:#075CCF;text-decoration:none">+34 613 708 322</a>
         </p>
       </td>
       <td align="right">
-        <a href="{portal_url}" style="display:inline-block;background:#edf4ff;color:#5725F4;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;text-decoration:none">Portal →</a>
+        <a href="{portal_url}" style="display:inline-block;background:#edf4ff;color:#075CCF;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;text-decoration:none">Portal →</a>
       </td>
     </tr></table>
     <p style="margin:10px 0 0;font-size:11px;color:#cbd5e1;text-align:center">© 2026 CreaGanaWeb · España</p>

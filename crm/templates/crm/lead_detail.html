@@ -8,7 +8,7 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     body { margin: 0; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; background: #f8fafc; color: #1e293b; }
-    a { color: #5725F4; text-decoration: none; }
+    a { color: #075CCF; text-decoration: none; }
     a:hover { text-decoration: underline; }
 
     .top-bar { background: #1e293b; color: #fff; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
@@ -44,31 +44,31 @@
 
     .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; color: #fff; }
     .extras-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-    .extra-tag { background: #eff6ff; color: #5725F4; border-radius: 10px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+    .extra-tag { background: #eff6ff; color: #075CCF; border-radius: 10px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
     hr.div { border: none; border-top: 1px solid #f1f5f9; margin: 14px 0; }
 
     /* form elements */
     label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #64748b; display: block; margin-bottom: 4px; }
     select, textarea, input[type=text] { width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 7px 10px; font-size: 13px; font-family: inherit; outline: none; background: #fff; }
-    select:focus, textarea:focus, input:focus { border-color: #5725F4; }
+    select:focus, textarea:focus, input:focus { border-color: #075CCF; }
     textarea { resize: vertical; min-height: 80px; }
-    .save-btn { background: #5725F4; color: #fff; border: none; border-radius: 6px; padding: 9px 0; font-size: .85rem; font-weight: 700; cursor: pointer; width: 100%; }
+    .save-btn { background: #075CCF; color: #fff; border: none; border-radius: 6px; padding: 9px 0; font-size: .85rem; font-weight: 700; cursor: pointer; width: 100%; }
     .save-btn:hover { background: #1d4ed8; }
     .btn-sm { display: inline-block; padding: 5px 12px; border-radius: 6px; font-size: .78rem; font-weight: 700; border: 1px solid #cbd5e1; background: #f8fafc; cursor: pointer; color: #1e293b; }
     .btn-sm:hover { background: #f1f5f9; }
-    .btn-sm.primary { background: #5725F4; color: #fff; border-color: #5725F4; }
+    .btn-sm.primary { background: #075CCF; color: #fff; border-color: #075CCF; }
     .btn-sm.primary:hover { background: #1d4ed8; }
     .btn-sm.green { background: #25d366; color: #fff; border-color: #25d366; }
     .btn-sm.danger { background: #fff; color: #dc2626; border-color: #fca5a5; }
     .btn-sm.danger:hover { background: #fef2f2; }
 
     /* next step */
-    .next-step { background: #eff6ff; border-left: 3px solid #5725F4; padding: 8px 12px; border-radius: 0 6px 6px 0; font-size: .82rem; color: #1e40af; }
+    .next-step { background: #eff6ff; border-left: 3px solid #075CCF; padding: 8px 12px; border-radius: 0 6px 6px 0; font-size: .82rem; color: #1e40af; }
 
     /* client access panel */
     .access-status { display: flex; align-items: center; gap: 8px; font-size: .83rem; margin-bottom: 14px; }
     .access-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .access-link-box { background: #f1f5f9; border-radius: 6px; padding: 8px 10px; font-family: monospace; font-size: .75rem; word-break: break-all; margin-bottom: 10px; color: #5725F4; }
+    .access-link-box { background: #f1f5f9; border-radius: 6px; padding: 8px 10px; font-family: monospace; font-size: .75rem; word-break: break-all; margin-bottom: 10px; color: #075CCF; }
     .pin-display { font-size: 1.6rem; font-weight: 900; letter-spacing: .3em; color: #1e293b; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 10px; text-align: center; margin-bottom: 10px; }
 
     /* comm log */
@@ -239,7 +239,7 @@
         {% endif %}
         {% if lead.email %}
         <a href="mailto:{{ lead.email }}?subject=Tu proyecto {{ lead.package|urlencode }}"
-           style="display:flex;align-items:center;gap:6px;background:#5725F4;color:#fff;border-radius:7px;padding:9px 12px;font-weight:700;font-size:.83rem;text-decoration:none">
+           style="display:flex;align-items:center;gap:6px;background:#075CCF;color:#fff;border-radius:7px;padding:9px 12px;font-weight:700;font-size:.83rem;text-decoration:none">
           ✉ <span data-i18n="crm.send_email">Enviar email</span>
         </a>
         {% endif %}
@@ -522,7 +522,7 @@
         <div class="mat-item">
           <div class="mat-icon">⏱</div>
           <div class="mat-name">
-            <span style="background:#eff6ff;color:#5725F4;border-radius:8px;padding:1px 6px;font-size:.7rem;font-weight:700">{{ w.get_category_display }}</span>
+            <span style="background:#eff6ff;color:#075CCF;border-radius:8px;padding:1px 6px;font-size:.7rem;font-weight:700">{{ w.get_category_display }}</span>
             {{ w.description }}
             {% if w.deliverable_url %}<a href="{{ w.deliverable_url }}" target="_blank" style="font-size:.72rem;margin-left:4px">🔗</a>{% endif %}
           </div>
@@ -712,7 +712,7 @@
             <div class="comm-content">{{ entry.content }}</div>
             <div class="comm-meta">
               <span class="comm-badge">{{ entry.get_channel_display }}</span>
-              {% if entry.template_name %}<span class="comm-badge" style="background:#eff6ff;color:#5725F4">{{ entry.template_name }}</span>{% endif %}
+              {% if entry.template_name %}<span class="comm-badge" style="background:#eff6ff;color:#075CCF">{{ entry.template_name }}</span>{% endif %}
               {{ entry.created_at|date:"d/m/Y H:i" }}
             </div>
           </div>
