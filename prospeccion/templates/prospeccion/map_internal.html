@@ -15,12 +15,18 @@
   .top-bar strong { font-size: .95rem; }
 
   .layout { display: grid; grid-template-columns: 1fr; grid-template-areas: "sidebar" "map"; }
-  #map { grid-area: map; height: 46vh; min-height: 260px; background: #eef2f7; position: relative; }
+  /* Contenedor propio, separado de #map: Google Maps toma posesión de su
+     propio div al inicializar (new google.maps.Map(...)) y puede limpiar
+     lo que hubiera dentro — la leyenda y el panel de iconos vivían ahí y
+     desaparecían sin avisar. Ahora son HERMANOS de #map, no hijos, dentro
+     de este wrapper que es quien realmente ocupa el hueco del grid. */
+  .map-wrap { grid-area: map; height: 46vh; min-height: 260px; position: relative; }
+  #map { position: absolute; inset: 0; background: #eef2f7; }
   .sidebar { grid-area: sidebar; padding: 14px; overflow-y: auto; }
 
   @media (min-width: 900px) {
     .layout { grid-template-columns: 1fr 400px; grid-template-areas: "map sidebar"; height: calc(100vh - 46px); }
-    #map { height: 100%; }
+    .map-wrap { height: 100%; }
     .sidebar { height: 100%; }
   }
 
@@ -202,7 +208,8 @@
 </div>
 
 <div class="layout">
-  <div id="map">
+  <div class="map-wrap">
+    <div id="map"></div>
     {% if not google_maps_js_api_key %}
       <div class="map-msg" data-i18n="map.no_map">El mapa no está disponible: falta configurar <code>GOOGLE_MAPS_JS_API_KEY</code> en el servidor. La búsqueda y el alta de empresas funcionan igualmente.</div>
     {% endif %}
