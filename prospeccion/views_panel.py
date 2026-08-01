@@ -20,7 +20,7 @@ from .quiz_config import QUESTIONNAIRE_VERSION, QUESTIONS
 from .scoring import compute_score, questions_for_sector
 from .services import (
     convert_prospect_to_lead, create_draft_proposal_for_prospect, create_prospect, find_duplicate,
-    find_existing_matches, publication_status,
+    find_existing_matches, find_nearby_prospects, publication_status,
 )
 
 logger = logging.getLogger(__name__)
@@ -261,6 +261,50 @@ def places_search(request):
         google_error = str(e)
     except Exception:
         logger.exception('Error buscando en Google Places: query=%r', query)
+        google_error = 'No se pudo consultar Google Places en este momento'
+
+    return JsonResponse({'existing': existing, 'google': google_results, 'google_error': google_error})
+
+
+@_crm_auth
+@require_GET
+def places_nearby(request):
+    """Botón "Estoy aquí": qué negocios hay en un radio (por defecto 1 km)
+    alrededor de la geolocalización real del dispositivo — sin escribir
+    ningún texto, a diferencia de places_search. Misma lógica de "ya
+    existente vs. nuevo de Google" que la búsqueda por texto."""
+    try:
+        lat = float(request.GET['lat'])
+        lng = float(request.GET['lng'])
+    except (KeyError, ValueError):
+        return JsonResponse({'error': 'Faltan coordenadas (lat/lng)'}, status=400)
+
+    try:
+        radius_m = min(max(int(request.GET.get('radius', 1000)), 100), 5000)
+    except ValueError:
+        radius_m = 1000
+
+    existing = [_existing_match_json(p) for p in find_nearby_prospects(lat, lng, radius_m=radius_m)]
+
+    google_results = []
+    google_error = None
+    try:
+        raw_results = places.search_nearby(lat, lng, radius_m=radius_m)
+        for r in raw_results:
+            dup = None
+            if r['lat'] is not None and r['lng'] is not None:
+                dup = find_duplicate(
+                    r['name'], r['phone'], '', r['website'], r['lat'], r['lng'],
+                    google_place_id=r['place_id'],
+                )
+            r['existing_prospect_id'] = dup.pk if dup else None
+            google_results.append(r)
+    except places.PlacesConfigError as e:
+        google_error = str(e)
+    except places.PlacesQuotaExceeded as e:
+        google_error = str(e)
+    except Exception:
+        logger.exception('Error buscando cerca en Google Places: lat=%r lng=%r', lat, lng)
         google_error = 'No se pudo consultar Google Places en este momento'
 
     return JsonResponse({'existing': existing, 'google': google_results, 'google_error': google_error})

@@ -15,6 +15,7 @@ from django.conf import settings
 from .models import PlacesApiUsage
 
 TEXT_SEARCH_URL = 'https://places.googleapis.com/v1/places:searchText'
+NEARBY_SEARCH_URL = 'https://places.googleapis.com/v1/places:searchNearby'
 
 # Solo lo que el equipo necesita ver y confirmar antes de crear un prospect.
 # Nunca reviews, photos, rating, ni regularOpeningHours.
@@ -112,8 +113,10 @@ def search_text(query, lat=None, lng=None, radius_m=15000):
         timeout=REQUEST_TIMEOUT,
     )
     resp.raise_for_status()
-    data = resp.json()
+    return _map_places(resp.json())
 
+
+def _map_places(data):
     results = []
     for place in data.get('places', []):
         loc = place.get('location') or {}
@@ -131,6 +134,41 @@ def search_text(query, lat=None, lng=None, radius_m=15000):
             'google_maps_url': place.get('googleMapsUri', ''),
         })
     return results
+
+
+def search_nearby(lat, lng, radius_m=1000):
+    """Negocios alrededor de un punto (la geolocalización real del equipo en
+    la calle), sin texto de búsqueda — para "qué hay aquí cerca" en vez de
+    buscar un nombre. Mismo field mask mínimo que search_text."""
+    if not settings.GOOGLE_PLACES_API_KEY:
+        raise PlacesConfigError('GOOGLE_PLACES_API_KEY no configurado')
+
+    _check_and_increment_quota()
+
+    body = {
+        'regionCode': 'ES',
+        'languageCode': 'es',
+        'maxResultCount': 20,
+        'locationRestriction': {
+            'circle': {
+                'center': {'latitude': lat, 'longitude': lng},
+                'radius': min(max(radius_m, 100), 50000),
+            }
+        },
+    }
+
+    resp = requests.post(
+        NEARBY_SEARCH_URL,
+        json=body,
+        headers={
+            'X-Goog-Api-Key': settings.GOOGLE_PLACES_API_KEY,
+            'X-Goog-FieldMask': FIELD_MASK,
+            'Content-Type': 'application/json',
+        },
+        timeout=REQUEST_TIMEOUT,
+    )
+    resp.raise_for_status()
+    return _map_places(resp.json())
 
 
 _COORD_RE = re.compile(r'@(-?\d+\.\d+),(-?\d+\.\d+)')

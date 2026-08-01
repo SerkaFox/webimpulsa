@@ -160,6 +160,36 @@ def find_existing_matches(query, limit=8):
     )
 
 
+def find_nearby_prospects(lat, lng, radius_m=1000, limit=30):
+    """Empresas ya en CreaGanaWeb dentro de un radio alrededor de un punto —
+    para el botón "Estoy aquí" (geolocalización real, no texto). Sin
+    PostGIS: se acota primero por una caja lat/lng (barata en SQLite) y
+    luego se filtra por distancia real (fórmula equirectangular, de sobra
+    para radios de barrio) para no devolver las esquinas de la caja."""
+    import math
+
+    from .models import BusinessProspect
+
+    lat_delta = radius_m / 111_000
+    lng_delta = radius_m / (111_000 * max(math.cos(math.radians(lat)), 0.01))
+
+    candidates = BusinessProspect.objects.filter(
+        lat__range=(lat - lat_delta, lat + lat_delta),
+        lng__range=(lng - lng_delta, lng + lng_delta),
+    ).select_related('assigned_to')
+
+    lat_rad = math.radians(lat)
+    results = []
+    for p in candidates:
+        dx = math.radians(p.lng - lng) * math.cos(lat_rad)
+        dy = math.radians(p.lat - lat)
+        dist_m = math.sqrt(dx * dx + dy * dy) * 6_371_000
+        if dist_m <= radius_m:
+            results.append((dist_m, p))
+    results.sort(key=lambda pair: pair[0])
+    return [p for _, p in results[:limit]]
+
+
 # ── Integración con el CRM existente (crm.Lead / crm.Proposal) ────────────────
 # Mismos precios base que los botones "calc-project" de tatiana.html — no se
 # importan de ahí (son JS), se mantiene esta copia como constante de Python.

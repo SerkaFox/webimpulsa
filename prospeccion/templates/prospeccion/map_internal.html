@@ -167,6 +167,8 @@
     </div>
     <p class="search-hint">Primero se muestra lo que ya está en CreaGanaWeb, después resultados de Google cerca de la zona visible del mapa.</p>
 
+    <button class="btn green" id="btnHereNow" style="margin-bottom:10px">🎯 Estoy aquí — ver negocios en 1 km</button>
+
     <div id="searchResults"></div>
 
     <button class="btn secondary" id="btnManualMode" style="margin-top:6px">+ Añadir lugar manualmente</button>
@@ -580,6 +582,57 @@ document.getElementById('btnSearch').addEventListener('click', runSearch);
 document.getElementById('searchInput').addEventListener('keydown', function(ev){
   if(ev.key === 'Enter'){ ev.preventDefault(); runSearch(); }
 });
+
+/* ---- "Estoy aquí" — negocios en 1 km alrededor de la geolocalización real
+   del dispositivo (tablet en la calle), sin escribir ningún texto ---- */
+function runNearbySearch(){
+  if(!navigator.geolocation){ showToast('Este dispositivo no permite compartir ubicación'); return; }
+  var btn = document.getElementById('btnHereNow');
+  var resultsEl = document.getElementById('searchResults');
+  btn.disabled = true;
+  resultsEl.innerHTML = '<p style="color:#8a94a6;font-size:.85rem">Localizando…</p>';
+
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var here = {lat: pos.coords.latitude, lng: pos.coords.longitude};
+    userLocation = here;
+    if(map){ map.setCenter(here); map.setZoom(16); }
+    resultsEl.innerHTML = '<p style="color:#8a94a6;font-size:.85rem">Buscando negocios en 1 km…</p>';
+
+    var params = new URLSearchParams({lat: here.lat, lng: here.lng, radius: 1000});
+    fetch('/panel/prospeccion/mapa/api/nearby/?' + params.toString())
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        btn.disabled = false;
+        if(data.error){ resultsEl.innerHTML = ''; clearSearchMarkers(); showToast(data.error); return; }
+        var existingResults = data.existing || [];
+        lastGoogleResults = data.google || [];
+        var html = '';
+        existingResults.forEach(function(p){ html += renderExistingCard(p); });
+        lastGoogleResults.forEach(function(r, idx){ html += renderGoogleCard(r, idx); });
+        if(data.google_error){
+          html += '<p style="color:#dc2626;font-size:.8rem">'+data.google_error+'</p>';
+        }
+        if(!html){ html = '<p style="color:#8a94a6;font-size:.85rem">Nada en un radio de 1 km.</p>'; }
+        resultsEl.innerHTML = html;
+        resultsEl.querySelectorAll('[data-google-idx]').forEach(function(elBtn){
+          elBtn.addEventListener('click', function(){
+            openConfirmPanel({fromGoogle: true, place: lastGoogleResults[parseInt(elBtn.getAttribute('data-google-idx'), 10)]});
+          });
+        });
+        plotSearchMarkers(existingResults, lastGoogleResults);
+      })
+      .catch(function(){
+        btn.disabled = false;
+        resultsEl.innerHTML = ''; clearSearchMarkers(); showToast('No se pudo buscar en este momento');
+      });
+  }, function(){
+    btn.disabled = false;
+    resultsEl.innerHTML = '';
+    showToast('No se pudo obtener tu ubicación — revisa el permiso de localización');
+  }, {enableHighAccuracy: true, timeout: 12000, maximumAge: 0});
+}
+
+document.getElementById('btnHereNow').addEventListener('click', runNearbySearch);
 
 /* ---- Modo manual: el clic normal en el mapa NUNCA crea nada ---- */
 var manualModeActive = false;
