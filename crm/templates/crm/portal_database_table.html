@@ -31,7 +31,6 @@
     <a class="back" href="/p/{{ access.token }}/database/">← Base de datos</a>
     <h1>🗂 {{ table_name }}</h1>
   </div>
-  {% include "crm/portal_subnav.html" with active_tab="database" %}
   <div class="pf-wrap">
     {% if error %}
       <div class="pf-error">{{ error }}</div>

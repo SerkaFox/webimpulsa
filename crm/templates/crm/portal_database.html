@@ -28,11 +28,6 @@
   </style>
 </head>
 <body>
-  <div class="pf-header">
-    <a class="back" href="/p/{{ access.token }}/">← Mi área de cliente</a>
-    <h1>🗄️ Base de datos</h1>
-  </div>
-  {% include "crm/portal_subnav.html" with active_tab="database" %}
   <div class="pf-wrap">
     {% if error %}
       <div class="pf-error">{{ error }}</div>

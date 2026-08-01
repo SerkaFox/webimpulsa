@@ -1212,14 +1212,14 @@ function copyVal(id, btnId) {
           📁 <span data-i18n="cabinet.tab_files">Progreso y materiales</span>
         </button>
         {% if lead.project_path %}
-        <a href="/p/{{ access.token }}/files/" class="main-tab-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">
+        <button id="mtabProjectfiles" class="main-tab-btn" onclick="showMainTab('projectfiles')">
           💻 <span data-i18n="cabinet.tab_project_files">Archivos del proyecto</span>
-        </a>
+        </button>
         {% endif %}
         {% if lead.project_db_path %}
-        <a href="/p/{{ access.token }}/database/" class="main-tab-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">
+        <button id="mtabDatabase" class="main-tab-btn" onclick="showMainTab('database')">
           🗄️ <span data-i18n="cabinet.tab_database">Base de datos</span>
-        </a>
+        </button>
         {% endif %}
       </div>
 
@@ -1333,6 +1333,21 @@ function copyVal(id, btnId) {
 
       </div>{# end #mpanelFiles #}
 
+      {% if lead.project_path %}
+      <div id="mpanelProjectfiles" style="display:none">
+        <iframe id="pfProjectfilesFrame" src="/p/{{ access.token }}/files/"
+                style="width:100%;border:none;display:block" title="Archivos del proyecto"
+                onload="wiAutosizeIframe(this)"></iframe>
+      </div>
+      {% endif %}
+      {% if lead.project_db_path %}
+      <div id="mpanelDatabase" style="display:none">
+        <iframe id="pfDatabaseFrame" src="/p/{{ access.token }}/database/"
+                style="width:100%;border:none;display:block" title="Base de datos"
+                onload="wiAutosizeIframe(this)"></iframe>
+      </div>
+      {% endif %}
+
   </div>{# end main column #}
 
   <!-- Project/invoice modal — opened via the header chip -->
@@ -1428,8 +1443,23 @@ function copyVal(id, btnId) {
   </script>
 
   <script>
+  window.wiAutosizeIframe = function(iframe) {
+    // Same-origin (both under this domain) — read the embedded page's real
+    // height so the iframe grows to fit instead of showing its own scrollbar,
+    // keeping this feeling like one continuous page rather than a nested frame.
+    try {
+      var h = iframe.contentWindow.document.body.scrollHeight;
+      iframe.style.height = Math.max(h, 300) + 'px';
+    } catch (e) {
+      iframe.style.height = '70vh';
+    }
+  };
+
   (function() {
-    var panels = {chat: 'mpanelChat', files: 'mpanelFiles'};
+    var panels = {
+      chat: 'mpanelChat', files: 'mpanelFiles',
+      projectfiles: 'mpanelProjectfiles', database: 'mpanelDatabase',
+    };
     window.showMainTab = function(t) {
       Object.keys(panels).forEach(function(key) {
         var panel = document.getElementById(panels[key]);
@@ -1441,7 +1471,9 @@ function copyVal(id, btnId) {
     };
     var saved = null;
     try { saved = localStorage.getItem('wi_cabinet_tab'); } catch (e) {}
-    showMainTab(saved === 'files' ? 'files' : 'chat');
+    var validSaved = ['chat', 'files', 'projectfiles', 'database'].indexOf(saved) !== -1
+      && document.getElementById(panels[saved]);
+    showMainTab(validSaved ? saved : 'chat');
   })();
   </script>
 

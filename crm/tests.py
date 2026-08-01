@@ -604,31 +604,57 @@ class LeadBackupListingTests(TestCase):
         self.assertIn(b'crm_password', resp.content)
 
 
-class PortalSubnavTests(TestCase):
+class PortalEmbeddedTabsTests(TestCase):
+    """Archivos del proyecto / Base de datos are embedded as in-page tabs
+    (iframe + showMainTab, same mechanism as Chat/Progreso) so switching
+    between them never navigates away and never loses the tab bar — a
+    regression from an earlier version where they were plain page links."""
+
     def setUp(self):
-        self.project_dir = Path(tempfile.mkdtemp(prefix='wi_project_subnav_test_'))
+        self.project_dir = Path(tempfile.mkdtemp(prefix='wi_project_tabs_test_'))
         (self.project_dir / 'index.html').write_text('<h1>hola</h1>')
         self.db_path = self.project_dir / 'db.sqlite3'
         con = sqlite3.connect(self.db_path)
         con.execute('CREATE TABLE t (id INTEGER PRIMARY KEY)')
         con.commit()
         con.close()
-        self.lead = _make_lead(project_path=str(self.project_dir), project_db_path=str(self.db_path))
+        self.lead = _make_lead(
+            project_path=str(self.project_dir), project_db_path=str(self.db_path),
+            status=Lead.ST_EN_TRABAJO,  # cabinet view (tabs) only renders past the proposal stage
+        )
         self.access = _make_access(self.lead)
 
     def tearDown(self):
         shutil.rmtree(self.project_dir, ignore_errors=True)
 
-    def test_files_page_links_to_database_and_chat(self):
+    def test_main_portal_embeds_files_and_database_as_iframes(self):
+        resp = self.client.get(f'/p/{self.access.token}/')
+        content = resp.content.decode()
+        self.assertIn(f'src="/p/{self.access.token}/files/"', content)
+        self.assertIn(f'src="/p/{self.access.token}/database/"', content)
+
+    def test_main_portal_has_tab_buttons_not_links(self):
+        resp = self.client.get(f'/p/{self.access.token}/')
+        content = resp.content.decode()
+        self.assertIn("showMainTab('projectfiles')", content)
+        self.assertIn("showMainTab('database')", content)
+        # the old behavior (plain <a href> navigating away) must be gone
+        self.assertNotIn(f'<a href="/p/{self.access.token}/files/" class="main-tab-btn"', content)
+
+    def test_tabs_hidden_when_not_configured(self):
+        lead = _make_lead(name='Sin proyecto ni BD', status=Lead.ST_EN_TRABAJO)
+        access = _make_access(lead)
+        resp = self.client.get(f'/p/{access.token}/')
+        content = resp.content.decode()
+        self.assertNotIn("showMainTab('projectfiles')", content)
+        self.assertNotIn("showMainTab('database')", content)
+
+    def test_embedded_pages_no_longer_have_their_own_back_header(self):
+        """The files/database pages used to carry a redundant "back to portal"
+        header + subnav — removed now that they live inside the tab iframe,
+        so there's no duplicate chrome."""
         resp = self.client.get(f'/p/{self.access.token}/files/')
-        self.assertContains(resp, f'/p/{self.access.token}/database/')
-        self.assertContains(resp, f'/p/{self.access.token}/')
+        self.assertNotContains(resp, 'Mi área de cliente')
 
-    def test_database_page_links_to_files_and_chat(self):
         resp = self.client.get(f'/p/{self.access.token}/database/')
-        self.assertContains(resp, f'/p/{self.access.token}/files/')
-
-    def test_database_table_page_links_to_files_and_chat(self):
-        resp = self.client.get(f'/p/{self.access.token}/database/table/t/')
-        self.assertContains(resp, f'/p/{self.access.token}/files/')
-        self.assertContains(resp, f'/p/{self.access.token}/database/')
+        self.assertNotContains(resp, 'Mi área de cliente')

@@ -23,6 +23,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from .models import ClientAccess, CommunicationLog, Lead, ProjectMaterial, Proposal
 from .proposal_content import (
@@ -1120,6 +1121,7 @@ def _portal_access_or_403(request, token):
     return access, None
 
 
+@xframe_options_sameorigin
 @require_http_methods(['GET'])
 def portal_files(request, token):
     """GET /p/<token>/files/ — browse the client's live project folder."""
@@ -1221,6 +1223,7 @@ def portal_files_delete(request, token):
 
 # ── Read-only database viewer (SQLite only, view + export — no writes) ───────
 
+@xframe_options_sameorigin
 @require_http_methods(['GET'])
 def portal_database(request, token):
     """GET /p/<token>/database/ — list tables in the client's SQLite database."""
@@ -1243,6 +1246,7 @@ def portal_database(request, token):
     })
 
 
+@xframe_options_sameorigin
 @require_http_methods(['GET'])
 def portal_database_table(request, token, table_name):
     """GET /p/<token>/database/table/<table_name>/ — paginated read-only rows."""
