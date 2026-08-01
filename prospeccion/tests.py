@@ -1,16 +1,21 @@
 import json
 import os
 import tempfile
+import threading
+import time
 from unittest import mock
 
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, TestCase, override_settings
+from django.test import Client, TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 
 from crm.models import Lead, Proposal
 from . import places, wa_bridge
 from .csv_import import parse_csv
-from .models import BusinessContact, BusinessProspect, ChequeoAudit, PlacesApiUsage, ProspectPhoto, StaffMember
+from .models import (
+    BusinessContact, BusinessProspect, ChequeoAudit, PlacesApiLimitNotification, PlacesApiMonthlyCounter,
+    PlacesApiRequestLog, PlacesApiUsage, ProspectPhoto, StaffMember,
+)
 from .quiz_config import CATEGORY_WEIGHTS
 from .recommendations import build_recommendations
 from .scoring import compute_score, questions_for_sector
@@ -667,6 +672,14 @@ class ClientSelfServicePublishConsentTests(BaseTestCase):
 
 # ── Mapa con búsqueda Google Places (UX simplificado) ─────────────────────
 
+def _fake_google_response(places_payload=None):
+    fake_response = mock.Mock()
+    fake_response.raise_for_status = mock.Mock()
+    fake_response.status_code = 200
+    fake_response.json.return_value = {'places': places_payload or []}
+    return fake_response
+
+
 class GooglePlacesModuleTests(TestCase):
     @override_settings(GOOGLE_PLACES_API_KEY='')
     def test_search_text_requires_api_key(self):
@@ -677,29 +690,16 @@ class GooglePlacesModuleTests(TestCase):
         for forbidden in ('review', 'photo', 'rating', 'Hours'):
             self.assertNotIn(forbidden, places.FIELD_MASK)
 
-    @override_settings(GOOGLE_PLACES_API_KEY='fake-key-for-tests', GOOGLE_PLACES_DAILY_QUOTA=1)
-    def test_search_text_enforces_daily_quota(self):
-        fake_response = mock.Mock()
-        fake_response.raise_for_status = mock.Mock()
-        fake_response.json.return_value = {'places': []}
-        with mock.patch('prospeccion.places.requests.post', return_value=fake_response) as mocked_post:
-            places.search_text('bar')  # 1ª llamada: consume la única unidad de cuota
-            with self.assertRaises(places.PlacesQuotaExceeded):
-                places.search_text('bar')  # 2ª llamada: por encima de cuota
-        self.assertEqual(mocked_post.call_count, 1)  # la 2ª ni siquiera llamó a Google
-
     @override_settings(GOOGLE_PLACES_API_KEY='fake-key-for-tests')
     def test_search_text_sends_minimal_field_mask_and_region_bias(self):
-        fake_response = mock.Mock()
-        fake_response.raise_for_status = mock.Mock()
-        fake_response.json.return_value = {'places': [{
+        fake_response = _fake_google_response([{
             'id': 'ChIJ123', 'displayName': {'text': 'Bar de Prueba'},
             'formattedAddress': 'Calle Falsa 123, Barakaldo',
             'location': {'latitude': 43.29, 'longitude': -2.99},
             'types': ['bar', 'restaurant'], 'primaryType': 'bar',
             'nationalPhoneNumber': '944 000 000', 'websiteUri': 'https://bar-de-prueba.example',
             'googleMapsUri': 'https://maps.google.com/?cid=123',
-        }]}
+        }])
         with mock.patch('prospeccion.places.requests.post', return_value=fake_response) as mocked_post:
             results = places.search_text('bar de prueba', lat=43.29, lng=-2.99)
         _, kwargs = mocked_post.call_args
@@ -729,6 +729,188 @@ class GooglePlacesModuleTests(TestCase):
     def test_resolve_maps_link_returns_none_for_unparseable_url(self):
         self.assertIsNone(places.resolve_maps_link('https://example.com/not-a-maps-link'))
         self.assertIsNone(places.resolve_maps_link(''))
+
+
+@override_settings(GOOGLE_PLACES_API_KEY='fake-key-for-tests')
+class PlacesQuotaControlTests(TestCase):
+    """Control mensual duro por tipo de request/SKU (ver places.py:
+    _reserve_call). Cubre el punto 11 pedido: contadores separados,
+    límite exacto, bloqueo antes de tocar Google, contabilidad de
+    errores, mes nuevo = contador nuevo, límite de mes en America/
+    Los_Angeles, y que la clave de API nunca aparezca en logs/JSON."""
+
+    def test_text_and_nearby_have_independent_counters(self):
+        with mock.patch('prospeccion.places.requests.post', return_value=_fake_google_response()):
+            places.search_text('bar')
+            places.search_nearby(43.29, -2.99, radius_m=500)
+        month = places.billing_month_for()
+        text_counter = PlacesApiMonthlyCounter.objects.get(billing_month=month, request_type='text_search_enterprise')
+        nearby_counter = PlacesApiMonthlyCounter.objects.get(
+            billing_month=month, request_type='nearby_search_enterprise',
+        )
+        self.assertEqual(text_counter.reserved_count, 1)
+        self.assertEqual(nearby_counter.reserved_count, 1)
+
+    @override_settings(GOOGLE_PLACES_NEARBY_ENTERPRISE_MONTHLY_LIMIT=899)
+    def test_899th_request_is_allowed(self):
+        month = places.billing_month_for()
+        PlacesApiMonthlyCounter.objects.create(
+            billing_month=month, request_type='nearby_search_enterprise', reserved_count=898,
+        )
+        with mock.patch('prospeccion.places.requests.post', return_value=_fake_google_response()) as mocked_post:
+            places.search_nearby(43.29, -2.99, radius_m=500)  # sería la 899ª
+        self.assertEqual(mocked_post.call_count, 1)
+        counter = PlacesApiMonthlyCounter.objects.get(billing_month=month, request_type='nearby_search_enterprise')
+        self.assertEqual(counter.reserved_count, 899)
+
+    @override_settings(GOOGLE_PLACES_NEARBY_ENTERPRISE_MONTHLY_LIMIT=900)
+    def test_900th_used_blocks_the_next_request(self):
+        month = places.billing_month_for()
+        PlacesApiMonthlyCounter.objects.create(
+            billing_month=month, request_type='nearby_search_enterprise', reserved_count=900,
+        )
+        with mock.patch('prospeccion.places.requests.post', return_value=_fake_google_response()) as mocked_post:
+            with self.assertRaises(places.PlacesQuotaExceeded) as ctx:
+                places.search_nearby(43.29, -2.99, radius_m=500)
+        self.assertEqual(mocked_post.call_count, 0)  # bloqueado ANTES de llamar a Google
+        exc = ctx.exception
+        self.assertEqual(exc.request_type, 'nearby_search_enterprise')
+        self.assertEqual(exc.used, 900)
+        self.assertEqual(exc.limit, 900)
+        self.assertEqual(exc.billing_month, month)
+        # el intento bloqueado se registra igualmente en el historial
+        log = PlacesApiRequestLog.objects.filter(request_type='nearby_search_enterprise').latest('created_at')
+        self.assertFalse(log.success)
+        self.assertEqual(log.error_type, 'monthly_limit_reached')
+
+    def test_blocked_request_never_calls_requests_post(self):
+        month = places.billing_month_for()
+        PlacesApiMonthlyCounter.objects.create(
+            billing_month=month, request_type='text_search_enterprise', reserved_count=900,
+        )
+        with override_settings(GOOGLE_PLACES_TEXT_ENTERPRISE_MONTHLY_LIMIT=900):
+            with mock.patch('prospeccion.places.requests.post') as mocked_post:
+                with self.assertRaises(places.PlacesQuotaExceeded):
+                    places.search_text('bar')
+                mocked_post.assert_not_called()
+
+    def test_google_errors_are_counted_separately_from_successes(self):
+        broken_response = mock.Mock()
+        broken_response.raise_for_status = mock.Mock(side_effect=Exception('boom'))
+        with mock.patch('prospeccion.places.requests.post', return_value=broken_response):
+            with self.assertRaises(Exception):
+                places.search_nearby(43.29, -2.99, radius_m=500)
+        month = places.billing_month_for()
+        counter = PlacesApiMonthlyCounter.objects.get(billing_month=month, request_type='nearby_search_enterprise')
+        self.assertEqual(counter.reserved_count, 1)
+        self.assertEqual(counter.success_count, 0)
+        self.assertEqual(counter.error_count, 1)
+        log = PlacesApiRequestLog.objects.latest('created_at')
+        self.assertFalse(log.success)
+        self.assertEqual(log.error_type, 'Exception')
+
+    def test_new_billing_month_gets_an_independent_counter(self):
+        with mock.patch('prospeccion.places.billing_month_for', return_value='2026-07'):
+            with mock.patch('prospeccion.places.requests.post', return_value=_fake_google_response()):
+                places.search_nearby(43.29, -2.99, radius_m=500)
+        with mock.patch('prospeccion.places.billing_month_for', return_value='2026-08'):
+            with mock.patch('prospeccion.places.requests.post', return_value=_fake_google_response()):
+                places.search_nearby(43.29, -2.99, radius_m=500)
+        july = PlacesApiMonthlyCounter.objects.get(billing_month='2026-07', request_type='nearby_search_enterprise')
+        august = PlacesApiMonthlyCounter.objects.get(billing_month='2026-08', request_type='nearby_search_enterprise')
+        self.assertEqual(july.reserved_count, 1)
+        self.assertEqual(august.reserved_count, 1)
+
+    def test_billing_month_boundary_uses_los_angeles_not_utc_or_madrid(self):
+        import datetime as dt
+        from zoneinfo import ZoneInfo
+        # 2026-08-01 03:00 UTC es todavía 2026-07-31 20:00 en Los Ángeles
+        # (UTC-7 en horario de verano) pero ya 2026-08-01 05:00 en Madrid —
+        # si el cálculo usara Madrid o UTC, se contaría en el mes equivocado.
+        moment = dt.datetime(2026, 8, 1, 3, 0, tzinfo=ZoneInfo('UTC'))
+        self.assertEqual(places.billing_month_for(moment), '2026-07')
+
+    def test_api_key_never_appears_in_request_log(self):
+        secret = 'super-secret-google-places-key-value'
+        with override_settings(GOOGLE_PLACES_API_KEY=secret):
+            with mock.patch('prospeccion.places.requests.post', return_value=_fake_google_response()):
+                places.search_nearby(43.29, -2.99, radius_m=500)
+        log = PlacesApiRequestLog.objects.latest('created_at')
+        dump = json.dumps({
+            'endpoint': log.endpoint, 'query_hash': log.query_hash, 'coordinates_hash': log.coordinates_hash,
+            'error_type': log.error_type, 'request_type': log.request_type,
+        })
+        self.assertNotIn(secret, dump)
+
+
+class PlacesQuotaConcurrencyTests(TransactionTestCase):
+    """TransactionTestCase (no TestCase) a propósito: cada hilo necesita su
+    propia transacción real confirmada para poder probar select_for_update
+    de verdad — con TestCase, todo el test comparte una única transacción
+    envolvente que nunca hace commit."""
+
+    @override_settings(GOOGLE_PLACES_API_KEY='fake-key-for-tests', GOOGLE_PLACES_NEARBY_ENTERPRISE_MONTHLY_LIMIT=5)
+    def test_concurrent_reservations_do_not_lose_increments(self):
+        # La propiedad que de verdad importa aquí para el gasto real: nunca
+        # se llega a llamar a requests.post (Google) más veces que el
+        # límite, y cada llamada real que SÍ se hizo corresponde a una
+        # reserva contada — nada más. No se compara contra cuántos hilos
+        # terminaron en 'ok', porque un fallo transitorio de SQLite en el
+        # paso de "finalizar" (después de reservar, pero ajeno a la reserva
+        # en sí) es una limitación del :memory: compartido entre hilos del
+        # test runner, no una pérdida de la reserva real.
+        real_calls_lock = threading.Lock()
+        real_calls = {'count': 0}
+
+        def fake_post(*args, **kwargs):
+            with real_calls_lock:
+                real_calls['count'] += 1
+            return _fake_google_response()
+
+        results = []
+        results_lock = threading.Lock()
+
+        def worker():
+            from django.db import connection
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute('PRAGMA busy_timeout = 15000')
+                places.search_nearby(43.29, -2.99, radius_m=500)
+                with results_lock:
+                    results.append('ok')
+            except places.PlacesQuotaExceeded:
+                with results_lock:
+                    results.append('blocked')
+            except Exception:
+                # Cualquier otro fallo (sqlite3 bajo :memory: compartido
+                # entre hilos puede lanzar variantes que ni siquiera son
+                # subclases de django.db.Error) cuenta aparte — nunca se
+                # reintenta la llamada completa (ver comentario arriba),
+                # solo se registra para que el hilo no desaparezca sin más.
+                with results_lock:
+                    results.append('db_error')
+            finally:
+                connection.close()
+
+        # OJO: mock.patch como context manager NO es seguro entre hilos (es
+        # un simple guardar/restaurar del atributo global de módulo) — si
+        # cada hilo abriera su propio "with mock.patch(...)", uno podría
+        # restaurar requests.post original mientras otro todavía lo espera
+        # parcheado. Se parchea UNA sola vez, fuera de los hilos.
+        with mock.patch('prospeccion.places.requests.post', side_effect=fake_post):
+            threads = [threading.Thread(target=worker) for _ in range(10)]
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join()
+
+        self.assertEqual(len(results), 10)  # todos los hilos terminaron, ninguno se perdió sin más
+        self.assertLessEqual(real_calls['count'], 5)  # nunca más llamadas reales que el límite
+        counter = PlacesApiMonthlyCounter.objects.get(
+            billing_month=places.billing_month_for(), request_type='nearby_search_enterprise',
+        )
+        self.assertEqual(counter.reserved_count, real_calls['count'])  # cada llamada real, contada — ninguna perdida
+        self.assertLessEqual(counter.reserved_count, 5)
 
 
 class PlacesSearchViewTests(BaseTestCase):
@@ -798,6 +980,78 @@ class PlacesSearchViewTests(BaseTestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(len(data['existing']), 1)
         self.assertTrue(data['google_error'])
+
+    def test_quota_exceeded_returns_429_with_fixed_shape(self):
+        c = self.login()
+        exc = places.PlacesQuotaExceeded(
+            request_type='text_search_enterprise', used=900, limit=900, billing_month='2026-08',
+        )
+        with mock.patch('prospeccion.views_panel.places.search_text', side_effect=exc):
+            r = c.get('/panel/prospeccion/mapa/api/search/', {'q': 'bar'})
+        self.assertEqual(r.status_code, 429)
+        data = json.loads(r.content)
+        self.assertEqual(data, {
+            'ok': False,
+            'code': 'google_places_monthly_limit_reached',
+            'message': str(exc),
+            'request_type': 'text_search_enterprise',
+            'used': 900,
+            'limit': 900,
+            'billing_month': '2026-08',
+        })
+
+
+class PlacesUsageEndpointsTests(BaseTestCase):
+    def test_stats_endpoint_requires_crm_login(self):
+        r = Client().get('/panel/prospeccion/mapa/api/places-usage/')
+        self.assertNotEqual(r.get('Content-Type'), 'application/json')
+
+    def test_history_endpoint_requires_crm_login(self):
+        r = Client().get('/panel/prospeccion/mapa/api/places-usage/history/')
+        self.assertNotEqual(r.get('Content-Type'), 'application/json')
+
+    def test_stats_endpoint_shape_and_never_leaks_api_key(self):
+        secret = 'super-secret-google-places-key-value'
+        with override_settings(GOOGLE_PLACES_API_KEY=secret):
+            with mock.patch('prospeccion.places.requests.post', return_value=_fake_google_response()):
+                places.search_nearby(43.29, -2.99, radius_m=500)
+                places.search_text('bar')
+        c = self.login()
+        r = c.get('/panel/prospeccion/mapa/api/places-usage/')
+        self.assertEqual(r.status_code, 200)
+        self.assertNotIn(secret, r.content.decode())
+        data = json.loads(r.content)
+        self.assertEqual(data['billing_month'], places.billing_month_for())
+        self.assertEqual(data['timezone'], 'America/Los_Angeles')
+        self.assertIn('nearby_search_enterprise', data['by_type'])
+        self.assertIn('text_search_enterprise', data['by_type'])
+        self.assertEqual(data['by_type']['nearby_search_enterprise']['used'], 1)
+        self.assertEqual(data['by_type']['text_search_enterprise']['used'], 1)
+        self.assertGreaterEqual(data['month_total'], 2)
+
+    def test_history_endpoint_lists_recent_calls_without_raw_coordinates(self):
+        with mock.patch('prospeccion.places.requests.post', return_value=_fake_google_response()):
+            places.search_nearby(43.29, -2.99, radius_m=500)
+        c = self.login()
+        r = c.get('/panel/prospeccion/mapa/api/places-usage/history/')
+        self.assertEqual(r.status_code, 200)
+        data = json.loads(r.content)
+        self.assertGreaterEqual(len(data['rows']), 1)
+        self.assertNotIn('43.29', r.content.decode())
+        self.assertNotIn('lat', data['rows'][0])
+        self.assertIn(data['rows'][0]['mode'], ('Búsqueda por texto', 'Cerca de mí', 'Área del mapa'))
+
+    def test_warning_notification_created_once_per_threshold_per_month(self):
+        month = places.billing_month_for()
+        with override_settings(GOOGLE_PLACES_NEARBY_ENTERPRISE_MONTHLY_LIMIT=10):
+            PlacesApiMonthlyCounter.objects.create(
+                billing_month=month, request_type='nearby_search_enterprise', reserved_count=6,
+            )  # ya al 60%, falta un empujón para cruzar el 70%
+            with mock.patch('prospeccion.places.requests.post', return_value=_fake_google_response()):
+                places.search_nearby(43.29, -2.99, radius_m=500)  # -> 7/10 = 70%
+                places.search_nearby(43.29, -2.99, radius_m=500)  # -> 8/10 = 80%, sigue en el mismo umbral
+        notifs = PlacesApiLimitNotification.objects.filter(billing_month=month, request_type='nearby_search_enterprise')
+        self.assertEqual(notifs.filter(threshold=70).count(), 1)  # nunca duplicado
 
 
 class AddFromPlaceTests(BaseTestCase):

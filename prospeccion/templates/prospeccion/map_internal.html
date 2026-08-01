@@ -121,126 +121,179 @@
   }
   .map-legend summary { cursor: pointer; font-weight: 700; padding: 8px 10px; list-style: none; }
   .map-legend summary::-webkit-details-marker { display: none; }
-  .map-legend summary::before { content: "ℹ️ Leyenda "; }
   .map-legend .legend-body { padding: 0 10px 10px; max-height: 40vh; overflow-y: auto; }
   .map-legend h4 { font-size: .68rem; text-transform: uppercase; letter-spacing: .03em; color: #8a94a6; margin: 8px 0 4px; }
   .map-legend .legend-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
   .map-legend .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(12,28,66,.15); }
   .map-legend .legend-ring { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; background: #cbd5e1; box-sizing: border-box; }
   small.hint { color: #8a94a6; display: block; margin-top: 4px; }
+
+  /* Widget de control de gasto de Google Places */
+  .puw { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; margin-bottom: 14px; font-size: .8rem; }
+  .puw-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .puw-header strong { font-size: .82rem; }
+  .puw-header span { color: #8a94a6; font-size: .72rem; }
+  .puw-row { margin-bottom: 8px; }
+  .puw-row-top { display: flex; justify-content: space-between; font-size: .74rem; color: #334155; margin-bottom: 3px; }
+  .puw-bar { height: 8px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
+  .puw-bar-fill { height: 100%; border-radius: 999px; transition: width .3s; }
+  .puw-bar-fill.ok { background: #16a34a; }
+  .puw-bar-fill.warn { background: #eab308; }
+  .puw-bar-fill.orange { background: #f97316; }
+  .puw-bar-fill.danger { background: #dc2626; }
+  .puw-bar-fill.blocked { background: #111827; }
+  .puw-sub { font-size: .7rem; color: #8a94a6; margin-top: 2px; }
+  .puw-today { font-size: .74rem; color: #334155; margin: 8px 0 4px; }
+  .puw-warning { background: #fef3c7; border: 1.5px solid #f59e0b; border-radius: 8px; padding: 6px 8px; font-size: .72rem; color: #92400e; margin-top: 6px; }
+  .puw-warning.blocked { background: #fee2e2; border-color: #dc2626; color: #7f1d1d; }
+  .puw-cost { font-size: .68rem; color: #8a94a6; margin-top: 6px; }
+  .puw-history-link { display: inline-block; margin-top: 8px; font-size: .76rem; color: #2563eb; cursor: pointer; }
+
+  /* Modal de historial */
+  .history-table { width: 100%; border-collapse: collapse; font-size: .74rem; }
+  .history-table th, .history-table td { text-align: left; padding: 5px 6px; border-bottom: 1px solid #e2e8f0; }
+  .history-table th { color: #8a94a6; font-weight: 700; text-transform: uppercase; font-size: .64rem; }
+  .history-ok { color: #15803d; }
+  .history-error { color: #b91c1c; }
+
+  .search-hint-btn { font-size: .68rem; color: #8a94a6; margin: 2px 0 8px; }
 </style>
 </head>
 <body>
 
 <div class="top-bar">
-  <strong>🗺️ Mapa de prospección</strong>
-  <a href="/panel/prospeccion/">← Panel</a>
+  <strong data-i18n="map.title">🗺️ Mapa de prospección</strong>
+  <a href="/panel/prospeccion/" data-i18n="map.back_panel">← Panel</a>
   <a href="/wi/crm/">🗂 CRM</a>
+  <a href="https://creaganaweb.es/" data-i18n="map.back_site">🌐 На сайт</a>
   <span id="countLabel" style="margin-left:auto;color:#93c5fd"></span>
+  <div class="lang-switcher" style="display:flex;gap:.28rem;align-items:center">
+    <button class="lang-btn map-lang-btn" data-lang="es" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.35);border-radius:6px;padding:.16rem .4rem;font-size:.72rem;font-weight:800;cursor:pointer;color:#fff">ES</button>
+    <button class="lang-btn map-lang-btn" data-lang="ru" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.35);border-radius:6px;padding:.16rem .4rem;font-size:.72rem;font-weight:800;cursor:pointer;color:#fff">RU</button>
+  </div>
 </div>
 
 <div class="layout">
   <div id="map">
     {% if not google_maps_js_api_key %}
-      <div class="map-msg">El mapa no está disponible: falta configurar <code>GOOGLE_MAPS_JS_API_KEY</code> en el servidor. La búsqueda y el alta de empresas funcionan igualmente.</div>
+      <div class="map-msg" data-i18n="map.no_map">El mapa no está disponible: falta configurar <code>GOOGLE_MAPS_JS_API_KEY</code> en el servidor. La búsqueda y el alta de empresas funcionan igualmente.</div>
     {% endif %}
     <details class="map-legend" id="mapLegend">
-      <summary></summary>
+      <summary data-i18n="map.legend_summary"></summary>
       <div class="legend-body">
-        <h4>¿Tiene web?</h4>
-        <div class="legend-row"><span class="legend-ring" style="background:radial-gradient(circle,#dc2626 40%,rgba(220,38,38,.28) 41%)"></span> Sin web — oportunidad (con halo rojo)</div>
-        <div class="legend-row"><span class="legend-ring" style="border:2px solid #16a34a"></span> Ya tiene web</div>
-        <div class="legend-row"><span class="legend-ring" style="border:2px dashed #94a3b8"></span> Sin datos todavía</div>
-        <h4>Etapa (color del círculo)</h4>
+        <h4 data-i18n="map.legend_has_web">¿Tiene web?</h4>
+        <div class="legend-row"><span class="legend-ring" style="background:radial-gradient(circle,#dc2626 40%,rgba(220,38,38,.28) 41%)"></span> <span data-i18n="map.legend_no_web">Sin web — oportunidad (con halo rojo)</span></div>
+        <div class="legend-row"><span class="legend-ring" style="border:2px solid #16a34a"></span> <span data-i18n="map.legend_has_web_yes">Ya tiene web</span></div>
+        <div class="legend-row"><span class="legend-ring" style="border:2px dashed #94a3b8"></span> <span data-i18n="map.legend_no_data">Sin datos todavía</span></div>
+        <h4 data-i18n="map.legend_stage">Etapa (color del círculo)</h4>
         <div id="legendStages"></div>
-        <h4>Número en el círculo</h4>
-        <div class="legend-row">Puntuación digital (0–100)</div>
+        <h4 data-i18n="map.legend_number">Número en el círculo</h4>
+        <div class="legend-row" data-i18n="map.legend_score">Puntuación digital (0–100)</div>
       </div>
     </details>
   </div>
 
   <div class="sidebar">
-    <h2>🔎 Buscar y añadir un negocio</h2>
-    <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Nombre, categoría o dirección…">
-      <button class="btn" id="btnSearch">Buscar</button>
+    <div class="puw" id="placesUsageWidget">
+      <div class="puw-header"><strong data-i18n="map.puw_title">Google Places — mes en curso</strong><span id="puwMonth"></span></div>
+      <div class="puw-row" data-type="nearby_search_enterprise">
+        <div class="puw-row-top"><span>Nearby Enterprise</span><span id="puwNearbyNums">—</span></div>
+        <div class="puw-bar"><div class="puw-bar-fill" id="puwNearbyFill"></div></div>
+        <div class="puw-sub" id="puwNearbySub"></div>
+      </div>
+      <div class="puw-row" data-type="text_search_enterprise">
+        <div class="puw-row-top"><span>Text Enterprise</span><span id="puwTextNums">—</span></div>
+        <div class="puw-bar"><div class="puw-bar-fill" id="puwTextFill"></div></div>
+        <div class="puw-sub" id="puwTextSub"></div>
+      </div>
+      <div class="puw-today"><span data-i18n="map.puw_today">Hoy:</span> <strong id="puwToday">—</strong> <span data-i18n="map.puw_requests">peticiones</span></div>
+      <div id="puwWarnings"></div>
+      <div class="puw-cost" id="puwCost"></div>
+      <a class="puw-history-link" id="puwHistoryLink" data-i18n="map.puw_history">📜 Historial de peticiones</a>
     </div>
-    <p class="search-hint">Primero se muestra lo que ya está en CreaGanaWeb, después resultados de Google cerca de la zona visible del mapa.</p>
+
+    <h2 data-i18n="map.search_title">🔎 Buscar y añadir un negocio</h2>
+    <div class="search-box">
+      <input type="text" id="searchInput" data-i18n-placeholder="map.search_placeholder" placeholder="Nombre, categoría o dirección…">
+      <button class="btn" id="btnSearch" data-i18n="map.search_btn">Buscar</button>
+    </div>
+    <p class="search-hint" data-i18n="map.search_hint">Primero se muestra lo que ya está en CreaGanaWeb, después resultados de Google cerca de la zona visible del mapa.</p>
+    <p class="search-hint-btn" data-i18n="map.search_hint_btn">ℹ️ Cada pulsación de un botón de búsqueda hace exactamente una petición a Google Places.</p>
 
     <div class="row2" style="display:flex;gap:8px;margin-bottom:10px">
-      <button class="btn green" id="btnHereNow" style="flex:1">🎯 Estoy aquí (1 km)</button>
-      <button class="btn secondary" id="btnSearchArea" style="flex:1">🗺️ Buscar en esta zona</button>
+      <button class="btn green" id="btnHereNow" style="flex:1" data-i18n="map.btn_here_now">🎯 Estoy aquí (1 km)</button>
+      <button class="btn secondary" id="btnSearchArea" style="flex:1" data-i18n="map.btn_search_area">🗺️ Buscar en esta zona</button>
     </div>
 
     <div id="searchResults"></div>
 
-    <button class="btn secondary" id="btnManualMode" style="margin-top:6px">+ Añadir lugar manualmente</button>
-    <div class="manual-banner" id="manualBanner">📍 Haz clic en el lugar exacto del negocio en el mapa. Podrás arrastrar el marcador para ajustarlo antes de guardar.</div>
+    <button class="btn secondary" id="btnManualMode" style="margin-top:6px" data-i18n="map.btn_manual_mode">+ Añadir lugar manualmente</button>
+    <div class="manual-banner" id="manualBanner" data-i18n="map.manual_banner">📍 Haz clic en el lugar exacto del negocio en el mapa. Podrás arrastrar el marcador para ajustarlo antes de guardar.</div>
 
-    <h3>Otras formas de añadir</h3>
+    <h3 data-i18n="map.other_ways">Otras formas de añadir</h3>
     <div class="row2" style="display:flex;gap:8px;margin-bottom:8px">
-      <button class="btn ghost sm" id="btnUseMyLocation" style="flex:1">📍 Usar mi ubicación</button>
+      <button class="btn ghost sm" id="btnUseMyLocation" style="flex:1" data-i18n="map.btn_my_location">📍 Usar mi ubicación</button>
     </div>
     <div class="field">
-      <label>Pegar enlace de Google Maps</label>
+      <label data-i18n="map.paste_gmaps_link">Pegar enlace de Google Maps</label>
       <div style="display:flex;gap:6px">
         <input type="text" id="mapsLinkInput" placeholder="https://maps.app.goo.gl/...">
-        <button class="btn sm secondary" id="btnUseMapsLink">Usar</button>
+        <button class="btn sm secondary" id="btnUseMapsLink" data-i18n="map.btn_use">Usar</button>
       </div>
     </div>
 
     <details class="filters-block">
-      <summary>Filtros del mapa</summary>
+      <summary data-i18n="map.filters_summary">Filtros del mapa</summary>
       <div style="margin-top:10px">
         <div class="field">
-          <label>Buscar por nombre (en el mapa)</label>
-          <input type="text" id="fQ" placeholder="Nombre...">
+          <label data-i18n="map.filter_name_label">Buscar por nombre (en el mapa)</label>
+          <input type="text" id="fQ" data-i18n-placeholder="map.filter_name_ph" placeholder="Nombre...">
         </div>
         <div class="field">
-          <label>Sector</label>
-          <select id="fSector"><option value="">Todos</option>
+          <label data-i18n="map.filter_sector">Sector</label>
+          <select id="fSector"><option value="" data-i18n="map.filter_all">Todos</option>
             {% for id, label in sectors %}<option value="{{ id }}">{{ label }}</option>{% endfor %}
           </select>
         </div>
         <div class="field">
-          <label>Etapa</label>
-          <select id="fStatus"><option value="">Todas</option>
+          <label data-i18n="map.filter_stage">Etapa</label>
+          <select id="fStatus"><option value="" data-i18n="map.filter_all_f">Todas</option>
             {% for id, label in sales_statuses %}<option value="{{ id }}">{{ label }}</option>{% endfor %}
           </select>
         </div>
         <div class="field">
-          <label>Responsable</label>
-          <select id="fAssigned"><option value="">Todos</option>
+          <label data-i18n="map.filter_assigned">Responsable</label>
+          <select id="fAssigned"><option value="" data-i18n="map.filter_all">Todos</option>
             {% for s in staff %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
           </select>
         </div>
         <div class="field">
-          <label>Puntuación mínima</label>
+          <label data-i18n="map.filter_min_score">Puntuación mínima</label>
           <input type="number" id="fMinScore" min="0" max="100" placeholder="0-100">
         </div>
         <div class="checks">
-          <label><input type="checkbox" id="fWebsite"> Tiene web</label>
-          <label><input type="checkbox" id="fBooking"> Reserva online</label>
+          <label><input type="checkbox" id="fWebsite"> <span data-i18n="map.filter_has_web">Tiene web</span></label>
+          <label><input type="checkbox" id="fBooking"> <span data-i18n="map.filter_booking">Reserva online</span></label>
           <label><input type="checkbox" id="fWhatsapp"> WhatsApp</label>
-          <label><input type="checkbox" id="fUnresolved"> Sin ubicar</label>
+          <label><input type="checkbox" id="fUnresolved"> <span data-i18n="map.filter_unresolved">Sin ubicar</span></label>
         </div>
-        <button class="btn" id="btnApplyFilters">Aplicar filtros</button>
+        <button class="btn" id="btnApplyFilters" data-i18n="map.btn_apply_filters">Aplicar filtros</button>
       </div>
     </details>
 
     <details class="filters-block">
-      <summary>Importar CSV</summary>
+      <summary data-i18n="map.import_csv">Importar CSV</summary>
       <div style="margin-top:10px">
-        <small class="hint">Columnas: name (obligatoria), sector, address, district, municipality, lat, lng, phone, email, website, whatsapp, gmaps_url. Filas sin lat/lng quedan "sin ubicar".</small>
+        <small class="hint" data-i18n="map.csv_hint">Columnas: name (obligatoria), sector, address, district, municipality, lat, lng, phone, email, website, whatsapp, gmaps_url. Filas sin lat/lng quedan "sin ubicar".</small>
         <form id="csvForm" style="margin-top:8px">
           <input type="file" id="csvFile" accept=".csv">
-          <button type="submit" class="btn secondary" style="margin-top:6px">Importar</button>
+          <button type="submit" class="btn secondary" style="margin-top:6px" data-i18n="map.btn_import">Importar</button>
         </form>
       </div>
     </details>
 
     <details class="filters-block">
-      <summary>En esta vista (<span id="listCount">0</span>)</summary>
+      <summary><span data-i18n="map.in_this_view">En esta vista</span> (<span id="listCount">0</span>)</summary>
       <div id="prospectList" style="margin-top:10px"></div>
     </details>
   </div>
@@ -249,37 +302,46 @@
 <!-- ── Panel de confirmación ─────────────────────────────────────────── -->
 <div class="overlay" id="confirmOverlay">
   <div class="confirm-panel">
-    <h2><span id="confirmTitle">Añadir negocio</span>
+    <h2><span id="confirmTitle" data-i18n="map.add_business">Añadir negocio</span>
       <button class="close-x" id="btnCloseConfirm" type="button">✕</button>
     </h2>
     <form id="confirmForm">
-      <div class="field"><label>Nombre *</label><input type="text" id="cName" required></div>
-      <div class="field"><label>Dirección</label><input type="text" id="cAddress"></div>
-      <div class="field"><label>Sector</label>
+      <div class="field"><label data-i18n="map.field_name">Nombre *</label><input type="text" id="cName" required></div>
+      <div class="field"><label data-i18n="map.field_address">Dirección</label><input type="text" id="cAddress"></div>
+      <div class="field"><label data-i18n="map.filter_sector">Sector</label>
         <select id="cSector">{% for id, label in sectors %}<option value="{{ id }}">{{ label }}</option>{% endfor %}</select>
       </div>
       <div class="coords-hint" id="cCoordsHint"></div>
-      <a id="cGmapsLink" href="#" target="_blank" rel="noopener" class="btn sm ghost" style="display:none;margin:0 0 10px">📷 Ver en Google Maps antes de guardar</a>
+      <a id="cGmapsLink" href="#" target="_blank" rel="noopener" class="btn sm ghost" style="display:none;margin:0 0 10px" data-i18n="map.view_before_save">📷 Ver en Google Maps antes de guardar</a>
       <input type="hidden" id="cLat"><input type="hidden" id="cLng">
       <input type="hidden" id="cPlaceId"><input type="hidden" id="cGmapsUrl">
 
       <details>
-        <summary>Más datos</summary>
+        <summary data-i18n="map.more_data">Más datos</summary>
         <div style="margin-top:8px">
-          <div class="field"><label>Teléfono</label><input type="text" id="cPhone"></div>
+          <div class="field"><label data-i18n="map.field_phone">Teléfono</label><input type="text" id="cPhone"></div>
           <div class="field"><label>WhatsApp</label><input type="text" id="cWhatsapp"></div>
           <div class="field"><label>Email</label><input type="text" id="cEmail"></div>
-          <div class="field"><label>Web</label><input type="text" id="cWebsite"></div>
-          <div class="field"><label>Distrito</label><input type="text" id="cDistrict"></div>
-          <div class="field"><label>Municipio</label><input type="text" id="cMunicipality"></div>
+          <div class="field"><label data-i18n="map.field_web">Web</label><input type="text" id="cWebsite"></div>
+          <div class="field"><label data-i18n="map.field_district">Distrito</label><input type="text" id="cDistrict"></div>
+          <div class="field"><label data-i18n="map.field_municipality">Municipio</label><input type="text" id="cMunicipality"></div>
         </div>
       </details>
 
       <div class="confirm-actions">
-        <button type="submit" class="btn" id="btnSaveOnly">Guardar</button>
-        <button type="button" class="btn green" id="btnSaveAndCheck">Guardar e iniciar chequeo</button>
+        <button type="submit" class="btn" id="btnSaveOnly" data-i18n="map.btn_save">Guardar</button>
+        <button type="button" class="btn green" id="btnSaveAndCheck" data-i18n="map.btn_save_and_check">Guardar e iniciar chequeo</button>
       </div>
     </form>
+  </div>
+</div>
+
+<div class="overlay" id="historyOverlay">
+  <div class="confirm-panel" style="max-width:640px">
+    <h2><span data-i18n="map.history_title">📜 Historial de peticiones a Google Places</span>
+      <button class="close-x" id="btnCloseHistory" type="button">✕</button>
+    </h2>
+    <div id="historyContent" data-i18n="map.loading">Cargando…</div>
   </div>
 </div>
 
@@ -364,9 +426,10 @@ function websiteRing(hasWebsite){
 }
 
 function websiteBadge(hasWebsite){
-  if(hasWebsite === true) return {cls: 'have', icon: '✅', label: 'Ya tiene web'};
-  if(hasWebsite === false) return {cls: 'opp', icon: '🌐', label: 'Sin web — oportunidad de venta'};
-  return {cls: 'unk', icon: '❔', label: 'Sin datos de web todavía'};
+  var _t = window.wiMapT || function(k){ return k; };
+  if(hasWebsite === true) return {cls: 'have', icon: '✅', label: _t('map.badge_has_web')};
+  if(hasWebsite === false) return {cls: 'opp', icon: '🌐', label: _t('map.badge_no_web')};
+  return {cls: 'unk', icon: '❔', label: _t('map.badge_unknown_web')};
 }
 
 function markerIcon(color, scale, hasWebsite){
@@ -443,8 +506,9 @@ function currentFilters(){
 }
 
 function renderProspectList(prospects){
+  var _t = window.wiMapT || function(k){ return k; };
   document.getElementById('listCount').textContent = prospects.length;
-  document.getElementById('countLabel').textContent = prospects.length + ' empresas visibles';
+  document.getElementById('countLabel').textContent = prospects.length + ' ' + _t('map.businesses_visible');
   var el = document.getElementById('prospectList');
   el.innerHTML = prospects.slice(0, 100).map(function(p){
     var score = p.current_score != null ? p.current_score : '—';
@@ -492,7 +556,7 @@ function reloadMapProspects(){
       });
       renderProspectList(data.prospects);
     })
-    .catch(function(){ showToast('No se pudo cargar el mapa'); });
+    .catch(function(){ showToast((window.wiMapT||function(k){return k;})('map.no_map_error')); });
 }
 
 document.getElementById('btnApplyFilters').addEventListener('click', reloadMapProspects);
@@ -508,24 +572,26 @@ function categoryLabel(sectorId){
 }
 
 function renderExistingCard(p){
+  var _t = window.wiMapT || function(k){ return k; };
   var scoreTag = p.current_score != null ? '<span class="exists-badge" style="background:'+p.color+'">'+p.current_score+'/100</span>' : '';
   var web = websiteBadge(resolveHasWebsite(p));
-  var gmapsBtn = p.gmaps_url ? '<a class="btn sm ghost" href="'+p.gmaps_url+'" target="_blank" rel="noopener">📷 Ver en Google Maps</a>' : '';
+  var gmapsBtn = p.gmaps_url ? '<a class="btn sm ghost" href="'+p.gmaps_url+'" target="_blank" rel="noopener">📷 '+_t('map.open_in_gmaps')+'</a>' : '';
   return '<div class="result-card" data-existing-id="'+p.prospect_id+'">'+
-    '<span class="cat">Ya en CreaGanaWeb</span><span class="exists-badge">Ya existe</span>'+scoreTag+
+    '<span class="cat">'+_t('map.already_in_crm')+'</span><span class="exists-badge">'+_t('map.already_exists')+'</span>'+scoreTag+
     '<div class="name" style="margin-top:6px">'+p.name+'</div>'+
     '<div class="addr">'+(p.address||'')+' · '+p.sector_label+'</div>'+
     '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span>'+
-    '<div class="actions"><a class="btn sm secondary" href="'+p.detail_url+'">Ver ficha</a>'+gmapsBtn+'</div>'+
+    '<div class="actions"><a class="btn sm secondary" href="'+p.detail_url+'">'+_t('map.view_card')+'</a>'+gmapsBtn+'</div>'+
   '</div>';
 }
 
 function renderGoogleCard(r, idx){
-  var existsTag = r.existing_prospect_id ? '<span class="exists-badge">Ya existe</span>' : '';
+  var _t = window.wiMapT || function(k){ return k; };
+  var existsTag = r.existing_prospect_id ? '<span class="exists-badge">'+_t('map.already_exists')+'</span>' : '';
   var addBtn = r.existing_prospect_id
-    ? '<a class="btn sm secondary" href="/panel/prospeccion/'+r.existing_prospect_id+'/">Ver ficha existente</a>'
-    : '<button type="button" class="btn sm" data-google-idx="'+idx+'">Añadir a CreaGanaWeb</button>';
-  var gmapsBtn = r.google_maps_url ? '<a class="btn sm ghost" href="'+r.google_maps_url+'" target="_blank" rel="noopener">Abrir en Google Maps</a>' : '';
+    ? '<a class="btn sm secondary" href="/panel/prospeccion/'+r.existing_prospect_id+'/">'+_t('map.view_existing_card')+'</a>'
+    : '<button type="button" class="btn sm" data-google-idx="'+idx+'">'+_t('map.add_to_crm')+'</button>';
+  var gmapsBtn = r.google_maps_url ? '<a class="btn sm ghost" href="'+r.google_maps_url+'" target="_blank" rel="noopener">'+_t('map.open_in_gmaps')+'</a>' : '';
   return '<div class="result-card">'+
     '<span class="cat">'+categoryLabel(r.category)+'</span>'+existsTag+
     '<div class="name" style="margin-top:6px">'+r.name+'</div>'+
@@ -587,19 +653,43 @@ function plotSearchMarkers(existing, googleResults){
   if(any) map.fitBounds(latLngBounds, 60);
 }
 
+// Si Google Places bloqueó la petición ANTES de llamar a Google (límite
+// mensual alcanzado, ver places.py:_reserve_call), el backend responde 429
+// con este código — se muestra el motivo real en vez de un error genérico,
+// y se refresca el widget para que el color/estado quede visible al momento.
+function handleBlockedResponse(data, resultsEl){
+  if(data && data.ok === false && data.code === 'google_places_monthly_limit_reached'){
+    resultsEl.innerHTML = '<p style="color:#7f1d1d;background:#fee2e2;border:1.5px solid #dc2626;' +
+      'border-radius:8px;padding:8px 10px;font-size:.8rem">🚫 '+data.message+'</p>';
+    clearSearchMarkers();
+    refreshPlacesUsage();
+    return true;
+  }
+  return false;
+}
+
+var searchInFlight = false;
+
 function runSearch(){
+  if(searchInFlight) return;
   var q = document.getElementById('searchInput').value.trim();
   if(!q){ showToast('Escribe algo para buscar'); return; }
   var params = new URLSearchParams({q: q});
   var bias = userLocation || (map ? {lat: map.getCenter().lat(), lng: map.getCenter().lng()} : null);
   if(bias){ params.set('lat', bias.lat); params.set('lng', bias.lng); }
 
+  var btn = document.getElementById('btnSearch');
   var resultsEl = document.getElementById('searchResults');
+  searchInFlight = true;
+  btn.disabled = true;
   resultsEl.innerHTML = '<p style="color:#8a94a6;font-size:.85rem">Buscando…</p>';
 
   fetch('/panel/prospeccion/mapa/api/search/?' + params.toString())
     .then(function(r){ return r.json(); })
     .then(function(data){
+      searchInFlight = false;
+      btn.disabled = false;
+      if(handleBlockedResponse(data, resultsEl)) return;
       if(data.error){ resultsEl.innerHTML = ''; clearSearchMarkers(); showToast(data.error); return; }
       var existingResults = data.existing || [];
       lastGoogleResults = data.google || [];
@@ -611,14 +701,19 @@ function runSearch(){
       }
       if(!html){ html = '<p style="color:#8a94a6;font-size:.85rem">Sin resultados. Prueba "+ Añadir lugar manualmente".</p>'; }
       resultsEl.innerHTML = html;
-      resultsEl.querySelectorAll('[data-google-idx]').forEach(function(btn){
-        btn.addEventListener('click', function(){
-          openConfirmPanel({fromGoogle: true, place: lastGoogleResults[parseInt(btn.getAttribute('data-google-idx'), 10)]});
+      resultsEl.querySelectorAll('[data-google-idx]').forEach(function(elBtn){
+        elBtn.addEventListener('click', function(){
+          openConfirmPanel({fromGoogle: true, place: lastGoogleResults[parseInt(elBtn.getAttribute('data-google-idx'), 10)]});
         });
       });
       plotSearchMarkers(existingResults, lastGoogleResults);
+      refreshPlacesUsage();
     })
-    .catch(function(){ resultsEl.innerHTML = ''; clearSearchMarkers(); showToast('No se pudo buscar en este momento'); });
+    .catch(function(){
+      searchInFlight = false;
+      btn.disabled = false;
+      resultsEl.innerHTML = ''; clearSearchMarkers(); showToast('No se pudo buscar en este momento');
+    });
 }
 
 document.getElementById('btnSearch').addEventListener('click', runSearch);
@@ -631,6 +726,7 @@ document.getElementById('searchInput').addEventListener('keydown', function(ev){
 function runNearbySearch(){
   if(!navigator.geolocation){ showToast('Este dispositivo no permite compartir ubicación'); return; }
   var btn = document.getElementById('btnHereNow');
+  if(btn.disabled) return;
   var resultsEl = document.getElementById('searchResults');
   btn.disabled = true;
   resultsEl.innerHTML = '<p style="color:#8a94a6;font-size:.85rem">Localizando…</p>';
@@ -646,6 +742,7 @@ function runNearbySearch(){
       .then(function(r){ return r.json(); })
       .then(function(data){
         btn.disabled = false;
+        if(handleBlockedResponse(data, resultsEl)) return;
         if(data.error){ resultsEl.innerHTML = ''; clearSearchMarkers(); showToast(data.error); return; }
         var existingResults = data.existing || [];
         lastGoogleResults = data.google || [];
@@ -663,6 +760,7 @@ function runNearbySearch(){
           });
         });
         plotSearchMarkers(existingResults, lastGoogleResults);
+        refreshPlacesUsage();
       })
       .catch(function(){
         btn.disabled = false;
@@ -691,6 +789,8 @@ function haversineMeters(lat1, lng1, lat2, lng2){
    físicamente hasta ella. ---- */
 function runAreaSearch(){
   if(!map){ showToast('El mapa no está listo todavía'); return; }
+  var btn = document.getElementById('btnSearchArea');
+  if(btn.disabled) return;
   var bounds = map.getBounds();
   if(!bounds){ showToast('Espera a que el mapa termine de cargar'); return; }
 
@@ -698,7 +798,6 @@ function runAreaSearch(){
   var ne = bounds.getNorthEast();
   var radius = Math.round(haversineMeters(center.lat(), center.lng(), ne.lat(), ne.lng()));
 
-  var btn = document.getElementById('btnSearchArea');
   var resultsEl = document.getElementById('searchResults');
   btn.disabled = true;
   resultsEl.innerHTML = '<p style="color:#8a94a6;font-size:.85rem">Buscando en la zona visible…</p>';
@@ -708,6 +807,7 @@ function runAreaSearch(){
     .then(function(r){ return r.json(); })
     .then(function(data){
       btn.disabled = false;
+      if(handleBlockedResponse(data, resultsEl)) return;
       if(data.error){ resultsEl.innerHTML = ''; clearSearchMarkers(); showToast(data.error); return; }
       var existingResults = data.existing || [];
       lastGoogleResults = data.google || [];
@@ -731,6 +831,7 @@ function runAreaSearch(){
         });
       });
       plotSearchMarkers(existingResults, lastGoogleResults);
+      refreshPlacesUsage();
     })
     .catch(function(){
       btn.disabled = false;
@@ -739,6 +840,94 @@ function runAreaSearch(){
 }
 
 document.getElementById('btnSearchArea').addEventListener('click', runAreaSearch);
+
+/* ══════════════════ Widget + historial de uso de Google Places ══════════════════ */
+
+function puwBarClass(percent, blocked){
+  if(blocked || percent >= 100) return 'blocked';
+  if(percent >= 95) return 'danger';
+  if(percent >= 85) return 'orange';
+  if(percent >= 70) return 'warn';
+  return 'ok';
+}
+
+function refreshPlacesUsage(){
+  fetch('/panel/prospeccion/mapa/api/places-usage/')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      document.getElementById('puwMonth').textContent = data.billing_month + ' (' + data.timezone + ')';
+      document.getElementById('puwToday').textContent = data.today_total;
+
+      var nearby = data.by_type.nearby_search_enterprise;
+      var text = data.by_type.text_search_enterprise;
+
+      function paint(prefix, stats){
+        var cls = puwBarClass(stats.percent, stats.blocked);
+        document.getElementById(prefix+'Fill').style.width = Math.min(stats.percent, 100) + '%';
+        document.getElementById(prefix+'Fill').className = 'puw-bar-fill ' + cls;
+        document.getElementById(prefix+'Nums').textContent = stats.used + ' / ' + stats.limit;
+        document.getElementById(prefix+'Sub').textContent =
+          'Restan ' + stats.remaining + ' · OK ' + stats.successful + ' · Errores ' + stats.errors;
+      }
+      paint('puwNearby', nearby);
+      paint('puwText', text);
+
+      var warningsEl = document.getElementById('puwWarnings');
+      warningsEl.innerHTML = (data.warnings || []).map(function(w){
+        var cls = w.threshold >= 100 ? 'puw-warning blocked' : 'puw-warning';
+        return '<div class="'+cls+'">'+w.message+'</div>';
+      }).join('');
+
+      var costEl = document.getElementById('puwCost');
+      costEl.textContent = 'Estimación local de coste: $' + data.estimated_cost_usd.toFixed(2) +
+        ' (a $' + data.price_per_1000_usd + '/1000 tras el límite gratuito). Cifra orientativa — la factura real está en Google Cloud Billing.';
+    })
+    .catch(function(){ /* el widget no es crítico para poder seguir trabajando */ });
+}
+
+function renderHistoryTable(data){
+  var rows = data.rows.map(function(row){
+    var when = new Date(row.created_at).toLocaleString('es-ES');
+    var resultClass = row.success ? 'history-ok' : 'history-error';
+    var resultText = row.success ? 'OK' : ('Error' + (row.error_type ? ' ('+row.error_type+')' : ''));
+    return '<tr>' +
+      '<td>'+when+'</td>' +
+      '<td>'+row.mode+'</td>' +
+      '<td class="'+resultClass+'">'+resultText+'</td>' +
+      '<td>'+(row.response_status != null ? row.response_status : '—')+'</td>' +
+      '<td>'+(row.result_count != null ? row.result_count : '—')+'</td>' +
+      '<td>'+(row.duration_ms != null ? row.duration_ms+' ms' : '—')+'</td>' +
+      '</tr>';
+  }).join('');
+
+  var dailyRows = data.daily.map(function(d){
+    var counts = Object.keys(d.counts).map(function(k){ return k+': '+d.counts[k]; }).join(', ');
+    return '<tr><td>'+d.date+'</td><td>'+counts+'</td></tr>';
+  }).join('');
+
+  return '<h3 style="font-size:.85rem;margin-bottom:6px">Últimas peticiones</h3>' +
+    '<div style="max-height:320px;overflow-y:auto">' +
+    '<table class="history-table"><thead><tr><th>Fecha</th><th>Modo</th><th>Resultado</th>' +
+    '<th>HTTP</th><th>Encontrados</th><th>Duración</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    '<h3 style="font-size:.85rem;margin:14px 0 6px">Por día (mes '+data.billing_month+')</h3>' +
+    '<div style="max-height:200px;overflow-y:auto">' +
+    '<table class="history-table"><thead><tr><th>Día</th><th>Peticiones por tipo</th></tr></thead><tbody>' +
+    dailyRows + '</tbody></table></div>';
+}
+
+document.getElementById('puwHistoryLink').addEventListener('click', function(){
+  document.getElementById('historyOverlay').classList.add('show');
+  document.getElementById('historyContent').innerHTML = 'Cargando…';
+  fetch('/panel/prospeccion/mapa/api/places-usage/history/')
+    .then(function(r){ return r.json(); })
+    .then(function(data){ document.getElementById('historyContent').innerHTML = renderHistoryTable(data); })
+    .catch(function(){ document.getElementById('historyContent').innerHTML = 'No se pudo cargar el historial.'; });
+});
+document.getElementById('btnCloseHistory').addEventListener('click', function(){
+  document.getElementById('historyOverlay').classList.remove('show');
+});
+
+refreshPlacesUsage();
 
 /* ---- Modo manual: el clic normal en el mapa NUNCA crea nada ---- */
 var manualModeActive = false;
@@ -926,6 +1115,226 @@ document.getElementById('csvForm').addEventListener('submit', function(ev){
 if(!window.WI_MAPA.hasGoogleKey){
   reloadMapProspects = function(){}; // sin mapa, no hay bounds que consultar
 }
+})();
+</script>
+
+<script>
+(function() {
+'use strict';
+var T = {
+es: {
+  'map.page_title': 'Mapa de prospección — CreaGanaWeb',
+  'map.title': '🗺️ Mapa de prospección',
+  'map.back_panel': '← Panel',
+  'map.back_site': '🌐 Ir a la web',
+  'map.no_map': 'El mapa no está disponible: falta configurar GOOGLE_MAPS_JS_API_KEY en el servidor. La búsqueda y el alta de empresas funcionan igualmente.',
+  'map.legend_summary': 'ℹ️ Leyenda',
+  'map.legend_has_web': '¿Tiene web?',
+  'map.legend_no_web': 'Sin web — oportunidad (con halo rojo)',
+  'map.legend_has_web_yes': 'Ya tiene web',
+  'map.legend_no_data': 'Sin datos todavía',
+  'map.legend_stage': 'Etapa (color del círculo)',
+  'map.legend_number': 'Número en el círculo',
+  'map.legend_score': 'Puntuación digital (0–100)',
+  'map.puw_title': 'Google Places — mes en curso',
+  'map.puw_today': 'Hoy:',
+  'map.puw_requests': 'peticiones',
+  'map.puw_history': '📜 Historial de peticiones',
+  'map.search_title': '🔎 Buscar y añadir un negocio',
+  'map.search_placeholder': 'Nombre, categoría o dirección…',
+  'map.search_btn': 'Buscar',
+  'map.search_hint': 'Primero se muestra lo que ya está en CreaGanaWeb, después resultados de Google cerca de la zona visible del mapa.',
+  'map.search_hint_btn': 'ℹ️ Cada pulsación de un botón de búsqueda hace exactamente una petición a Google Places.',
+  'map.btn_here_now': '🎯 Estoy aquí (1 km)',
+  'map.btn_search_area': '🗺️ Buscar en esta zona',
+  'map.btn_manual_mode': '+ Añadir lugar manualmente',
+  'map.manual_banner': '📍 Haz clic en el lugar exacto del negocio en el mapa. Podrás arrastrar el marcador para ajustarlo antes de guardar.',
+  'map.other_ways': 'Otras formas de añadir',
+  'map.btn_my_location': '📍 Usar mi ubicación',
+  'map.paste_gmaps_link': 'Pegar enlace de Google Maps',
+  'map.btn_use': 'Usar',
+  'map.filters_summary': 'Filtros del mapa',
+  'map.filter_name_label': 'Buscar por nombre (en el mapa)',
+  'map.filter_name_ph': 'Nombre...',
+  'map.filter_sector': 'Sector',
+  'map.filter_all': 'Todos',
+  'map.filter_stage': 'Etapa',
+  'map.filter_all_f': 'Todas',
+  'map.filter_assigned': 'Responsable',
+  'map.filter_min_score': 'Puntuación mínima',
+  'map.filter_has_web': 'Tiene web',
+  'map.filter_booking': 'Reserva online',
+  'map.filter_unresolved': 'Sin ubicar',
+  'map.btn_apply_filters': 'Aplicar filtros',
+  'map.import_csv': 'Importar CSV',
+  'map.csv_hint': 'Columnas: name (obligatoria), sector, address, district, municipality, lat, lng, phone, email, website, whatsapp, gmaps_url. Filas sin lat/lng quedan "sin ubicar".',
+  'map.btn_import': 'Importar',
+  'map.in_this_view': 'En esta vista',
+  'map.add_business': 'Añadir negocio',
+  'map.field_name': 'Nombre *',
+  'map.field_address': 'Dirección',
+  'map.view_before_save': '📷 Ver en Google Maps antes de guardar',
+  'map.more_data': 'Más datos',
+  'map.field_phone': 'Teléfono',
+  'map.field_web': 'Web',
+  'map.field_district': 'Distrito',
+  'map.field_municipality': 'Municipio',
+  'map.btn_save': 'Guardar',
+  'map.btn_save_and_check': 'Guardar e iniciar chequeo',
+  'map.history_title': '📜 Historial de peticiones a Google Places',
+  'map.loading': 'Cargando…',
+  'map.badge_has_web': 'Ya tiene web',
+  'map.badge_no_web': 'Sin web — oportunidad de venta',
+  'map.badge_unknown_web': 'Sin datos de web todavía',
+  'map.already_in_crm': 'Ya en CreaGanaWeb',
+  'map.already_exists': 'Ya existe',
+  'map.view_card': 'Ver ficha',
+  'map.view_existing_card': 'Ver ficha existente',
+  'map.add_to_crm': 'Añadir a CreaGanaWeb',
+  'map.open_in_gmaps': 'Abrir en Google Maps',
+  'map.businesses_visible': 'empresas visibles',
+  'map.no_map_error': 'No se pudo cargar el mapa',
+  'map.type_to_search': 'Escribe algo para buscar',
+  'map.searching': 'Buscando…',
+  'map.no_results': 'Sin resultados. Prueba "+ Añadir lugar manualmente".',
+  'map.search_failed': 'No se pudo buscar en este momento',
+  'map.no_geolocation': 'Este dispositivo no permite compartir ubicación',
+  'map.locating': 'Localizando…',
+  'map.searching_1km': 'Buscando negocios en 1 km…',
+  'map.nothing_1km': 'Nada en un radio de 1 km.',
+  'map.location_failed': 'No se pudo obtener tu ubicación — revisa el permiso de localización',
+  'map.map_not_ready': 'El mapa no está listo todavía',
+  'map.wait_map_load': 'Espera a que el mapa termine de cargar',
+  'map.searching_area': 'Buscando en la zona visible…',
+  'map.nothing_area': 'Nada en la zona visible.',
+  'map.choose_csv': 'Elige un fichero CSV',
+},
+ru: {
+  'map.page_title': 'Карта проспекции — CreaGanaWeb',
+  'map.title': '🗺️ Карта проспекции',
+  'map.back_panel': '← Панель',
+  'map.back_site': '🌐 На сайт',
+  'map.no_map': 'Карта недоступна: не настроен GOOGLE_MAPS_JS_API_KEY на сервере. Поиск и добавление компаний работают как обычно.',
+  'map.legend_summary': 'ℹ️ Легенда',
+  'map.legend_has_web': 'Есть сайт?',
+  'map.legend_no_web': 'Нет сайта — возможность продажи (с красным ореолом)',
+  'map.legend_has_web_yes': 'Уже есть сайт',
+  'map.legend_no_data': 'Пока нет данных',
+  'map.legend_stage': 'Этап (цвет круга)',
+  'map.legend_number': 'Число в круге',
+  'map.legend_score': 'Цифровой рейтинг (0–100)',
+  'map.puw_title': 'Google Places — текущий месяц',
+  'map.puw_today': 'Сегодня:',
+  'map.puw_requests': 'запросов',
+  'map.puw_history': '📜 История запросов',
+  'map.search_title': '🔎 Найти и добавить бизнес',
+  'map.search_placeholder': 'Название, категория или адрес…',
+  'map.search_btn': 'Найти',
+  'map.search_hint': 'Сначала показывается то, что уже есть в CreaGanaWeb, затем результаты Google рядом с видимой зоной карты.',
+  'map.search_hint_btn': 'ℹ️ Каждое нажатие кнопки поиска — это ровно один запрос к Google Places.',
+  'map.btn_here_now': '🎯 Я здесь (1 км)',
+  'map.btn_search_area': '🗺️ Искать в этой зоне',
+  'map.btn_manual_mode': '+ Добавить место вручную',
+  'map.manual_banner': '📍 Кликните точное место бизнеса на карте. Можно перетащить маркер перед сохранением.',
+  'map.other_ways': 'Другие способы добавить',
+  'map.btn_my_location': '📍 Использовать моё местоположение',
+  'map.paste_gmaps_link': 'Вставить ссылку Google Maps',
+  'map.btn_use': 'Использовать',
+  'map.filters_summary': 'Фильтры карты',
+  'map.filter_name_label': 'Поиск по названию (на карте)',
+  'map.filter_name_ph': 'Название...',
+  'map.filter_sector': 'Сектор',
+  'map.filter_all': 'Все',
+  'map.filter_stage': 'Этап',
+  'map.filter_all_f': 'Все',
+  'map.filter_assigned': 'Ответственный',
+  'map.filter_min_score': 'Минимальный рейтинг',
+  'map.filter_has_web': 'Есть сайт',
+  'map.filter_booking': 'Онлайн-запись',
+  'map.filter_unresolved': 'Без координат',
+  'map.btn_apply_filters': 'Применить фильтры',
+  'map.import_csv': 'Импорт CSV',
+  'map.csv_hint': 'Колонки: name (обязательно), sector, address, district, municipality, lat, lng, phone, email, website, whatsapp, gmaps_url. Строки без lat/lng остаются "без координат".',
+  'map.btn_import': 'Импортировать',
+  'map.in_this_view': 'В этом виде',
+  'map.add_business': 'Добавить бизнес',
+  'map.field_name': 'Имя *',
+  'map.field_address': 'Адрес',
+  'map.view_before_save': '📷 Посмотреть в Google Maps перед сохранением',
+  'map.more_data': 'Больше данных',
+  'map.field_phone': 'Телефон',
+  'map.field_web': 'Сайт',
+  'map.field_district': 'Район',
+  'map.field_municipality': 'Муниципалитет',
+  'map.btn_save': 'Сохранить',
+  'map.btn_save_and_check': 'Сохранить и начать проверку',
+  'map.history_title': '📜 История запросов к Google Places',
+  'map.loading': 'Загрузка…',
+  'map.badge_has_web': 'Уже есть сайт',
+  'map.badge_no_web': 'Нет сайта — возможность продажи',
+  'map.badge_unknown_web': 'Пока нет данных о сайте',
+  'map.already_in_crm': 'Уже в CreaGanaWeb',
+  'map.already_exists': 'Уже существует',
+  'map.view_card': 'Открыть карточку',
+  'map.view_existing_card': 'Открыть существующую карточку',
+  'map.add_to_crm': 'Добавить в CreaGanaWeb',
+  'map.open_in_gmaps': 'Открыть в Google Maps',
+  'map.businesses_visible': 'компаний видно',
+  'map.no_map_error': 'Не удалось загрузить карту',
+  'map.type_to_search': 'Введите что-нибудь для поиска',
+  'map.searching': 'Поиск…',
+  'map.no_results': 'Нет результатов. Попробуйте "+ Добавить место вручную".',
+  'map.search_failed': 'Не удалось выполнить поиск сейчас',
+  'map.no_geolocation': 'Это устройство не поддерживает передачу местоположения',
+  'map.locating': 'Определение местоположения…',
+  'map.searching_1km': 'Поиск компаний в радиусе 1 км…',
+  'map.nothing_1km': 'Ничего не найдено в радиусе 1 км.',
+  'map.location_failed': 'Не удалось получить ваше местоположение — проверьте разрешение на геолокацию',
+  'map.map_not_ready': 'Карта ещё не готова',
+  'map.wait_map_load': 'Подождите, пока карта загрузится',
+  'map.searching_area': 'Поиск в видимой зоне…',
+  'map.nothing_area': 'Ничего не найдено в видимой зоне.',
+  'map.choose_csv': 'Выберите файл CSV',
+},
+};
+
+var LANG = localStorage.getItem('wi_crm_lang') || 'ru';
+
+function t(key) {
+  var cur = T[LANG], fb = T.ru;
+  var v = (cur && cur[key] !== undefined) ? cur[key] : (fb && fb[key]);
+  return v !== undefined ? v : key;
+}
+window.wiMapT = t;
+
+function applyMapTranslations() {
+  document.title = t('map.page_title');
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    if (key) el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n-placeholder');
+    if (key) el.placeholder = t(key);
+  });
+}
+
+function setMapLang(lang) {
+  LANG = lang;
+  localStorage.setItem('wi_crm_lang', lang);
+  document.querySelectorAll('.map-lang-btn').forEach(function(b) {
+    b.style.background = b.dataset.lang === lang ? '#fff' : 'rgba(255,255,255,.1)';
+    b.style.color = b.dataset.lang === lang ? '#1e293b' : '#fff';
+  });
+  applyMapTranslations();
+}
+window.wiSetMapLang = setMapLang;
+
+document.querySelectorAll('.map-lang-btn').forEach(function(b) {
+  b.addEventListener('click', function() { setMapLang(this.dataset.lang); });
+});
+
+setMapLang(LANG);
 })();
 </script>
 </body>

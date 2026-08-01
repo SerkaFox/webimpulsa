@@ -1,7 +1,9 @@
 import json
 import logging
-from collections import Counter
+from collections import Counter, defaultdict
+from datetime import timedelta
 
+from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
@@ -13,8 +15,8 @@ from . import places
 from .constants import SALES_STATUS_COLORS
 from .csv_import import parse_csv, validate_csv_file
 from .models import (
-    CONSENT_TEXT_VERSION, BusinessContact, BusinessProspect, ChequeoAudit, ProspectPhoto, SECTOR_CHOICES,
-    StaffMember,
+    CONSENT_TEXT_VERSION, BusinessContact, BusinessProspect, ChequeoAudit, PlacesApiLimitNotification,
+    PlacesApiMonthlyCounter, PlacesApiRequestLog, ProspectPhoto, SECTOR_CHOICES, StaffMember,
 )
 from .quiz_config import QUESTIONNAIRE_VERSION, QUESTIONS
 from .scoring import compute_score, questions_for_sector
@@ -223,6 +225,20 @@ def _existing_match_json(p):
     return data
 
 
+def _places_quota_response(exc):
+    """Respuesta 429 cuando _reserve_call bloqueó la llamada ANTES de tocar
+    Google — forma fija, sin más campos, tal como la consume el frontend."""
+    return JsonResponse({
+        'ok': False,
+        'code': 'google_places_monthly_limit_reached',
+        'message': str(exc),
+        'request_type': exc.request_type,
+        'used': exc.used,
+        'limit': exc.limit,
+        'billing_month': exc.billing_month,
+    }, status=429)
+
+
 @_crm_auth
 @require_GET
 def places_search(request):
@@ -256,9 +272,9 @@ def places_search(request):
                 )
             r['existing_prospect_id'] = dup.pk if dup else None
             google_results.append(r)
-    except places.PlacesConfigError as e:
-        google_error = str(e)
     except places.PlacesQuotaExceeded as e:
+        return _places_quota_response(e)
+    except places.PlacesConfigError as e:
         google_error = str(e)
     except Exception:
         logger.exception('Error buscando en Google Places: query=%r', query)
@@ -310,9 +326,9 @@ def places_nearby(request):
                 )
             r['existing_prospect_id'] = dup.pk if dup else None
             google_results.append(r)
-    except places.PlacesConfigError as e:
-        google_error = str(e)
     except places.PlacesQuotaExceeded as e:
+        return _places_quota_response(e)
+    except places.PlacesConfigError as e:
         google_error = str(e)
     except Exception:
         logger.exception('Error buscando cerca en Google Places: lat=%r lng=%r', lat, lng)
@@ -322,6 +338,137 @@ def places_nearby(request):
         'existing': existing, 'google': google_results, 'google_error': google_error,
         'radius_used': radius_m, 'radius_capped': radius_capped,
     })
+
+
+# Se muestran siempre estas dos filas en el widget/estadísticas aunque el mes
+# todavía no tenga ninguna llamada — son las únicas dos que produce este CRM
+# hoy (Place Details lo usa el proyecto `anna`, no este).
+_PRIMARY_REQUEST_TYPES = ('nearby_search_enterprise', 'text_search_enterprise')
+
+
+def _mode_label(log):
+    """Nunca se guarda explícitamente qué botón disparó la búsqueda — se
+    infiere para mostrar en el historial sin exponer coordenadas reales:
+    texto vs. "cerca de mí" (radio fijo ~1 km) vs. "área del mapa" (radio
+    variable, calculado del viewport)."""
+    if log.request_type.startswith('text_search'):
+        return 'Búsqueda por texto'
+    if log.radius_m is not None and log.radius_m <= 1200:
+        return 'Cerca de mí'
+    return 'Área del mapa'
+
+
+def _usage_snapshot():
+    billing_month = places.billing_month_for()
+    now = timezone.now()
+
+    counters = {c.request_type: c for c in PlacesApiMonthlyCounter.objects.filter(billing_month=billing_month)}
+
+    by_type = {}
+    for request_type in _PRIMARY_REQUEST_TYPES:
+        c = counters.get(request_type)
+        limit = places.monthly_limit_for(request_type)
+        used = c.reserved_count if c else 0
+        percent = round((used / limit) * 100, 1) if limit else 0.0
+        by_type[request_type] = {
+            'used': used,
+            'successful': c.success_count if c else 0,
+            'errors': c.error_count if c else 0,
+            'limit': limit,
+            'remaining': max(limit - used, 0),
+            'percent': percent,
+            'blocked': used >= limit,
+        }
+    month_total = sum(c.reserved_count for c in counters.values())
+
+    today_local = places.to_billing_tz(now).date()
+    # today_total: cuenta por día de facturación (America/Los_Angeles), no
+    # por medianoche del servidor — coherente con billing_month.
+    today_total = sum(
+        1 for log in PlacesApiRequestLog.objects.filter(created_at__gte=now - timedelta(hours=36))
+        if places.to_billing_tz(log.created_at).date() == today_local
+    )
+
+    last_14 = defaultdict(lambda: defaultdict(int))
+    since = now - timedelta(days=14)
+    for log in PlacesApiRequestLog.objects.filter(created_at__gte=since).only('created_at', 'request_type'):
+        day = places.to_billing_tz(log.created_at).strftime('%Y-%m-%d')
+        last_14[day][log.request_type] += 1
+    last_14_days = [{'date': d, 'counts': dict(v)} for d, v in sorted(last_14.items())]
+
+    last_log = PlacesApiRequestLog.objects.order_by('-created_at').first()
+
+    warnings = [
+        {
+            'request_type': n.request_type,
+            'threshold': n.threshold,
+            'message': (
+                f'Casi se alcanza el límite protector de Google Places ({n.request_type}): '
+                f'quedan {max(places.monthly_limit_for(n.request_type) - (counters[n.request_type].reserved_count if n.request_type in counters else 0), 0)} peticiones.'
+                if n.threshold < 100 else
+                f'Peticiones de tipo {n.request_type} detenidas hasta el próximo mes de facturación '
+                f'o hasta que un administrador cambie el límite.'
+            ),
+        }
+        for n in PlacesApiLimitNotification.objects.filter(billing_month=billing_month).order_by('threshold')
+    ]
+
+    return {
+        'billing_month': billing_month,
+        'timezone': 'America/Los_Angeles',
+        'today_total': today_total,
+        'month_total': month_total,
+        'by_type': by_type,
+        'last_14_days': last_14_days,
+        'last_request_at': last_log.created_at.isoformat() if last_log else None,
+        'warnings': warnings,
+        'price_per_1000_usd': settings.GOOGLE_PLACES_ENTERPRISE_PRICE_PER_1000_USD,
+        'estimated_cost_usd': round(
+            sum(max(v['used'] - 1000, 0) for v in by_type.values())
+            / 1000 * settings.GOOGLE_PLACES_ENTERPRISE_PRICE_PER_1000_USD, 2,
+        ),
+    }
+
+
+@_crm_auth
+@require_GET
+def places_usage_stats(request):
+    """Estadística en vivo del gasto en Google Places — auth de CRM, nunca
+    expone la clave de API ni credential_id, solo cifras agregadas."""
+    return JsonResponse(_usage_snapshot())
+
+
+@_crm_auth
+@require_GET
+def places_usage_history(request):
+    """Últimas peticiones (reales o bloqueadas) + agregado diario del mes en
+    curso. Nunca se muestran coordenadas reales, solo un "modo" inferido
+    (ver _mode_label) y el hash ya guardado (no la consulta en crudo)."""
+    try:
+        limit = min(max(int(request.GET.get('limit', 100)), 1), 500)
+    except ValueError:
+        limit = 100
+
+    logs = PlacesApiRequestLog.objects.all()[:limit]
+    rows = [{
+        'created_at': log.created_at.isoformat(),
+        'request_type': log.request_type,
+        'mode': _mode_label(log),
+        'success': log.success,
+        'response_status': log.response_status,
+        'error_type': log.error_type,
+        'result_count': log.result_count,
+        'duration_ms': log.duration_ms,
+    } for log in logs]
+
+    billing_month = places.billing_month_for()
+    daily = defaultdict(lambda: defaultdict(int))
+    for log in PlacesApiRequestLog.objects.filter(billing_month=billing_month).only('created_at', 'request_type'):
+        day = places.to_billing_tz(log.created_at).strftime('%Y-%m-%d')
+        daily[day][log.request_type] += 1
+    daily_rows = [{'date': d, 'counts': dict(v)} for d, v in sorted(daily.items())]
+
+    return JsonResponse({'rows': rows, 'daily': daily_rows, 'billing_month': billing_month})
 
 
 @_crm_auth

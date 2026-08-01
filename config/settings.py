@@ -94,7 +94,27 @@ PLANNER_ADMIN_TOKEN = os.getenv('PLANNER_ADMIN_TOKEN', 'be-admin-9f3ac2d1e7')
 # explícita (ver prospeccion/places.py) en vez de degradar silenciosamente.
 GOOGLE_MAPS_JS_API_KEY = os.getenv('GOOGLE_MAPS_JS_API_KEY', '')
 GOOGLE_PLACES_API_KEY = os.getenv('GOOGLE_PLACES_API_KEY', '')
-GOOGLE_PLACES_DAILY_QUOTA = int(os.getenv('GOOGLE_PLACES_DAILY_QUOTA', '300'))
+GOOGLE_PLACES_DAILY_QUOTA = int(os.getenv('GOOGLE_PLACES_DAILY_QUOTA', '300'))  # legacy, ver PlacesApiUsage
+
+# Tope mensual DURO por tipo de request/SKU (ver prospeccion/places.py:
+# _reserve_call). El mes de facturación se calcula en America/Los_Angeles,
+# igual que Google Cloud Billing — no en la hora del servidor. El límite
+# gratuito real de Google para cada SKU Enterprise es 1000/mes; se deja un
+# margen de seguridad local (900 por defecto) para frenar ANTES de que
+# empiece a facturarse, no justo al límite.
+GOOGLE_PLACES_NEARBY_ENTERPRISE_MONTHLY_LIMIT = int(os.getenv('GOOGLE_PLACES_NEARBY_ENTERPRISE_MONTHLY_LIMIT', '900'))
+GOOGLE_PLACES_TEXT_ENTERPRISE_MONTHLY_LIMIT = int(os.getenv('GOOGLE_PLACES_TEXT_ENTERPRISE_MONTHLY_LIMIT', '900'))
+GOOGLE_PLACES_PLACE_DETAILS_ENTERPRISE_MONTHLY_LIMIT = int(
+    os.getenv('GOOGLE_PLACES_PLACE_DETAILS_ENTERPRISE_MONTHLY_LIMIT', '900')
+)
+# Aviso (no bloqueante) si en un solo día se supera este número de llamadas
+# — para detectar un uso anómalo antes de que se acumule todo el mes.
+GOOGLE_PLACES_DAILY_WARNING_LIMIT = int(os.getenv('GOOGLE_PLACES_DAILY_WARNING_LIMIT', '50'))
+# Solo para la estimación de coste ORIENTATIVA que se muestra en el panel —
+# nunca sustituye a la factura real de Google Cloud Billing.
+GOOGLE_PLACES_ENTERPRISE_PRICE_PER_1000_USD = float(
+    os.getenv('GOOGLE_PLACES_ENTERPRISE_PRICE_PER_1000_USD', '35')
+)
 
 # Bridge de WhatsApp no oficial compartido con el proyecto `anna` (mismo
 # servidor, servicio systemd brimoon-whatsapp-bridge — ver prospeccion/wa_bridge.py).

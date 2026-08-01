@@ -342,13 +342,126 @@ class ProspectPhoto(models.Model):
 
 
 class PlacesApiUsage(models.Model):
-    """Contador diario de llamadas a la Google Places API — el proyecto no
-    tiene Redis/cache compartida entre workers, así que se persiste en la
-    propia BD para poder aplicar una cuota diaria real (GOOGLE_PLACES_DAILY_
-    QUOTA) sin depender de memoria de un único proceso gunicorn."""
+    """Contador diario ORIGINAL de llamadas a la Google Places API — se
+    mantiene solo por compatibilidad con datos históricos (antes de que
+    existiera el desglose por tipo de request en PlacesApiRequestLog /
+    PlacesApiMonthlyCounter, más abajo). No se le añaden más filas nuevas
+    desde que existe el control por request_type."""
 
     date = models.DateField(unique=True)
     count = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return f'{self.date}: {self.count} búsquedas'
+
+
+# ── Control real de gasto en Google Places (por tipo de request/SKU) ─────────
+#
+# El campo mask (FIELD_MASK en places.py) determina el SKU real que Google
+# factura — no el endpoint por sí solo. Actualmente el mask incluye teléfono
+# y website (Contact Data), así que tanto Text Search como Nearby Search
+# caen en el tier "Enterprise". Si el mask cambiara a futuro para excluir
+# esos campos, _field_tier() en places.py reclasificaría automáticamente
+# hacia "pro" — por eso el enum ya contempla ambos tiers desde ahora, y
+# también Place Details (no usado hoy en este CRM, pero sí en el proyecto
+# hermano `anna`, con su propia clave — se deja preparado por si algún día
+# se centraliza aquí).
+PLACES_REQUEST_TYPE_CHOICES = [
+    ('text_search_enterprise', 'Text Search — Enterprise'),
+    ('nearby_search_enterprise', 'Nearby Search — Enterprise'),
+    ('place_details_enterprise', 'Place Details — Enterprise'),
+    ('place_details_enterprise_atmosphere', 'Place Details — Enterprise + Atmosphere'),
+    ('text_search_pro', 'Text Search — Pro'),
+    ('nearby_search_pro', 'Nearby Search — Pro'),
+    # Solo para los datos migrados desde PlacesApiUsage (antes de este
+    # control), donde no hay forma real de saber si cada llamada fue texto
+    # o nearby — nunca se inventa el desglose.
+    ('legacy_unknown', 'Histórico sin desglosar (anterior a este control)'),
+]
+
+
+class PlacesApiMonthlyCounter(models.Model):
+    """Contador atómico por (mes de facturación de Google, tipo de request).
+    El mes de facturación se calcula en America/Los_Angeles (huso horario
+    que usa Google para el ciclo de facturación de Cloud), NUNCA en la zona
+    horaria del servidor — ver billing_month_now() en places.py.
+
+    reserved_count se incrementa ANTES de llamar a Google (con select_for_
+    update dentro de una transacción — ver places.py:_reserve_call), así
+    que success_count + error_count <= reserved_count siempre (nunca al
+    revés): "reservado" significa "se decidió intentar la llamada real",
+    no "se completó con éxito"."""
+
+    billing_month = models.CharField(max_length=7, db_index=True)  # 'YYYY-MM' en America/Los_Angeles
+    request_type = models.CharField(max_length=40, choices=PLACES_REQUEST_TYPE_CHOICES, db_index=True)
+    reserved_count = models.PositiveIntegerField(default=0)
+    success_count = models.PositiveIntegerField(default=0)
+    error_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['billing_month', 'request_type'], name='uniq_places_counter_month_type'),
+        ]
+
+    def __str__(self):
+        return f'{self.billing_month} · {self.request_type}: {self.reserved_count}'
+
+
+class PlacesApiRequestLog(models.Model):
+    """Registro individual de cada intento real de llamada a Google Places
+    (incluye los bloqueados por límite, para poder ver cuántas veces el
+    equipo se topó con el tope). Deliberadamente NO guarda: la clave de API,
+    la URL completa con la clave, el texto/coordenadas en crudo (solo un
+    hash, para poder detectar búsquedas repetidas sin poder reconstruir qué
+    se buscó exactamente), ni la respuesta completa de Google."""
+
+    # default=timezone.now (no auto_now_add) a propósito: para uso normal se
+    # comporta igual (se rellena solo al crear), pero permite que la
+    # migración de datos legacy (0009) fije la fecha histórica real en vez
+    # de "ahora" — auto_now_add ignora cualquier valor pasado explícitamente,
+    # incluso en bulk_create.
+    created_at = models.DateTimeField(default=timezone.now, db_index=True)
+    billing_month = models.CharField(max_length=7, db_index=True)
+    request_type = models.CharField(max_length=40, choices=PLACES_REQUEST_TYPE_CHOICES, db_index=True)
+    endpoint = models.CharField(max_length=200, blank=True)
+    # Nullable a propósito: el CRM usa una única contraseña compartida (ver
+    # _crm_auth en crm/views.py), no login individual — no hay forma real de
+    # saber QUÉ persona del equipo hizo cada búsqueda todavía.
+    user = models.ForeignKey(StaffMember, null=True, blank=True, on_delete=models.SET_NULL)
+    success = models.BooleanField(default=False)
+    response_status = models.IntegerField(null=True, blank=True)
+    error_type = models.CharField(max_length=120, blank=True)
+    result_count = models.IntegerField(null=True, blank=True)
+    duration_ms = models.IntegerField(null=True, blank=True)
+    query_hash = models.CharField(max_length=64, blank=True)
+    coordinates_hash = models.CharField(max_length=64, blank=True)
+    radius_m = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['billing_month', 'request_type']),
+        ]
+
+    def __str__(self):
+        return f'{self.created_at:%Y-%m-%d %H:%M} · {self.request_type} · {"OK" if self.success else "ERROR"}'
+
+
+class PlacesApiLimitNotification(models.Model):
+    """Marca de "ya se avisó este umbral este mes" — para que el 70/85/95/100%
+    se notifique una única vez por (mes, tipo), no en cada carga de página."""
+
+    billing_month = models.CharField(max_length=7, db_index=True)
+    request_type = models.CharField(max_length=40, choices=PLACES_REQUEST_TYPE_CHOICES)
+    threshold = models.PositiveSmallIntegerField()  # 70, 85, 95, 100
+    notified_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['billing_month', 'request_type', 'threshold'], name='uniq_places_notif_month_type_threshold'
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.billing_month} · {self.request_type} · {self.threshold}%'
