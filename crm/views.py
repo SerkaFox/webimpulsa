@@ -54,14 +54,20 @@ def _crm_auth(view):
             return HttpResponse('WI_CRM_PASSWORD not configured', status=500,
                                 content_type='text/plain')
         if request.session.get(_CRM_SESSION_KEY):
-            return view(request, *args, **kwargs)
-        if request.method == 'POST' and request.POST.get('crm_password') == _CRM_PASSWORD:
+            response = view(request, *args, **kwargs)
+        elif request.method == 'POST' and request.POST.get('crm_password') == _CRM_PASSWORD:
             request.session[_CRM_SESSION_KEY] = True
             request.session.set_expiry(_CRM_SESSION_AGE)
-            return redirect(request.path)
-        return render(request, 'crm/login.html', {
-            'error': request.method == 'POST',
-        })
+            response = redirect(request.path)
+        else:
+            response = render(request, 'crm/login.html', {
+                'error': request.method == 'POST',
+            })
+        # Páginas internas del panel: cambian de diseño con cada despliegue y
+        # nunca deben quedar cacheadas por el navegador (el bug de "veo el
+        # diseño viejo" tras un deploy siempre resultaba ser esto).
+        response['Cache-Control'] = 'no-store'
+        return response
     return wrapper
 
 
