@@ -110,13 +110,22 @@
 
   /* Fila superior de 3 columnas: info | funciones | estado — los paneles
      laterales van con ancho fijo (son cortos) y el central se lleva todo
-     el espacio que sobra, que si no queda sin usar a los lados del wrap.
-     En pantallas estrechas se apila (info arriba, luego funciones, luego
-     estado). */
-  .top-grid { display: grid; grid-template-columns: 300px minmax(0, 1fr) 300px; gap: 16px; align-items: start; margin-bottom: 16px; }
+     el espacio que sobra. Se usan áreas con nombre (no solo el orden del
+     HTML) para poder reordenar en pantallas estrechas: si no, al apilarse
+     el estado (corto) quedaba después de funciones (larga, con todas las
+     pestañas dentro) y caía al final de la página. Apilado, el orden es
+     info → estado → funciones, así el estado se ve enseguida. */
+  .top-grid {
+    display: grid; grid-template-columns: 260px minmax(0, 1fr) 260px;
+    grid-template-areas: "info functions status";
+    gap: 16px; align-items: start; margin-bottom: 16px;
+  }
   .top-grid .card { margin-bottom: 0; }
-  @media (max-width: 1100px) {
-    .top-grid { grid-template-columns: 1fr; }
+  #infoCard { grid-area: info; }
+  #functionsCard { grid-area: functions; }
+  #statusQuickCard { grid-area: status; }
+  @media (max-width: 860px) {
+    .top-grid { grid-template-columns: 1fr; grid-template-areas: "info" "status" "functions"; }
   }
 </style>
 </head>
