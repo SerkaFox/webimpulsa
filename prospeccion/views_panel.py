@@ -2,7 +2,7 @@ import json
 import logging
 import re
 from collections import Counter, defaultdict
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
@@ -18,8 +18,9 @@ from .csv_import import parse_csv, validate_csv_file
 from .daily_tasks import build_daily_tasks
 from .messaging_templates import build_opener_variants, build_referral_message
 from .models import (
-    CONSENT_TEXT_VERSION, BusinessContact, BusinessProspect, ChequeoAudit, PlacesApiLimitNotification,
-    PlacesApiMonthlyCounter, PlacesApiRequestLog, ProspectPhoto, SECTOR_CHOICES, StaffMember,
+    CONSENT_TEXT_VERSION, BusinessContact, BusinessProspect, ChequeoAudit, Interaction,
+    PlacesApiLimitNotification, PlacesApiMonthlyCounter, PlacesApiRequestLog, ProspectPhoto,
+    SECTOR_CHOICES, StaffMember,
 )
 from .quiz_config import QUESTIONNAIRE_VERSION, QUESTIONS
 from .scoring import compute_score, questions_for_sector
@@ -128,6 +129,37 @@ def internal_map(request):
         'google_maps_js_api_key': dj_settings.GOOGLE_MAPS_JS_API_KEY,
         'daily_tasks_json': json.dumps(build_daily_tasks()),
     })
+
+
+@_crm_auth
+@require_GET
+def daily_tasks_api(request):
+    """Mismos datos que alimentan el modal "Instrucciones de hoy" del mapa,
+    en JSON plano — pensado para que herramientas externas (Pushik, el
+    asistente de Tania en Telegram) puedan leer el estado del día sin tener
+    que interpretar HTML."""
+    return JsonResponse(build_daily_tasks())
+
+
+@_crm_auth
+@require_GET
+def prospect_search_api(request):
+    """Búsqueda de prospectos por nombre — pensado para que una herramienta
+    externa (Pushik) pueda encontrar el id correcto a partir de lo que Tania
+    escribe en lenguaje natural ("el bar de la calle Barra"), igual que ya
+    existe wi-crm-reply.py "search" para leads del CRM."""
+    q = request.GET.get('q', '').strip()
+    if not q:
+        return JsonResponse({'error': 'Falta el parámetro q'}, status=400)
+    qs = BusinessProspect.objects.filter(name__icontains=q).order_by('name')[:20]
+    return JsonResponse({'results': [
+        {
+            'id': p.pk, 'name': p.name, 'sector': p.get_sector_display(),
+            'municipality': p.municipality, 'sales_status': p.sales_status,
+            'sales_status_display': p.get_sales_status_display(),
+        }
+        for p in qs
+    ]})
 
 
 @_crm_auth
@@ -731,6 +763,78 @@ def prospect_update(request, pk):
     if 'lat' in payload and 'lng' in payload and payload['lat'] is not None and payload['lng'] is not None:
         prospect.needs_manual_placement = False
     prospect.save()
+    return JsonResponse({'prospect': _prospect_json(prospect)})
+
+
+REPORT_OUTCOME_STATUS_MAP = {
+    'no_interest': BusinessProspect.SALES_LOST,
+    'closed': BusinessProspect.SALES_ARCHIVED,
+}
+REPORT_OUTCOME_DEFAULT_NOTE = {
+    'no_interest': 'No quisieron saber nada.',
+    'closed': 'El negocio ya no existe / está cerrado permanentemente.',
+    'call_back': 'Pidieron volver a llamar más adelante.',
+    'other': 'Visita registrada.',
+}
+
+
+@_crm_auth
+@require_POST
+def report_outcome(request, pk):
+    """Registrar el resultado de una visita/llamada — pensado para que Tania
+    lo cuente en lenguaje natural a Pushik (su asistente de Telegram) y este
+    traduzca la respuesta a uno de estos 4 resultados, en vez de que Tania
+    tenga que abrir el panel y tocar nada.
+
+    outcome:
+      'no_interest'  -> no quisieron saber nada, se marca como Perdido.
+      'closed'       -> el negocio ya no existe, se marca como Archivado.
+      'call_back'    -> pidieron volver a llamar en una fecha (callback_date);
+                        si seguía en "Descubierto" pasa a "Contactado" (ya se
+                        llegó hasta ellos, aunque no haya cerrado nada), y se
+                        guarda next_action_at para el recordatorio.
+      'other'        -> solo se guarda la nota, sin tocar la etapa.
+    """
+    prospect = get_object_or_404(BusinessProspect, pk=pk)
+    try:
+        payload = json.loads(request.body or '{}')
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'JSON inválido'}, status=400)
+
+    outcome = payload.get('outcome')
+    if outcome not in ('no_interest', 'closed', 'call_back', 'other'):
+        return JsonResponse({'error': 'outcome debe ser no_interest/closed/call_back/other'}, status=400)
+
+    note = (payload.get('note') or '').strip()
+    callback_date_raw = payload.get('callback_date')
+    callback_date = None
+    if callback_date_raw:
+        try:
+            callback_date = date.fromisoformat(callback_date_raw)
+        except ValueError:
+            return JsonResponse({'error': 'callback_date debe tener formato YYYY-MM-DD'}, status=400)
+
+    if outcome in REPORT_OUTCOME_STATUS_MAP:
+        prospect.sales_status = REPORT_OUTCOME_STATUS_MAP[outcome]
+    elif outcome == 'call_back' and prospect.sales_status == BusinessProspect.SALES_DISCOVERED:
+        prospect.sales_status = BusinessProspect.SALES_CONTACTED
+
+    if callback_date:
+        prospect.next_action_at = timezone.make_aware(
+            timezone.datetime.combine(callback_date, timezone.datetime.min.time())
+        )
+    prospect.save(update_fields=['sales_status', 'next_action_at', 'updated_at'])
+
+    Interaction.objects.create(
+        prospect=prospect,
+        type=Interaction.TYPE_VISIT,
+        result=note or REPORT_OUTCOME_DEFAULT_NOTE[outcome],
+        next_action=(
+            f'Volver a llamar el {callback_date.isoformat()}' if callback_date else ''
+        ),
+        next_action_at=prospect.next_action_at,
+    )
+
     return JsonResponse({'prospect': _prospect_json(prospect)})
 
 

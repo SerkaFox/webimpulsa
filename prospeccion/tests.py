@@ -1655,3 +1655,137 @@ class DailyTasksTests(BaseTestCase):
         c = self.login()
         r = c.get('/panel/prospeccion/mapa/')
         self.assertIn(b'dailyTasks', r.content)
+
+
+class DailyTasksApiTests(BaseTestCase):
+    """API en JSON plano para herramientas externas (Pushik) — mismo dato
+    que build_daily_tasks(), sin tener que interpretar HTML."""
+
+    def test_requires_login(self):
+        c = Client()
+        r = c.get('/panel/prospeccion/api/daily-tasks/')
+        self.assertEqual(r.status_code, 200)
+        self.assertIn(b'crm_password', r.content)  # login form, no datos
+
+    def test_returns_expected_shape(self):
+        c = self.login()
+        r = c.get('/panel/prospeccion/api/daily-tasks/')
+        self.assertEqual(r.status_code, 200)
+        body = json.loads(r.content)
+        self.assertIn('unpaid', body)
+        self.assertIn('no_personal_chequeo', body)
+        self.assertIn('not_yet_reached', body)
+        self.assertIn('new_clients_goal', body)
+        self.assertIn('reach_goal', body)
+
+
+class ProspectSearchApiTests(BaseTestCase):
+    def test_search_matches_by_name(self):
+        BusinessProspect.objects.create(name='Panadería Ibarra', sector='tienda')
+        BusinessProspect.objects.create(name='Otro Negocio', sector='bar')
+        c = self.login()
+        r = c.get('/panel/prospeccion/api/search/', {'q': 'ibarra'})
+        body = json.loads(r.content)
+        names = [item['name'] for item in body['results']]
+        self.assertIn('Panadería Ibarra', names)
+        self.assertNotIn('Otro Negocio', names)
+
+    def test_search_requires_query(self):
+        c = self.login()
+        r = c.get('/panel/prospeccion/api/search/')
+        self.assertEqual(r.status_code, 400)
+
+
+class ReportOutcomeTests(BaseTestCase):
+    """Pushik reporta el resultado de una visita/llamada en nombre de Tania
+    — esto es lo que traduce su respuesta en lenguaje natural a un cambio de
+    estado + recordatorio, sin que ella tenga que abrir el panel."""
+
+    def test_no_interest_marks_as_lost(self):
+        prospect = BusinessProspect.objects.create(
+            name='No Quiere SL', sector='bar', sales_status=BusinessProspect.SALES_CONTACTED,
+        )
+        c = self.login()
+        r = c.post(
+            f'/panel/prospeccion/{prospect.pk}/report-outcome/',
+            data=json.dumps({'outcome': 'no_interest'}), content_type='application/json',
+        )
+        self.assertEqual(r.status_code, 200)
+        prospect.refresh_from_db()
+        self.assertEqual(prospect.sales_status, BusinessProspect.SALES_LOST)
+        self.assertEqual(prospect.interactions.count(), 1)
+
+    def test_closed_marks_as_archived(self):
+        prospect = BusinessProspect.objects.create(name='Cerrado Para Siempre SL', sector='bar')
+        c = self.login()
+        r = c.post(
+            f'/panel/prospeccion/{prospect.pk}/report-outcome/',
+            data=json.dumps({'outcome': 'closed'}), content_type='application/json',
+        )
+        self.assertEqual(r.status_code, 200)
+        prospect.refresh_from_db()
+        self.assertEqual(prospect.sales_status, BusinessProspect.SALES_ARCHIVED)
+
+    def test_call_back_sets_reminder_and_advances_discovered_to_contacted(self):
+        prospect = BusinessProspect.objects.create(
+            name='Llamar Luego SL', sector='bar', sales_status=BusinessProspect.SALES_DISCOVERED,
+        )
+        c = self.login()
+        r = c.post(
+            f'/panel/prospeccion/{prospect.pk}/report-outcome/',
+            data=json.dumps({'outcome': 'call_back', 'callback_date': '2026-08-10', 'note': 'Pidió llamar el lunes'}),
+            content_type='application/json',
+        )
+        self.assertEqual(r.status_code, 200)
+        prospect.refresh_from_db()
+        self.assertEqual(prospect.sales_status, BusinessProspect.SALES_CONTACTED)
+        self.assertIsNotNone(prospect.next_action_at)
+        self.assertEqual(prospect.next_action_at.date().isoformat(), '2026-08-10')
+        interaction = prospect.interactions.first()
+        self.assertEqual(interaction.result, 'Pidió llamar el lunes')
+
+    def test_call_back_does_not_regress_already_advanced_status(self):
+        prospect = BusinessProspect.objects.create(
+            name='Ya Auditada SL', sector='bar', sales_status=BusinessProspect.SALES_AUDITED,
+        )
+        c = self.login()
+        c.post(
+            f'/panel/prospeccion/{prospect.pk}/report-outcome/',
+            data=json.dumps({'outcome': 'call_back', 'callback_date': '2026-08-10'}),
+            content_type='application/json',
+        )
+        prospect.refresh_from_db()
+        self.assertEqual(prospect.sales_status, BusinessProspect.SALES_AUDITED)
+
+    def test_other_outcome_only_logs_note_without_status_change(self):
+        prospect = BusinessProspect.objects.create(
+            name='Nota Simple SL', sector='bar', sales_status=BusinessProspect.SALES_CONTACTED,
+        )
+        c = self.login()
+        c.post(
+            f'/panel/prospeccion/{prospect.pk}/report-outcome/',
+            data=json.dumps({'outcome': 'other', 'note': 'Estaban cerrando, volver otro día'}),
+            content_type='application/json',
+        )
+        prospect.refresh_from_db()
+        self.assertEqual(prospect.sales_status, BusinessProspect.SALES_CONTACTED)
+        self.assertEqual(prospect.interactions.first().result, 'Estaban cerrando, volver otro día')
+
+    def test_invalid_outcome_rejected(self):
+        prospect = BusinessProspect.objects.create(name='Cualquiera SL', sector='bar')
+        c = self.login()
+        r = c.post(
+            f'/panel/prospeccion/{prospect.pk}/report-outcome/',
+            data=json.dumps({'outcome': 'made_up'}), content_type='application/json',
+        )
+        self.assertEqual(r.status_code, 400)
+
+    def test_invalid_callback_date_rejected(self):
+        prospect = BusinessProspect.objects.create(name='Fecha Mala SL', sector='bar')
+        c = self.login()
+        r = c.post(
+            f'/panel/prospeccion/{prospect.pk}/report-outcome/',
+            data=json.dumps({'outcome': 'call_back', 'callback_date': 'not-a-date'}),
+            content_type='application/json',
+        )
+        self.assertEqual(r.status_code, 400)
