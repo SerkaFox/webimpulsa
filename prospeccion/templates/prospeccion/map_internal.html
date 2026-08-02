@@ -120,6 +120,7 @@
   .daily-task .dt-text { flex: 1; }
   .daily-task .dt-link { font-size: .78rem; font-weight: 700; color: var(--wi-blue, #075CCF); text-decoration: none; white-space: nowrap; }
   .daily-tasks-empty { font-size: .85rem; color: #5a6d8c; padding: 4px 0; }
+  .guide-howto { margin-top: 16px; }
 
   .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--wi-navy); color: #fff;
     padding: 8px 14px; border-radius: 999px; font-size: .82rem; opacity: 0; transition: opacity .25s;
@@ -457,15 +458,18 @@
     <h2><span data-i18n="map.guide_title">📋 Instrucciones de hoy</span>
       <button class="close-x" id="btnCloseGuide" type="button">✕</button>
     </h2>
-    <ol class="guide-steps">
-      <li><span class="guide-num">1</span><div><b data-i18n="map.guide_step1_t">Busca negocios cerca de ti</b><p data-i18n="map.guide_step1_d">Pulsa «🎯 Estoy aquí» o escribe una búsqueda arriba a la derecha.</p></div></li>
-      <li><span class="guide-num">2</span><div><b data-i18n="map.guide_step2_t">Añade los que te interesen a la ruta</b><p data-i18n="map.guide_step2_d">En cada tarjeta o marcador pulsa «➕ Añadir a la ruta de hoy».</p></div></li>
-      <li><span class="guide-num">3</span><div><b data-i18n="map.guide_step3_t">Abre tu ruta del día</b><p data-i18n="map.guide_step3_d">Arriba a la izquierda, en «Ruta de hoy», pulsa «🧭 Abrir ruta en Google Maps» — te lleva a todos seguidos.</p></div></li>
-      <li><span class="guide-num">4</span><div><b data-i18n="map.guide_step4_t">En cada negocio, usa el mensaje ya preparado</b><p data-i18n="map.guide_step4_d">En la ficha de cada uno tienes un mensaje de WhatsApp listo (💬) o una tarjeta QR (📇) para dejar sin tener que explicar nada.</p></div></li>
-      <li><span class="guide-num">5</span><div><b data-i18n="map.guide_step5_t">Marca visitada cuando termines</b><p data-i18n="map.guide_step5_d">En el panel de «Ruta de hoy» pulsa «✅ Visitada» — así siempre sabes por quién ibas.</p></div></li>
-    </ol>
-    <h3 data-i18n="map.daily_tasks_title" style="font-size:.92rem;margin:16px 0 8px">📌 Según tu progreso ahora mismo</h3>
+    <h3 data-i18n="map.daily_tasks_title" style="font-size:.92rem;margin:0 0 8px">📌 Según tu progreso ahora mismo</h3>
     <div id="dailyTasksBox"></div>
+    <details class="guide-howto">
+      <summary data-i18n="map.guide_howto_summary">❓ Cómo usar el mapa (instrucciones)</summary>
+      <ol class="guide-steps">
+        <li><span class="guide-num">1</span><div><b data-i18n="map.guide_step1_t">Busca negocios cerca de ti</b><p data-i18n="map.guide_step1_d">Pulsa «🎯 Estoy aquí» o escribe una búsqueda arriba a la derecha.</p></div></li>
+        <li><span class="guide-num">2</span><div><b data-i18n="map.guide_step2_t">Añade los que te interesen a la ruta</b><p data-i18n="map.guide_step2_d">En cada tarjeta o marcador pulsa «➕ Añadir a la ruta de hoy».</p></div></li>
+        <li><span class="guide-num">3</span><div><b data-i18n="map.guide_step3_t">Abre tu ruta del día</b><p data-i18n="map.guide_step3_d">Arriba a la izquierda, en «Ruta de hoy», pulsa «🧭 Abrir ruta en Google Maps» — te lleva a todos seguidos.</p></div></li>
+        <li><span class="guide-num">4</span><div><b data-i18n="map.guide_step4_t">En cada negocio, usa el mensaje ya preparado</b><p data-i18n="map.guide_step4_d">En la ficha de cada uno tienes un mensaje de WhatsApp listo (💬) o una tarjeta QR (📇) para dejar sin tener que explicar nada.</p></div></li>
+        <li><span class="guide-num">5</span><div><b data-i18n="map.guide_step5_t">Marca visitada cuando termines</b><p data-i18n="map.guide_step5_d">En el panel de «Ruta de hoy» pulsa «✅ Visitada» — así siempre sabes por quién ibas.</p></div></li>
+      </ol>
+    </details>
     <div class="wi-explain" id="guideTip">Recuerda: el chequeo es un regalo gratis, no una venta — nunca hace falta insistir.</div>
   </div>
 </div>
@@ -1827,6 +1831,7 @@ es: {
   'map.guide_step4_d': 'En la ficha de cada uno tienes un mensaje de WhatsApp listo (💬) o una tarjeta QR (📇) para dejar sin tener que explicar nada.',
   'map.guide_step5_t': 'Marca visitada cuando termines',
   'map.guide_step5_d': 'En el panel de «Ruta de hoy» pulsa «✅ Visitada» — así siempre sabes por quién ibas.',
+  'map.guide_howto_summary': '❓ Cómo usar el mapa (instrucciones)',
   'map.daily_tasks_title': '📌 Según tu progreso ahora mismo',
 },
 ru: {
@@ -1966,6 +1971,7 @@ ru: {
   'map.guide_step4_d': 'В карточке каждой компании есть готовое сообщение для WhatsApp (💬) или QR-визитка (📇) — можно оставить, ничего не объясняя.',
   'map.guide_step5_t': 'Отметь «посетили», когда закончишь',
   'map.guide_step5_d': 'В панели «Маршрут на сегодня» нажми «✅ Посетили» — так всегда видно, у кого ещё не была.',
+  'map.guide_howto_summary': '❓ Как пользоваться картой (инструкция)',
   'map.daily_tasks_title': '📌 Судя по твоему прогрессу прямо сейчас',
 },
 };
