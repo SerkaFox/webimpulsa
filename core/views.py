@@ -1,5 +1,7 @@
+import hmac
 import json
 import logging
+import os
 import re
 from datetime import date
 from functools import lru_cache
@@ -8,7 +10,7 @@ import xml.etree.ElementTree as ET
 import requests
 from django.conf import settings
 from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse, Http404
+from django.http import JsonResponse, HttpResponse, Http404, HttpResponseForbidden
 from .vertical_landings import VERTICAL_LANDING_PAGES
 from django.template.loader import render_to_string
 from django.utils.text import slugify
@@ -68,6 +70,45 @@ def sitemap_xml(request):
     xml = ('<?xml version="1.0" encoding="UTF-8"?>'
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + urls + '</urlset>')
     return HttpResponse(xml, content_type='application/xml')
+
+
+REPORT_TOKEN = os.getenv("WI_REPORT_TOKEN", "")
+TG_TOKEN = os.getenv("WI_TG_TOKEN", "")
+TG_CHAT_ID = os.getenv("WI_TG_CHAT_ID", "")
+
+
+@csrf_exempt
+@require_POST
+def report_notify(request):
+    """Relay a short automated report (e.g. weekly SEO/health check) to Telegram.
+
+    Callers authenticate with a dedicated bearer token (WI_REPORT_TOKEN) instead
+    of the real Telegram bot token, so an external agent never holds a credential
+    that could message anyone other than this one chat.
+    """
+    auth = request.headers.get('Authorization', '')
+    token = auth[7:] if auth.startswith('Bearer ') else ''
+    if not REPORT_TOKEN or not hmac.compare_digest(token, REPORT_TOKEN):
+        return HttpResponseForbidden('forbidden')
+    try:
+        data = json.loads(request.body or b'{}')
+    except ValueError:
+        return JsonResponse({'error': 'invalid json'}, status=400)
+    text = (data.get('text') or '').strip()[:3000]
+    if not text:
+        return JsonResponse({'error': 'text required'}, status=400)
+    if not TG_TOKEN or not TG_CHAT_ID:
+        return JsonResponse({'error': 'telegram not configured'}, status=503)
+    try:
+        requests.post(
+            f'https://api.telegram.org/bot{TG_TOKEN}/sendMessage',
+            json={'chat_id': TG_CHAT_ID, 'text': text, 'disable_web_page_preview': True},
+            timeout=10,
+        )
+    except Exception:
+        logger.exception('report_notify: Telegram send failed')
+        return JsonResponse({'error': 'send failed'}, status=502)
+    return JsonResponse({'ok': True})
 
 
 def digital_checkup(request):
