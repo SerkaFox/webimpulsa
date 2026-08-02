@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 import requests
 from django.conf import settings
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.template.loader import render_to_string
 from django.utils.text import slugify
 from django.views.decorators.csrf import csrf_exempt
@@ -22,6 +22,22 @@ BE360_RECIPIENT = 'bethechange.esp@gmail.com'
 
 def home(request):
     return render(request, "tatiana.html")
+
+
+SITEMAP_URLS = [
+    {'loc': 'https://creaganaweb.es/', 'changefreq': 'weekly', 'priority': '1.0'},
+    {'loc': 'https://creaganaweb.es/chequeo-digital/', 'changefreq': 'monthly', 'priority': '0.8'},
+]
+
+
+def sitemap_xml(request):
+    urls = ''.join(
+        '<url><loc>{loc}</loc><changefreq>{changefreq}</changefreq><priority>{priority}</priority></url>'.format(**u)
+        for u in SITEMAP_URLS
+    )
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>'
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + urls + '</urlset>')
+    return HttpResponse(xml, content_type='application/xml')
 
 
 def digital_checkup(request):
