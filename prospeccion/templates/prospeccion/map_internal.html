@@ -103,6 +103,16 @@
   .confirm-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
   .coords-hint { font-size: .76rem; color: #8a94a6; margin: 2px 0 10px; }
 
+  .top-bar #btnOpenGuide { font-weight: 700; }
+  .guide-steps { list-style: none; padding: 0; margin: 14px 0; }
+  .guide-steps li { display: flex; gap: 10px; margin-bottom: 14px; }
+  .guide-num {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--wi-blue, #075CCF);
+    color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .82rem;
+  }
+  .guide-steps b { display: block; font-size: .92rem; }
+  .guide-steps p { margin: 3px 0 0; font-size: .82rem; color: #5a6d8c; }
+
   .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--wi-navy); color: #fff;
     padding: 8px 14px; border-radius: 999px; font-size: .82rem; opacity: 0; transition: opacity .25s;
     pointer-events: none; z-index: 200; max-width: 90vw; text-align: center; }
@@ -223,6 +233,7 @@
   <a href="/panel/prospeccion/" data-i18n="map.back_panel">← Panel</a>
   <a href="/wi/crm/">🗂 CRM</a>
   <a href="https://creaganaweb.es/" data-i18n="map.back_site">🌐 На сайт</a>
+  <a href="#" id="btnOpenGuide" data-i18n="map.guide_link">❓ Instrucciones de hoy</a>
   <span id="countLabel" style="margin-left:auto;color:#93c5fd"></span>
   <div class="lang-switcher" style="display:flex;gap:.28rem;align-items:center">
     <button class="lang-btn map-lang-btn" data-lang="es" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.35);border-radius:6px;padding:.16rem .4rem;font-size:.72rem;font-weight:800;cursor:pointer;color:#fff">ES</button>
@@ -333,13 +344,13 @@
         <div class="field">
           <label data-i18n="map.filter_sector">Sector</label>
           <select id="fSector"><option value="" data-i18n="map.filter_all">Todos</option>
-            {% for id, label in sectors %}<option value="{{ id }}">{{ label }}</option>{% endfor %}
+            {% for id, label in sectors %}<option value="{{ id }}" data-code="{{ id }}">{{ label }}</option>{% endfor %}
           </select>
         </div>
         <div class="field">
           <label data-i18n="map.filter_stage">Etapa</label>
           <select id="fStatus"><option value="" data-i18n="map.filter_all_f">Todas</option>
-            {% for id, label in sales_statuses %}<option value="{{ id }}">{{ label }}</option>{% endfor %}
+            {% for id, label in sales_statuses %}<option value="{{ id }}" data-code="{{ id }}">{{ label }}</option>{% endfor %}
           </select>
         </div>
         <div class="field">
@@ -390,7 +401,7 @@
       <div class="field"><label data-i18n="map.field_name">Nombre *</label><input type="text" id="cName" required></div>
       <div class="field"><label data-i18n="map.field_address">Dirección</label><input type="text" id="cAddress"></div>
       <div class="field"><label data-i18n="map.filter_sector">Sector</label>
-        <select id="cSector">{% for id, label in sectors %}<option value="{{ id }}">{{ label }}</option>{% endfor %}</select>
+        <select id="cSector">{% for id, label in sectors %}<option value="{{ id }}" data-code="{{ id }}">{{ label }}</option>{% endfor %}</select>
       </div>
       <div class="coords-hint" id="cCoordsHint"></div>
       <a id="cGmapsLink" href="#" target="_blank" rel="noopener" class="btn sm ghost" style="display:none;margin:0 0 10px" data-i18n="map.view_before_save">📷 Ver en Google Maps antes de guardar</a>
@@ -426,15 +437,30 @@
   </div>
 </div>
 
+<div class="overlay" id="guideOverlay">
+  <div class="confirm-panel guide-panel" style="max-width:560px">
+    <h2><span data-i18n="map.guide_title">📋 Instrucciones de hoy</span>
+      <button class="close-x" id="btnCloseGuide" type="button">✕</button>
+    </h2>
+    <ol class="guide-steps">
+      <li><span class="guide-num">1</span><div><b data-i18n="map.guide_step1_t">Busca negocios cerca de ti</b><p data-i18n="map.guide_step1_d">Pulsa «🎯 Estoy aquí» o escribe una búsqueda arriba a la derecha.</p></div></li>
+      <li><span class="guide-num">2</span><div><b data-i18n="map.guide_step2_t">Añade los que te interesen a la ruta</b><p data-i18n="map.guide_step2_d">En cada tarjeta o marcador pulsa «➕ Añadir a la ruta de hoy».</p></div></li>
+      <li><span class="guide-num">3</span><div><b data-i18n="map.guide_step3_t">Abre tu ruta del día</b><p data-i18n="map.guide_step3_d">Arriba a la izquierda, en «Ruta de hoy», pulsa «🧭 Abrir ruta en Google Maps» — te lleva a todos seguidos.</p></div></li>
+      <li><span class="guide-num">4</span><div><b data-i18n="map.guide_step4_t">En cada negocio, usa el mensaje ya preparado</b><p data-i18n="map.guide_step4_d">En la ficha de cada uno tienes un mensaje de WhatsApp listo (💬) o una tarjeta QR (📇) para dejar sin tener que explicar nada.</p></div></li>
+      <li><span class="guide-num">5</span><div><b data-i18n="map.guide_step5_t">Marca visitada cuando termines</b><p data-i18n="map.guide_step5_d">En el panel de «Ruta de hoy» pulsa «✅ Visitada» — así siempre sabes por quién ibas.</p></div></li>
+    </ol>
+    <div class="wi-explain" data-i18n="map.guide_footer">Recuerda: el chequeo es un regalo gratis, no una venta — nunca hace falta insistir.</div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
+<script src="/static/wi/js/prospeccion-i18n.js"></script>
 <script>
 window.WI_MAPA = {
   hasGoogleKey: {{ google_maps_js_api_key|yesno:"true,false" }},
   statusColors: {{ status_colors_json|safe }},
-  statusLabels: {},
 };
-{% for id, label in sales_statuses %}window.WI_MAPA.statusLabels['{{ id }}'] = '{{ label|escapejs }}';{% endfor %}
 </script>
 {% if google_maps_js_api_key %}
 <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_js_api_key }}&loading=async&callback=wiInitMap&v=weekly" async defer></script>
@@ -444,15 +470,28 @@ window.WI_MAPA = {
 'use strict';
 
 var STATUS_COLORS = window.WI_MAPA.statusColors;
-var STATUS_LABELS = window.WI_MAPA.statusLabels;
 var DEFAULT_CENTER = {lat: 43.2627, lng: -2.9253}; // Barakaldo/Bilbao
 
-(function renderLegendStages(){
+function statusLabel(code){ return wiCodeLabel('salesStatus', code, LANG); }
+function sectorLabel(code){ return wiCodeLabel('sector', code, LANG); }
+
+function renderLegendStages(){
   var el = document.getElementById('legendStages');
   el.innerHTML = Object.keys(STATUS_COLORS).map(function(id){
-    return '<div class="legend-row"><span class="legend-dot" style="background:'+STATUS_COLORS[id]+'"></span>'+(STATUS_LABELS[id] || id)+'</div>';
+    return '<div class="legend-row"><span class="legend-dot" style="background:'+STATUS_COLORS[id]+'"></span>'+statusLabel(id)+'</div>';
   }).join('');
-})();
+}
+renderLegendStages();
+
+function relabelCodedOptions(){
+  document.querySelectorAll('#fStatus option[data-code]').forEach(function(o){
+    o.textContent = statusLabel(o.dataset.code);
+  });
+  document.querySelectorAll('#fSector option[data-code], #cSector option[data-code]').forEach(function(o){
+    o.textContent = sectorLabel(o.dataset.code);
+  });
+}
+window.__mapRelabelCodes = function(){ renderLegendStages(); relabelCodedOptions(); };
 
 var map = null;
 var markers = [];
@@ -543,6 +582,10 @@ window.wiInitMap = function(){
   map = new google.maps.Map(document.getElementById('map'), {
     center: DEFAULT_CENTER, zoom: 12, mapId: null,
     streetViewControl: false, fullscreenControl: false,
+    // El selector Mapa/Satélite de Google se queda por defecto arriba a la
+    // izquierda, justo donde vive el panel de "Ruta de hoy" — lo movemos al
+    // centro superior, una zona que ningún panel propio ocupa.
+    mapTypeControlOptions: { position: google.maps.ControlPosition.TOP_CENTER },
   });
   map.addListener('idle', reloadMapProspects);
   map.addListener('click', function(ev){
@@ -672,13 +715,17 @@ function renderProspectList(prospects){
   el.innerHTML = prospects.slice(0, 100).map(function(p){
     var score = p.current_score != null ? p.current_score : '—';
     var web = websiteBadge(resolveHasWebsite(p));
-    return '<a class="card-list-item" style="display:block;color:inherit;text-decoration:none" href="'+p.detail_url+'">'+
+    var canRoute = p.lat != null && p.lng != null;
+    return '<div class="card-list-item" style="color:inherit">'+
+      '<a href="'+p.detail_url+'" style="display:block;color:inherit;text-decoration:none">'+
       '<span class="score-pill">'+score+'</span>'+
       '<div class="name">'+p.name+'</div>'+
       '<div style="color:#8a94a6">'+p.municipality+' '+p.district+'</div>'+
       '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>'+
-      '<span class="badge" style="background:'+p.color+'">'+ (STATUS_LABELS[p.sales_status] || p.sales_status) +'</span>'+
-      '</a>';
+      '<span class="badge" style="background:'+p.color+'">'+ statusLabel(p.sales_status) +'</span>'+
+      '</a>'+
+      (canRoute ? '<button type="button" class="btn sm ghost" style="margin-top:6px" onclick="addToRoute('+p.id+')">'+_t('map.add_to_route')+'</button>' : '')+
+      '</div>';
   }).join('');
 }
 
@@ -704,7 +751,7 @@ function reloadMapProspects(){
           '<div style="font-family:inherit">'+
           '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>'+
           '<strong>'+p.name+'</strong><br>'+
-          (STATUS_LABELS[p.sales_status] || p.sales_status)+' · '+_t1('map.score_label')+' '+score+'<br>'+
+          statusLabel(p.sales_status)+' · '+_t1('map.score_label')+' '+score+'<br>'+
           '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:.85rem">'+
           '<a href="'+p.detail_url+'">📇 '+_t1('map.view_card')+'</a>'+
           '<a href="'+p.detail_url+'?start_check=1">🩺 '+_t1('map.create_preliminary')+'</a>'+
@@ -722,6 +769,7 @@ function reloadMapProspects(){
 }
 
 document.getElementById('btnApplyFilters').addEventListener('click', reloadMapProspects);
+window.reloadMapProspects = reloadMapProspects;
 
 /* ══════════════════════════ Búsqueda + alta ══════════════════════════ */
 
@@ -735,15 +783,17 @@ function categoryLabel(sectorId){
 
 function renderExistingCard(p){
   var _t = window.wiMapT || function(k){ return k; };
+  window.__prospectsById[p.id] = p;
   var scoreTag = p.current_score != null ? '<span class="exists-badge" style="background:'+p.color+'">'+p.current_score+'/100</span>' : '';
   var web = websiteBadge(resolveHasWebsite(p));
   var gmapsBtn = p.gmaps_url ? '<a class="btn sm ghost" href="'+p.gmaps_url+'" target="_blank" rel="noopener">📷 '+_t('map.open_in_gmaps')+'</a>' : '';
+  var routeBtn = (p.lat != null && p.lng != null) ? '<button type="button" class="btn sm ghost" onclick="addToRoute('+p.id+')">'+_t('map.add_to_route')+'</button>' : '';
   return '<div class="result-card" data-existing-id="'+p.prospect_id+'">'+
     '<span class="cat">'+_t('map.already_in_crm')+'</span><span class="exists-badge">'+_t('map.already_exists')+'</span>'+scoreTag+
     '<div class="name" style="margin-top:6px">'+p.name+'</div>'+
-    '<div class="addr">'+(p.address||'')+' · '+p.sector_label+'</div>'+
+    '<div class="addr">'+(p.address||'')+' · '+sectorLabel(p.sector)+'</div>'+
     '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span>'+
-    '<div class="actions"><a class="btn sm secondary" href="'+p.detail_url+'">'+_t('map.view_card')+'</a>'+gmapsBtn+'</div>'+
+    '<div class="actions"><a class="btn sm secondary" href="'+p.detail_url+'">'+_t('map.view_card')+'</a>'+gmapsBtn+routeBtn+'</div>'+
   '</div>';
 }
 
@@ -776,6 +826,7 @@ function plotSearchMarkers(existing, googleResults){
   existing.forEach(function(p){
     if(p.lat == null || p.lng == null) return;
     any = true;
+    window.__prospectsById[p.id] = p;
     var pos = {lat: p.lat, lng: p.lng};
     latLngBounds.extend(pos);
     var hasWeb = resolveHasWebsite(p);
@@ -793,6 +844,7 @@ function plotSearchMarkers(existing, googleResults){
       (p.current_score != null ? ' · '+_t2('map.score_label')+' '+p.current_score : '')+'<br>'+
       '<a href="'+p.detail_url+'">📇 '+_t2('map.view_card')+'</a>'+
       (p.gmaps_url ? ' · <a href="'+p.gmaps_url+'" target="_blank" rel="noopener">📷 '+_t2('map.open_in_gmaps')+'</a>' : '')+
+      ' · <a href="#" onclick="addToRoute('+p.id+');return false;">'+_t2('map.add_to_route')+'</a>'+
       '</div>'
     });
     marker.addListener('click', function(){ info.open(map, marker); });
@@ -1123,6 +1175,24 @@ document.getElementById('puwHistoryLink').addEventListener('click', function(){
 document.getElementById('btnCloseHistory').addEventListener('click', function(){
   document.getElementById('historyOverlay').classList.remove('show');
 });
+
+document.getElementById('btnOpenGuide').addEventListener('click', function(ev){
+  ev.preventDefault();
+  document.getElementById('guideOverlay').classList.add('show');
+});
+document.getElementById('btnCloseGuide').addEventListener('click', function(){
+  document.getElementById('guideOverlay').classList.remove('show');
+});
+
+// Se abre sola una vez al día — para que no haga falta saber que existe el
+// botón para enterarse de qué hacer hoy, pero sin ser pesada cada visita.
+(function(){
+  var today = new Date().toISOString().slice(0, 10);
+  if(localStorage.getItem('wi_guide_seen_date') !== today){
+    localStorage.setItem('wi_guide_seen_date', today);
+    document.getElementById('guideOverlay').classList.add('show');
+  }
+})();
 
 refreshPlacesUsage();
 
@@ -1521,6 +1591,19 @@ es: {
   'map.route_clear': '🗑️ Vaciar ruta',
   'map.route_visited': '✅ Visitada',
   'map.route_remove': '✕',
+  'map.guide_link': '❓ Instrucciones de hoy',
+  'map.guide_title': '📋 Instrucciones de hoy',
+  'map.guide_step1_t': 'Busca negocios cerca de ti',
+  'map.guide_step1_d': 'Pulsa «🎯 Estoy aquí» o escribe una búsqueda arriba a la derecha.',
+  'map.guide_step2_t': 'Añade los que te interesen a la ruta',
+  'map.guide_step2_d': 'En cada tarjeta o marcador pulsa «➕ Añadir a la ruta de hoy».',
+  'map.guide_step3_t': 'Abre tu ruta del día',
+  'map.guide_step3_d': 'Arriba a la izquierda, en «Ruta de hoy», pulsa «🧭 Abrir ruta en Google Maps» — te lleva a todos seguidos.',
+  'map.guide_step4_t': 'En cada negocio, usa el mensaje ya preparado',
+  'map.guide_step4_d': 'En la ficha de cada uno tienes un mensaje de WhatsApp listo (💬) o una tarjeta QR (📇) para dejar sin tener que explicar nada.',
+  'map.guide_step5_t': 'Marca visitada cuando termines',
+  'map.guide_step5_d': 'En el panel de «Ruta de hoy» pulsa «✅ Visitada» — así siempre sabes por quién ibas.',
+  'map.guide_footer': 'Recuerda: el chequeo es un regalo gratis, no una venta — nunca hace falta insistir.',
 },
 ru: {
   'map.page_title': 'Карта проспекции — CreaGanaWeb',
@@ -1647,10 +1730,25 @@ ru: {
   'map.route_clear': '🗑️ Очистить маршрут',
   'map.route_visited': '✅ Посетили',
   'map.route_remove': '✕',
+  'map.guide_link': '❓ Инструкция на сегодня',
+  'map.guide_title': '📋 Инструкция на сегодня',
+  'map.guide_step1_t': 'Найди компании рядом с собой',
+  'map.guide_step1_d': 'Нажми «🎯 Я здесь» или введи поиск справа вверху.',
+  'map.guide_step2_t': 'Добавь интересные в маршрут',
+  'map.guide_step2_d': 'На карточке или маркере нажми «➕ Добавить в маршрут на сегодня».',
+  'map.guide_step3_t': 'Открой маршрут на сегодня',
+  'map.guide_step3_d': 'Слева вверху, в «Маршрут на сегодня», нажми «🧭 Открыть маршрут в Google Maps» — приведёт по всем точкам подряд.',
+  'map.guide_step4_t': 'На месте используй готовое сообщение',
+  'map.guide_step4_d': 'В карточке каждой компании есть готовое сообщение для WhatsApp (💬) или QR-визитка (📇) — можно оставить, ничего не объясняя.',
+  'map.guide_step5_t': 'Отметь «посетили», когда закончишь',
+  'map.guide_step5_d': 'В панели «Маршрут на сегодня» нажми «✅ Посетили» — так всегда видно, у кого ещё не была.',
+  'map.guide_footer': 'Помни: проверка — это бесплатный подарок, а не продажа. Настаивать никогда не нужно.',
 },
 };
 
-var LANG = localStorage.getItem('wi_crm_lang') || 'ru';
+// window.LANG (no "var" local) — statusLabel()/sectorLabel() viven en el
+// otro <script> (otro cierre), y necesitan ver el mismo idioma.
+window.LANG = localStorage.getItem('wi_crm_lang') || 'ru';
 
 function t(key) {
   var cur = T[LANG], fb = T.ru;
@@ -1679,6 +1777,8 @@ function setMapLang(lang) {
     b.style.color = b.dataset.lang === lang ? '#081747' : '#fff';
   });
   applyMapTranslations();
+  if (window.__mapRelabelCodes) window.__mapRelabelCodes();
+  if (window.reloadMapProspects) window.reloadMapProspects();
 }
 window.wiSetMapLang = setMapLang;
 

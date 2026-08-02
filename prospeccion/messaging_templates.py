@@ -53,13 +53,23 @@ def build_opener_variants(prospect):
             f'Sin compromiso ninguno.'
         )
 
+    # Variante "proyecto de zona" — apela a la vena colectiva/solidaria sin
+    # fingir que se pide ayuda: el chequeo gratis real es la parte central,
+    # la mención del proyecto es contexto honesto, no un anzuelo aparte.
+    variants.append(
+        f'Hola! Soy Tania — estoy haciendo chequeos digitales gratuitos para negocios de la zona, '
+        f'como parte de un proyecto para ayudar a que el comercio local se digitalice mejor. '
+        f'Me gustaría hacerte uno a {name} también, sin compromiso — ¿te interesa ver cómo te encuentra '
+        f'hoy un cliente que te busca en Google?'
+    )
+
     variants.append(
         f'Hola! Soy Tania, ayudo a {sector_word}s de la zona a que los encuentren y contacten más fácil '
         f'por internet. Hago un chequeo gratis de 2 minutos, sin compromiso — ¿os interesaría ver cómo '
         f'os ve un cliente que os busca en Google?'
     )
 
-    return variants[:3]
+    return variants[:4]
 
 
 def build_referral_message(prospect):
