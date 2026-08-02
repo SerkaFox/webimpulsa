@@ -1307,15 +1307,21 @@ var DAILY_TASK_TEXT = {
   es: {
     unpaid_line: '{name} — presupuesto aceptado, faltan {amount}€ por cobrar',
     chequeo_line: '{name} — es cliente pero no ha confirmado su chequeo personal',
-    goal_done: '🎉 Meta de hoy cumplida — ya añadiste {added} negocio(s) nuevo(s).',
-    goal_pending: 'Hoy llevas {added}/{goal} negocios nuevos añadidos — busca {remaining} más.',
+    not_reached_line: '{name} — encontrada, todavía sin visitar',
+    find_goal_done: '🎉 Meta de "encontrar" cumplida — ya añadiste {added} negocio(s) nuevo(s) hoy.',
+    find_goal_pending: '🔎 Encontrar: hoy llevas {added}/{goal} negocios nuevos añadidos — busca {remaining} más.',
+    reach_goal_done: '🎉 No te queda ningún negocio encontrado sin visitar.',
+    reach_goal_pending: '🚶 Llegar: tienes {backlog} negocio(s) encontrado(s) sin visitar — intenta llegar a {goal} hoy.',
     view_card: 'Ver ficha →',
   },
   ru: {
     unpaid_line: '{name} — смета принята, осталось получить {amount}€',
     chequeo_line: '{name} — уже клиент, но не подтвердил личную проверку',
-    goal_done: '🎉 Дневная цель выполнена — уже добавлено {added} новых компаний.',
-    goal_pending: 'Сегодня добавлено {added}/{goal} новых компаний — найди ещё {remaining}.',
+    not_reached_line: '{name} — найдена, но пока не посетили',
+    find_goal_done: '🎉 Цель «найти» выполнена — сегодня добавлено {added} новых компаний.',
+    find_goal_pending: '🔎 Найти: сегодня добавлено {added}/{goal} новых компаний — найди ещё {remaining}.',
+    reach_goal_done: '🎉 Нет найденных компаний, до которых ещё не дошли.',
+    reach_goal_pending: '🚶 Дойти: есть {backlog} найденных, но не посещённых компаний — постарайся дойти хотя бы до {goal} сегодня.',
     view_card: 'Открыть карточку →',
   },
 };
@@ -1343,11 +1349,26 @@ function renderDailyTasks(){
     var text = L.chequeo_line.replace('{name}', esc(item.name));
     html += row('🩺', text, item.prospect_id);
   });
-  var goal = data.new_clients_goal || {goal: 3, added_today: 0, remaining: 3};
-  var goalText = goal.remaining > 0
-    ? L.goal_pending.replace('{added}', goal.added_today).replace('{goal}', goal.goal).replace('{remaining}', goal.remaining)
-    : L.goal_done.replace('{added}', goal.added_today);
-  html += row('🔎', goalText, null);
+
+  // "Encontrar" (negocios nuevos) y "llegar" (visitar los ya encontrados) son
+  // dos objetivos separados a propósito — son dos acciones distintas y hay
+  // que empujar cada una por su lado, no mezclarlas en un solo número.
+  var findGoal = data.new_clients_goal || {goal: 2, added_today: 0, remaining: 2};
+  var findText = findGoal.remaining > 0
+    ? L.find_goal_pending.replace('{added}', findGoal.added_today).replace('{goal}', findGoal.goal).replace('{remaining}', findGoal.remaining)
+    : L.find_goal_done.replace('{added}', findGoal.added_today);
+  html += row('🔎', findText, null);
+
+  var reachGoal = data.reach_goal || {goal: 2, backlog_total: 0};
+  var reachText = reachGoal.backlog_total > 0
+    ? L.reach_goal_pending.replace('{backlog}', reachGoal.backlog_total).replace('{goal}', reachGoal.goal)
+    : L.reach_goal_done;
+  html += row('🚶', reachText, null);
+  (data.not_yet_reached || []).forEach(function(item){
+    var text = L.not_reached_line.replace('{name}', esc(item.name));
+    html += row('📍', text, item.prospect_id);
+  });
+
   document.getElementById('dailyTasksBox').innerHTML = html;
 }
 window.renderDailyTasks = renderDailyTasks;

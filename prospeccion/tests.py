@@ -1614,16 +1614,42 @@ class DailyTasksTests(BaseTestCase):
 
     def test_new_clients_goal_counts_only_todays_prospects(self):
         BusinessProspect.objects.create(name='Hoy Uno', sector='bar')
-        BusinessProspect.objects.create(name='Hoy Dos', sector='bar')
         old = BusinessProspect.objects.create(name='De Ayer', sector='bar')
         BusinessProspect.objects.filter(pk=old.pk).update(
             created_at=timezone.now() - timezone.timedelta(days=2)
         )
         tasks = build_daily_tasks()
         goal = tasks['new_clients_goal']
-        self.assertEqual(goal['added_today'], 2)
-        self.assertEqual(goal['goal'], 3)
+        self.assertEqual(goal['added_today'], 1)
+        self.assertEqual(goal['goal'], 2)
         self.assertEqual(goal['remaining'], 1)
+
+    def test_new_clients_goal_met_has_zero_remaining(self):
+        BusinessProspect.objects.create(name='Hoy Uno', sector='bar')
+        BusinessProspect.objects.create(name='Hoy Dos', sector='bar')
+        tasks = build_daily_tasks()
+        goal = tasks['new_clients_goal']
+        self.assertEqual(goal['added_today'], 2)
+        self.assertEqual(goal['remaining'], 0)
+
+    def test_discovered_prospects_are_flagged_not_yet_reached(self):
+        prospect = BusinessProspect.objects.create(
+            name='Sin Visitar SL', sector='bar', sales_status=BusinessProspect.SALES_DISCOVERED,
+        )
+        tasks = build_daily_tasks()
+        names = [item['name'] for item in tasks['not_yet_reached']]
+        self.assertIn('Sin Visitar SL', names)
+        self.assertEqual(tasks['reach_goal']['goal'], 2)
+        self.assertEqual(tasks['reach_goal']['backlog_total'], 1)
+
+    def test_contacted_prospect_is_not_flagged_not_yet_reached(self):
+        BusinessProspect.objects.create(
+            name='Ya Contactada SL', sector='bar', sales_status=BusinessProspect.SALES_CONTACTED,
+        )
+        tasks = build_daily_tasks()
+        names = [item['name'] for item in tasks['not_yet_reached']]
+        self.assertNotIn('Ya Contactada SL', names)
+        self.assertEqual(tasks['reach_goal']['backlog_total'], 0)
 
     def test_internal_map_view_includes_daily_tasks_json(self):
         c = self.login()

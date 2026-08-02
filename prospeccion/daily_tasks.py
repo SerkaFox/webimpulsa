@@ -1,16 +1,24 @@
 """Tareas de hoy para Tania — reemplaza la idea de una lista estática de
 pasos por sugerencias que dependen del estado real de sus prospectos: quién
 tiene un presupuesto aceptado pero no ha pagado del todo, quién ya es cliente
-pero nunca confirmó el chequeo personal, y cuántas empresas nuevas lleva
-añadidas hoy frente al objetivo diario. Se muestra en el modal "Instrucciones
-de hoy" de map_internal.html, con enlace directo a la ficha de cada empresa.
+pero nunca confirmó el chequeo personal, cuántas empresas nuevas lleva
+encontradas hoy, y cuántas de las ya encontradas todavía no ha visitado. Se
+muestra en el modal "Instrucciones de hoy" de map_internal.html, con enlace
+directo a la ficha de cada empresa.
+
+"Encontrar" y "llegar/visitar" son dos objetivos separados a propósito
+(pedido explícito): encontrar es descubrir negocios nuevos, llegar es
+presentarse en los que ya están en el mapa pero siguen en "descubierto" sin
+que nadie los haya contactado todavía — son dos pasos distintos y Tania
+necesita que se le recuerden por separado.
 """
 from django.db.models import Sum
 from django.utils import timezone
 
 from .models import BusinessProspect, ChequeoAudit
 
-DAILY_NEW_CLIENTS_GOAL = 3
+DAILY_NEW_CLIENTS_GOAL = 2
+DAILY_REACH_GOAL = 2
 MAX_ITEMS_PER_TYPE = 5
 
 
@@ -54,12 +62,26 @@ def build_daily_tasks():
     today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
     added_today = BusinessProspect.objects.filter(created_at__gte=today_start).count()
 
+    not_yet_reached_qs = BusinessProspect.objects.filter(
+        sales_status=BusinessProspect.SALES_DISCOVERED,
+    ).order_by('created_at')
+    not_yet_reached = [
+        {'prospect_id': p.pk, 'name': p.name}
+        for p in not_yet_reached_qs[:MAX_ITEMS_PER_TYPE]
+    ]
+    reach_backlog_total = not_yet_reached_qs.count()
+
     return {
         'unpaid': unpaid,
         'no_personal_chequeo': no_personal_chequeo,
+        'not_yet_reached': not_yet_reached,
         'new_clients_goal': {
             'goal': DAILY_NEW_CLIENTS_GOAL,
             'added_today': added_today,
             'remaining': max(0, DAILY_NEW_CLIENTS_GOAL - added_today),
+        },
+        'reach_goal': {
+            'goal': DAILY_REACH_GOAL,
+            'backlog_total': reach_backlog_total,
         },
     }
