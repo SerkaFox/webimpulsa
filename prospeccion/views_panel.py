@@ -617,6 +617,7 @@ def prospect_detail(request, pk):
         'publication_reason': publication_reason,
         'prelim_draft_json': json.dumps(request.session.get(_prelim_draft_key(pk), {})),
         'status_color': SALES_STATUS_COLORS.get(prospect.sales_status, '#8a94a6'),
+        'status_colors_json': json.dumps(SALES_STATUS_COLORS),
         'opener_variants': opener_variants,
         'opener_variants_json': json.dumps(opener_variants),
         'referral_message': build_referral_message(prospect) if is_won else None,
@@ -654,6 +655,18 @@ def draft_proposal(request, pk):
         proposal = create_draft_proposal_for_prospect(prospect)
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+    # Auto-avanza la etapa a "Presupuesto creado" — igual que con el chequeo
+    # preliminar, solo si sigue en un estado temprano (nunca retrocede algo
+    # como Ganado o Perdido que ya se decidió a mano).
+    early_statuses = (
+        BusinessProspect.SALES_DISCOVERED, BusinessProspect.SALES_CONTACTED,
+        BusinessProspect.SALES_PRE_AUDITED, BusinessProspect.SALES_AUDITED,
+    )
+    if prospect.sales_status in early_statuses:
+        prospect.sales_status = BusinessProspect.SALES_PRESUPUESTO
+        prospect.save(update_fields=['sales_status', 'updated_at'])
+
     return JsonResponse({
         'proposal_id': proposal.pk,
         'proposal_url': f'/wi/crm/proposal/{proposal.pk}/',
@@ -817,7 +830,10 @@ def preliminar_complete(request, pk):
     )
 
     prospect.last_check_at = timezone.now()
-    if prospect.sales_status == BusinessProspect.SALES_DISCOVERED:
+    # Auto-avanza la etapa cuando se completa el chequeo preliminar, para no
+    # depender de que alguien la cambie a mano — solo si sigue en un estado
+    # "temprano" (nunca retrocede un estado ya más avanzado, p.ej. Ganado).
+    if prospect.sales_status in (BusinessProspect.SALES_DISCOVERED, BusinessProspect.SALES_CONTACTED):
         prospect.sales_status = BusinessProspect.SALES_PRE_AUDITED
     prospect.save(update_fields=['last_check_at', 'sales_status', 'updated_at'])
 

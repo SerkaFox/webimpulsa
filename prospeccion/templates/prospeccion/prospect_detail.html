@@ -88,14 +88,26 @@
   .primary-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
   .primary-actions .btn { flex: 1; min-width: 150px; padding: 14px 10px; font-size: .9rem; }
 
-  /* Secciones secundarias plegables */
-  details.section-card { background: var(--wi-card); border: 1px solid var(--wi-border); border-radius: 14px;
-    margin-bottom: 12px; box-shadow: var(--wi-shadow); }
-  details.section-card summary { padding: 14px 16px; font-size: .95rem; font-weight: 700; cursor: pointer; list-style: none; }
-  details.section-card summary::-webkit-details-marker { display: none; }
-  details.section-card summary::before { content: '▸ '; color: var(--wi-muted); }
-  details.section-card[open] summary::before { content: '▾ '; }
-  details.section-card .section-body { padding: 0 16px 16px; }
+  /* Botones grandes para cambiar la etapa — sustituye al desplegable
+     "una palabra" de antes, que quedaba escondido en una sección plegada. */
+  .status-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .status-btn {
+    border: 2px solid var(--sc, #8a94a6); background: #fff; color: var(--sc, #334155);
+    border-radius: 999px; padding: 8px 14px; font-size: .85rem; font-weight: 700; cursor: pointer;
+  }
+  .status-btn.active { background: var(--sc, #8a94a6); color: #fff; }
+
+  /* Barra de pestañas — sustituye a la pila de secciones plegables: un solo
+     panel visible a la vez en vez de "líneas" apiladas y poco claras. */
+  .tab-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tab-btn {
+    background: #fff; border: 1.5px solid var(--wi-border); border-radius: 10px; padding: 9px 13px;
+    font-size: .84rem; font-weight: 700; color: var(--wi-muted); cursor: pointer;
+  }
+  .tab-btn.active { background: var(--wi-blue); border-color: var(--wi-blue); color: #fff; }
+  .tab-panel { display: none; background: var(--wi-card); border: 1px solid var(--wi-border); border-radius: 14px;
+    margin-bottom: 12px; box-shadow: var(--wi-shadow); padding: 16px; }
+  .tab-panel.active { display: block; }
 </style>
 </head>
 <body>
@@ -125,6 +137,21 @@
           <a class="btn sm ghost" href="{{ prospect.gmaps_url }}" target="_blank" rel="noopener" data-i18n="detail.view_gmaps">📷 Ver en Google Maps (fotos, menú, reseñas…)</a>
         </div>
       {% endif %}
+    </div>
+
+    <!-- ── Cambiar la etapa: botones grandes, siempre visibles — antes era
+         un desplegable "una palabra" escondido en una sección plegada ── -->
+    <div class="card" id="statusQuickCard">
+      <h2 data-i18n="detail.status_section_title">Estado y responsable</h2>
+      <div class="wi-explain" data-i18n="detail.status_explain">
+        La «etapa» es en qué punto del proceso de venta está esta empresa (descubierta, contactada,
+        auditada, ganada…) — el color del punto en el mapa es siempre el mismo que el de esta etiqueta.
+      </div>
+      <div class="status-btns" id="statusBtns">
+        {% for id, label in sales_statuses %}
+          <button type="button" class="status-btn" data-status="{{ id }}" data-code="{{ id }}">{{ label }}</button>
+        {% endfor %}
+      </div>
     </div>
 
     <!-- ── Mensaje listo para copiar/enviar — pensado para que nunca haga falta
@@ -169,23 +196,22 @@
       <button type="button" class="btn green" id="btnPrepararPropuesta" data-i18n="detail.btn_propuesta">📋 Preparar propuesta</button>
     </div>
 
-    <details class="section-card" id="statusDetails">
-      <summary data-i18n="detail.status_section_title">Estado y responsable</summary>
-      <div class="section-body">
-      <div class="wi-explain" data-i18n="detail.status_explain">
-        La «etapa» es en qué punto del proceso de venta está esta empresa (descubierta, contactada,
-        auditada, ganada…) — el color del punto en el mapa es siempre el mismo que el de esta etiqueta.
-      </div>
+    <!-- ── Barra de pestañas — un solo panel visible a la vez ── -->
+    <div class="tab-bar" id="tabBar">
+      <button type="button" class="tab-btn" data-tab="settingsPanel" data-i18n="detail.tab_settings">⚙️ Prioridad y responsable</button>
+      <button type="button" class="tab-btn" data-tab="prelimDetails" data-i18n="detail.prelim_section_title">Auditoría preliminar</button>
+      <button type="button" class="tab-btn" data-tab="linkPanel" data-i18n="detail.link_section_title">Enlace personal del chequeo</button>
+      <button type="button" class="tab-btn" data-tab="crmDetails" data-i18n="detail.crm_section_title">CRM</button>
+      <button type="button" class="tab-btn" data-tab="contactosDetails" data-i18n="detail.contacts_section_title">Contactos</button>
+      <button type="button" class="tab-btn" data-tab="photosDetails" data-i18n="detail.photos_section_title">Fotos</button>
+      <button type="button" class="tab-btn" data-tab="publicationPanel" data-i18n="detail.publication_section_title">Consentimientos de publicación</button>
+      <button type="button" class="tab-btn" data-tab="historyPanel" data-i18n="detail.history_section_title">Historial de chequeos</button>
+      <button type="button" class="tab-btn" data-tab="dangerPanel" style="color:#dc2626" data-i18n="detail.danger_title">Zona de peligro</button>
+    </div>
+
+    <div class="card tab-panel" id="settingsPanel">
       <form id="updateForm">
         <div class="row">
-          <div class="field">
-            <label data-i18n="detail.label_stage">Etapa</label>
-            <select name="sales_status" id="statusSelect">
-              {% for id, label in sales_statuses %}
-                <option value="{{ id }}" data-code="{{ id }}" {% if id == prospect.sales_status %}selected{% endif %}>{{ label }}</option>
-              {% endfor %}
-            </select>
-          </div>
           <div class="field">
             <label data-i18n="detail.label_priority">Prioridad</label>
             <select name="priority">
@@ -210,13 +236,10 @@
         </div>
         <button type="submit" class="btn" data-i18n="detail.btn_save">Guardar</button>
       </form>
-      </div>
-    </details>
+    </div>
 
     <!-- ── Auditoría preliminar ─────────────────────────────────────── -->
-    <details class="section-card" id="prelimDetails">
-      <summary data-i18n="detail.prelim_section_title">Auditoría preliminar</summary>
-      <div class="section-body">
+    <div class="card tab-panel" id="prelimDetails">
       <div class="prelim-summary">
         <span><span data-i18n="detail.prelim_last_preliminar">Último preliminar:</span>
           {% if latest_preliminar %}{{ latest_preliminar.created_at|date:"d/m/Y H:i" }} — {{ latest_preliminar.score }}/100 <span class="muted-version">({{ latest_preliminar.questionnaire_version }})</span>{% else %}—{% endif %}
@@ -247,11 +270,9 @@
         siempre.
       </small>
       </div>
-    </details>
+    </div>
 
-    <details class="section-card">
-      <summary data-i18n="detail.link_section_title">Enlace personal del chequeo</summary>
-      <div class="section-body">
+    <div class="card tab-panel" id="linkPanel">
       <p style="font-size:.85rem;color:var(--wi-muted)" data-i18n="detail.link_explain">Compártelo con la empresa para que confirme/corrija el chequeo ya pre-rellenado.</p>
       <div class="link-box" id="personalLink">{{ personal_url }}</div>
       <div class="row" style="margin-top:8px">
@@ -261,11 +282,9 @@
         <a class="btn ghost" style="text-decoration:none;text-align:center" href="/panel/prospeccion/{{ prospect.pk }}/qr/" target="_blank" data-i18n="detail.btn_qr_card">📇 Tarjeta QR para imprimir</a>
       </div>
       </div>
-    </details>
+    </div>
 
-    <details class="section-card" id="crmDetails">
-      <summary data-i18n="detail.crm_section_title">CRM</summary>
-      <div class="section-body">
+    <div class="card tab-panel" id="crmDetails">
       {% if prospect.converted_client_id %}
         <p style="font-size:.85rem"><span data-i18n="detail.crm_already_converted">Ya convertido en cliente:</span> <a href="/wi/crm/{{ prospect.converted_client_id }}/" data-i18n="detail.crm_view_lead">ver ficha en el CRM →</a></p>
         <button class="btn" id="btnDraftProposal" data-i18n="detail.btn_draft_proposal">Crear borrador de presupuesto</button>
@@ -274,13 +293,10 @@
         <button class="btn" id="btnConvert" data-i18n="detail.btn_convert">Convertir en cliente</button>
         <button class="btn" id="btnDraftProposal" style="margin-left:6px" data-i18n="detail.btn_convert_and_draft">Convertir y crear presupuesto</button>
       {% endif %}
-      </div>
-    </details>
+    </div>
 
     <!-- ── Contactos (CRUD completo) ────────────────────────────────── -->
-    <details class="section-card" id="contactosDetails">
-      <summary data-i18n="detail.contacts_section_title">Contactos</summary>
-      <div class="section-body">
+    <div class="card tab-panel" id="contactosDetails">
       <div class="wi-explain" data-i18n="detail.contacts_explain">
         Dos consentimientos distintos, cada uno se pide y se revoca por separado: «Recibir informe» es
         para poder enviarle el resultado del chequeo, y «Contacto comercial» es para poder escribirle
@@ -345,14 +361,11 @@
           <button type="button" class="btn ghost" id="btnCancelEditContact" hidden data-i18n="detail.btn_cancel_edit">Cancelar edición</button>
         </div>
       </form>
-      </div>
-    </details>
+    </div>
 
     <!-- ── Fotos in situ (complementan la única foto que suele haber en la
          ficha de Google) ──────────────────────────────────────────── -->
-    <details class="section-card" id="photosDetails">
-      <summary><span data-i18n="detail.photos_section_title">Fotos</span> ({{ photos|length }})</summary>
-      <div class="section-body">
+    <div class="card tab-panel" id="photosDetails">
       <p style="font-size:.85rem;color:var(--wi-muted);margin-bottom:10px" data-i18n="detail.photos_explain">
         Haz fotos frescas del negocio desde varios ángulos (fachada, interior, detalles) — no se publican
         en ningún sitio automáticamente, son referencia interna del equipo.
@@ -374,15 +387,10 @@
         </div>
         <button type="submit" class="btn" id="btnUploadPhotos" data-i18n="detail.btn_upload_photos">📸 Subir fotos</button>
       </form>
-      </div>
-    </details>
+    </div>
 
     <!-- ── Consentimientos (publicación) ───────────────────────────── -->
-    <details class="section-card">
-      <summary><span data-i18n="detail.publication_section_title">Consentimientos de publicación</span>
-        <span class="pub-badge {% if is_public %}yes{% else %}no{% endif %}" data-i18n="{% if is_public %}detail.pub_visible{% else %}detail.pub_not_visible{% endif %}" style="margin-left:8px;font-size:.68rem">{% if is_public %}✓ Visible{% else %}✕ No publicable{% endif %}</span>
-      </summary>
-      <div class="section-body">
+    <div class="card tab-panel" id="publicationPanel">
       <p style="margin-bottom:10px">
         <span class="pub-badge {% if is_public %}yes{% else %}no{% endif %}" data-i18n="{% if is_public %}detail.pub_visible_full{% else %}detail.pub_not_visible{% endif %}">{% if is_public %}✓ Visible en mapa público{% else %}✕ No publicable{% endif %}</span>
         <span style="font-size:.82rem;color:var(--wi-muted);display:block;margin-top:4px" id="publicationReason">{{ publication_reason }}</span>
@@ -401,12 +409,9 @@
           <button type="button" class="btn sm" id="btnPublishConsent" data-action="grant" data-i18n="detail.btn_grant_pub_consent">Registrar consentimiento</button>
         {% endif %}
       </div>
-      </div>
-    </details>
+    </div>
 
-    <details class="section-card">
-      <summary><span data-i18n="detail.history_section_title">Historial de chequeos</span> ({{ audits|length }})</summary>
-      <div class="section-body">
+    <div class="card tab-panel" id="historyPanel">
       {% if audits %}
       <table>
         <tr><th data-i18n="detail.th_date">Fecha</th><th data-i18n="detail.th_mode">Modo</th><th data-i18n="detail.th_stage">Etapa</th><th data-i18n="detail.th_score">Puntuación</th></tr>
@@ -415,12 +420,9 @@
         {% endfor %}
       </table>
       {% else %}<p style="color:var(--wi-muted);font-size:.85rem" data-i18n="detail.no_audits">Todavía no se ha hecho ningún chequeo para esta empresa.</p>{% endif %}
-      </div>
-    </details>
+    </div>
 
-    <details class="section-card">
-      <summary style="color:#dc2626" data-i18n="detail.danger_title">Zona de peligro</summary>
-      <div class="section-body">
+    <div class="card tab-panel" id="dangerPanel">
       <p style="font-size:.85rem;color:var(--wi-muted);margin-bottom:10px">
         <span data-i18n="detail.danger_explain">Elimina esta ficha de prospección de forma permanente: historial de chequeos, contactos y fotos
         se borran con ella.</span>
@@ -432,8 +434,7 @@
         {% endif %}
       </p>
       <button type="button" class="btn danger" id="btnDeleteProspect" data-i18n="detail.btn_delete_prospect">🗑 Eliminar esta empresa</button>
-      </div>
-    </details>
+    </div>
 
   </div>
 </div>
@@ -444,10 +445,91 @@
 <script>
 var PK = {{ prospect.pk }};
 var BASE = '/panel/prospeccion/' + PK + '/';
-var ANSWER_OPTIONS = [
+var PROSPECT_SECTOR = '{{ prospect.sector }}';
+var ANSWER_OPTIONS_ES = [
   {value:'si', label:'Sí'}, {value:'en_parte', label:'En parte'}, {value:'no_se', label:'No estoy segura/o'},
   {value:'no', label:'No'}, {value:'no_aplica', label:'No aplica'},
 ];
+var ANSWER_OPTIONS_RU = [
+  {value:'si', label:'Да'}, {value:'en_parte', label:'Отчасти'}, {value:'no_se', label:'Не уверена/уверен'},
+  {value:'no', label:'Нет'}, {value:'no_aplica', label:'Не применимо'},
+];
+function getAnswerOptions(){ return (window.wiGetLang && window.wiGetLang() === 'ru') ? ANSWER_OPTIONS_RU : ANSWER_OPTIONS_ES; }
+
+// El texto de las preguntas del chequeo preliminar viene ya resuelto por
+// sector desde el servidor (siempre en español, ver quiz_config.py) — para
+// que se traduzca de verdad al ruso (y no se quede en español pese al
+// selector RU/ES, que era el bug reportado), se traduce en el cliente por
+// id de pregunta + sector, con "_default" como respaldo.
+var QUESTION_TEXT_RU = {
+  gbp_accuracy: {
+    _default: 'Актуальны ли в вашей карточке Google (та, что показывается на карте) часы работы, телефон, адрес и фото?',
+    bar: 'Актуальны ли в карточке Google часы работы, телефон, адрес и фото заведения и блюд?',
+    salon: 'Актуальны ли в карточке Google часы работы, телефон, адрес и фото ваших работ?',
+    taller: 'Актуальны ли в карточке Google часы работы, телефон, адрес и фото мастерской?',
+    clinica: 'Актуальны ли в карточке Google часы работы, телефон, адрес и фото кабинета?',
+    tienda: 'Актуальны ли в карточке Google часы работы, телефон, адрес и фото магазина?',
+    academia: 'Актуальны ли в карточке Google часы работы, телефон, адрес и фото центра?',
+  },
+  mobile_page: {
+    _default: 'Есть ли у вас страница или канал, который хорошо выглядит и удобен на телефоне?',
+  },
+  catalog_visible: {
+    _default: 'Видны ли ваши услуги и хотя бы примерная цена без необходимости спрашивать?',
+    bar: 'Может ли клиент увидеть меню и цены (или примерный диапазон), не спрашивая вас?',
+    salon: 'Видны ли ваши услуги и примерные цены без необходимости спрашивать?',
+    clinica: 'Видны ли ваши услуги или специализации и хотя бы примерная цена без вопроса?',
+    taller: 'Понятно ли объяснено, какие виды ремонта или услуг вы предлагаете?',
+    tienda: 'Может ли клиент увидеть товары и цены (или примерный диапазон), не спрашивая вас?',
+    academia: 'Видны ли ваши курсы, расписание и цены без необходимости спрашивать?',
+    inmobiliaria: 'Понятно ли видно, какие услуги вы предлагаете (районы, типы недвижимости или работ)?',
+  },
+  one_tap_contact: {
+    _default: 'Может ли клиент написать вам в WhatsApp, позвонить или заполнить форму в одно касание, не разыскивая номер?',
+  },
+  main_action_no_wait: {
+    _default: 'Может ли клиент получить то, что нужно (забронировать, купить, запросить смету), не дожидаясь звонка?',
+    bar: 'Может ли забронировать столик, не дожидаясь обратного звонка?',
+    salon: 'Может ли записаться на приём, выбрав день и время, без ожидания ответа?',
+    clinica: 'Может ли записаться на приём, выбрав день и время, без ожидания ответа?',
+    taller: 'Может ли запросить смету или оставить автомобиль, не дожидаясь звонка?',
+    tienda: 'Может ли купить или забронировать товар без ожидания ответа?',
+    academia: 'Может ли записаться или забронировать место без ожидания ответа?',
+    inmobiliaria: 'Может ли запросить смету или показ объекта без ожидания ответа?',
+  },
+  messages_lost: {
+    _default: 'Знаете ли вы точно, кто проверяет сообщения и за какое время вы обычно отвечаете?',
+  },
+  auto_confirmation: {
+    _default: 'Отправляете ли вы клиентам автоматическое подтверждение или напоминание?',
+    bar: 'Отправляете ли автоматическое подтверждение брони и напоминание заранее?',
+    salon: 'Отправляете ли автоматическое напоминание перед визитом?',
+    clinica: 'Отправляете ли автоматическое напоминание перед визитом?',
+    taller: 'Уведомляете ли автоматически, когда автомобиль готов?',
+    tienda: 'Подтверждаете ли автоматически заказы или бронирования товара?',
+    academia: 'Отправляете ли автоматическое напоминание о следующем занятии?',
+    inmobiliaria: 'Подтверждаете ли автоматически получение заявки или запись на показ?',
+  },
+  reviews_uptodate: {
+    _default: 'Есть ли у вас свежие отзывы и фото, и отвечаете ли вы на получаемые отзывы?',
+  },
+  centralized_records: {
+    _default: 'Ваши брони, заказы, записи или работы хранятся в одном месте, или разбросаны по блокнотам, WhatsApp и Excel?',
+  },
+  repetitive_tasks: {
+    _default: 'Есть ли задачи, которые вы каждый день делаете вручную (подтверждения, напоминания, отслеживание), которые могли бы выполняться сами?',
+  },
+  brings_back_customers: {
+    _default: 'Есть ли у вас способ вернуть клиента (уведомление, акция, напоминание), и знаете ли вы, как он нашёл вас впервые?',
+  },
+};
+function questionText(q){
+  if(window.wiGetLang && window.wiGetLang() === 'ru'){
+    var byId = QUESTION_TEXT_RU[q.id];
+    if(byId) return byId[PROSPECT_SECTOR] || byId._default;
+  }
+  return q.text;
+}
 var PRELIM_DRAFT = {{ prelim_draft_json|safe }};
 
 function showToast(msg){
@@ -513,16 +595,49 @@ if (btnReferralCopy) {
   });
 }
 
-/* ---- Las 3 acciones principales ---- */
-document.getElementById('btnGoChequeo').addEventListener('click', function(){
-  var d = document.getElementById('prelimDetails');
-  d.open = true;
-  d.scrollIntoView({behavior:'smooth', block:'start'});
+/* ---- Barra de pestañas — un solo panel visible a la vez, sustituye a la
+   pila de secciones plegables de antes ---- */
+function showTab(id){
+  document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.toggle('active', p.id === id); });
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === id); });
+  var panel = document.getElementById(id);
+  if(panel) panel.scrollIntoView({behavior:'smooth', block:'start'});
+}
+document.querySelectorAll('.tab-btn').forEach(function(b){
+  b.addEventListener('click', function(){ showTab(b.dataset.tab); });
 });
+
+/* ---- Botones grandes de etapa ---- */
+function paintStatusButtons(current){
+  document.querySelectorAll('.status-btn').forEach(function(b){
+    var color = STATUS_COLORS[b.dataset.status] || '#8a94a6';
+    b.style.setProperty('--sc', color);
+    b.classList.toggle('active', b.dataset.status === current);
+  });
+}
+var STATUS_COLORS = {{ status_colors_json|safe }};
+var currentStatus = '{{ prospect.sales_status }}';
+paintStatusButtons(currentStatus);
+document.querySelectorAll('.status-btn').forEach(function(b){
+  b.addEventListener('click', function(){
+    if(b.dataset.status === currentStatus) return;
+    postJson(BASE + 'update/', {sales_status: b.dataset.status}).then(function(res){
+      if(res.data.error){ showToast(res.data.error); return; }
+      currentStatus = b.dataset.status;
+      paintStatusButtons(currentStatus);
+      var badge = document.getElementById('statusBadge');
+      badge.textContent = b.textContent;
+      badge.style.background = STATUS_COLORS[currentStatus] || '#8a94a6';
+      badge.setAttribute('data-status-id', currentStatus);
+      showToast(t('detail.toast_saved'));
+    });
+  });
+});
+
+/* ---- Las 3 acciones principales ---- */
+document.getElementById('btnGoChequeo').addEventListener('click', function(){ showTab('prelimDetails'); });
 document.getElementById('btnGoContacto').addEventListener('click', function(){
-  var d = document.getElementById('contactosDetails');
-  d.open = true;
-  d.scrollIntoView({behavior:'smooth', block:'start'});
+  showTab('contactosDetails');
   var nameInput = document.querySelector('#contactForm input[name="name"]');
   if(nameInput) setTimeout(function(){ nameInput.focus(); }, 350);
 });
@@ -537,9 +652,7 @@ document.getElementById('btnPrepararPropuesta').addEventListener('click', functi
    aquí con ?start_check=1 (desde "Guardar e iniciar chequeo" del mapa),
    se abre y se hace scroll automáticamente. */
 if(new URLSearchParams(window.location.search).get('start_check') === '1'){
-  var pd = document.getElementById('prelimDetails');
-  pd.open = true;
-  setTimeout(function(){ pd.scrollIntoView({behavior:'smooth', block:'start'}); }, 200);
+  setTimeout(function(){ showTab('prelimDetails'); }, 200);
 }
 
 /* ---- Estado y responsable ---- */
@@ -588,35 +701,51 @@ var prelimAnswers = {}; // {qid: {value, comment, evidence_url}}
 
 function renderQuestion(q){
   var saved = prelimAnswers[q.id] || {};
-  var opts = ANSWER_OPTIONS.map(function(o){
+  var opts = getAnswerOptions().map(function(o){
     var checked = saved.value === o.value ? 'checked' : '';
     var cls = saved.value === o.value ? 'checked' : '';
     return '<label class="'+cls+'"><input type="radio" name="q_'+q.id+'" value="'+o.value+'" '+checked+'>'+o.label+'</label>';
   }).join('');
   return '<div class="q-item" data-qid="'+q.id+'">'+
-    '<div class="q-text">'+q.text+'</div>'+
+    '<div class="q-text">'+questionText(q)+'</div>'+
     '<div class="q-opts">'+opts+'</div>'+
     '<div class="q-extra">'+
-      '<input type="text" class="q-comment" placeholder="Comentario (opcional)" value="'+(saved.comment||'').replace(/"/g,'&quot;')+'">'+
-      '<input type="url" class="q-evidence" placeholder="URL de evidencia (opcional)" value="'+(saved.evidence_url||'').replace(/"/g,'&quot;')+'">'+
+      '<input type="text" class="q-comment" placeholder="'+t('detail.q_comment_placeholder')+'" value="'+(saved.comment||'').replace(/"/g,'&quot;')+'">'+
+      '<input type="url" class="q-evidence" placeholder="'+t('detail.q_evidence_placeholder')+'" value="'+(saved.evidence_url||'').replace(/"/g,'&quot;')+'">'+
     '</div>'+
   '</div>';
+}
+
+var LAST_QUESTIONS = null;
+
+function paintPrelimQuestions(questions){
+  document.getElementById('prelimQuestions').innerHTML = questions.map(renderQuestion).join('');
+  document.querySelectorAll('#prelimQuestions .q-opts input').forEach(function(input){
+    input.addEventListener('change', function(){
+      document.querySelectorAll('input[name="'+input.name+'"]').forEach(function(sibling){
+        sibling.closest('label').classList.toggle('checked', sibling.checked);
+      });
+    });
+  });
 }
 
 function loadPrelimQuestions(sector){
   fetch('/chequeo-digital/api/questionnaire/'+encodeURIComponent(sector)+'/')
     .then(function(r){ return r.json(); })
     .then(function(data){
-      document.getElementById('prelimQuestions').innerHTML = data.questions.map(renderQuestion).join('');
-      document.querySelectorAll('#prelimQuestions .q-opts input').forEach(function(input){
-        input.addEventListener('change', function(){
-          document.querySelectorAll('input[name="'+input.name+'"]').forEach(function(sibling){
-            sibling.closest('label').classList.toggle('checked', sibling.checked);
-          });
-        });
-      });
+      LAST_QUESTIONS = data.questions;
+      paintPrelimQuestions(data.questions);
     })
     .catch(function(){ showToast(t('detail.toast_questions_error')); });
+}
+
+// Al cambiar RU/ES hay que volver a pintar las preguntas ya cargadas (el
+// texto se traduce en el cliente, ver questionText()) sin perder lo que
+// Tania ya haya marcado sin guardar todavía.
+function rerenderPrelimQuestions(){
+  if(!LAST_QUESTIONS) return;
+  Object.assign(prelimAnswers, collectPrelimAnswers());
+  paintPrelimQuestions(LAST_QUESTIONS);
 }
 
 function collectPrelimAnswers(){
@@ -802,6 +931,7 @@ var T = {
     'detail.btn_propuesta': '📋 Preparar propuesta',
     'detail.status_section_title': 'Estado y responsable',
     'detail.status_explain': 'La «etapa» es en qué punto del proceso de venta está esta empresa (descubierta, contactada, auditada, ganada…) — el color del punto en el mapa es siempre el mismo que el de esta etiqueta.',
+    'detail.tab_settings': '⚙️ Prioridad y responsable',
     'detail.label_stage': 'Etapa',
     'detail.label_priority': 'Prioridad',
     'detail.priority_low': 'Baja',
@@ -887,6 +1017,8 @@ var T = {
     'detail.toast_saved': 'Guardado',
     'detail.toast_link_copied': 'Enlace copiado',
     'detail.toast_questions_error': 'No se pudieron cargar las preguntas',
+    'detail.q_comment_placeholder': 'Comentario (opcional)',
+    'detail.q_evidence_placeholder': 'URL de evidencia (opcional)',
     'detail.toast_draft_saved': 'Borrador guardado ({count} respuestas)',
     'detail.toast_answer_one': 'Responde al menos una pregunta',
     'detail.toast_audit_created': 'Auditoría preliminar creada: {score}/100',
@@ -925,6 +1057,7 @@ var T = {
     'detail.btn_propuesta': '📋 Подготовить предложение',
     'detail.status_section_title': 'Статус и ответственный',
     'detail.status_explain': '«Этап» — это на каком шаге процесса продажи находится компания (найдена, на связи, проверена, стала клиентом…). Цвет этой метки всегда совпадает с цветом точки на карте.',
+    'detail.tab_settings': '⚙️ Приоритет и ответственный',
     'detail.label_stage': 'Этап',
     'detail.label_priority': 'Приоритет',
     'detail.priority_low': 'Низкий',
@@ -1010,6 +1143,8 @@ var T = {
     'detail.toast_saved': 'Сохранено',
     'detail.toast_link_copied': 'Ссылка скопирована',
     'detail.toast_questions_error': 'Не удалось загрузить вопросы',
+    'detail.q_comment_placeholder': 'Комментарий (необязательно)',
+    'detail.q_evidence_placeholder': 'Ссылка-подтверждение (необязательно)',
     'detail.toast_draft_saved': 'Черновик сохранён ({count} ответов)',
     'detail.toast_answer_one': 'Ответьте хотя бы на один вопрос',
     'detail.toast_audit_created': 'Предварительная проверка создана: {score}/100',
@@ -1049,8 +1184,11 @@ function applyDetailLang(lang){
   document.querySelectorAll('[data-stage-code]').forEach(function(el){
     el.textContent = wiCodeLabel('auditStage', el.getAttribute('data-stage-code'), lang);
   });
-  document.querySelectorAll('#statusSelect option[data-code], #prelimSector option[data-code]').forEach(function(el){
-    el.textContent = wiCodeLabel(el.parentElement.id === 'statusSelect' ? 'salesStatus' : 'sector', el.getAttribute('data-code'), lang);
+  document.querySelectorAll('#prelimSector option[data-code]').forEach(function(el){
+    el.textContent = wiCodeLabel('sector', el.getAttribute('data-code'), lang);
+  });
+  document.querySelectorAll('.status-btn[data-code]').forEach(function(el){
+    el.textContent = wiCodeLabel('salesStatus', el.getAttribute('data-code'), lang);
   });
   document.querySelectorAll('select[name="role"] option[data-code]').forEach(function(el){
     el.textContent = wiCodeLabel('contactRole', el.getAttribute('data-code'), lang);
@@ -1058,6 +1196,7 @@ function applyDetailLang(lang){
   document.querySelectorAll('select[name="preferred_channel"] option[data-code]').forEach(function(el){
     el.textContent = wiCodeLabel('channel', el.getAttribute('data-code'), lang);
   });
+  rerenderPrelimQuestions();
 }
 wiWireLangSwitcher(applyDetailLang);
 

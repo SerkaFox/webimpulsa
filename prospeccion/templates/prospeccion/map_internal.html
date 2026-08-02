@@ -47,7 +47,7 @@
   .checks label { display: flex; align-items: center; gap: 6px; font-size: .82rem; margin-bottom: 4px; }
 
   .btn { background: var(--wi-blue); color: #fff; border: none; border-radius: 10px; padding: 12px 14px;
-    font-size: .92rem; font-weight: 700; cursor: pointer; width: 100%; }
+    font-size: .92rem; font-weight: 700; cursor: pointer; width: 100%; text-decoration: none; display: inline-block; }
   .btn.sm { padding: 7px 11px; font-size: .8rem; width: auto; border-radius: 8px; }
   .btn:hover { background: #1746a8; }
   .btn.secondary { background: #fff; color: var(--wi-blue); border: 1.5px solid var(--wi-blue); }
@@ -180,6 +180,12 @@
   .route-actions .go { background: #075CCF; color: #fff; font-weight: 700; }
   .route-actions .clear { background: #f1f5f9; color: #334155; }
 
+  .map-locate-btn {
+    position: absolute; right: 10px; bottom: 90px; z-index: 5; width: 40px; height: 40px; border-radius: 50%;
+    background: #fff; border: none; box-shadow: 0 2px 8px rgba(12,28,66,.25); font-size: 1.1rem; cursor: pointer;
+  }
+  .map-locate-btn:hover { background: #f1f5f9; }
+
   /* Widget de control de gasto de Google Places — colapsado por defecto
      (como la leyenda del mapa), para no ocupar media pantalla del sidebar. */
   .puw { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 14px; font-size: .8rem; }
@@ -271,6 +277,7 @@
       <summary>🗺️ <span data-i18n="map.route_title">Ruta de hoy</span> (<span id="routeCount">0</span>)</summary>
       <div class="route-body" id="routeBody"></div>
     </details>
+    <button type="button" class="map-locate-btn" id="btnLocateMe" title="Mi ubicación">🎯</button>
   </div>
 
   <div class="sidebar">
@@ -594,9 +601,30 @@ function _rt(key){ return (window.wiMapT || function(k){ return k; })(key); }
 
 /* ══════════════════════════ Mapa (Google Maps JS) ══════════════════════════ */
 
+// Recuerda dónde se quedó la última vez — arrastrar el mapa cada vez que se
+// entra era el motivo nº1 de queja: sin esto, siempre volvía al centro por
+// defecto (Barakaldo/Bilbao) en vez del sitio donde se estaba trabajando.
+var MAP_VIEW_KEY = 'wi_map_last_view';
+function loadSavedMapView(){
+  try {
+    var saved = JSON.parse(localStorage.getItem(MAP_VIEW_KEY) || 'null');
+    if(saved && saved.lat != null && saved.lng != null && saved.zoom) return saved;
+  } catch(e){}
+  return null;
+}
+function saveMapView(){
+  if(!map) return;
+  var c = map.getCenter();
+  if(!c) return;
+  localStorage.setItem(MAP_VIEW_KEY, JSON.stringify({lat: c.lat(), lng: c.lng(), zoom: map.getZoom()}));
+}
+
 window.wiInitMap = function(){
+  var savedView = loadSavedMapView();
   map = new google.maps.Map(document.getElementById('map'), {
-    center: DEFAULT_CENTER, zoom: 12, mapId: null,
+    center: savedView ? {lat: savedView.lat, lng: savedView.lng} : DEFAULT_CENTER,
+    zoom: savedView ? savedView.zoom : 12,
+    mapId: null,
     streetViewControl: false, fullscreenControl: false,
     // El selector Mapa/Satélite de Google se queda por defecto arriba a la
     // izquierda, justo donde vive el panel de "Ruta de hoy" — lo movemos al
@@ -604,6 +632,7 @@ window.wiInitMap = function(){
     mapTypeControlOptions: { position: google.maps.ControlPosition.TOP_CENTER },
   });
   map.addListener('idle', reloadMapProspects);
+  map.addListener('idle', saveMapView);
   map.addListener('click', function(ev){
     if(manualModeActive){
       placeManualMarker(ev.latLng.lat(), ev.latLng.lng());
@@ -733,7 +762,7 @@ function renderProspectList(prospects){
     var web = websiteBadge(resolveHasWebsite(p));
     var canRoute = p.lat != null && p.lng != null;
     return '<div class="card-list-item" style="color:inherit">'+
-      '<a href="'+p.detail_url+'" style="display:block;color:inherit;text-decoration:none">'+
+      '<a href="'+p.detail_url+'" target="_blank" rel="noopener" style="display:block;color:inherit;text-decoration:none">'+
       '<span class="score-pill">'+score+'</span>'+
       '<div class="name">'+p.name+'</div>'+
       '<div style="color:#8a94a6">'+p.municipality+' '+p.district+'</div>'+
@@ -763,17 +792,17 @@ function reloadMapProspects(){
         var score = p.current_score != null ? p.current_score : '—';
         var web = websiteBadge(hasWeb);
         var _t1 = window.wiMapT || function(k){ return k; };
-        var info = new google.maps.InfoWindow({content:
+        var info = new google.maps.InfoWindow({disableAutoPan: true, content:
           '<div style="font-family:inherit">'+
           '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>'+
           '<strong>'+p.name+'</strong><br>'+
           statusLabel(p.sales_status)+' · '+_t1('map.score_label')+' '+score+'<br>'+
-          '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:.85rem">'+
-          '<a href="'+p.detail_url+'">📇 '+_t1('map.view_card')+'</a>'+
-          '<a href="'+p.detail_url+'?start_check=1">🩺 '+_t1('map.create_preliminary')+'</a>'+
-          '<a href="'+p.detail_url+'#contactForm">👤 '+_t1('map.add_contact')+'</a>'+
-          (p.gmaps_url ? '<a href="'+p.gmaps_url+'" target="_blank" rel="noopener">📷 '+_t1('map.open_in_gmaps')+'</a>' : '')+
-          '<a href="#" onclick="addToRoute('+p.id+');return false;">'+_t1('map.add_to_route')+'</a>'+
+          '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+
+          '<a class="btn sm" target="_blank" rel="noopener" href="'+p.detail_url+'">📇 '+_t1('map.view_card')+'</a>'+
+          '<a class="btn sm green" target="_blank" rel="noopener" href="'+p.detail_url+'?start_check=1">🩺 '+_t1('map.create_preliminary')+'</a>'+
+          '<a class="btn sm ghost" target="_blank" rel="noopener" href="'+p.detail_url+'#contactForm">👤 '+_t1('map.add_contact')+'</a>'+
+          (p.gmaps_url ? '<a class="btn sm ghost" href="'+p.gmaps_url+'" target="_blank" rel="noopener">📷 '+_t1('map.open_in_gmaps')+'</a>' : '')+
+          '<button type="button" class="btn sm ghost" onclick="addToRoute('+p.id+')">'+_t1('map.add_to_route')+'</button>'+
           '</div></div>'
         });
         marker.addListener('click', function(){ info.open(map, marker); });
@@ -809,7 +838,7 @@ function renderExistingCard(p){
     '<div class="name" style="margin-top:6px">'+p.name+'</div>'+
     '<div class="addr">'+(p.address||'')+' · '+sectorLabel(p.sector)+'</div>'+
     '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span>'+
-    '<div class="actions"><a class="btn sm secondary" href="'+p.detail_url+'">'+_t('map.view_card')+'</a>'+gmapsBtn+routeBtn+'</div>'+
+    '<div class="actions"><a class="btn sm secondary" target="_blank" rel="noopener" href="'+p.detail_url+'">'+_t('map.view_card')+'</a>'+gmapsBtn+routeBtn+'</div>'+
   '</div>';
 }
 
@@ -817,7 +846,7 @@ function renderGoogleCard(r, idx){
   var _t = window.wiMapT || function(k){ return k; };
   var existsTag = r.existing_prospect_id ? '<span class="exists-badge">'+_t('map.already_exists')+'</span>' : '';
   var addBtn = r.existing_prospect_id
-    ? '<a class="btn sm secondary" href="/panel/prospeccion/'+r.existing_prospect_id+'/">'+_t('map.view_existing_card')+'</a>'
+    ? '<a class="btn sm secondary" target="_blank" rel="noopener" href="/panel/prospeccion/'+r.existing_prospect_id+'/">'+_t('map.view_existing_card')+'</a>'
     : '<button type="button" class="btn sm" data-google-idx="'+idx+'">'+_t('map.add_to_crm')+'</button>';
   var gmapsBtn = r.google_maps_url ? '<a class="btn sm ghost" href="'+r.google_maps_url+'" target="_blank" rel="noopener">'+_t('map.open_in_gmaps')+'</a>' : '';
   return '<div class="result-card">'+
@@ -853,12 +882,12 @@ function plotSearchMarkers(existing, googleResults){
     });
     var web = websiteBadge(hasWeb);
     var _t2 = window.wiMapT || function(k){ return k; };
-    var info = new window.google.maps.InfoWindow({content:
+    var info = new window.google.maps.InfoWindow({disableAutoPan: true, content:
       '<div style="font-family:inherit">'+
       '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>'+
       '<strong>'+p.name+'</strong><br>'+_t2('map.already_in_crm')+
       (p.current_score != null ? ' · '+_t2('map.score_label')+' '+p.current_score : '')+'<br>'+
-      '<a href="'+p.detail_url+'">📇 '+_t2('map.view_card')+'</a>'+
+      '<a class="btn sm secondary" target="_blank" rel="noopener" href="'+p.detail_url+'">📇 '+_t2('map.view_card')+'</a>'+
       (p.gmaps_url ? ' · <a href="'+p.gmaps_url+'" target="_blank" rel="noopener">📷 '+_t2('map.open_in_gmaps')+'</a>' : '')+
       ' · <a href="#" onclick="addToRoute('+p.id+');return false;">'+_t2('map.add_to_route')+'</a>'+
       '</div>'
@@ -1373,7 +1402,7 @@ function fetchPoiDetails(placeId, latLng){
       var web = websiteBadge(resolveHasWebsite(p));
       var gmapsUrl = p.google_maps_url || poiGmapsUrl(placeId);
       var actionBtn = p.existing_prospect_id
-        ? '<a class="btn sm secondary" href="'+p.detail_url+'">📇 '+_t('map.view_card')+'</a>'
+        ? '<a class="btn sm secondary" target="_blank" rel="noopener" href="'+p.detail_url+'">📇 '+_t('map.view_card')+'</a>'
         : '<button type="button" class="btn sm" id="poiAddFoundBtn">➕ '+_t('map.add_to_crm')+'</button>';
       var routeBtn = p.existing_prospect_id
         ? '<button type="button" class="btn sm ghost" id="poiFoundRouteBtn" data-existing-id="'+p.existing_prospect_id+'">'+_t('map.add_to_route')+'</button>'
@@ -1408,16 +1437,18 @@ function fetchPoiDetails(placeId, latLng){
 }
 
 /* ---- Usar mi ubicación ---- */
-document.getElementById('btnUseMyLocation').addEventListener('click', function(){
+function centerOnMyLocation(withToast){
   if(!navigator.geolocation){ showToast('Este navegador no permite compartir ubicación'); return; }
   navigator.geolocation.getCurrentPosition(function(pos){
     userLocation = {lat: pos.coords.latitude, lng: pos.coords.longitude};
     if(map){ map.setCenter(userLocation); map.setZoom(15); }
-    showToast('Ubicación detectada — la búsqueda priorizará esta zona');
+    if(withToast) showToast('Ubicación detectada — la búsqueda priorizará esta zona');
   }, function(){
     showToast('No se pudo obtener tu ubicación');
   });
-});
+}
+document.getElementById('btnUseMyLocation').addEventListener('click', function(){ centerOnMyLocation(true); });
+document.getElementById('btnLocateMe').addEventListener('click', function(){ centerOnMyLocation(false); });
 
 /* ---- Pegar enlace de Google Maps ---- */
 document.getElementById('btnUseMapsLink').addEventListener('click', function(){
