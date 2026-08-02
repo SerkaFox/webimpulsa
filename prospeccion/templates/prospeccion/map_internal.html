@@ -472,8 +472,13 @@ window.WI_MAPA = {
 var STATUS_COLORS = window.WI_MAPA.statusColors;
 var DEFAULT_CENTER = {lat: 43.2627, lng: -2.9253}; // Barakaldo/Bilbao
 
-function statusLabel(code){ return wiCodeLabel('salesStatus', code, LANG); }
-function sectorLabel(code){ return wiCodeLabel('sector', code, LANG); }
+// Sin pasar idioma explícito: wiCodeLabel cae a wiGetLang() (lee
+// localStorage directamente) — este script se ejecuta ANTES que el bloque
+// donde vive window.LANG, así que depender de esa variable aquí rompía
+// renderLegendStages() nada más cargar la página (y con ello wiInitMap,
+// dejando el mapa en blanco).
+function statusLabel(code){ return wiCodeLabel('salesStatus', code); }
+function sectorLabel(code){ return wiCodeLabel('sector', code); }
 
 function renderLegendStages(){
   var el = document.getElementById('legendStages');
@@ -1194,7 +1199,11 @@ document.getElementById('btnCloseGuide').addEventListener('click', function(){
   }
 })();
 
-refreshPlacesUsage();
+// Expuesta en window: se llama de verdad desde setMapLang() (otro <script>,
+// ejecuta después) — llamarla aquí directamente usaba window.wiMapT antes
+// de que existiera, y el widget se quedaba con las claves sin traducir
+// (p.ej. "map.puw_today" literal) el resto de la sesión.
+window.refreshPlacesUsage = refreshPlacesUsage;
 
 /* ---- Modo manual: el clic normal en el mapa NUNCA crea nada ---- */
 var manualModeActive = false;
@@ -1779,6 +1788,7 @@ function setMapLang(lang) {
   applyMapTranslations();
   if (window.__mapRelabelCodes) window.__mapRelabelCodes();
   if (window.reloadMapProspects) window.reloadMapProspects();
+  if (window.refreshPlacesUsage) window.refreshPlacesUsage();
 }
 window.wiSetMapLang = setMapLang;
 
