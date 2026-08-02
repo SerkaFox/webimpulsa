@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ v.title }}</title>
+<meta name="description" content="{{ v.meta_description }}">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="{{ v.canonical }}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ v.canonical }}">
+<meta property="og:title" content="{{ v.title }}">
+<meta property="og:description" content="{{ v.meta_description }}">
+<meta property="og:image" content="https://creaganaweb.es/static/wi/img/og-cover.webp">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="es_ES">
+<meta property="og:site_name" content="CreaGanaWeb">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ v.title }}">
+<meta name="twitter:description" content="{{ v.meta_description }}">
+<meta name="twitter:image" content="https://creaganaweb.es/static/wi/img/og-cover.webp">
+<link rel="icon" type="image/svg+xml" href="/static/wi/img/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/wi/img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/static/wi/img/favicon-192.png">
+<link rel="apple-touch-icon" href="/static/wi/img/apple-icon.png">
+<link href="/static/sergei/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+<link href="/static/wi/css/brand.css" rel="stylesheet">
+<script type="application/ld+json">{{ ld_json|safe }}</script>
+<style>
+  body { margin: 0; color: var(--wi-text); background: var(--wi-bg); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  a { text-decoration: none; }
+  .wrap { padding-top: 70px; }
+  .navbar { background: rgba(255,255,255,.97); border-bottom: 1px solid var(--wi-line); }
+  .navbar img { height: 44px; }
+  .btn { border-radius: 10px; font-weight: 750; }
+  .btn-primary { background: var(--wi-gradient); border: none; color: #fff; box-shadow: 0 4px 18px rgba(7,92,207,.30); }
+  .btn-outline-dark-wi { color: var(--wi-text); border: 1.5px solid rgba(8,23,71,.25); background: transparent; }
+  .section { padding: 3.5rem 0; }
+  .section-alt { background: var(--wi-surface); }
+  .kicker { color: var(--wi-primary); font-weight: 800; text-transform: uppercase; font-size: .78rem; letter-spacing: .1em; margin-bottom: .5rem; }
+  h1 { font-size: clamp(1.8rem, 4vw, 2.7rem); font-weight: 880; line-height: 1.1; }
+  h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 850; }
+  .lead-text { color: var(--wi-muted); font-size: 1.05rem; max-width: 680px; }
+  .hero-icon { width: 96px; height: 96px; object-fit: contain; }
+  .feat-icon { width: 44px; height: 44px; object-fit: contain; margin-bottom: .6rem; }
+  .price-tag { font-size: 1.6rem; font-weight: 900; color: var(--wi-primary); }
+  .faq-item { border: 1px solid var(--wi-border); border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: .7rem; background: var(--wi-card); }
+  .faq-item b { color: var(--wi-text); }
+  footer { padding: 2.2rem 0; font-size: .82rem; color: var(--wi-muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="navbar navbar-expand fixed-top">
+    <div class="container d-flex justify-content-between align-items-center">
+      <a href="/"><img src="/static/wi/img/logo.webp" alt="CreaGanaWeb"></a>
+      <a href="https://wa.me/34613708322" target="_blank" rel="noopener" class="btn btn-primary btn-sm px-3">WhatsApp →</a>
+    </div>
+  </nav>
+
+  <section class="section" style="padding-top:6.5rem">
+    <div class="container">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-8">
+          <div class="kicker">Webs para {{ v.plural_lower }}</div>
+          <h1>{{ v.h1 }}</h1>
+          <p class="lead-text mt-3 mb-4">{{ v.intro }}</p>
+          <div class="d-flex flex-wrap gap-2">
+            <a href="#contacto" class="btn btn-primary px-4">Pedir presupuesto gratis →</a>
+            <a href="/" class="btn btn-outline-dark-wi px-4">Ver todos los servicios</a>
+          </div>
+        </div>
+        <div class="col-lg-4 text-center">
+          <img src="/static/wi/icons/{{ v.icon }}" alt="{{ v.plural }}" class="hero-icon">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="container">
+      <div class="kicker">Qué incluye</div>
+      <h2 class="mb-4">Lo que construimos para {{ v.plural_lower }}</h2>
+      <div class="row g-4">
+        {% for f in v.features %}
+        <div class="col-md-4">
+          <div class="wi-card h-100">
+            <img src="/static/wi/icons/{{ f.icon }}" alt="" class="feat-icon" loading="lazy">
+            <h3 style="font-size:1.05rem">{{ f.title }}</h3>
+            <p style="color:var(--wi-muted);font-size:.92rem">{{ f.desc }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="kicker">Precio orientativo</div>
+      <h2 class="mb-4">¿Cuánto cuesta una web para {{ v.plural_lower }}?</h2>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="wi-card h-100">
+            <div class="price-tag">Desde 490€</div>
+            <p style="color:var(--wi-muted)">Web profesional con toda la información de tu negocio, ficha de Google Maps y botón de WhatsApp.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="wi-card h-100">
+            <div class="price-tag">Desde 690€</div>
+            <p style="color:var(--wi-muted)">{{ v.mid_tier }}</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="wi-card h-100">
+            <div class="price-tag">A medida</div>
+            <p style="color:var(--wi-muted)">Automatizaciones, apps o integraciones específicas para tu negocio. Presupuesto gratis, sin compromiso.</p>
+          </div>
+        </div>
+      </div>
+      <p class="mt-3" style="color:var(--wi-muted);font-size:.85rem">Precio solo de desarrollo. Hosting y dominio se contratan aparte (desde 5€/mes y 10–15€/año).</p>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="kicker text-center">Preguntas frecuentes</div>
+          <h2 class="text-center mb-4">Dudas habituales de {{ v.plural_lower }}</h2>
+          {% for q in v.faq %}
+          <div class="faq-item">
+            <b>{{ q.q }}</b>
+            <p class="mb-0 mt-2" style="color:var(--wi-muted)">{{ q.a }}</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contacto" class="section">
+    <div class="container text-center">
+      <h2 class="mb-3">¿Hablamos de tu {{ v.singular_lower }}?</h2>
+      <p class="lead-text mx-auto mb-4">Primera consulta gratis, sin compromiso. Te respondemos en menos de 24 horas.</p>
+      <div class="d-flex flex-wrap justify-content-center gap-2">
+        <a href="https://wa.me/34613708322" target="_blank" rel="noopener" class="btn btn-primary px-4">WhatsApp directo</a>
+        <a href="mailto:info@creaganaweb.es" class="btn btn-outline-dark-wi px-4">Enviar email</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <span class="wi-logo-card"><img src="/static/wi/img/logo.webp" alt="CreaGanaWeb" height="24" loading="lazy"></span>
+      <div>© 2026 CreaGanaWeb · creaganaweb.es</div>
+      <div class="d-flex flex-wrap gap-3">
+        <a href="tel:+34613708322" style="color:inherit">613 708 322</a>
+        <a href="mailto:info@creaganaweb.es" style="color:inherit">info@creaganaweb.es</a>
+      </div>
+    </div>
+    <div class="container d-flex flex-wrap justify-content-center gap-3 mt-3" style="opacity:.7">
+      <a href="/aviso-legal/" style="color:inherit">Aviso legal</a><span>·</span>
+      <a href="/privacidad/" style="color:inherit">Privacidad</a><span>·</span>
+      <a href="/cookies/" style="color:inherit">Cookies</a><span>·</span>
+      <a href="/" style="color:inherit">Volver a la web principal</a>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

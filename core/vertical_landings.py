@@ -1,0 +1,92 @@
+"""Content for the vertical/niche landing pages (SEO satellite pages).
+
+Each entry is real, distinct copy for that business type — not a find/replace
+template — so the pages don't read as thin/duplicate content to search engines.
+"""
+
+VERTICAL_LANDING_PAGES = {
+    'restaurantes': {
+        'title': 'Páginas web para restaurantes y cafeterías | CreaGanaWeb',
+        'meta_description': 'Webs para restaurantes con carta digital, reservas online y pedidos para recoger o a domicilio. Presencia en Google Maps incluida. Desde 490€.',
+        'canonical': 'https://creaganaweb.es/webs-para-restaurantes/',
+        'icon': 'biz-restaurant.webp',
+        'h1': 'Webs para restaurantes que llenan mesas, no solo muestran el menú',
+        'plural': 'Restaurantes',
+        'plural_lower': 'restaurantes y cafeterías',
+        'singular_lower': 'restaurante',
+        'intro': 'Una carta que se actualiza sola, reservas que llegan sin llamadas y una ficha de Google que aparece cuando alguien busca "restaurante cerca de mí". Eso es lo que construimos para negocios de hostelería.',
+        'mid_tier': 'Web con sistema de reservas online integrado: tus clientes reservan mesa a cualquier hora, tú recibes el aviso por WhatsApp.',
+        'features': [
+            {'icon': 'feat-whatsapp.webp', 'title': 'Carta digital siempre actualizada', 'desc': 'Cambias precios o platos tú mismo, sin depender de nadie. Con fotos, alérgenos y menú del día.'},
+            {'icon': 'icon-booking.webp', 'title': 'Reservas de mesa online', 'desc': 'Tus clientes reservan sin llamar. Confirmación automática por WhatsApp o email, con recordatorio.'},
+            {'icon': 'feat-booking.webp', 'title': 'Pedidos para recoger o a domicilio', 'desc': 'Un sistema simple de pedidos conectado a tu WhatsApp, sin comisiones de apps de terceros.'},
+            {'icon': 'biz-company.webp', 'title': 'Ficha de Google Maps optimizada', 'desc': 'Para que aparezcas cuando alguien busca "restaurante cerca de mí" en tu zona, con fotos y horario.'},
+            {'icon': 'ic-whatsapp.webp', 'title': 'Botón de WhatsApp', 'desc': 'Visible en toda la web, para consultas de grupos, eventos o alergias antes de venir.'},
+            {'icon': 'ic-shield.webp', 'title': 'Correo y dominio profesional', 'desc': 'reservas@turestaurante.com en vez de un Gmail — más confianza para proveedores y clientes.'},
+        ],
+        'faq': [
+            {'q': '¿Puedo cambiar el menú yo mismo cuando cambian los precios?',
+             'a': 'Sí. Te dejamos acceso para editar platos, precios y fotos sin depender de nosotros para cada cambio.'},
+            {'q': '¿El sistema de reservas evita que se llenen mesas de más?',
+             'a': 'Sí, puedes limitar cuántas mesas o comensales admites por franja horaria, para no saturar la cocina.'},
+            {'q': '¿Sirve para un bar o cafetería, no solo restaurantes?',
+             'a': 'Sí, la misma base sirve para bares, cafeterías, obradores o cualquier negocio de hostelería — ajustamos las secciones a lo que necesites.'},
+        ],
+    },
+    'salones-de-belleza': {
+        'title': 'Páginas web para salones de belleza y spas | CreaGanaWeb',
+        'meta_description': 'Webs para salones de belleza, peluquerías y spas con citas online, recordatorios automáticos y ficha de Google Maps. Reduce huecos vacíos en tu agenda. Desde 490€.',
+        'canonical': 'https://creaganaweb.es/webs-para-salones-de-belleza/',
+        'icon': 'biz-beauty.webp',
+        'h1': 'Webs para salones de belleza que llenan la agenda solas',
+        'plural': 'Salones y spas',
+        'plural_lower': 'salones de belleza y spas',
+        'singular_lower': 'salón',
+        'intro': 'Clientas que reservan hora sin llamar, recordatorios automáticos que reducen las ausencias, y una web que muestra tus servicios y resultados como merecen. Eso es lo que construimos para salones, peluquerías y centros de estética.',
+        'mid_tier': 'Web con sistema de citas online integrado: tus clientas eligen día, hora y servicio solas, sin llamar.',
+        'features': [
+            {'icon': 'icon-booking.webp', 'title': 'Citas online 24 horas', 'desc': 'Tus clientas reservan cuando quieran, sin esperar a que abras. Tú controlas la disponibilidad real de cada profesional.'},
+            {'icon': 'feat-whatsapp.webp', 'title': 'Recordatorios automáticos', 'desc': 'Aviso por WhatsApp 24h antes de cada cita. Reduce las ausencias entre un 50% y un 70%.'},
+            {'icon': 'icon-design.webp', 'title': 'Catálogo de servicios y precios', 'desc': 'Todos tus tratamientos, con fotos de antes/después si quieres mostrarlos.'},
+            {'icon': 'biz-company.webp', 'title': 'Ficha de Google Maps optimizada', 'desc': 'Apareces cuando alguien busca "peluquería" o "centro de estética cerca de mí".'},
+            {'icon': 'feat-multilang.webp', 'title': 'Galería de Instagram conectada', 'desc': 'Tus últimos trabajos se muestran solos en la web, sin que tengas que subir nada dos veces.'},
+            {'icon': 'ic-lock.webp', 'title': 'Ficha de cliente y historial', 'desc': 'Guarda preferencias, alergias o tratamientos anteriores de cada clienta, accesible desde el móvil.'},
+        ],
+        'faq': [
+            {'q': '¿Puedo tener varias profesionales con agendas distintas?',
+             'a': 'Sí, cada profesional puede tener su propia disponibilidad y sus propios servicios asociados.'},
+            {'q': '¿Los recordatorios realmente reducen las ausencias?',
+             'a': 'Sí, es uno de los cambios con más impacto medible: negocios similares reportan entre 50% y 70% menos no-shows tras activarlos.'},
+            {'q': '¿Sirve para barberías o centros de estética, no solo peluquerías?',
+             'a': 'Sí, la misma base funciona para barberías, centros de estética, uñas o cualquier negocio con citas — solo cambian los servicios que ofreces.'},
+        ],
+    },
+    'talleres': {
+        'title': 'Páginas web para talleres mecánicos | CreaGanaWeb',
+        'meta_description': 'Webs para talleres mecánicos y de servicio técnico con presupuestos online, partes de trabajo en PDF y ficha de Google Maps. Desde 490€.',
+        'canonical': 'https://creaganaweb.es/webs-para-talleres/',
+        'icon': 'biz-repair.webp',
+        'h1': 'Webs para talleres que dan confianza antes de que el cliente entre por la puerta',
+        'plural': 'Talleres',
+        'plural_lower': 'talleres mecánicos y de servicio técnico',
+        'singular_lower': 'taller',
+        'intro': 'Antes de dejar su coche o su equipo en un taller, el cliente busca en Google. Una web clara, con tus servicios, tus horarios y una ficha de Maps bien configurada es lo que decide si te llama a ti o al de al lado.',
+        'mid_tier': 'Web con formulario de presupuesto online: el cliente describe la avería y recibe una respuesta sin tener que llamar ni pasarse por el taller.',
+        'features': [
+            {'icon': 'icon-support.webp', 'title': 'Presupuestos y solicitudes online', 'desc': 'El cliente describe el problema desde el móvil, tú respondes por WhatsApp o email sin que tenga que llamar.'},
+            {'icon': 'feat-form.webp', 'title': 'Partes de trabajo en PDF automáticos', 'desc': 'Cuando se completa un servicio, se genera un PDF con el detalle y se envía solo, sin trabajo manual.'},
+            {'icon': 'biz-company.webp', 'title': 'Ficha de Google Maps optimizada', 'desc': 'Para aparecer cuando alguien busca "taller cerca de mí" o "mecánico en [tu ciudad]" con horario y valoraciones.'},
+            {'icon': 'ic-whatsapp.webp', 'title': 'Botón de WhatsApp', 'desc': 'Para consultas rápidas de disponibilidad, precios o si tienen la pieza necesaria.'},
+            {'icon': 'feat-integration.webp', 'title': 'Recordatorio de revisiones', 'desc': 'Avisos automáticos cuando toca la próxima ITV o revisión de un cliente habitual.'},
+            {'icon': 'ic-shield.webp', 'title': 'Correo y dominio profesional', 'desc': 'presupuestos@tutaller.com en vez de un Gmail — más confianza en cada respuesta.'},
+        ],
+        'faq': [
+            {'q': '¿Puedo recibir fotos del problema antes de dar presupuesto?',
+             'a': 'Sí, el formulario puede pedir fotos o descripción del problema, para que valores antes de que el cliente venga.'},
+            {'q': '¿Sirve para talleres de otros equipos, no solo coches?',
+             'a': 'Sí, la misma base funciona para talleres de motos, electrodomésticos, informática o cualquier servicio técnico.'},
+            {'q': '¿Puedo llevar el historial de vehículos de clientes habituales?',
+             'a': 'Sí, con el plan de área privada puedes guardar el historial de cada vehículo y consultarlo en la siguiente visita.'},
+        ],
+    },
+}

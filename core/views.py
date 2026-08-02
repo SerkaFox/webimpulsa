@@ -8,7 +8,8 @@ import xml.etree.ElementTree as ET
 import requests
 from django.conf import settings
 from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, Http404
+from .vertical_landings import VERTICAL_LANDING_PAGES
 from django.template.loader import render_to_string
 from django.utils.text import slugify
 from django.views.decorators.csrf import csrf_exempt
@@ -27,7 +28,36 @@ def home(request):
 SITEMAP_URLS = [
     {'loc': 'https://creaganaweb.es/', 'changefreq': 'weekly', 'priority': '1.0'},
     {'loc': 'https://creaganaweb.es/chequeo-digital/', 'changefreq': 'monthly', 'priority': '0.8'},
+] + [
+    {'loc': v['canonical'], 'changefreq': 'monthly', 'priority': '0.7'}
+    for v in VERTICAL_LANDING_PAGES.values()
 ]
+
+
+def vertical_landing(request, slug):
+    v = VERTICAL_LANDING_PAGES.get(slug)
+    if v is None:
+        raise Http404
+    ld_json = json.dumps({
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "Service",
+                "name": v['h1'],
+                "provider": {"@type": "LocalBusiness", "@id": "https://creaganaweb.es/#business", "name": "CreaGanaWeb"},
+                "areaServed": {"@type": "Country", "name": "España"},
+                "description": v['meta_description'],
+            },
+            {
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {"@type": "Question", "name": q['q'], "acceptedAnswer": {"@type": "Answer", "text": q['a']}}
+                    for q in v['faq']
+                ],
+            },
+        ],
+    }, ensure_ascii=False)
+    return render(request, "vertical_landing.html", {'v': v, 'ld_json': ld_json})
 
 
 def sitemap_xml(request):

@@ -5,6 +5,7 @@ from .views_chat import start_chat, send_message, poll_messages, lookup_session,
 urlpatterns = [
     path('', views.home, name='home'),
     path('sitemap.xml', views.sitemap_xml, name='sitemap_xml'),
+    path('webs-para-<slug:slug>/', views.vertical_landing, name='vertical_landing'),
     path('chequeo-digital/', views.digital_checkup, name='digital_checkup'),
     path('cuestionario-be360/', views.be360_questionnaire, name='be360_questionnaire'),
     path('cuestionario-be360/enviar-pdf/', views.send_be360_pdf, name='be360_send_pdf'),
