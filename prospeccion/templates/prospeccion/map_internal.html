@@ -449,7 +449,7 @@
       <li><span class="guide-num">4</span><div><b data-i18n="map.guide_step4_t">En cada negocio, usa el mensaje ya preparado</b><p data-i18n="map.guide_step4_d">En la ficha de cada uno tienes un mensaje de WhatsApp listo (💬) o una tarjeta QR (📇) para dejar sin tener que explicar nada.</p></div></li>
       <li><span class="guide-num">5</span><div><b data-i18n="map.guide_step5_t">Marca visitada cuando termines</b><p data-i18n="map.guide_step5_d">En el panel de «Ruta de hoy» pulsa «✅ Visitada» — así siempre sabes por quién ibas.</p></div></li>
     </ol>
-    <div class="wi-explain" data-i18n="map.guide_footer">Recuerda: el chequeo es un regalo gratis, no una venta — nunca hace falta insistir.</div>
+    <div class="wi-explain" id="guideTip">Recuerda: el chequeo es un regalo gratis, no una venta — nunca hace falta insistir.</div>
   </div>
 </div>
 
@@ -529,20 +529,30 @@ function saveRoute(stops){
   localStorage.setItem(ROUTE_KEY, JSON.stringify(stops));
   renderRoutePanel();
 }
+function addRouteStop(stop){
+  var stops = getRoute();
+  if(stops.some(function(s){ return s.id === stop.id; })) { showToast(_rt('map.route_added_toast')); return; }
+  stops.push(stop);
+  saveRoute(stops);
+  showToast(_rt('map.route_added_toast'));
+}
 function addToRoute(id){
   var p = window.__prospectsById[id];
   if(!p) return;
-  var stops = getRoute();
-  if(stops.some(function(s){ return s.id === id; })) { showToast(_rt('map.route_added_toast')); return; }
-  stops.push({id: id, name: p.name, lat: p.lat, lng: p.lng, address: p.address || ''});
-  saveRoute(stops);
-  showToast(_rt('map.route_added_toast'));
+  addRouteStop({id: id, name: p.name, lat: p.lat, lng: p.lng, address: p.address || ''});
+}
+// Para un negocio del propio mapa de Google que TODAVÍA no está guardado en
+// CreaGanaWeb — usa el place_id como identificador (no hay pk de verdad
+// hasta que se guarde), así que "Visitada" solo puede quitarlo de la lista,
+// nunca actualizar un estado de venta que no existe.
+function addPoiToRoute(placeId, lat, lng, name){
+  addRouteStop({id: 'gp:' + placeId, name: name, lat: lat, lng: lng, address: ''});
 }
 function removeFromRoute(id){
   saveRoute(getRoute().filter(function(s){ return s.id !== id; }));
 }
 function markRouteStopVisited(id){
-  postJson('/panel/prospeccion/' + id + '/update/', {sales_status: 'contacted'});
+  if(typeof id === 'number') postJson('/panel/prospeccion/' + id + '/update/', {sales_status: 'contacted'});
   removeFromRoute(id);
 }
 function clearRoute(){
@@ -566,12 +576,13 @@ function renderRoutePanel(){
     return;
   }
   body.innerHTML = stops.map(function(s){
+    var idJson = JSON.stringify(s.id); // string (gp:placeId) o número (pk) — comillas simples en el onclick para no chocar con las dobles del HTML
     return '<div class="route-stop">' +
       '<div class="name">' + s.name + '</div>' +
       '<div class="addr">' + (s.address || '') + '</div>' +
       '<div class="actions">' +
-        '<button type="button" onclick="markRouteStopVisited(' + s.id + ')">' + _rt('map.route_visited') + '</button>' +
-        '<button type="button" onclick="removeFromRoute(' + s.id + ')">' + _rt('map.route_remove') + '</button>' +
+        "<button type=\"button\" onclick='markRouteStopVisited(" + idJson + ")'>" + _rt('map.route_visited') + '</button>' +
+        "<button type=\"button\" onclick='removeFromRoute(" + idJson + ")'>" + _rt('map.route_remove') + '</button>' +
       '</div></div>';
   }).join('') +
   '<div class="route-actions">' +
@@ -1181,8 +1192,73 @@ document.getElementById('btnCloseHistory').addEventListener('click', function(){
   document.getElementById('historyOverlay').classList.remove('show');
 });
 
+// Consejos de ánimo — rotan por día del año (no al azar en cada carga, para
+// que no cambie si recarga la página el mismo día) — pensados para bajar el
+// miedo al rechazo, no solo explicar los pasos técnicos.
+var GUIDE_TIPS = {
+  es: [
+    'Recuerda: el chequeo es un regalo gratis, no una venta — nunca hace falta insistir.',
+    'Un «no, gracias» no es sobre ti — la mayoría ni te conoce todavía. Sigue con el siguiente.',
+    'No hace falta convencer a nadie: si el chequeo es bueno, se explica solo.',
+    'Cuantos más negocios visites, menos pesa cada «no» — es cuestión de números, no de ti.',
+    'Si te da vergüenza empezar, usa el mensaje de WhatsApp tal cual está — no hace falta improvisar.',
+    'Un cliente que dice que no hoy puede decir que sí en unos meses — no se cierra ninguna puerta.',
+    'Ir despacio también cuenta: 2 negocios bien atendidos hoy valen más que 10 a medias.',
+    'Nadie espera que sepas explicarlo todo perfecto — el chequeo hace ese trabajo por ti.',
+    'Si un negocio ya tiene todo bien, dilo con naturalidad — también genera confianza.',
+    'Está bien tomarte un descanso entre visitas — no hay prisa ni cuota que cumplir.',
+    'Cada «sí» de hoy también puede traer una recomendación mañana — no se pierde nada.',
+    'Tú no estás pidiendo nada — estás ofreciendo algo gratis. La postura correcta ya está de tu lado.',
+    'Si preguntan «¿y esto cuánto cuesta?», la respuesta es fácil: el chequeo es gratis, sin letra pequeña.',
+    'Si no saben qué es un «chequeo digital», dilo simple: «miro cómo os ve un cliente que os busca en Google».',
+    'Si dicen que están ocupados, no insistas — ofrece dejar el enlace o volver otro día. Nunca se pierde la opción.',
+    'Si preguntan por qué lo haces gratis, es sencillo: así ven el trabajo antes de decidir nada.',
+    'Si notas que dudan, no hace falta convencer más — solo pregunta «¿lo miro y te cuento igualmente?».',
+    'Sonríe al entrar y preséntate por tu nombre — genera más confianza que cualquier frase preparada.',
+    'Si te preguntan si vendes algo, sé honesta: «solo el chequeo es gratis, si luego quieres mejorar algo, hablamos».',
+    'No hace falta memorizar nada — puedes leer el mensaje de la web tal cual, en persona también funciona.',
+    'Si alguien te corta con un «no, gracias» seco, agradece igualmente y sigue — no fue tiempo perdido.',
+    'Termina siempre dejando la puerta abierta: «si cambias de opinión, aquí me tienes» — sin presionar.',
+    'Habla despacio y deja pausas — no hace falta llenar todos los silencios para que suene bien.',
+    'Si el dueño no está, pregunta cuándo vuelve y deja tu WhatsApp — no hace falta esperar de pie.',
+  ],
+  ru: [
+    'Помни: проверка — это бесплатный подарок, а не продажа. Настаивать никогда не нужно.',
+    '«Нет, спасибо» — это не про тебя лично, многие тебя ещё даже не знают. Иди к следующему.',
+    'Никого не нужно убеждать: если проверка хорошая, она говорит сама за себя.',
+    'Чем больше визитов, тем меньше весит каждый отказ — это статистика, а не оценка тебя.',
+    'Если стесняешься начать — используй готовое сообщение как есть, не нужно ничего придумывать.',
+    'Тот, кто сегодня отказал, через пару месяцев может согласиться — двери не закрываются навсегда.',
+    'Не спеши: 2 хорошо проведённых визита сегодня стоят больше, чем 10 наспех.',
+    'Никто не ждёт, что ты объяснишь всё идеально — проверка делает эту работу за тебя.',
+    'Если у бизнеса и так всё хорошо — так и скажи, это тоже вызывает доверие.',
+    'Можно устроить перерыв между визитами — спешить некуда, никакой нормы нет.',
+    'Каждое сегодняшнее «да» завтра может превратиться в рекомендацию — ничего не теряется.',
+    'Ты ничего не просишь — ты предлагаешь бесплатную вещь. Позиция изначально на твоей стороне.',
+    'Если спросят «а сколько это стоит?» — ответ простой: проверка бесплатная, без скрытых условий.',
+    'Если не понимают, что такое «цифровая проверка», объясни просто: «смотрю, как вас видит клиент в Google».',
+    'Если говорят, что заняты — не настаивай, предложи оставить ссылку или зайти в другой раз. Вариант не теряется.',
+    'Если спросят, почему бесплатно — всё просто: так они видят результат до того, как что-то решать.',
+    'Если чувствуешь сомнение — не нужно уговаривать, просто спроси: «я всё равно посмотрю и расскажу?».',
+    'Улыбнись и представься по имени при входе — это работает лучше любой заготовленной фразы.',
+    'Если спросят, не продаёшь ли ты что-то — будь честна: «бесплатна только проверка, а если захотят улучшить — обсудим отдельно».',
+    'Не нужно ничего заучивать — можно читать текст с сайта как есть, в живую тоже работает.',
+    'Если кто-то резко скажет «нет, спасибо» — всё равно поблагодари и иди дальше, время не потрачено зря.',
+    'Всегда заканчивай так, чтобы дверь оставалась открытой: «если передумаете — я рядом» — без давления.',
+    'Говори не спеша, паузы — это нормально, не нужно заполнять любую тишину.',
+    'Если владельца нет на месте — спроси, когда будет, и оставь WhatsApp — ждать стоя не обязательно.',
+  ],
+};
+function paintGuideTip(){
+  var lang = (window.wiGetLang ? window.wiGetLang() : 'ru');
+  var tips = GUIDE_TIPS[lang] || GUIDE_TIPS.ru;
+  var dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+  document.getElementById('guideTip').textContent = tips[dayOfYear % tips.length];
+}
+
 document.getElementById('btnOpenGuide').addEventListener('click', function(ev){
   ev.preventDefault();
+  paintGuideTip();
   document.getElementById('guideOverlay').classList.add('show');
 });
 document.getElementById('btnCloseGuide').addEventListener('click', function(){
@@ -1195,6 +1271,7 @@ document.getElementById('btnCloseGuide').addEventListener('click', function(){
   var today = new Date().toISOString().slice(0, 10);
   if(localStorage.getItem('wi_guide_seen_date') !== today){
     localStorage.setItem('wi_guide_seen_date', today);
+    paintGuideTip();
     document.getElementById('guideOverlay').classList.add('show');
   }
 })();
@@ -1261,6 +1338,7 @@ function showPoiPopup(placeId, latLng){
     '<div style="display:flex;flex-direction:column;gap:6px">' +
     '<button type="button" class="btn sm" id="poiGetInfoBtn">'+_t('map.poi_get_info')+'</button>' +
     '<button type="button" class="btn sm green" id="poiAddDirectBtn">'+_t('map.poi_add_direct')+'</button>' +
+    '<button type="button" class="btn sm ghost" id="poiAddRouteBtn">'+_t('map.add_to_route')+'</button>' +
     '<a href="'+gmapsUrl+'" target="_blank" rel="noopener" style="font-size:.78rem">📷 '+_t('map.open_in_gmaps')+'</a>' +
     '</div>';
   document.getElementById('poiBar').classList.add('show');
@@ -1268,6 +1346,9 @@ function showPoiPopup(placeId, latLng){
   document.getElementById('poiAddDirectBtn').addEventListener('click', function(){
     closePoiBar();
     openConfirmPanel({fromLink: true, lat: latLng.lat(), lng: latLng.lng(), name: '', gmapsUrl: gmapsUrl});
+  });
+  document.getElementById('poiAddRouteBtn').addEventListener('click', function(){
+    addPoiToRoute(placeId, latLng.lat(), latLng.lng(), _t('map.poi_no_name'));
   });
 }
 
@@ -1294,17 +1375,30 @@ function fetchPoiDetails(placeId, latLng){
       var actionBtn = p.existing_prospect_id
         ? '<a class="btn sm secondary" href="'+p.detail_url+'">📇 '+_t('map.view_card')+'</a>'
         : '<button type="button" class="btn sm" id="poiAddFoundBtn">➕ '+_t('map.add_to_crm')+'</button>';
+      var routeBtn = p.existing_prospect_id
+        ? '<button type="button" class="btn sm ghost" id="poiFoundRouteBtn" data-existing-id="'+p.existing_prospect_id+'">'+_t('map.add_to_route')+'</button>'
+        : '<button type="button" class="btn sm ghost" id="poiFoundRouteBtn">'+_t('map.add_to_route')+'</button>';
       bodyEl.innerHTML =
         '<span class="web-badge '+web.cls+'">'+web.icon+' '+web.label+'</span><br>' +
         '<strong>'+(p.name || _t('map.poi_no_name'))+'</strong><br>' +
         '<div style="color:#5a6d8c;font-size:.8rem;margin:2px 0 8px">'+(p.address||'')+'</div>' +
-        '<div style="display:flex;gap:6px;flex-wrap:wrap">' + actionBtn +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap">' + actionBtn + routeBtn +
         '<a class="btn sm ghost" href="'+gmapsUrl+'" target="_blank" rel="noopener">📷 '+_t('map.open_in_gmaps')+'</a>' +
         '</div>';
       var addBtn = document.getElementById('poiAddFoundBtn');
       if(addBtn) addBtn.addEventListener('click', function(){
         closePoiBar();
         openConfirmPanel({fromGoogle: true, place: p});
+      });
+      document.getElementById('poiFoundRouteBtn').addEventListener('click', function(){
+        if(p.existing_prospect_id){
+          window.__prospectsById[p.existing_prospect_id] = {
+            name: p.name, lat: latLng.lat(), lng: latLng.lng(), address: p.address || '',
+          };
+          addToRoute(p.existing_prospect_id);
+        } else {
+          addPoiToRoute(placeId, latLng.lat(), latLng.lng(), p.name || _t('map.poi_no_name'));
+        }
       });
       refreshPlacesUsage();
     })
@@ -1612,7 +1706,6 @@ es: {
   'map.guide_step4_d': 'En la ficha de cada uno tienes un mensaje de WhatsApp listo (💬) o una tarjeta QR (📇) para dejar sin tener que explicar nada.',
   'map.guide_step5_t': 'Marca visitada cuando termines',
   'map.guide_step5_d': 'En el panel de «Ruta de hoy» pulsa «✅ Visitada» — así siempre sabes por quién ibas.',
-  'map.guide_footer': 'Recuerda: el chequeo es un regalo gratis, no una venta — nunca hace falta insistir.',
 },
 ru: {
   'map.page_title': 'Карта проспекции — CreaGanaWeb',
@@ -1751,7 +1844,6 @@ ru: {
   'map.guide_step4_d': 'В карточке каждой компании есть готовое сообщение для WhatsApp (💬) или QR-визитка (📇) — можно оставить, ничего не объясняя.',
   'map.guide_step5_t': 'Отметь «посетили», когда закончишь',
   'map.guide_step5_d': 'В панели «Маршрут на сегодня» нажми «✅ Посетили» — так всегда видно, у кого ещё не была.',
-  'map.guide_footer': 'Помни: проверка — это бесплатный подарок, а не продажа. Настаивать никогда не нужно.',
 },
 };
 
