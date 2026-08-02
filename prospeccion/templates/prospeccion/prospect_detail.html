@@ -108,6 +108,14 @@
   .tab-panel { display: none; background: var(--wi-card); border: 1px solid var(--wi-border); border-radius: 14px;
     margin-bottom: 12px; box-shadow: var(--wi-shadow); padding: 16px; }
   .tab-panel.active { display: block; }
+
+  /* Fila superior de 3 columnas: info | funciones | estado — en pantallas
+     estrechas se apila (info arriba, luego funciones, luego estado). */
+  .top-grid { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 16px; align-items: start; margin-bottom: 16px; }
+  .top-grid .card { margin-bottom: 0; }
+  @media (max-width: 900px) {
+    .top-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -124,33 +132,60 @@
   </div>
   <div class="wrap">
 
-    <div class="card">
-      <h1>{{ prospect.name }} <span class="badge" id="statusBadge" data-status-id="{{ prospect.sales_status }}" style="background:{{ status_color }}">{{ prospect.get_sales_status_display }}</span></h1>
-      <div style="color:var(--wi-muted);font-size:.88rem"><span id="sectorLabel" data-sector-code="{{ prospect.sector }}">{{ prospect.get_sector_display }}</span> · {{ prospect.municipality }} {{ prospect.district }}</div>
-      <div style="margin-top:8px"><span data-i18n="detail.score_label">Puntuación actual:</span> <strong>{{ prospect.current_score|default:"—" }}</strong>/100</div>
-      <div class="wi-explain" data-i18n="detail.score_explain">
-        Es una nota de 0 a 100 que resume qué tan bien está preparado el negocio en internet
-        (web, WhatsApp, reservas online…) — cuanto más alta, menos trabajo de mejora necesita.
-      </div>
-      {% if prospect.gmaps_url %}
-        <div style="margin-top:8px">
-          <a class="btn sm ghost" href="{{ prospect.gmaps_url }}" target="_blank" rel="noopener" data-i18n="detail.view_gmaps">📷 Ver en Google Maps (fotos, menú, reseñas…)</a>
+    <!-- ── Fila superior: info a la izquierda, funciones al centro,
+         estado a la derecha — antes todo apilado, con lo más usado
+         (las acciones) empujado hacia abajo por las tarjetas de encima ── -->
+    <div class="top-grid">
+      <div class="card" id="infoCard">
+        <h1>{{ prospect.name }}</h1>
+        <div style="color:var(--wi-muted);font-size:.88rem"><span id="sectorLabel" data-sector-code="{{ prospect.sector }}">{{ prospect.get_sector_display }}</span> · {{ prospect.municipality }} {{ prospect.district }}</div>
+        <div style="margin-top:8px"><span data-i18n="detail.score_label">Puntuación actual:</span> <strong>{{ prospect.current_score|default:"—" }}</strong>/100</div>
+        <div class="wi-explain" data-i18n="detail.score_explain">
+          Es una nota de 0 a 100 que resume qué tan bien está preparado el negocio en internet
+          (web, WhatsApp, reservas online…) — cuanto más alta, menos trabajo de mejora necesita.
         </div>
-      {% endif %}
-    </div>
-
-    <!-- ── Cambiar la etapa: botones grandes, siempre visibles — antes era
-         un desplegable "una palabra" escondido en una sección plegada ── -->
-    <div class="card" id="statusQuickCard">
-      <h2 data-i18n="detail.status_section_title">Estado y responsable</h2>
-      <div class="wi-explain" data-i18n="detail.status_explain">
-        La «etapa» es en qué punto del proceso de venta está esta empresa (descubierta, contactada,
-        auditada, ganada…) — el color del punto en el mapa es siempre el mismo que el de esta etiqueta.
+        {% if prospect.gmaps_url %}
+          <div style="margin-top:8px">
+            <a class="btn sm ghost" href="{{ prospect.gmaps_url }}" target="_blank" rel="noopener" data-i18n="detail.view_gmaps">📷 Ver en Google Maps (fotos, menú, reseñas…)</a>
+          </div>
+        {% endif %}
       </div>
-      <div class="status-btns" id="statusBtns">
-        {% for id, label in sales_statuses %}
-          <button type="button" class="status-btn" data-status="{{ id }}" data-code="{{ id }}">{{ label }}</button>
-        {% endfor %}
+
+      <div class="card" id="functionsCard">
+        <div class="primary-actions">
+          <button type="button" class="btn" id="btnGoChequeo" data-i18n="detail.btn_chequeo">🩺 Hacer chequeo</button>
+          <button type="button" class="btn" id="btnGoContacto" data-i18n="detail.btn_contacto">👤 Añadir contacto</button>
+          <button type="button" class="btn green" id="btnPrepararPropuesta" data-i18n="detail.btn_propuesta">📋 Preparar propuesta</button>
+        </div>
+        <div class="tab-bar" id="tabBar">
+          <button type="button" class="tab-btn" data-tab="settingsPanel" data-i18n="detail.tab_settings">⚙️ Prioridad y responsable</button>
+          <button type="button" class="tab-btn" data-tab="prelimDetails" data-i18n="detail.prelim_section_title">Auditoría preliminar</button>
+          <button type="button" class="tab-btn" data-tab="linkPanel" data-i18n="detail.link_section_title">Enlace personal del chequeo</button>
+          <button type="button" class="tab-btn" data-tab="crmDetails" data-i18n="detail.crm_section_title">CRM</button>
+          <button type="button" class="tab-btn" data-tab="contactosDetails" data-i18n="detail.contacts_section_title">Contactos</button>
+          <button type="button" class="tab-btn" data-tab="photosDetails" data-i18n="detail.photos_section_title">Fotos</button>
+          <button type="button" class="tab-btn" data-tab="publicationPanel" data-i18n="detail.publication_section_title">Consentimientos de publicación</button>
+          <button type="button" class="tab-btn" data-tab="historyPanel" data-i18n="detail.history_section_title">Historial de chequeos</button>
+          <button type="button" class="tab-btn" data-tab="dangerPanel" style="color:#dc2626" data-i18n="detail.danger_title">Zona de peligro</button>
+        </div>
+      </div>
+
+      <!-- ── Cambiar la etapa: botones grandes, siempre visibles — antes era
+           un desplegable "una palabra" escondido en una sección plegada ── -->
+      <div class="card" id="statusQuickCard">
+        <h2 data-i18n="detail.status_section_title">Estado y responsable</h2>
+        <div class="wi-explain" data-i18n="detail.status_explain">
+          La «etapa» es en qué punto del proceso de venta está esta empresa (descubierta, contactada,
+          auditada, ganada…) — el color del punto en el mapa es siempre el mismo que el de esta etiqueta.
+        </div>
+        <div style="margin-bottom:10px">
+          <span class="badge" id="statusBadge" data-status-id="{{ prospect.sales_status }}" style="background:{{ status_color }}">{{ prospect.get_sales_status_display }}</span>
+        </div>
+        <div class="status-btns" id="statusBtns">
+          {% for id, label in sales_statuses %}
+            <button type="button" class="status-btn" data-status="{{ id }}" data-code="{{ id }}">{{ label }}</button>
+          {% endfor %}
+        </div>
       </div>
     </div>
 
@@ -188,26 +223,6 @@
       </div>
     </div>
     {% endif %}
-
-    <!-- ── Las 3 acciones principales — nunca hace falta abrir nada más ── -->
-    <div class="primary-actions">
-      <button type="button" class="btn" id="btnGoChequeo" data-i18n="detail.btn_chequeo">🩺 Hacer chequeo</button>
-      <button type="button" class="btn" id="btnGoContacto" data-i18n="detail.btn_contacto">👤 Añadir contacto</button>
-      <button type="button" class="btn green" id="btnPrepararPropuesta" data-i18n="detail.btn_propuesta">📋 Preparar propuesta</button>
-    </div>
-
-    <!-- ── Barra de pestañas — un solo panel visible a la vez ── -->
-    <div class="tab-bar" id="tabBar">
-      <button type="button" class="tab-btn" data-tab="settingsPanel" data-i18n="detail.tab_settings">⚙️ Prioridad y responsable</button>
-      <button type="button" class="tab-btn" data-tab="prelimDetails" data-i18n="detail.prelim_section_title">Auditoría preliminar</button>
-      <button type="button" class="tab-btn" data-tab="linkPanel" data-i18n="detail.link_section_title">Enlace personal del chequeo</button>
-      <button type="button" class="tab-btn" data-tab="crmDetails" data-i18n="detail.crm_section_title">CRM</button>
-      <button type="button" class="tab-btn" data-tab="contactosDetails" data-i18n="detail.contacts_section_title">Contactos</button>
-      <button type="button" class="tab-btn" data-tab="photosDetails" data-i18n="detail.photos_section_title">Fotos</button>
-      <button type="button" class="tab-btn" data-tab="publicationPanel" data-i18n="detail.publication_section_title">Consentimientos de publicación</button>
-      <button type="button" class="tab-btn" data-tab="historyPanel" data-i18n="detail.history_section_title">Historial de chequeos</button>
-      <button type="button" class="tab-btn" data-tab="dangerPanel" style="color:#dc2626" data-i18n="detail.danger_title">Zona de peligro</button>
-    </div>
 
     <div class="card tab-panel" id="settingsPanel">
       <form id="updateForm">
