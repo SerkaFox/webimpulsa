@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from collections import Counter, defaultdict
 from datetime import timedelta
 
@@ -14,6 +15,7 @@ from crm.views import _crm_auth
 from . import places
 from .constants import SALES_STATUS_COLORS
 from .csv_import import parse_csv, validate_csv_file
+from .messaging_templates import build_opener_variants, build_referral_message
 from .models import (
     CONSENT_TEXT_VERSION, BusinessContact, BusinessProspect, ChequeoAudit, PlacesApiLimitNotification,
     PlacesApiMonthlyCounter, PlacesApiRequestLog, ProspectPhoto, SECTOR_CHOICES, StaffMember,
@@ -569,6 +571,20 @@ def _prelim_draft_key(pk):
     return f'prelim_draft_{pk}'
 
 
+def _best_whatsapp_digits(prospect, contacts):
+    """Digits-only phone for a wa.me link — prefers the primary contact's
+    WhatsApp/phone, falls back to the business-level fields."""
+    primary = next((c for c in contacts if c.is_primary), None)
+    for candidate in (
+        primary.whatsapp if primary else '', primary.phone if primary else '',
+        prospect.whatsapp, prospect.phone,
+    ):
+        digits = re.sub(r'\D', '', candidate or '')
+        if digits:
+            return digits
+    return ''
+
+
 @_crm_auth
 def prospect_detail(request, pk):
     prospect = get_object_or_404(BusinessProspect.objects.select_related('assigned_to', 'converted_client'), pk=pk)
@@ -576,10 +592,16 @@ def prospect_detail(request, pk):
     latest_preliminar = next((a for a in audits if a.stage == ChequeoAudit.STAGE_PRELIMINAR), None)
     latest_confirmado = next((a for a in audits if a.stage == ChequeoAudit.STAGE_CONFIRMADO), None)
     is_public, publication_reason = publication_status(prospect)
+    contacts = list(prospect.contacts.all())
+    is_won = prospect.sales_status == BusinessProspect.SALES_WON
+    # Un cliente ya ganado no necesita el mensaje de "toma contacto en frío"
+    # (asumiría cosas como "no tenéis web" que ya no son ciertas) — para él
+    # solo tiene sentido pedirle una recomendación.
+    opener_variants = [] if is_won else build_opener_variants(prospect)
 
     return render(request, 'prospeccion/prospect_detail.html', {
         'prospect': prospect,
-        'contacts': prospect.contacts.all(),
+        'contacts': contacts,
         'photos': prospect.site_photos.all(),
         'interactions': prospect.interactions.all()[:50],
         'audits': audits,
@@ -595,6 +617,10 @@ def prospect_detail(request, pk):
         'publication_reason': publication_reason,
         'prelim_draft_json': json.dumps(request.session.get(_prelim_draft_key(pk), {})),
         'status_color': SALES_STATUS_COLORS.get(prospect.sales_status, '#8a94a6'),
+        'opener_variants': opener_variants,
+        'opener_variants_json': json.dumps(opener_variants),
+        'referral_message': build_referral_message(prospect) if is_won else None,
+        'whatsapp_digits': _best_whatsapp_digits(prospect, contacts),
     })
 
 
@@ -632,6 +658,25 @@ def draft_proposal(request, pk):
         'proposal_id': proposal.pk,
         'proposal_url': f'/wi/crm/proposal/{proposal.pk}/',
     })
+
+
+@_crm_auth
+def prospect_qr_png(request, pk):
+    import io
+    import qrcode
+
+    prospect = get_object_or_404(BusinessProspect, pk=pk)
+    url = request.build_absolute_uri(f'/chequeo-digital/e/{prospect.public_token}/')
+    img = qrcode.make(url, box_size=10, border=2)
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    return HttpResponse(buf.getvalue(), content_type='image/png')
+
+
+@_crm_auth
+def prospect_qr_card(request, pk):
+    prospect = get_object_or_404(BusinessProspect, pk=pk)
+    return render(request, 'prospeccion/prospect_qr_card.html', {'prospect': prospect})
 
 
 @_crm_auth

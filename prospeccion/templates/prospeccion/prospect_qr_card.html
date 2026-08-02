@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tarjeta QR — {{ prospect.name }}</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="/static/wi/css/brand.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--wi-bg); color: var(--wi-text); }
+  .toolbar { padding: 14px 18px; display: flex; gap: 10px; align-items: center; }
+  .toolbar a { color: var(--wi-blue); font-size: .88rem; text-decoration: none; }
+  .btn { background: var(--wi-gradient); color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: .85rem; font-weight: 700; cursor: pointer; }
+  .card-wrap { display: flex; justify-content: center; padding: 20px; }
+  .card {
+    width: 340px; background: #fff; border-radius: 18px; box-shadow: var(--wi-shadow);
+    padding: 28px 24px; text-align: center;
+  }
+  .card img.logo { height: 32px; margin-bottom: 14px; }
+  .card h1 { font-size: 1.1rem; margin: 0 0 4px; color: var(--wi-navy); }
+  .card p.tagline { font-size: .82rem; color: var(--wi-muted); margin: 0 0 18px; }
+  .card img.qr { width: 220px; height: 220px; margin: 0 auto 16px; display: block; }
+  .card .cta { font-size: .92rem; font-weight: 700; color: var(--wi-blue); margin-bottom: 4px; }
+  .card .sub { font-size: .78rem; color: var(--wi-muted); }
+  @media print {
+    .toolbar { display: none; }
+    body { background: #fff; }
+    .card { box-shadow: none; border: 1px solid #ddd; }
+  }
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <a href="/panel/prospeccion/{{ prospect.pk }}/">← Volver a la ficha</a>
+    <button type="button" class="btn" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+  </div>
+  <div class="card-wrap">
+    <div class="card">
+      <img class="logo" src="/static/wi/img/logo.webp" alt="CreaGanaWeb">
+      <h1>{{ prospect.name }}</h1>
+      <p class="tagline">Chequeo digital gratuito, sin compromiso</p>
+      <img class="qr" src="/panel/prospeccion/{{ prospect.pk }}/qr.png" alt="Código QR del chequeo digital">
+      <div class="cta">Escanea para ver tu chequeo gratis</div>
+      <div class="sub">2 minutos · sin compromiso · creaganaweb.es</div>
+    </div>
+  </div>
+</body>
+</html>

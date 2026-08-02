@@ -40,6 +40,8 @@ urlpatterns = [
     path('panel/prospeccion/<int:pk>/convert/', views_panel.convert_to_lead, name='prospeccion_convert'),
     path('panel/prospeccion/<int:pk>/draft-proposal/', views_panel.draft_proposal, name='prospeccion_draft_proposal'),
     path('panel/prospeccion/<int:pk>/pdf/', views_panel.prospect_pdf, name='prospeccion_pdf'),
+    path('panel/prospeccion/<int:pk>/qr.png', views_panel.prospect_qr_png, name='prospeccion_qr_png'),
+    path('panel/prospeccion/<int:pk>/qr/', views_panel.prospect_qr_card, name='prospeccion_qr_card'),
 
     path('panel/prospeccion/<int:pk>/preliminar/draft/', views_panel.preliminar_save_draft,
          name='prospeccion_preliminar_draft'),

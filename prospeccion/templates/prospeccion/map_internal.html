@@ -148,6 +148,28 @@
   .poi-bar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   .poi-bar-close { background: none; border: none; cursor: pointer; color: #8a94a6; font-size: 1rem; line-height: 1; }
 
+  /* "Ruta de hoy" — pensada para el trabajo de campo: ir marcando negocios
+     encontrados en el mapa, y al final del recorrido abrir todos como una
+     ruta en Google Maps en vez de tener que planificarla a mano. */
+  .route-panel {
+    position: absolute; top: 10px; left: 10px; z-index: 5; background: rgba(255,255,255,.97);
+    border-radius: 10px; box-shadow: 0 2px 12px rgba(12,28,66,.18); font-size: .78rem; max-width: 260px;
+  }
+  .route-panel summary { cursor: pointer; font-weight: 700; padding: 8px 10px; list-style: none; }
+  .route-panel summary::-webkit-details-marker { display: none; }
+  .route-panel .route-body { padding: 0 10px 10px; max-height: 44vh; overflow-y: auto; }
+  .route-stop { border-top: 1px solid #eef0f4; padding: 7px 0; }
+  .route-stop:first-child { border-top: none; }
+  .route-stop .name { font-weight: 700; }
+  .route-stop .addr { color: #8a94a6; font-size: .74rem; }
+  .route-stop .actions { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+  .route-stop .actions button { font-size: .72rem; padding: 3px 7px; border-radius: 6px; border: 1px solid #d8dee8; background: #f8fafc; cursor: pointer; }
+  .route-empty { color: #8a94a6; padding: 6px 0; }
+  .route-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .route-actions button { flex: 1; font-size: .76rem; padding: 6px 8px; border-radius: 7px; border: none; cursor: pointer; }
+  .route-actions .go { background: #075CCF; color: #fff; font-weight: 700; }
+  .route-actions .clear { background: #f1f5f9; color: #334155; }
+
   /* Widget de control de gasto de Google Places — colapsado por defecto
      (como la leyenda del mapa), para no ocupar media pantalla del sidebar. */
   .puw { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 14px; font-size: .8rem; }
@@ -234,6 +256,10 @@
       </div>
       <div id="poiBarBody"></div>
     </div>
+    <details class="route-panel" id="routePanel">
+      <summary>🗺️ <span data-i18n="map.route_title">Ruta de hoy</span> (<span id="routeCount">0</span>)</summary>
+      <div class="route-body" id="routeBody"></div>
+    </details>
   </div>
 
   <div class="sidebar">
@@ -445,6 +471,72 @@ function postJson(url, body){
     .then(function(r){ return r.json().then(function(data){ return {ok:r.ok, status:r.status, data:data}; }); });
 }
 
+/* ══════════════════════════ Ruta de hoy ══════════════════════════
+   Pensada para el trabajo de campo: ir marcando negocios encontrados en el
+   mapa a lo largo del día y, al final, abrir todos como una única ruta en
+   Google Maps en vez de tener que planificarla a mano parada por parada. */
+var ROUTE_KEY = 'wi_route_today';
+window.__prospectsById = window.__prospectsById || {};
+
+function getRoute(){
+  try { return JSON.parse(localStorage.getItem(ROUTE_KEY) || '[]'); } catch(e){ return []; }
+}
+function saveRoute(stops){
+  localStorage.setItem(ROUTE_KEY, JSON.stringify(stops));
+  renderRoutePanel();
+}
+function addToRoute(id){
+  var p = window.__prospectsById[id];
+  if(!p) return;
+  var stops = getRoute();
+  if(stops.some(function(s){ return s.id === id; })) { showToast(_rt('map.route_added_toast')); return; }
+  stops.push({id: id, name: p.name, lat: p.lat, lng: p.lng, address: p.address || ''});
+  saveRoute(stops);
+  showToast(_rt('map.route_added_toast'));
+}
+function removeFromRoute(id){
+  saveRoute(getRoute().filter(function(s){ return s.id !== id; }));
+}
+function markRouteStopVisited(id){
+  postJson('/panel/prospeccion/' + id + '/update/', {sales_status: 'contacted'});
+  removeFromRoute(id);
+}
+function clearRoute(){
+  saveRoute([]);
+}
+function openRouteInMaps(){
+  var stops = getRoute();
+  if(!stops.length) return;
+  var last = stops[stops.length - 1];
+  var waypoints = stops.slice(0, -1).map(function(s){ return s.lat + ',' + s.lng; }).join('|');
+  var url = 'https://www.google.com/maps/dir/?api=1&destination=' + last.lat + ',' + last.lng
+    + (waypoints ? '&waypoints=' + encodeURIComponent(waypoints) : '') + '&travelmode=walking';
+  window.open(url, '_blank', 'noopener');
+}
+function renderRoutePanel(){
+  var stops = getRoute();
+  document.getElementById('routeCount').textContent = stops.length;
+  var body = document.getElementById('routeBody');
+  if(!stops.length){
+    body.innerHTML = '<div class="route-empty">' + _rt('map.route_empty') + '</div>';
+    return;
+  }
+  body.innerHTML = stops.map(function(s){
+    return '<div class="route-stop">' +
+      '<div class="name">' + s.name + '</div>' +
+      '<div class="addr">' + (s.address || '') + '</div>' +
+      '<div class="actions">' +
+        '<button type="button" onclick="markRouteStopVisited(' + s.id + ')">' + _rt('map.route_visited') + '</button>' +
+        '<button type="button" onclick="removeFromRoute(' + s.id + ')">' + _rt('map.route_remove') + '</button>' +
+      '</div></div>';
+  }).join('') +
+  '<div class="route-actions">' +
+    '<button type="button" class="go" onclick="openRouteInMaps()">' + _rt('map.route_open_maps') + '</button>' +
+    '<button type="button" class="clear" onclick="clearRoute()">' + _rt('map.route_clear') + '</button>' +
+  '</div>';
+}
+function _rt(key){ return (window.wiMapT || function(k){ return k; })(key); }
+
 /* ══════════════════════════ Mapa (Google Maps JS) ══════════════════════════ */
 
 window.wiInitMap = function(){
@@ -469,6 +561,7 @@ window.wiInitMap = function(){
     }
   });
   reloadMapProspects();
+  renderRoutePanel();
 };
 
 // has_website solo se rellena de verdad tras un chequeo confirmado. Antes de
@@ -596,6 +689,7 @@ function reloadMapProspects(){
       clearMarkers();
       var withCoords = data.prospects.filter(function(p){ return p.lat != null && p.lng != null; });
       withCoords.forEach(function(p){
+        window.__prospectsById[p.id] = p;
         var pos = {lat: p.lat, lng: p.lng};
         var hasWeb = resolveHasWebsite(p);
         addOpportunityHalo(pos, hasWeb, markers);
@@ -616,6 +710,7 @@ function reloadMapProspects(){
           '<a href="'+p.detail_url+'?start_check=1">🩺 '+_t1('map.create_preliminary')+'</a>'+
           '<a href="'+p.detail_url+'#contactForm">👤 '+_t1('map.add_contact')+'</a>'+
           (p.gmaps_url ? '<a href="'+p.gmaps_url+'" target="_blank" rel="noopener">📷 '+_t1('map.open_in_gmaps')+'</a>' : '')+
+          '<a href="#" onclick="addToRoute('+p.id+');return false;">'+_t1('map.add_to_route')+'</a>'+
           '</div></div>'
         });
         marker.addListener('click', function(){ info.open(map, marker); });
@@ -1418,6 +1513,14 @@ es: {
   'map.poi_querying': 'Consultando Google…',
   'map.poi_no_name': 'Sin nombre',
   'map.poi_query_failed': 'No se pudo consultar Google Places.',
+  'map.route_title': 'Ruta de hoy',
+  'map.add_to_route': '➕ Añadir a la ruta de hoy',
+  'map.route_added_toast': 'Añadido a la ruta de hoy',
+  'map.route_empty': 'Todavía no has añadido ninguna parada. Usa "➕ Añadir a la ruta de hoy" en cada negocio.',
+  'map.route_open_maps': '🧭 Abrir ruta en Google Maps',
+  'map.route_clear': '🗑️ Vaciar ruta',
+  'map.route_visited': '✅ Visitada',
+  'map.route_remove': '✕',
 },
 ru: {
   'map.page_title': 'Карта проспекции — CreaGanaWeb',
@@ -1536,6 +1639,14 @@ ru: {
   'map.poi_querying': 'Запрос к Google…',
   'map.poi_no_name': 'Без названия',
   'map.poi_query_failed': 'Не удалось получить данные из Google Places.',
+  'map.route_title': 'Маршрут на сегодня',
+  'map.add_to_route': '➕ Добавить в маршрут на сегодня',
+  'map.route_added_toast': 'Добавлено в маршрут на сегодня',
+  'map.route_empty': 'Пока нет ни одной остановки. Нажмите «➕ Добавить в маршрут» на карточке нужного бизнеса.',
+  'map.route_open_maps': '🧭 Открыть маршрут в Google Maps',
+  'map.route_clear': '🗑️ Очистить маршрут',
+  'map.route_visited': '✅ Посетили',
+  'map.route_remove': '✕',
 },
 };
 

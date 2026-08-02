@@ -127,6 +127,41 @@
       {% endif %}
     </div>
 
+    <!-- ── Mensaje listo para copiar/enviar — pensado para que nunca haga falta
+         improvisar el primer contacto ── -->
+    {% if opener_variants %}
+    <div class="card" id="openerCard">
+      <h2 data-i18n="detail.opener_title">💬 Mensaje para contactar</h2>
+      <div class="wi-explain" data-i18n="detail.opener_explain">
+        Texto listo para copiar o enviar tal cual — ofrece el chequeo gratis, no una venta. Puedes probar otra variante o editarlo antes de enviar.
+      </div>
+      <textarea id="openerText" rows="4" readonly>{{ opener_variants.0 }}</textarea>
+      <div class="row" style="margin-top:8px">
+        <button type="button" class="btn ghost sm" id="btnOpenerCycle" data-i18n="detail.opener_cycle">🔄 Otra opción</button>
+        <button type="button" class="btn outline sm" id="btnOpenerCopy" data-i18n="detail.opener_copy">📋 Copiar</button>
+        {% if whatsapp_digits %}
+          <a class="btn green sm" id="btnOpenerSend" href="#" target="_blank" rel="noopener" data-i18n="detail.opener_send">💬 Enviar por WhatsApp</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if referral_message %}
+    <div class="card" id="referralCard">
+      <h2 data-i18n="detail.referral_title">🙏 Pedir una recomendación</h2>
+      <div class="wi-explain" data-i18n="detail.referral_explain">
+        Ya es cliente — pedirle que recomiende a otro negocio de la zona es mucho más fácil que contactar a un desconocido.
+      </div>
+      <textarea id="referralText" rows="3" readonly>{{ referral_message }}</textarea>
+      <div class="row" style="margin-top:8px">
+        <button type="button" class="btn outline sm" id="btnReferralCopy" data-i18n="detail.opener_copy">📋 Copiar</button>
+        {% if whatsapp_digits %}
+          <a class="btn green sm" id="btnReferralSend" href="#" target="_blank" rel="noopener" data-i18n="detail.opener_send">💬 Enviar por WhatsApp</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
     <!-- ── Las 3 acciones principales — nunca hace falta abrir nada más ── -->
     <div class="primary-actions">
       <button type="button" class="btn" id="btnGoChequeo" data-i18n="detail.btn_chequeo">🩺 Hacer chequeo</button>
@@ -223,6 +258,7 @@
         <button class="btn outline" id="btnCopyLink" data-i18n="detail.btn_copy_link">📋 Copiar enlace</button>
         <a class="btn green" style="text-decoration:none;text-align:center" id="btnWhatsappLink" href="#" target="_blank" rel="noopener" data-i18n="detail.btn_whatsapp_link">💬 Enviar por WhatsApp</a>
         {% if audits %}<a class="btn ghost" style="text-decoration:none;text-align:center" href="/panel/prospeccion/{{ prospect.pk }}/pdf/" target="_blank" data-i18n="detail.btn_pdf">📄 Abrir resultado (PDF)</a>{% endif %}
+        <a class="btn ghost" style="text-decoration:none;text-align:center" href="/panel/prospeccion/{{ prospect.pk }}/qr/" target="_blank" data-i18n="detail.btn_qr_card">📇 Tarjeta QR para imprimir</a>
       </div>
       </div>
     </details>
@@ -423,6 +459,58 @@ function showToast(msg){
 function postJson(url, body){
   return fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})})
     .then(function(r){ return r.json().then(function(data){ return {ok: r.ok, status: r.status, data: data}; }); });
+}
+
+/* ---- Mensaje para contactar (opener) + pedir recomendación ---- */
+var OPENER_VARIANTS = {{ opener_variants_json|safe }};
+var WHATSAPP_DIGITS = '{{ whatsapp_digits|escapejs }}';
+var openerIndex = 0;
+
+function waLink(text){
+  return 'https://wa.me/' + WHATSAPP_DIGITS + '?text=' + encodeURIComponent(text);
+}
+function copyText(text){
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text);
+  }
+  var ta = document.createElement('textarea');
+  ta.value = text; document.body.appendChild(ta); ta.select();
+  document.execCommand('copy'); document.body.removeChild(ta);
+  return Promise.resolve();
+}
+
+var openerTextEl = document.getElementById('openerText');
+var btnOpenerSend = document.getElementById('btnOpenerSend');
+function refreshOpenerLink(){
+  if (btnOpenerSend && openerTextEl) btnOpenerSend.href = waLink(openerTextEl.value);
+}
+if (openerTextEl) refreshOpenerLink();
+
+var btnOpenerCycle = document.getElementById('btnOpenerCycle');
+if (btnOpenerCycle) {
+  btnOpenerCycle.addEventListener('click', function(){
+    openerIndex = (openerIndex + 1) % OPENER_VARIANTS.length;
+    openerTextEl.value = OPENER_VARIANTS[openerIndex];
+    refreshOpenerLink();
+  });
+}
+var btnOpenerCopy = document.getElementById('btnOpenerCopy');
+if (btnOpenerCopy) {
+  btnOpenerCopy.addEventListener('click', function(){
+    copyText(openerTextEl.value).then(function(){ showToast(t('detail.toast_opener_copied')); });
+  });
+}
+
+var referralTextEl = document.getElementById('referralText');
+var btnReferralSend = document.getElementById('btnReferralSend');
+if (referralTextEl && btnReferralSend) {
+  btnReferralSend.href = waLink(referralTextEl.value);
+}
+var btnReferralCopy = document.getElementById('btnReferralCopy');
+if (btnReferralCopy) {
+  btnReferralCopy.addEventListener('click', function(){
+    copyText(referralTextEl.value).then(function(){ showToast(t('detail.toast_opener_copied')); });
+  });
 }
 
 /* ---- Las 3 acciones principales ---- */
@@ -701,6 +789,14 @@ var T = {
     'detail.score_label': 'Puntuación actual:',
     'detail.score_explain': 'Es una nota de 0 a 100 que resume qué tan bien está preparado el negocio en internet (web, WhatsApp, reservas online…) — cuanto más alta, menos trabajo de mejora necesita.',
     'detail.view_gmaps': '📷 Ver en Google Maps (fotos, menú, reseñas…)',
+    'detail.opener_title': '💬 Mensaje para contactar',
+    'detail.opener_explain': 'Texto listo para copiar o enviar tal cual — ofrece el chequeo gratis, no una venta. Puedes probar otra variante o editarlo antes de enviar.',
+    'detail.opener_cycle': '🔄 Otra opción',
+    'detail.opener_copy': '📋 Copiar',
+    'detail.opener_send': '💬 Enviar por WhatsApp',
+    'detail.referral_title': '🙏 Pedir una recomendación',
+    'detail.referral_explain': 'Ya es cliente — pedirle que recomiende a otro negocio de la zona es mucho más fácil que contactar a un desconocido.',
+    'detail.toast_opener_copied': 'Mensaje copiado',
     'detail.btn_chequeo': '🩺 Hacer chequeo',
     'detail.btn_contacto': '👤 Añadir contacto',
     'detail.btn_propuesta': '📋 Preparar propuesta',
@@ -728,6 +824,7 @@ var T = {
     'detail.btn_copy_link': '📋 Copiar enlace',
     'detail.btn_whatsapp_link': '💬 Enviar por WhatsApp',
     'detail.btn_pdf': '📄 Abrir resultado (PDF)',
+    'detail.btn_qr_card': '📇 Tarjeta QR para imprimir',
     'detail.crm_section_title': 'CRM',
     'detail.crm_already_converted': 'Ya convertido en cliente:',
     'detail.crm_view_lead': 'ver ficha en el CRM →',
@@ -815,6 +912,14 @@ var T = {
     'detail.score_label': 'Текущая оценка:',
     'detail.score_explain': 'Число от 0 до 100 — насколько хорошо бизнес представлен в интернете (сайт, WhatsApp, онлайн-запись…). Чем выше, тем меньше нужно улучшать.',
     'detail.view_gmaps': '📷 Открыть в Google Maps (фото, меню, отзывы…)',
+    'detail.opener_title': '💬 Сообщение для первого контакта',
+    'detail.opener_explain': 'Готовый текст — предлагает бесплатную проверку, а не продажу. Можно выбрать другой вариант или отредактировать перед отправкой.',
+    'detail.opener_cycle': '🔄 Другой вариант',
+    'detail.opener_copy': '📋 Скопировать',
+    'detail.opener_send': '💬 Отправить в WhatsApp',
+    'detail.referral_title': '🙏 Попросить рекомендацию',
+    'detail.referral_explain': 'Уже клиент — попросить порекомендовать другой бизнес в округе намного проще, чем писать незнакомцу.',
+    'detail.toast_opener_copied': 'Сообщение скопировано',
     'detail.btn_chequeo': '🩺 Сделать проверку',
     'detail.btn_contacto': '👤 Добавить контакт',
     'detail.btn_propuesta': '📋 Подготовить предложение',
@@ -842,6 +947,7 @@ var T = {
     'detail.btn_copy_link': '📋 Скопировать ссылку',
     'detail.btn_whatsapp_link': '💬 Отправить в WhatsApp',
     'detail.btn_pdf': '📄 Открыть результат (PDF)',
+    'detail.btn_qr_card': '📇 QR-визитка для печати',
     'detail.crm_section_title': 'CRM',
     'detail.crm_already_converted': 'Уже стала клиентом:',
     'detail.crm_view_lead': 'открыть карточку в CRM →',
