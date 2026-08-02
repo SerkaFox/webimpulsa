@@ -9,9 +9,10 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 
-from crm.models import Lead, Proposal
+from crm.models import Lead, PaymentRecord, Proposal
 from . import places, wa_bridge
 from .csv_import import parse_csv
+from .daily_tasks import build_daily_tasks
 from .models import (
     BusinessContact, BusinessProspect, ChequeoAudit, PlacesApiLimitNotification, PlacesApiMonthlyCounter,
     PlacesApiRequestLog, PlacesApiUsage, ProspectPhoto, StaffMember,
@@ -1533,3 +1534,98 @@ class PersonalModeMusicFullscreenParityTests(BaseTestCase):
         r = c.get(f'/chequeo-digital/e/{prospect.public_token}/')
         self.assertIn(b'resultEyebrow', r.content)
         self.assertIn(b'data-prospect-name="Nombrada SL"', r.content)
+
+
+class DailyTasksTests(BaseTestCase):
+    """Instrucciones de hoy: en vez de una lista fija de pasos, sugerencias
+    que dependen del estado real de los prospectos — quién tiene un
+    presupuesto aceptado sin cobrar del todo, quién es cliente pero nunca
+    confirmó su chequeo personal, y cuántos negocios nuevos llevamos hoy
+    frente al objetivo diario."""
+
+    def _make_lead_with_proposal(self, prospect, total, status=Proposal.ST_ACCEPTED):
+        lead = Lead.objects.create(name=prospect.name)
+        prospect.converted_client = lead
+        prospect.save(update_fields=['converted_client'])
+        proposal = Proposal.objects.create(
+            number=Proposal.generate_number(),
+            lead=lead,
+            status=status,
+            issued_at=timezone.localdate(),
+            total_with_iva=total,
+        )
+        return lead, proposal
+
+    def test_accepted_proposal_with_no_payment_is_flagged_unpaid(self):
+        prospect = BusinessProspect.objects.create(name='Debe Pago SL', sector='bar')
+        self._make_lead_with_proposal(prospect, total=1000)
+        tasks = build_daily_tasks()
+        names = [item['name'] for item in tasks['unpaid']]
+        self.assertIn('Debe Pago SL', names)
+        item = next(i for i in tasks['unpaid'] if i['name'] == 'Debe Pago SL')
+        self.assertEqual(item['owed'], 1000)
+        self.assertEqual(item['prospect_id'], prospect.pk)
+
+    def test_fully_paid_proposal_is_not_flagged(self):
+        prospect = BusinessProspect.objects.create(name='Ya Pagado SL', sector='bar')
+        lead, proposal = self._make_lead_with_proposal(prospect, total=500)
+        PaymentRecord.objects.create(
+            lead=lead, concept='Pago completo', amount=500,
+            payment_date=timezone.localdate(), status=PaymentRecord.ST_RECEIVED,
+        )
+        tasks = build_daily_tasks()
+        names = [item['name'] for item in tasks['unpaid']]
+        self.assertNotIn('Ya Pagado SL', names)
+
+    def test_draft_proposal_is_not_flagged_as_unpaid(self):
+        prospect = BusinessProspect.objects.create(name='Solo Borrador SL', sector='bar')
+        self._make_lead_with_proposal(prospect, total=800, status=Proposal.ST_DRAFT)
+        tasks = build_daily_tasks()
+        names = [item['name'] for item in tasks['unpaid']]
+        self.assertNotIn('Solo Borrador SL', names)
+
+    def test_won_prospect_without_confirmed_personal_chequeo_is_flagged(self):
+        prospect = BusinessProspect.objects.create(
+            name='Ganado Sin Chequeo', sector='bar', sales_status=BusinessProspect.SALES_WON,
+        )
+        tasks = build_daily_tasks()
+        names = [item['name'] for item in tasks['no_personal_chequeo']]
+        self.assertIn('Ganado Sin Chequeo', names)
+
+    def test_won_prospect_with_confirmed_personal_chequeo_is_not_flagged(self):
+        prospect = BusinessProspect.objects.create(
+            name='Ganado Con Chequeo', sector='bar', sales_status=BusinessProspect.SALES_WON,
+        )
+        ChequeoAudit.objects.create(
+            prospect=prospect, mode=ChequeoAudit.MODE_PERSONAL, stage=ChequeoAudit.STAGE_CONFIRMADO,
+            sector='bar', questionnaire_version='v1', answers=[], score=80,
+        )
+        tasks = build_daily_tasks()
+        names = [item['name'] for item in tasks['no_personal_chequeo']]
+        self.assertNotIn('Ganado Con Chequeo', names)
+
+    def test_non_won_prospect_never_flagged_for_personal_chequeo(self):
+        BusinessProspect.objects.create(
+            name='Solo Contactado', sector='bar', sales_status=BusinessProspect.SALES_CONTACTED,
+        )
+        tasks = build_daily_tasks()
+        names = [item['name'] for item in tasks['no_personal_chequeo']]
+        self.assertNotIn('Solo Contactado', names)
+
+    def test_new_clients_goal_counts_only_todays_prospects(self):
+        BusinessProspect.objects.create(name='Hoy Uno', sector='bar')
+        BusinessProspect.objects.create(name='Hoy Dos', sector='bar')
+        old = BusinessProspect.objects.create(name='De Ayer', sector='bar')
+        BusinessProspect.objects.filter(pk=old.pk).update(
+            created_at=timezone.now() - timezone.timedelta(days=2)
+        )
+        tasks = build_daily_tasks()
+        goal = tasks['new_clients_goal']
+        self.assertEqual(goal['added_today'], 2)
+        self.assertEqual(goal['goal'], 3)
+        self.assertEqual(goal['remaining'], 1)
+
+    def test_internal_map_view_includes_daily_tasks_json(self):
+        c = self.login()
+        r = c.get('/panel/prospeccion/mapa/')
+        self.assertIn(b'dailyTasks', r.content)

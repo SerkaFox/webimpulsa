@@ -15,6 +15,7 @@ from crm.views import _crm_auth
 from . import places
 from .constants import SALES_STATUS_COLORS
 from .csv_import import parse_csv, validate_csv_file
+from .daily_tasks import build_daily_tasks
 from .messaging_templates import build_opener_variants, build_referral_message
 from .models import (
     CONSENT_TEXT_VERSION, BusinessContact, BusinessProspect, ChequeoAudit, PlacesApiLimitNotification,
@@ -125,6 +126,7 @@ def internal_map(request):
         'staff': StaffMember.objects.filter(active=True),
         'status_colors_json': json.dumps(SALES_STATUS_COLORS),
         'google_maps_js_api_key': dj_settings.GOOGLE_MAPS_JS_API_KEY,
+        'daily_tasks_json': json.dumps(build_daily_tasks()),
     })
 
 

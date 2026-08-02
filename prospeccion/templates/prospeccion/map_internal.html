@@ -113,6 +113,14 @@
   .guide-steps b { display: block; font-size: .92rem; }
   .guide-steps p { margin: 3px 0 0; font-size: .82rem; color: #5a6d8c; }
 
+  /* Tareas de hoy — dinámicas según el progreso real, no una lista fija */
+  .daily-task { display: flex; gap: 8px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #eef1f5; font-size: .85rem; }
+  .daily-task:last-child { border-bottom: none; }
+  .daily-task .dt-icon { flex-shrink: 0; font-size: 1rem; }
+  .daily-task .dt-text { flex: 1; }
+  .daily-task .dt-link { font-size: .78rem; font-weight: 700; color: var(--wi-blue, #075CCF); text-decoration: none; white-space: nowrap; }
+  .daily-tasks-empty { font-size: .85rem; color: #5a6d8c; padding: 4px 0; }
+
   .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--wi-navy); color: #fff;
     padding: 8px 14px; border-radius: 999px; font-size: .82rem; opacity: 0; transition: opacity .25s;
     pointer-events: none; z-index: 200; max-width: 90vw; text-align: center; }
@@ -456,6 +464,8 @@
       <li><span class="guide-num">4</span><div><b data-i18n="map.guide_step4_t">En cada negocio, usa el mensaje ya preparado</b><p data-i18n="map.guide_step4_d">En la ficha de cada uno tienes un mensaje de WhatsApp listo (💬) o una tarjeta QR (📇) para dejar sin tener que explicar nada.</p></div></li>
       <li><span class="guide-num">5</span><div><b data-i18n="map.guide_step5_t">Marca visitada cuando termines</b><p data-i18n="map.guide_step5_d">En el panel de «Ruta de hoy» pulsa «✅ Visitada» — así siempre sabes por quién ibas.</p></div></li>
     </ol>
+    <h3 data-i18n="map.daily_tasks_title" style="font-size:.92rem;margin:16px 0 8px">📌 Según tu progreso ahora mismo</h3>
+    <div id="dailyTasksBox"></div>
     <div class="wi-explain" id="guideTip">Recuerda: el chequeo es un regalo gratis, no una venta — nunca hace falta insistir.</div>
   </div>
 </div>
@@ -467,6 +477,7 @@
 window.WI_MAPA = {
   hasGoogleKey: {{ google_maps_js_api_key|yesno:"true,false" }},
   statusColors: {{ status_colors_json|safe }},
+  dailyTasks: {{ daily_tasks_json|safe }},
 };
 </script>
 {% if google_maps_js_api_key %}
@@ -1285,9 +1296,66 @@ function paintGuideTip(){
   document.getElementById('guideTip').textContent = tips[dayOfYear % tips.length];
 }
 
+// Tareas de hoy — no una lista fija, sino sacadas del estado real de los
+// prospectos (quién no ha pagado del todo, quién no confirmó su chequeo
+// personal, cuántos negocios nuevos llevamos hoy frente al objetivo). Usa
+// window.wiGetLang (de prospeccion-i18n.js, cargado al principio) en vez de
+// window.wiMapT porque esta función también se llama desde el IIFE de
+// apertura automática, que corre al analizar la página — antes de que el
+// tercer <script> (más abajo) defina wiMapT.
+var DAILY_TASK_TEXT = {
+  es: {
+    unpaid_line: '{name} — presupuesto aceptado, faltan {amount}€ por cobrar',
+    chequeo_line: '{name} — es cliente pero no ha confirmado su chequeo personal',
+    goal_done: '🎉 Meta de hoy cumplida — ya añadiste {added} negocio(s) nuevo(s).',
+    goal_pending: 'Hoy llevas {added}/{goal} negocios nuevos añadidos — busca {remaining} más.',
+    view_card: 'Ver ficha →',
+  },
+  ru: {
+    unpaid_line: '{name} — смета принята, осталось получить {amount}€',
+    chequeo_line: '{name} — уже клиент, но не подтвердил личную проверку',
+    goal_done: '🎉 Дневная цель выполнена — уже добавлено {added} новых компаний.',
+    goal_pending: 'Сегодня добавлено {added}/{goal} новых компаний — найди ещё {remaining}.',
+    view_card: 'Открыть карточку →',
+  },
+};
+function renderDailyTasks(){
+  var lang = (window.wiGetLang ? window.wiGetLang() : 'ru');
+  var L = DAILY_TASK_TEXT[lang] || DAILY_TASK_TEXT.ru;
+  var data = (window.WI_MAPA && window.WI_MAPA.dailyTasks) || {};
+  function esc(s){
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+  function row(icon, text, prospectId){
+    return '<div class="daily-task"><span class="dt-icon">' + icon + '</span>' +
+      '<span class="dt-text">' + text + '</span>' +
+      (prospectId ? '<a class="dt-link" href="/panel/prospeccion/' + prospectId + '/" target="_blank" rel="noopener">' + L.view_card + '</a>' : '') +
+      '</div>';
+  }
+  var html = '';
+  (data.unpaid || []).forEach(function(item){
+    var text = L.unpaid_line.replace('{name}', esc(item.name)).replace('{amount}', item.owed);
+    html += row('💳', text, item.prospect_id);
+  });
+  (data.no_personal_chequeo || []).forEach(function(item){
+    var text = L.chequeo_line.replace('{name}', esc(item.name));
+    html += row('🩺', text, item.prospect_id);
+  });
+  var goal = data.new_clients_goal || {goal: 3, added_today: 0, remaining: 3};
+  var goalText = goal.remaining > 0
+    ? L.goal_pending.replace('{added}', goal.added_today).replace('{goal}', goal.goal).replace('{remaining}', goal.remaining)
+    : L.goal_done.replace('{added}', goal.added_today);
+  html += row('🔎', goalText, null);
+  document.getElementById('dailyTasksBox').innerHTML = html;
+}
+window.renderDailyTasks = renderDailyTasks;
+
 document.getElementById('btnOpenGuide').addEventListener('click', function(ev){
   ev.preventDefault();
   paintGuideTip();
+  renderDailyTasks();
   document.getElementById('guideOverlay').classList.add('show');
 });
 document.getElementById('btnCloseGuide').addEventListener('click', function(){
@@ -1301,6 +1369,7 @@ document.getElementById('btnCloseGuide').addEventListener('click', function(){
   if(localStorage.getItem('wi_guide_seen_date') !== today){
     localStorage.setItem('wi_guide_seen_date', today);
     paintGuideTip();
+    renderDailyTasks();
     document.getElementById('guideOverlay').classList.add('show');
   }
 })();
@@ -1737,6 +1806,7 @@ es: {
   'map.guide_step4_d': 'En la ficha de cada uno tienes un mensaje de WhatsApp listo (💬) o una tarjeta QR (📇) para dejar sin tener que explicar nada.',
   'map.guide_step5_t': 'Marca visitada cuando termines',
   'map.guide_step5_d': 'En el panel de «Ruta de hoy» pulsa «✅ Visitada» — así siempre sabes por quién ibas.',
+  'map.daily_tasks_title': '📌 Según tu progreso ahora mismo',
 },
 ru: {
   'map.page_title': 'Карта проспекции — CreaGanaWeb',
@@ -1875,6 +1945,7 @@ ru: {
   'map.guide_step4_d': 'В карточке каждой компании есть готовое сообщение для WhatsApp (💬) или QR-визитка (📇) — можно оставить, ничего не объясняя.',
   'map.guide_step5_t': 'Отметь «посетили», когда закончишь',
   'map.guide_step5_d': 'В панели «Маршрут на сегодня» нажми «✅ Посетили» — так всегда видно, у кого ещё не была.',
+  'map.daily_tasks_title': '📌 Судя по твоему прогрессу прямо сейчас',
 },
 };
 
@@ -1912,6 +1983,7 @@ function setMapLang(lang) {
   if (window.__mapRelabelCodes) window.__mapRelabelCodes();
   if (window.reloadMapProspects) window.reloadMapProspects();
   if (window.refreshPlacesUsage) window.refreshPlacesUsage();
+  if (window.renderDailyTasks) window.renderDailyTasks();
 }
 window.wiSetMapLang = setMapLang;
 
