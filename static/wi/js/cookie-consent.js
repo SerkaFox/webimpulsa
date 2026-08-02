@@ -55,6 +55,9 @@
     var consent = { necessary: true, analytics: !!analytics, ts: Date.now() };
     localStorage.setItem(STORE_KEY, JSON.stringify(consent));
     window.WI_COOKIE_CONSENT = consent;
+    if (window.gtag) {
+      window.gtag('consent', 'update', { analytics_storage: consent.analytics ? 'granted' : 'denied' });
+    }
     return consent;
   }
   window.WI_COOKIE_CONSENT = getConsent() || { necessary: true, analytics: false };
