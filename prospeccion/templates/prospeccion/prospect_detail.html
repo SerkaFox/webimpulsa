@@ -84,10 +84,6 @@
   .consent-actor-note { color: var(--wi-muted); font-size: .74rem; }
   .primary-tag { background: #fef3c7; color: #92400e; font-size: .68rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; }
 
-  /* Acciones principales */
-  .primary-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
-  .primary-actions .btn { flex: 1; min-width: 150px; padding: 14px 10px; font-size: .9rem; }
-
   /* Botones grandes para cambiar la etapa — sustituye al desplegable
      "una palabra" de antes, que quedaba escondido en una sección plegada. */
   .status-btns { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -97,16 +93,19 @@
   }
   .status-btn.active { background: var(--sc, #8a94a6); color: #fff; }
 
-  /* Barra de pestañas — sustituye a la pila de secciones plegables: un solo
-     panel visible a la vez en vez de "líneas" apiladas y poco claras. */
-  .tab-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  /* Menú de pestañas estilo "subrayado": el contenido de la pestaña activa
+     se pinta justo debajo, dentro de la misma tarjeta (functionsCard), sin
+     salto visual ni tarjeta aparte más abajo en la página — antes al pulsar
+     una pestaña la página saltaba a otra tarjeta suelta más abajo. */
+  .tab-bar { display: flex; gap: 2px; flex-wrap: wrap; border-bottom: 2px solid var(--wi-border); }
   .tab-btn {
-    background: #fff; border: 1.5px solid var(--wi-border); border-radius: 10px; padding: 9px 13px;
-    font-size: .84rem; font-weight: 700; color: var(--wi-muted); cursor: pointer;
+    background: none; border: none; border-bottom: 3px solid transparent; margin-bottom: -2px;
+    border-radius: 6px 6px 0 0; padding: 10px 12px; font-size: .84rem; font-weight: 700;
+    color: var(--wi-muted); cursor: pointer;
   }
-  .tab-btn.active { background: var(--wi-blue); border-color: var(--wi-blue); color: #fff; }
-  .tab-panel { display: none; background: var(--wi-card); border: 1px solid var(--wi-border); border-radius: 14px;
-    margin-bottom: 12px; box-shadow: var(--wi-shadow); padding: 16px; }
+  .tab-btn:hover { color: var(--wi-text); background: rgba(0,0,0,.03); }
+  .tab-btn.active { color: var(--wi-blue); border-bottom-color: var(--wi-blue); background: none; }
+  .tab-panel { display: none; padding-top: 16px; }
   .tab-panel.active { display: block; }
 
   /* Fila superior de 3 columnas: info | funciones | estado — los paneles
@@ -155,11 +154,6 @@
       </div>
 
       <div class="card" id="functionsCard">
-        <div class="primary-actions">
-          <button type="button" class="btn" id="btnGoChequeo" data-i18n="detail.btn_chequeo">🩺 Hacer chequeo</button>
-          <button type="button" class="btn" id="btnGoContacto" data-i18n="detail.btn_contacto">👤 Añadir contacto</button>
-          <button type="button" class="btn green" id="btnPrepararPropuesta" data-i18n="detail.btn_propuesta">📋 Preparar propuesta</button>
-        </div>
         <div class="tab-bar" id="tabBar">
           <button type="button" class="tab-btn" data-tab="messagePanel" data-i18n="detail.tab_message">💬 Mensaje de contacto</button>
           <button type="button" class="tab-btn" data-tab="prelimDetails" data-i18n="detail.prelim_section_title">Auditoría preliminar</button>
@@ -169,6 +163,252 @@
           <button type="button" class="tab-btn" data-tab="historyPanel" data-i18n="detail.history_section_title">Historial de chequeos</button>
           <button type="button" class="tab-btn" data-tab="dangerPanel" style="color:#dc2626" data-i18n="detail.danger_title">Zona de peligro</button>
         </div>
+
+      <!-- ── Mensaje listo para copiar/enviar — pensado para que nunca haga falta
+           improvisar el primer contacto ── -->
+      <div class="tab-panel" id="messagePanel">
+        {% if opener_variants %}
+        <div id="openerCard">
+          <h2 data-i18n="detail.opener_title">💬 Mensaje para contactar</h2>
+          <div class="wi-explain" data-i18n="detail.opener_explain">
+            Texto listo para copiar o enviar tal cual — ofrece el chequeo gratis, no una venta. Puedes probar otra variante o editarlo antes de enviar.
+          </div>
+          <textarea id="openerText" rows="4" readonly>{{ opener_variants.0 }}</textarea>
+          <div class="row" style="margin-top:8px">
+            <button type="button" class="btn ghost sm" id="btnOpenerCycle" data-i18n="detail.opener_cycle">🔄 Otra opción</button>
+            <button type="button" class="btn outline sm" id="btnOpenerCopy" data-i18n="detail.opener_copy">📋 Copiar</button>
+            {% if whatsapp_digits %}
+              <a class="btn green sm" id="btnOpenerSend" href="#" target="_blank" rel="noopener" data-i18n="detail.opener_send">💬 Enviar por WhatsApp</a>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if referral_message %}
+        <div id="referralCard">
+          <h2 data-i18n="detail.referral_title">🙏 Pedir una recomendación</h2>
+          <div class="wi-explain" data-i18n="detail.referral_explain">
+            Ya es cliente — pedirle que recomiende a otro negocio de la zona es mucho más fácil que contactar a un desconocido.
+          </div>
+          <textarea id="referralText" rows="3" readonly>{{ referral_message }}</textarea>
+          <div class="row" style="margin-top:8px">
+            <button type="button" class="btn outline sm" id="btnReferralCopy" data-i18n="detail.opener_copy">📋 Copiar</button>
+            {% if whatsapp_digits %}
+              <a class="btn green sm" id="btnReferralSend" href="#" target="_blank" rel="noopener" data-i18n="detail.opener_send">💬 Enviar por WhatsApp</a>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- ── Auditoría preliminar ─────────────────────────────────────── -->
+      <div class="tab-panel" id="prelimDetails">
+        <div class="prelim-summary">
+          <span><span data-i18n="detail.prelim_last_preliminar">Último preliminar:</span>
+            {% if latest_preliminar %}{{ latest_preliminar.created_at|date:"d/m/Y H:i" }} — {{ latest_preliminar.score }}/100 <span class="muted-version">({{ latest_preliminar.questionnaire_version }})</span>{% else %}—{% endif %}
+          </span>
+          <span><span data-i18n="detail.prelim_last_confirmado">Último confirmado:</span>
+            {% if latest_confirmado %}{{ latest_confirmado.created_at|date:"d/m/Y H:i" }} — {{ latest_confirmado.score }}/100 <span class="muted-version">({{ latest_confirmado.questionnaire_version }})</span>{% else %}—{% endif %}
+          </span>
+        </div>
+
+        <div class="field">
+          <label data-i18n="detail.label_sector_template">Sector del negocio</label>
+          <select id="prelimSector">
+            {% for id, label in sectors %}
+              <option value="{{ id }}" data-code="{{ id }}" {% if id == prospect.sector %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div id="prelimQuestions" data-i18n="detail.prelim_loading">Cargando preguntas…</div>
+
+        <div class="row">
+          <button type="button" class="btn outline" id="btnPrelimDraft" data-i18n="detail.btn_prelim_draft">💾 Guardar borrador</button>
+          <button type="button" class="btn green" id="btnPrelimComplete" data-i18n="detail.btn_prelim_complete">✔ Calcular y completar auditoría</button>
+        </div>
+        <small style="color:var(--wi-muted);display:block;margin-top:6px" data-i18n="detail.prelim_draft_note">
+          El borrador se guarda solo en este navegador/sesión (no es visible para otro compañero ni desde
+          otro dispositivo) hasta que pulses «Calcular y completar auditoría», que sí queda guardado para
+          siempre.
+        </small>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="linkPanel">
+        <p style="font-size:.85rem;color:var(--wi-muted)" data-i18n="detail.link_explain">Compártelo con la empresa para que confirme/corrija el chequeo ya pre-rellenado.</p>
+        <div class="link-box" id="personalLink">{{ personal_url }}</div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn outline" id="btnCopyLink" data-i18n="detail.btn_copy_link">📋 Copiar enlace</button>
+          <a class="btn green" style="text-decoration:none;text-align:center" id="btnWhatsappLink" href="#" target="_blank" rel="noopener" data-i18n="detail.btn_whatsapp_link">💬 Enviar por WhatsApp</a>
+          {% if audits %}<a class="btn ghost" style="text-decoration:none;text-align:center" href="/panel/prospeccion/{{ prospect.pk }}/pdf/" target="_blank" data-i18n="detail.btn_pdf">📄 Abrir resultado (PDF)</a>{% endif %}
+          <a class="btn ghost" style="text-decoration:none;text-align:center" href="/panel/prospeccion/{{ prospect.pk }}/qr/" target="_blank" data-i18n="detail.btn_qr_card">📇 Tarjeta QR para imprimir</a>
+        </div>
+        </div>
+      </div>
+
+      <!-- ── Cliente y contactos: CRM + contactos + consentimiento de
+           publicación fusionados en un único panel, antes eran 3 botones
+           separados para lo que en la práctica siempre se mira junto ── -->
+      <div class="tab-panel" id="clienteDetails">
+        <div id="crmDetails">
+          {% if prospect.converted_client_id %}
+            <p style="font-size:.85rem"><span data-i18n="detail.crm_already_converted">Ya convertido en cliente:</span> <a href="/wi/crm/{{ prospect.converted_client_id }}/" data-i18n="detail.crm_view_lead">ver ficha en el CRM →</a></p>
+            <button class="btn" id="btnDraftProposal" data-i18n="detail.btn_draft_proposal">Crear borrador de presupuesto</button>
+          {% else %}
+            <p style="font-size:.85rem;color:var(--wi-muted)"><span data-i18n="detail.crm_not_converted">Todavía no está en el CRM. Al convertir se usará como contacto:</span> {{ prospect.whatsapp|default:prospect.phone|default:prospect.email|default:"—" }}</p>
+            <button class="btn" id="btnConvert" data-i18n="detail.btn_convert">Convertir en cliente</button>
+            <button class="btn" id="btnDraftProposal" style="margin-left:6px" data-i18n="detail.btn_convert_and_draft">Convertir y crear presupuesto</button>
+          {% endif %}
+        </div>
+
+        <hr style="margin:18px 0;border:none;border-top:1px solid var(--wi-border)">
+
+        <!-- ── Contactos (CRUD completo) ────────────────────────────────── -->
+        <div id="contactosDetails">
+          <h3 data-i18n="detail.contacts_section_title">Contactos</h3>
+          <div class="wi-explain" data-i18n="detail.contacts_explain">
+            Dos consentimientos distintos, cada uno se pide y se revoca por separado: «Recibir informe» es
+            para poder enviarle el resultado del chequeo, y «Contacto comercial» es para poder escribirle
+            ofreciendo el servicio.
+          </div>
+          <div id="contactsList">
+            {% for c in contacts %}
+              <div class="contact-row" data-contact-id="{{ c.id }}">
+                <div class="name-line">{{ c.name|default:"" }}<span data-i18n="detail.no_name" {% if c.name %}hidden{% endif %}>(sin nombre)</span> {% if c.is_primary %}<span class="primary-tag" data-i18n="detail.primary_tag">principal</span>{% endif %}</div>
+                <div class="meta-line"><span data-role-code="{{ c.role }}">{{ c.get_role_display }}</span> · {{ c.phone }} {% if c.whatsapp %}· WhatsApp {{ c.whatsapp }}{% endif %} {% if c.email %}· {{ c.email }}{% endif %}</div>
+                <div class="consent-line"><span class="consent-dot {% if c.consent_receive_report %}on{% else %}off{% endif %}"></span>
+                  <span data-i18n="detail.consent_report_label">Recibir informe</span>:
+                  {% if c.consent_receive_report %}<span data-i18n="detail.consent_granted">Concedido</span>{% if c.consent_receive_report_actor %} <span class="consent-actor-note">({{ c.consent_receive_report_actor }})</span>{% endif %}{% elif c.consent_receive_report_revoked_at %}<span data-i18n="detail.consent_revoked">Revocado</span>{% else %}<span data-i18n="detail.consent_none">Sin registrar</span>{% endif %}
+                  <button class="btn sm outline" data-consent-type="report" data-consent-action="{% if c.consent_receive_report %}revoke{% else %}grant{% endif %}" data-i18n="{% if c.consent_receive_report %}detail.btn_revoke{% else %}detail.btn_grant{% endif %}">{% if c.consent_receive_report %}Revocar{% else %}Conceder{% endif %}</button>
+                </div>
+                <div class="consent-line"><span class="consent-dot {% if c.consent_commercial_contact %}on{% else %}off{% endif %}"></span>
+                  <span data-i18n="detail.consent_commercial_label">Contacto comercial</span>:
+                  {% if c.consent_commercial_contact %}<span data-i18n="detail.consent_granted">Concedido</span>{% if c.consent_commercial_contact_actor %} <span class="consent-actor-note">({{ c.consent_commercial_contact_actor }})</span>{% endif %}{% elif c.consent_commercial_contact_revoked_at %}<span data-i18n="detail.consent_revoked">Revocado</span>{% else %}<span data-i18n="detail.consent_none">Sin registrar</span>{% endif %}
+                  <button class="btn sm outline" data-consent-type="commercial" data-consent-action="{% if c.consent_commercial_contact %}revoke{% else %}grant{% endif %}" data-i18n="{% if c.consent_commercial_contact %}detail.btn_revoke{% else %}detail.btn_grant{% endif %}">{% if c.consent_commercial_contact %}Revocar{% else %}Conceder{% endif %}</button>
+                </div>
+                <div class="field" style="margin-top:4px">
+                  <label style="font-size:.72rem" data-i18n="detail.consent_actor_label">¿Quién registra este consentimiento? (tu nombre)</label>
+                  <input type="text" class="consentActorInput" placeholder="Tu nombre" data-i18n-placeholder="detail.consent_actor_placeholder" style="max-width:220px">
+                </div>
+                <div class="row" style="margin-top:6px">
+                  <button class="btn sm ghost btnEditContact" data-i18n="detail.btn_edit">✎ Editar</button>
+                  <button class="btn sm danger btnDeleteContact" data-i18n="detail.btn_delete">🗑 Eliminar</button>
+                </div>
+              </div>
+            {% empty %}
+              <p style="color:var(--wi-muted);font-size:.85rem" data-i18n="detail.no_contacts">Sin contactos registrados todavía.</p>
+            {% endfor %}
+          </div>
+
+          <h3 style="margin-top:14px" data-i18n="detail.add_contact_title">Añadir contacto</h3>
+          <form id="contactForm">
+            <input type="hidden" name="contact_id" value="">
+            <div class="row">
+              <div class="field"><label data-i18n="detail.label_name">Nombre</label><input type="text" name="name"></div>
+              <div class="field"><label data-i18n="detail.label_role">Rol</label>
+                <select name="role">{% for id, label in role_choices %}<option value="{{ id }}" data-code="{{ id }}">{{ label }}</option>{% endfor %}</select>
+              </div>
+            </div>
+            <div class="row">
+              <div class="field"><label data-i18n="detail.label_phone">Teléfono</label><input type="text" name="phone"></div>
+              <div class="field"><label>WhatsApp</label><input type="text" name="whatsapp"></div>
+              <div class="field"><label>Email</label><input type="text" name="email"></div>
+            </div>
+            <div class="row">
+              <div class="field"><label data-i18n="detail.label_channel">Canal preferido</label>
+                <select name="preferred_channel">{% for id, label in channel_choices %}<option value="{{ id }}" data-code="{{ id }}">{{ label }}</option>{% endfor %}</select>
+              </div>
+              <div class="field" style="display:flex;align-items:flex-end;gap:6px">
+                <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;margin:0">
+                  <input type="checkbox" name="is_primary" style="width:auto"> <span data-i18n="detail.label_is_primary">Es el contacto principal</span>
+                </label>
+              </div>
+            </div>
+            <div class="field"><label data-i18n="detail.label_contact_notes">Notas</label><textarea name="notes" rows="2"></textarea></div>
+            <div class="row">
+              <button type="submit" class="btn" id="btnSaveContact" data-i18n="detail.btn_save_contact">Guardar contacto</button>
+              <button type="button" class="btn ghost" id="btnCancelEditContact" hidden data-i18n="detail.btn_cancel_edit">Cancelar edición</button>
+            </div>
+          </form>
+        </div>
+
+        <hr style="margin:18px 0;border:none;border-top:1px solid var(--wi-border)">
+
+        <!-- ── Consentimientos (publicación) ───────────────────────────── -->
+        <div id="publicationPanel">
+          <h3 data-i18n="detail.publication_section_title">Consentimientos de publicación</h3>
+          <p style="margin-bottom:10px">
+            <span class="pub-badge {% if is_public %}yes{% else %}no{% endif %}" data-i18n="{% if is_public %}detail.pub_visible_full{% else %}detail.pub_not_visible{% endif %}">{% if is_public %}✓ Visible en mapa público{% else %}✕ No publicable{% endif %}</span>
+            <span style="font-size:.82rem;color:var(--wi-muted);display:block;margin-top:4px" id="publicationReason">{{ publication_reason }}</span>
+          </p>
+
+          <div class="field">
+            <label data-i18n="detail.pub_consent_label">Consentimiento de publicación de la empresa</label>
+            <p style="font-size:.76rem;color:var(--wi-muted);margin:0 0 6px" data-i18n="detail.pub_consent_explain">
+              Normalmente se marca solo — hay una casilla (marcada por defecto) al final del chequeo
+              personal que la propia empresa puede desmarcar. Este botón es solo para forzarlo a mano si
+              hace falta. Es la única condición para aparecer en el mapa público, no hay un segundo paso.
+            </p>
+            {% if prospect.publish_consent %}
+              <button type="button" class="btn sm outline" id="btnPublishConsent" data-action="revoke" data-i18n="detail.btn_revoke_pub_consent">Revocar consentimiento</button>
+            {% else %}
+              <button type="button" class="btn sm" id="btnPublishConsent" data-action="grant" data-i18n="detail.btn_grant_pub_consent">Registrar consentimiento</button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Fotos in situ (complementan la única foto que suele haber en la
+           ficha de Google) ──────────────────────────────────────────── -->
+      <div class="tab-panel" id="photosDetails">
+        <p style="font-size:.85rem;color:var(--wi-muted);margin-bottom:10px" data-i18n="detail.photos_explain">
+          Haz fotos frescas del negocio desde varios ángulos (fachada, interior, detalles) — no se publican
+          en ningún sitio automáticamente, son referencia interna del equipo.
+        </p>
+        <div class="photo-grid" id="photoGrid">
+          {% for p in photos %}
+            <div class="photo-item" data-photo-id="{{ p.id }}">
+              <img src="{{ p.image.url }}" alt="{{ p.caption|default:'Foto del negocio' }}">
+              <button type="button" class="btn sm danger btnDeletePhoto">🗑</button>
+            </div>
+          {% empty %}
+            <p style="color:var(--wi-muted);font-size:.85rem;grid-column:1/-1" data-i18n="detail.no_photos">Todavía no hay fotos de este negocio.</p>
+          {% endfor %}
+        </div>
+        <form id="photoForm" style="margin-top:12px">
+          <div class="field">
+            <label data-i18n="detail.label_add_photos">Añadir fotos (puedes elegir varias a la vez, o hacerlas directamente con la cámara del móvil)</label>
+            <input type="file" name="photos" id="photoInput" accept="image/*" capture="environment" multiple>
+          </div>
+          <button type="submit" class="btn" id="btnUploadPhotos" data-i18n="detail.btn_upload_photos">📸 Subir fotos</button>
+        </form>
+      </div>
+
+      <div class="tab-panel" id="historyPanel">
+        {% if audits %}
+        <table>
+          <tr><th data-i18n="detail.th_date">Fecha</th><th data-i18n="detail.th_mode">Modo</th><th data-i18n="detail.th_stage">Etapa</th><th data-i18n="detail.th_score">Puntuación</th></tr>
+          {% for a in audits %}
+            <tr><td>{{ a.created_at|date:"d/m/Y H:i" }}</td><td data-mode-code="{{ a.mode }}">{{ a.get_mode_display }}</td><td data-stage-code="{{ a.stage }}">{{ a.get_stage_display }}</td><td>{{ a.score }}/100</td></tr>
+          {% endfor %}
+        </table>
+        {% else %}<p style="color:var(--wi-muted);font-size:.85rem" data-i18n="detail.no_audits">Todavía no se ha hecho ningún chequeo para esta empresa.</p>{% endif %}
+      </div>
+
+      <div class="tab-panel" id="dangerPanel">
+        <p style="font-size:.85rem;color:var(--wi-muted);margin-bottom:10px">
+          <span data-i18n="detail.danger_explain">Elimina esta ficha de prospección de forma permanente: historial de chequeos, contactos y fotos
+          se borran con ella.</span>
+          {% if prospect.converted_client_id %}
+            <strong data-i18n="detail.danger_converted_warning">Esta empresa ya está convertida en cliente</strong> —
+            <span data-i18n="detail.danger_converted_link">su ficha en el CRM</span>
+            (<a href="/wi/crm/{{ prospect.converted_client_id }}/" data-i18n="detail.view_record">ver ficha</a>)
+            <span data-i18n="detail.danger_converted_note">no se borrará, pero perderá el enlace a este historial de prospección.</span>
+          {% endif %}
+        </p>
+        <button type="button" class="btn danger" id="btnDeleteProspect" data-i18n="detail.btn_delete_prospect">🗑 Eliminar esta empresa</button>
+      </div>
       </div>
 
       <!-- ── Cambiar la etapa: botones grandes, siempre visibles — antes era
@@ -188,252 +428,6 @@
           {% endfor %}
         </div>
       </div>
-    </div>
-
-    <!-- ── Mensaje listo para copiar/enviar — pensado para que nunca haga falta
-         improvisar el primer contacto ── -->
-    <div class="card tab-panel" id="messagePanel">
-      {% if opener_variants %}
-      <div id="openerCard">
-        <h2 data-i18n="detail.opener_title">💬 Mensaje para contactar</h2>
-        <div class="wi-explain" data-i18n="detail.opener_explain">
-          Texto listo para copiar o enviar tal cual — ofrece el chequeo gratis, no una venta. Puedes probar otra variante o editarlo antes de enviar.
-        </div>
-        <textarea id="openerText" rows="4" readonly>{{ opener_variants.0 }}</textarea>
-        <div class="row" style="margin-top:8px">
-          <button type="button" class="btn ghost sm" id="btnOpenerCycle" data-i18n="detail.opener_cycle">🔄 Otra opción</button>
-          <button type="button" class="btn outline sm" id="btnOpenerCopy" data-i18n="detail.opener_copy">📋 Copiar</button>
-          {% if whatsapp_digits %}
-            <a class="btn green sm" id="btnOpenerSend" href="#" target="_blank" rel="noopener" data-i18n="detail.opener_send">💬 Enviar por WhatsApp</a>
-          {% endif %}
-        </div>
-      </div>
-      {% endif %}
-
-      {% if referral_message %}
-      <div id="referralCard">
-        <h2 data-i18n="detail.referral_title">🙏 Pedir una recomendación</h2>
-        <div class="wi-explain" data-i18n="detail.referral_explain">
-          Ya es cliente — pedirle que recomiende a otro negocio de la zona es mucho más fácil que contactar a un desconocido.
-        </div>
-        <textarea id="referralText" rows="3" readonly>{{ referral_message }}</textarea>
-        <div class="row" style="margin-top:8px">
-          <button type="button" class="btn outline sm" id="btnReferralCopy" data-i18n="detail.opener_copy">📋 Copiar</button>
-          {% if whatsapp_digits %}
-            <a class="btn green sm" id="btnReferralSend" href="#" target="_blank" rel="noopener" data-i18n="detail.opener_send">💬 Enviar por WhatsApp</a>
-          {% endif %}
-        </div>
-      </div>
-      {% endif %}
-    </div>
-
-    <!-- ── Auditoría preliminar ─────────────────────────────────────── -->
-    <div class="card tab-panel" id="prelimDetails">
-      <div class="prelim-summary">
-        <span><span data-i18n="detail.prelim_last_preliminar">Último preliminar:</span>
-          {% if latest_preliminar %}{{ latest_preliminar.created_at|date:"d/m/Y H:i" }} — {{ latest_preliminar.score }}/100 <span class="muted-version">({{ latest_preliminar.questionnaire_version }})</span>{% else %}—{% endif %}
-        </span>
-        <span><span data-i18n="detail.prelim_last_confirmado">Último confirmado:</span>
-          {% if latest_confirmado %}{{ latest_confirmado.created_at|date:"d/m/Y H:i" }} — {{ latest_confirmado.score }}/100 <span class="muted-version">({{ latest_confirmado.questionnaire_version }})</span>{% else %}—{% endif %}
-        </span>
-      </div>
-
-      <div class="field">
-        <label data-i18n="detail.label_sector_template">Sector del negocio</label>
-        <select id="prelimSector">
-          {% for id, label in sectors %}
-            <option value="{{ id }}" data-code="{{ id }}" {% if id == prospect.sector %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div id="prelimQuestions" data-i18n="detail.prelim_loading">Cargando preguntas…</div>
-
-      <div class="row">
-        <button type="button" class="btn outline" id="btnPrelimDraft" data-i18n="detail.btn_prelim_draft">💾 Guardar borrador</button>
-        <button type="button" class="btn green" id="btnPrelimComplete" data-i18n="detail.btn_prelim_complete">✔ Calcular y completar auditoría</button>
-      </div>
-      <small style="color:var(--wi-muted);display:block;margin-top:6px" data-i18n="detail.prelim_draft_note">
-        El borrador se guarda solo en este navegador/sesión (no es visible para otro compañero ni desde
-        otro dispositivo) hasta que pulses «Calcular y completar auditoría», que sí queda guardado para
-        siempre.
-      </small>
-      </div>
-    </div>
-
-    <div class="card tab-panel" id="linkPanel">
-      <p style="font-size:.85rem;color:var(--wi-muted)" data-i18n="detail.link_explain">Compártelo con la empresa para que confirme/corrija el chequeo ya pre-rellenado.</p>
-      <div class="link-box" id="personalLink">{{ personal_url }}</div>
-      <div class="row" style="margin-top:8px">
-        <button class="btn outline" id="btnCopyLink" data-i18n="detail.btn_copy_link">📋 Copiar enlace</button>
-        <a class="btn green" style="text-decoration:none;text-align:center" id="btnWhatsappLink" href="#" target="_blank" rel="noopener" data-i18n="detail.btn_whatsapp_link">💬 Enviar por WhatsApp</a>
-        {% if audits %}<a class="btn ghost" style="text-decoration:none;text-align:center" href="/panel/prospeccion/{{ prospect.pk }}/pdf/" target="_blank" data-i18n="detail.btn_pdf">📄 Abrir resultado (PDF)</a>{% endif %}
-        <a class="btn ghost" style="text-decoration:none;text-align:center" href="/panel/prospeccion/{{ prospect.pk }}/qr/" target="_blank" data-i18n="detail.btn_qr_card">📇 Tarjeta QR para imprimir</a>
-      </div>
-      </div>
-    </div>
-
-    <!-- ── Cliente y contactos: CRM + contactos + consentimiento de
-         publicación fusionados en un único panel, antes eran 3 botones
-         separados para lo que en la práctica siempre se mira junto ── -->
-    <div class="card tab-panel" id="clienteDetails">
-      <div id="crmDetails">
-        {% if prospect.converted_client_id %}
-          <p style="font-size:.85rem"><span data-i18n="detail.crm_already_converted">Ya convertido en cliente:</span> <a href="/wi/crm/{{ prospect.converted_client_id }}/" data-i18n="detail.crm_view_lead">ver ficha en el CRM →</a></p>
-          <button class="btn" id="btnDraftProposal" data-i18n="detail.btn_draft_proposal">Crear borrador de presupuesto</button>
-        {% else %}
-          <p style="font-size:.85rem;color:var(--wi-muted)"><span data-i18n="detail.crm_not_converted">Todavía no está en el CRM. Al convertir se usará como contacto:</span> {{ prospect.whatsapp|default:prospect.phone|default:prospect.email|default:"—" }}</p>
-          <button class="btn" id="btnConvert" data-i18n="detail.btn_convert">Convertir en cliente</button>
-          <button class="btn" id="btnDraftProposal" style="margin-left:6px" data-i18n="detail.btn_convert_and_draft">Convertir y crear presupuesto</button>
-        {% endif %}
-      </div>
-
-      <hr style="margin:18px 0;border:none;border-top:1px solid var(--wi-border)">
-
-      <!-- ── Contactos (CRUD completo) ────────────────────────────────── -->
-      <div id="contactosDetails">
-        <h3 data-i18n="detail.contacts_section_title">Contactos</h3>
-        <div class="wi-explain" data-i18n="detail.contacts_explain">
-          Dos consentimientos distintos, cada uno se pide y se revoca por separado: «Recibir informe» es
-          para poder enviarle el resultado del chequeo, y «Contacto comercial» es para poder escribirle
-          ofreciendo el servicio.
-        </div>
-        <div id="contactsList">
-          {% for c in contacts %}
-            <div class="contact-row" data-contact-id="{{ c.id }}">
-              <div class="name-line">{{ c.name|default:"" }}<span data-i18n="detail.no_name" {% if c.name %}hidden{% endif %}>(sin nombre)</span> {% if c.is_primary %}<span class="primary-tag" data-i18n="detail.primary_tag">principal</span>{% endif %}</div>
-              <div class="meta-line"><span data-role-code="{{ c.role }}">{{ c.get_role_display }}</span> · {{ c.phone }} {% if c.whatsapp %}· WhatsApp {{ c.whatsapp }}{% endif %} {% if c.email %}· {{ c.email }}{% endif %}</div>
-              <div class="consent-line"><span class="consent-dot {% if c.consent_receive_report %}on{% else %}off{% endif %}"></span>
-                <span data-i18n="detail.consent_report_label">Recibir informe</span>:
-                {% if c.consent_receive_report %}<span data-i18n="detail.consent_granted">Concedido</span>{% if c.consent_receive_report_actor %} <span class="consent-actor-note">({{ c.consent_receive_report_actor }})</span>{% endif %}{% elif c.consent_receive_report_revoked_at %}<span data-i18n="detail.consent_revoked">Revocado</span>{% else %}<span data-i18n="detail.consent_none">Sin registrar</span>{% endif %}
-                <button class="btn sm outline" data-consent-type="report" data-consent-action="{% if c.consent_receive_report %}revoke{% else %}grant{% endif %}" data-i18n="{% if c.consent_receive_report %}detail.btn_revoke{% else %}detail.btn_grant{% endif %}">{% if c.consent_receive_report %}Revocar{% else %}Conceder{% endif %}</button>
-              </div>
-              <div class="consent-line"><span class="consent-dot {% if c.consent_commercial_contact %}on{% else %}off{% endif %}"></span>
-                <span data-i18n="detail.consent_commercial_label">Contacto comercial</span>:
-                {% if c.consent_commercial_contact %}<span data-i18n="detail.consent_granted">Concedido</span>{% if c.consent_commercial_contact_actor %} <span class="consent-actor-note">({{ c.consent_commercial_contact_actor }})</span>{% endif %}{% elif c.consent_commercial_contact_revoked_at %}<span data-i18n="detail.consent_revoked">Revocado</span>{% else %}<span data-i18n="detail.consent_none">Sin registrar</span>{% endif %}
-                <button class="btn sm outline" data-consent-type="commercial" data-consent-action="{% if c.consent_commercial_contact %}revoke{% else %}grant{% endif %}" data-i18n="{% if c.consent_commercial_contact %}detail.btn_revoke{% else %}detail.btn_grant{% endif %}">{% if c.consent_commercial_contact %}Revocar{% else %}Conceder{% endif %}</button>
-              </div>
-              <div class="field" style="margin-top:4px">
-                <label style="font-size:.72rem" data-i18n="detail.consent_actor_label">¿Quién registra este consentimiento? (tu nombre)</label>
-                <input type="text" class="consentActorInput" placeholder="Tu nombre" data-i18n-placeholder="detail.consent_actor_placeholder" style="max-width:220px">
-              </div>
-              <div class="row" style="margin-top:6px">
-                <button class="btn sm ghost btnEditContact" data-i18n="detail.btn_edit">✎ Editar</button>
-                <button class="btn sm danger btnDeleteContact" data-i18n="detail.btn_delete">🗑 Eliminar</button>
-              </div>
-            </div>
-          {% empty %}
-            <p style="color:var(--wi-muted);font-size:.85rem" data-i18n="detail.no_contacts">Sin contactos registrados todavía.</p>
-          {% endfor %}
-        </div>
-
-        <h3 style="margin-top:14px" data-i18n="detail.add_contact_title">Añadir contacto</h3>
-        <form id="contactForm">
-          <input type="hidden" name="contact_id" value="">
-          <div class="row">
-            <div class="field"><label data-i18n="detail.label_name">Nombre</label><input type="text" name="name"></div>
-            <div class="field"><label data-i18n="detail.label_role">Rol</label>
-              <select name="role">{% for id, label in role_choices %}<option value="{{ id }}" data-code="{{ id }}">{{ label }}</option>{% endfor %}</select>
-            </div>
-          </div>
-          <div class="row">
-            <div class="field"><label data-i18n="detail.label_phone">Teléfono</label><input type="text" name="phone"></div>
-            <div class="field"><label>WhatsApp</label><input type="text" name="whatsapp"></div>
-            <div class="field"><label>Email</label><input type="text" name="email"></div>
-          </div>
-          <div class="row">
-            <div class="field"><label data-i18n="detail.label_channel">Canal preferido</label>
-              <select name="preferred_channel">{% for id, label in channel_choices %}<option value="{{ id }}" data-code="{{ id }}">{{ label }}</option>{% endfor %}</select>
-            </div>
-            <div class="field" style="display:flex;align-items:flex-end;gap:6px">
-              <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;margin:0">
-                <input type="checkbox" name="is_primary" style="width:auto"> <span data-i18n="detail.label_is_primary">Es el contacto principal</span>
-              </label>
-            </div>
-          </div>
-          <div class="field"><label data-i18n="detail.label_contact_notes">Notas</label><textarea name="notes" rows="2"></textarea></div>
-          <div class="row">
-            <button type="submit" class="btn" id="btnSaveContact" data-i18n="detail.btn_save_contact">Guardar contacto</button>
-            <button type="button" class="btn ghost" id="btnCancelEditContact" hidden data-i18n="detail.btn_cancel_edit">Cancelar edición</button>
-          </div>
-        </form>
-      </div>
-
-      <hr style="margin:18px 0;border:none;border-top:1px solid var(--wi-border)">
-
-      <!-- ── Consentimientos (publicación) ───────────────────────────── -->
-      <div id="publicationPanel">
-        <h3 data-i18n="detail.publication_section_title">Consentimientos de publicación</h3>
-        <p style="margin-bottom:10px">
-          <span class="pub-badge {% if is_public %}yes{% else %}no{% endif %}" data-i18n="{% if is_public %}detail.pub_visible_full{% else %}detail.pub_not_visible{% endif %}">{% if is_public %}✓ Visible en mapa público{% else %}✕ No publicable{% endif %}</span>
-          <span style="font-size:.82rem;color:var(--wi-muted);display:block;margin-top:4px" id="publicationReason">{{ publication_reason }}</span>
-        </p>
-
-        <div class="field">
-          <label data-i18n="detail.pub_consent_label">Consentimiento de publicación de la empresa</label>
-          <p style="font-size:.76rem;color:var(--wi-muted);margin:0 0 6px" data-i18n="detail.pub_consent_explain">
-            Normalmente se marca solo — hay una casilla (marcada por defecto) al final del chequeo
-            personal que la propia empresa puede desmarcar. Este botón es solo para forzarlo a mano si
-            hace falta. Es la única condición para aparecer en el mapa público, no hay un segundo paso.
-          </p>
-          {% if prospect.publish_consent %}
-            <button type="button" class="btn sm outline" id="btnPublishConsent" data-action="revoke" data-i18n="detail.btn_revoke_pub_consent">Revocar consentimiento</button>
-          {% else %}
-            <button type="button" class="btn sm" id="btnPublishConsent" data-action="grant" data-i18n="detail.btn_grant_pub_consent">Registrar consentimiento</button>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    <!-- ── Fotos in situ (complementan la única foto que suele haber en la
-         ficha de Google) ──────────────────────────────────────────── -->
-    <div class="card tab-panel" id="photosDetails">
-      <p style="font-size:.85rem;color:var(--wi-muted);margin-bottom:10px" data-i18n="detail.photos_explain">
-        Haz fotos frescas del negocio desde varios ángulos (fachada, interior, detalles) — no se publican
-        en ningún sitio automáticamente, son referencia interna del equipo.
-      </p>
-      <div class="photo-grid" id="photoGrid">
-        {% for p in photos %}
-          <div class="photo-item" data-photo-id="{{ p.id }}">
-            <img src="{{ p.image.url }}" alt="{{ p.caption|default:'Foto del negocio' }}">
-            <button type="button" class="btn sm danger btnDeletePhoto">🗑</button>
-          </div>
-        {% empty %}
-          <p style="color:var(--wi-muted);font-size:.85rem;grid-column:1/-1" data-i18n="detail.no_photos">Todavía no hay fotos de este negocio.</p>
-        {% endfor %}
-      </div>
-      <form id="photoForm" style="margin-top:12px">
-        <div class="field">
-          <label data-i18n="detail.label_add_photos">Añadir fotos (puedes elegir varias a la vez, o hacerlas directamente con la cámara del móvil)</label>
-          <input type="file" name="photos" id="photoInput" accept="image/*" capture="environment" multiple>
-        </div>
-        <button type="submit" class="btn" id="btnUploadPhotos" data-i18n="detail.btn_upload_photos">📸 Subir fotos</button>
-      </form>
-    </div>
-
-    <div class="card tab-panel" id="historyPanel">
-      {% if audits %}
-      <table>
-        <tr><th data-i18n="detail.th_date">Fecha</th><th data-i18n="detail.th_mode">Modo</th><th data-i18n="detail.th_stage">Etapa</th><th data-i18n="detail.th_score">Puntuación</th></tr>
-        {% for a in audits %}
-          <tr><td>{{ a.created_at|date:"d/m/Y H:i" }}</td><td data-mode-code="{{ a.mode }}">{{ a.get_mode_display }}</td><td data-stage-code="{{ a.stage }}">{{ a.get_stage_display }}</td><td>{{ a.score }}/100</td></tr>
-        {% endfor %}
-      </table>
-      {% else %}<p style="color:var(--wi-muted);font-size:.85rem" data-i18n="detail.no_audits">Todavía no se ha hecho ningún chequeo para esta empresa.</p>{% endif %}
-    </div>
-
-    <div class="card tab-panel" id="dangerPanel">
-      <p style="font-size:.85rem;color:var(--wi-muted);margin-bottom:10px">
-        <span data-i18n="detail.danger_explain">Elimina esta ficha de prospección de forma permanente: historial de chequeos, contactos y fotos
-        se borran con ella.</span>
-        {% if prospect.converted_client_id %}
-          <strong data-i18n="detail.danger_converted_warning">Esta empresa ya está convertida en cliente</strong> —
-          <span data-i18n="detail.danger_converted_link">su ficha en el CRM</span>
-          (<a href="/wi/crm/{{ prospect.converted_client_id }}/" data-i18n="detail.view_record">ver ficha</a>)
-          <span data-i18n="detail.danger_converted_note">no se borrará, pero perderá el enlace a este historial de prospección.</span>
-        {% endif %}
-      </p>
-      <button type="button" class="btn danger" id="btnDeleteProspect" data-i18n="detail.btn_delete_prospect">🗑 Eliminar esta empresa</button>
     </div>
 
   </div>
@@ -634,23 +628,9 @@ document.querySelectorAll('.status-btn').forEach(function(b){
   });
 });
 
-/* ---- Las 3 acciones principales ---- */
-document.getElementById('btnGoChequeo').addEventListener('click', function(){ showTab('prelimDetails'); });
-document.getElementById('btnGoContacto').addEventListener('click', function(){
-  showTab('clienteDetails');
-  var nameInput = document.querySelector('#contactForm input[name="name"]');
-  if(nameInput) setTimeout(function(){ nameInput.focus(); }, 350);
-});
-document.getElementById('btnPrepararPropuesta').addEventListener('click', function(){
-  postJson(BASE + 'draft-proposal/').then(function(res){
-    if(res.data.error){ showToast(res.data.error); return; }
-    window.location.href = res.data.proposal_url;
-  });
-});
-/* Preliminar no es obligatorio para guardar la empresa — "Hacer chequeo"
-   solo abre la sección, nunca bloquea nada más de la ficha. Si se llega
+/* Preliminar no es obligatorio para guardar la empresa — si se llega
    aquí con ?start_check=1 (desde "Guardar e iniciar chequeo" del mapa),
-   se abre y se hace scroll automáticamente. */
+   se abre la pestaña de auditoría preliminar y se hace scroll automático. */
 if(new URLSearchParams(window.location.search).get('start_check') === '1'){
   setTimeout(function(){ showTab('prelimDetails'); }, 200);
 }
@@ -916,9 +896,6 @@ var T = {
     'detail.referral_title': '🙏 Pedir una recomendación',
     'detail.referral_explain': 'Ya es cliente — pedirle que recomiende a otro negocio de la zona es mucho más fácil que contactar a un desconocido.',
     'detail.toast_opener_copied': 'Mensaje copiado',
-    'detail.btn_chequeo': '🩺 Hacer chequeo',
-    'detail.btn_contacto': '👤 Añadir contacto',
-    'detail.btn_propuesta': '📋 Preparar propuesta',
     'detail.status_section_title': 'Estado y responsable',
     'detail.status_explain': 'La «etapa» es en qué punto del proceso de venta está esta empresa (descubierta, contactada, auditada, ganada…) — el color del punto en el mapa es siempre el mismo que el de esta etiqueta.',
     'detail.tab_message': '💬 Mensaje de contacto',
@@ -1034,9 +1011,6 @@ var T = {
     'detail.referral_title': '🙏 Попросить рекомендацию',
     'detail.referral_explain': 'Уже клиент — попросить порекомендовать другой бизнес в округе намного проще, чем писать незнакомцу.',
     'detail.toast_opener_copied': 'Сообщение скопировано',
-    'detail.btn_chequeo': '🩺 Сделать проверку',
-    'detail.btn_contacto': '👤 Добавить контакт',
-    'detail.btn_propuesta': '📋 Подготовить предложение',
     'detail.status_section_title': 'Статус и ответственный',
     'detail.status_explain': '«Этап» — это на каком шаге процесса продажи находится компания (найдена, на связи, проверена, стала клиентом…). Цвет этой метки всегда совпадает с цветом точки на карте.',
     'detail.tab_message': '💬 Сообщение для контакта',

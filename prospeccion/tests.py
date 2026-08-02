@@ -1249,8 +1249,8 @@ class OldRoutesStillWorkTests(BaseTestCase):
         c = self.login()
         r = c.get(f'/panel/prospeccion/{prospect.pk}/')
         self.assertEqual(r.status_code, 200)
-        self.assertIn(b'Hacer chequeo', r.content)
-        self.assertIn(b'Preparar propuesta', r.content)
+        self.assertIn('Auditoría preliminar'.encode('utf-8'), r.content)
+        self.assertIn(b'Convertir en cliente', r.content)
         self.assertIn('Añadir contacto'.encode('utf-8'), r.content)
 
 
