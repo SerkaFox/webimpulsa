@@ -2,7 +2,7 @@ import json
 import logging
 import re
 from collections import Counter, defaultdict
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
@@ -157,6 +157,34 @@ def prospect_search_api(request):
             'id': p.pk, 'name': p.name, 'sector': p.get_sector_display(),
             'municipality': p.municipality, 'sales_status': p.sales_status,
             'sales_status_display': p.get_sales_status_display(),
+        }
+        for p in qs
+    ]})
+
+
+@_crm_auth
+@require_GET
+def prospect_new_since_api(request):
+    """Prospectos dados de alta después de un instante dado — pensado para
+    que Pushik detecte altas nuevas entre una comprobación en segundo plano
+    y la siguiente, y le pregunte a Tania cuándo piensa ir a visitarlas."""
+    since_raw = request.GET.get('since', '').strip()
+    if not since_raw:
+        return JsonResponse({'error': 'Falta el parámetro since'}, status=400)
+    try:
+        since = datetime.fromisoformat(since_raw)
+    except ValueError:
+        return JsonResponse({'error': 'since debe ser ISO 8601'}, status=400)
+    if timezone.is_naive(since):
+        since = timezone.make_aware(since)
+    qs = BusinessProspect.objects.filter(
+        created_at__gt=since, sales_status=BusinessProspect.SALES_DISCOVERED,
+    ).order_by('created_at')[:20]
+    return JsonResponse({'results': [
+        {
+            'id': p.pk, 'name': p.name, 'sector': p.get_sector_display(),
+            'address': p.address, 'municipality': p.municipality,
+            'created_at': p.created_at.isoformat(),
         }
         for p in qs
     ]})

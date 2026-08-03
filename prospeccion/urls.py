@@ -36,6 +36,7 @@ urlpatterns = [
     path('panel/prospeccion/mapa/api/parse-maps-link/', views_panel.parse_maps_link, name='prospeccion_parse_maps_link'),
     path('panel/prospeccion/api/daily-tasks/', views_panel.daily_tasks_api, name='prospeccion_daily_tasks_api'),
     path('panel/prospeccion/api/search/', views_panel.prospect_search_api, name='prospeccion_search_api'),
+    path('panel/prospeccion/api/new-since/', views_panel.prospect_new_since_api, name='prospeccion_new_since_api'),
     path('panel/prospeccion/<int:pk>/', views_panel.prospect_detail, name='prospeccion_detail'),
     path('panel/prospeccion/<int:pk>/update/', views_panel.prospect_update, name='prospeccion_update'),
     path('panel/prospeccion/<int:pk>/report-outcome/', views_panel.report_outcome, name='prospeccion_report_outcome'),

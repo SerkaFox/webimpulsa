@@ -1696,6 +1696,45 @@ class ProspectSearchApiTests(BaseTestCase):
         self.assertEqual(r.status_code, 400)
 
 
+class ProspectNewSinceApiTests(BaseTestCase):
+    """Pushik usa esto para detectar altas nuevas en el mapa entre una
+    comprobación en segundo plano y la siguiente."""
+
+    def test_returns_only_prospects_created_after_since(self):
+        old = BusinessProspect.objects.create(name='Viejo', sector='bar')
+        BusinessProspect.objects.filter(pk=old.pk).update(
+            created_at=timezone.now() - timezone.timedelta(hours=2)
+        )
+        since = timezone.now() - timezone.timedelta(hours=1)
+        new = BusinessProspect.objects.create(name='Nuevo', sector='bar')
+        c = self.login()
+        r = c.get('/panel/prospeccion/api/new-since/', {'since': since.isoformat()})
+        self.assertEqual(r.status_code, 200)
+        ids = [item['id'] for item in json.loads(r.content)['results']]
+        self.assertIn(new.pk, ids)
+        self.assertNotIn(old.pk, ids)
+
+    def test_excludes_prospects_not_in_discovered_stage(self):
+        since = timezone.now() - timezone.timedelta(hours=1)
+        BusinessProspect.objects.create(
+            name='Ya Contactado', sector='bar', sales_status=BusinessProspect.SALES_CONTACTED,
+        )
+        c = self.login()
+        r = c.get('/panel/prospeccion/api/new-since/', {'since': since.isoformat()})
+        names = [item['name'] for item in json.loads(r.content)['results']]
+        self.assertNotIn('Ya Contactado', names)
+
+    def test_requires_since_param(self):
+        c = self.login()
+        r = c.get('/panel/prospeccion/api/new-since/')
+        self.assertEqual(r.status_code, 400)
+
+    def test_rejects_invalid_since_format(self):
+        c = self.login()
+        r = c.get('/panel/prospeccion/api/new-since/', {'since': 'no-es-una-fecha'})
+        self.assertEqual(r.status_code, 400)
+
+
 class ReportOutcomeTests(BaseTestCase):
     """Pushik reporta el resultado de una visita/llamada en nombre de Tania
     — esto es lo que traduce su respuesta en lenguaje natural a un cambio de
