@@ -115,6 +115,11 @@ GOOGLE_PLACES_DAILY_WARNING_LIMIT = int(os.getenv('GOOGLE_PLACES_DAILY_WARNING_L
 GOOGLE_PLACES_ENTERPRISE_PRICE_PER_1000_USD = float(
     os.getenv('GOOGLE_PLACES_ENTERPRISE_PRICE_PER_1000_USD', '35')
 )
+# Si está activo, dar de alta un prospecto (manual/clic en mapa/Google
+# Places) dispara en el acto a Pushik (asistente de Telegram de Tania) vía
+# un subproceso sudo -u tatiana — desactivado por defecto para que los
+# tests nunca intenten lanzar procesos reales.
+PUSHIK_NOTIFY_ENABLED = os.getenv('PUSHIK_NOTIFY_ENABLED', '') == '1'
 
 # Bridge de WhatsApp no oficial compartido con el proyecto `anna` (mismo
 # servidor, servicio systemd brimoon-whatsapp-bridge — ver prospeccion/wa_bridge.py).

@@ -197,6 +197,41 @@ class DedupeTests(TestCase):
         self.assertEqual(k1, k2)
 
 
+class PushikNotifyTriggerTests(TestCase):
+    """El alta manual/mapa/Google Places de un prospecto debe disparar (si
+    está activo) un aviso directo a Pushik — nunca cuando está desactivado
+    (el valor por defecto, el que usan los tests), y nunca para importación
+    CSV masiva."""
+
+    @override_settings(PUSHIK_NOTIFY_ENABLED=True)
+    @mock.patch('prospeccion.services.subprocess.Popen')
+    def test_fires_subprocess_when_enabled(self, mock_popen):
+        create_prospect({'name': 'Bar Disparo', 'phone': '600123123'}, source=BusinessProspect.SOURCE_MANUAL)
+        mock_popen.assert_called_once()
+        args = mock_popen.call_args[0][0]
+        self.assertIn('/usr/local/bin/wi-notify-pushik-event.py', args)
+        self.assertIn('new_prospect', args)
+
+    @mock.patch('prospeccion.services.subprocess.Popen')
+    def test_does_not_fire_when_disabled(self, mock_popen):
+        create_prospect({'name': 'Bar Sin Aviso', 'phone': '600123124'}, source=BusinessProspect.SOURCE_MANUAL)
+        mock_popen.assert_not_called()
+
+    @override_settings(PUSHIK_NOTIFY_ENABLED=True)
+    @mock.patch('prospeccion.services.subprocess.Popen')
+    def test_does_not_fire_for_csv_import(self, mock_popen):
+        create_prospect({'name': 'Bar CSV', 'phone': '600123125'}, source=BusinessProspect.SOURCE_CSV)
+        mock_popen.assert_not_called()
+
+    @override_settings(PUSHIK_NOTIFY_ENABLED=True)
+    @mock.patch('prospeccion.services.subprocess.Popen')
+    def test_does_not_fire_for_duplicate(self, mock_popen):
+        create_prospect({'name': 'Bar Duplicado', 'phone': '600123126'}, source=BusinessProspect.SOURCE_MANUAL)
+        mock_popen.reset_mock()
+        create_prospect({'name': 'Bar Duplicado', 'phone': '600123126'}, source=BusinessProspect.SOURCE_MANUAL)
+        mock_popen.assert_not_called()
+
+
 class ConversionTests(BaseTestCase):
     def test_convert_creates_lead_with_expected_package_and_extras(self):
         prospect = BusinessProspect.objects.create(name='Convert Co', sector='bar', phone='699000111')

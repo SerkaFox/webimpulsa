@@ -6,6 +6,7 @@ equipo introduce (manual, clic en el mapa o CSV).
 import hashlib
 import math
 import re
+import subprocess
 
 
 def _normalize(s):
@@ -103,6 +104,36 @@ def find_duplicate(name, phone='', email='', website='', lat=None, lng=None, exc
     return None
 
 
+# Fuentes donde Tania añade UN negocio a la vez, ella misma, sobre la marcha
+# — dispara el aviso a Pushik. La importación CSV masiva y la conversión
+# desde el chequeo público quedan fuera a propósito (no son "Tania acaba de
+# encontrar un sitio nuevo", serían decenas de avisos de golpe o ni siquiera
+# vienen de ella).
+NOTIFY_PUSHIK_SOURCES = {'manual', 'map_click', 'google_places'}
+
+
+def _notify_pushik_new_prospect(prospect):
+    """Dispara a Pushik (el asistente de Telegram de Tania) en el momento
+    exacto en que ella añade un negocio nuevo al mapa — un disparo real, no
+    algo que Pushik tenga que ir a buscar por su cuenta (eso costaría tokens
+    y carga en cada comprobación periódica sin necesidad). Fire-and-forget:
+    nunca debe bloquear ni poder romper el guardado de la ficha."""
+    from django.conf import settings
+    if not getattr(settings, 'PUSHIK_NOTIFY_ENABLED', False):
+        return
+    try:
+        subprocess.Popen(
+            [
+                'sudo', '-u', 'tatiana', '/usr/bin/python3',
+                '/usr/local/bin/wi-notify-pushik-event.py', 'new_prospect',
+                str(prospect.pk), prospect.name, prospect.address,
+            ],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True,
+        )
+    except OSError:
+        pass
+
+
 def create_prospect(data, source=None):
     """data: dict con al menos 'name'. Devuelve (prospect, created) — si ya
     existe un duplicado, lo devuelve tal cual con created=False, sin tocarlo.
@@ -142,6 +173,8 @@ def create_prospect(data, source=None):
         source=source,
         dedupe_key=compute_dedupe_key(name, phone, email, website),
     )
+    if source in NOTIFY_PUSHIK_SOURCES:
+        _notify_pushik_new_prospect(prospect)
     return prospect, True
 
 
